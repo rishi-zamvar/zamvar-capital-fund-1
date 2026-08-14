@@ -31,11 +31,27 @@
 | Plan-checker | 122,844 |
 | Revision planner | 112,211 |
 | Plan-checker (re-check) | 119,586 |
-| Execution + verify | (pending) |
+| Executor 01-01 | 109,211 |
+| Executor 01-02 | 86,869 |
+| Executor 01-03 | 124,032 |
+| Executor 01-04 | 114,150 |
+| Executor 01-05 | 155,138 |
+| Executor 01-06 | 118,843 |
+| Verifier | 133,453 |
+| **Phase 1 subtotal** | **~1,444,361** |
 
-**Cumulative (measured, so far): ~1,022,242 subagent tokens**
+**Cumulative (measured, so far): ~1,863,938 subagent tokens (project 419,577 + Phase 1 1,444,361)**
 
-> Planning round-trip for Phase 1 (research→plan→check→revise→re-check) = ~603k tokens. Lever for future phases: the plan-check found a real blocker so the round-trip earned its cost, but graphify (Phase 2+) + narrower per-phase research should cut the research/plan legs materially.
+## Per-Phase Retrospective
+
+### Phase 1 — Data Integrity & Catalyst Feed (CLOSED)
+- **Spend:** ~1.44M tokens. Split: planning round-trip (research→plan→check→revise→re-check) ~603k; execution (6 plans) ~708k; verify 133k.
+- **Earned its cost:** the plan-check round-trip caught a real money-critical blocker (date_type persistence) that tests would not have. Keep plan-check on.
+- **Levers now active for Phase 2+:**
+  1. **Graphify LIVE** (706 nodes / 1155 edges indexed). Every Phase 2 agent MUST query the graph (`graphify explain/path` or the skill) to locate code instead of reading src/ files. This is the biggest lever — Phase-1 executors each re-read overlapping src/ files (~110-155k each).
+  2. **Narrow per-phase research** — project STACK/ARCH are settled; Phase 2 research should only cover the KB/contracts specifics, not re-derive the stack.
+  3. **Tighter files_to_read** — pass the graph + the 2-3 specific files, not the whole src tree.
+- **Directive carried to Phase 2 prompts:** "Graphify graph is built — use `graphify explain <symbol>` / `graphify path A B` / the graphify skill to navigate; read only the files the graph points to. Do not re-read the src/ tree."
 
 ## Per-Phase Retrospective (filled at each phase close)
 
