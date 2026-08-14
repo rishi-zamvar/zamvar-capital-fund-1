@@ -245,6 +245,40 @@ def hedge_peers(conn, name: str) -> list[dict]:
     return out
 
 
+def insert_playbook(conn, scenario_type, scenario, strategy, confidence, evidence) -> int:
+    """Store a playbook as a derived, cited claim (KB-05).
+
+    Routed through insert_claim so the citation invariant holds — playbooks cite the outcomes they
+    generalize from. `confidence` is a first-class kb_node column (surfaced by every query).
+    """
+    if not 0.0 <= confidence <= 1.0:
+        raise ValueError(f"confidence must be in [0,1], got {confidence!r}")
+    node = KBNode(
+        kind="playbook",
+        confidence=confidence,
+        attrs={"scenario_type": scenario_type, "scenario": scenario, "strategy": strategy},
+    )
+    return insert_claim(conn, node, evidence)
+
+
+def query_playbooks(conn, scenario_type: str) -> list[dict]:
+    """Playbooks for `scenario_type`, confidence-desc, each surfacing its first-class confidence."""
+    rows = conn.execute(
+        "SELECT id, confidence, attrs_json FROM kb_node "
+        "WHERE kind='playbook' AND json_extract(attrs_json,'$.scenario_type')=? "
+        "ORDER BY confidence DESC",
+        (scenario_type,),
+    ).fetchall()
+    out = []
+    for r in rows:
+        a = json.loads(r["attrs_json"])
+        out.append({
+            "id": r["id"], "confidence": r["confidence"],
+            "scenario_type": a["scenario_type"], "scenario": a["scenario"], "strategy": a["strategy"],
+        })
+    return out
+
+
 def hash_embed(text: str, dim: int = EMBED_DIM) -> list[float]:
     """Deterministic, offline, L2-normalized embedding of `text` (default 384-dim).
 
