@@ -18,6 +18,11 @@ Given an imminent biotech catalyst, produce a data-backed, portfolio-aware, hedg
 
 <!-- Hypotheses until shipped and validated. Grouped by area; formalized in REQUIREMENTS.md. -->
 
+**Quant tool/skill library (deterministic analysis — agents never do the math)**
+- [ ] Any analysis the desk does repeatedly is a deterministic tool/skill the agents call with parameters, then interpret the output — no LLM arithmetic on money-critical numbers
+- [ ] Tool set spans: rNPV / pipeline valuation, cash-runway, Kelly / risk-of-ruin position sizing, pair correlation + beta, options-implied move, IV-crush estimate, Sharpe / returns / performance attribution, stop-loss & take-profit levels, portfolio concentration + exposure, phase-transition / catalyst base-rate lookups
+- [ ] Each tool is unit-tested and versioned; outputs carry the inputs used (reproducible, auditable)
+
 **Knowledge & framework**
 - [ ] Ingest online descriptions of stock fundamental-analysis frameworks and distill a scoring rubric the agents apply
 - [ ] Graph knowledge base storing scenario playbooks + past catalyst outcomes, queryable by analog ("similar situations")
@@ -84,6 +89,7 @@ Given an imminent biotech catalyst, produce a data-backed, portfolio-aware, hedg
 | Fork an existing debate framework vs. build from scratch | Reuse proven bull/bear debate structure; adapt for memory + biotech | — Pending |
 | Internal sim ledger for paper trading | No external paper broker dependency; simplest path to a 1-month shakedown | — Pending |
 | Claude Code subagents as the agent runtime | Matches user's existing fleet expertise + native MCP access | — Pending |
+| Deterministic analysis as callable tools, not LLM math | Real money — no hallucinated arithmetic; reproducible, testable, auditable financial models | — Pending |
 | iOS-first dashboard | Approve-on-the-go; reuse ZeeChat's Tailscale-to-Claude-Code pattern | — Pending |
 
 ## Evolution
