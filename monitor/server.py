@@ -194,6 +194,36 @@ def tokens_total():
     return 0
 
 
+def graphify_savings():
+    """Estimate tokens saved by Graphify using executor-level tokens as the proxy.
+
+    Baseline = Phase 1 executors (Graphify was NOT live). Post = Phase 2+ executors (Graphify live).
+    Executors are where codebase-reading happens, so their per-plan token delta is the most
+    Graphify-attributable signal. Honest label: an estimate, not a controlled measurement.
+    """
+    import re
+    path = os.path.join(ROOT, ".planning/TOKEN-NOTES.md")
+    base, post = [], []
+    try:
+        with open(path) as f:
+            for line in f:
+                m = re.search(r"Executor\s+(\d+)-\d+\s*\|\s*\**\s*([\d,]+)", line)
+                if m:
+                    phase = m.group(1)
+                    tok = int(m.group(2).replace(",", ""))
+                    (base if phase == "01" else post).append(tok)
+    except Exception:
+        return None
+    if not base or not post:
+        return None
+    base_avg = sum(base) / len(base)
+    post_avg = sum(post) / len(post)
+    saved = int(sum(max(0, base_avg - t) for t in post))
+    pct = int(round((1 - post_avg / base_avg) * 100)) if base_avg else 0
+    return {"base_avg": int(base_avg), "post_avg": int(post_avg),
+            "saved": saved, "pct": pct, "n_post": len(post)}
+
+
 def session_jsonl():
     files = glob.glob(os.path.join(HOME, ".claude/projects/-Users-rishizamvar/*.jsonl"))
     return max(files, key=os.path.getmtime) if files else None
@@ -244,7 +274,7 @@ def sample():
     return {"ok": True, "now": time.time(), "git": g, "phases": ph,
             "phases_done": done, "phases_total": len(ph) or 11,
             "current": cp, "agent": active_agent(),
-            "tokens": tokens_total(), "feed": feed}
+            "tokens": tokens_total(), "graphify": graphify_savings(), "feed": feed}
 
 
 def sampler():
@@ -358,8 +388,10 @@ h1{font-size:19px;margin:0;letter-spacing:.02em}
   <div class="tile"><div class="k">Phases</div><div class="v"><span id="tph">–</span><small id="tpht">/11</small></div></div>
   <div class="tile"><div class="k">Commits</div><div class="v" id="tc">–</div></div>
   <div class="tile"><div class="k">Tokens</div><div class="v" id="ttok">–</div></div>
+  <div class="tile"><div class="k">Graphify saved (est.)</div><div class="v" id="gsaved" style="color:var(--grn)">–</div></div>
   <div class="tile"><div class="k">Last commit</div><div class="v" id="tage" style="font-size:18px">–</div></div>
 </div>
+<div id="gdetail" style="font-family:var(--mono);font-size:11.5px;color:var(--faint);margin:-6px 0 16px"></div>
 <div class="grid">
   <div>
     <div class="panel" style="margin-bottom:14px">
@@ -400,6 +432,14 @@ function render(d){
   document.getElementById("tpht").textContent="/"+d.phases_total;
   document.getElementById("tc").textContent=d.git.count;
   document.getElementById("ttok").textContent=d.tokens?(d.tokens/1e6).toFixed(2)+"M":"–";
+  var gs=d.graphify;
+  if(gs){
+    document.getElementById("gsaved").textContent="~"+Math.round(gs.saved/1000)+"k";
+    document.getElementById("gdetail").textContent="graphify est: executors "+Math.round(gs.base_avg/1000)+"k (pre) → "+Math.round(gs.post_avg/1000)+"k (live) avg per plan · −"+gs.pct+"% over "+gs.n_post+" plans (executor-proxy estimate)";
+  } else {
+    document.getElementById("gsaved").textContent="–";
+    document.getElementById("gdetail").textContent="graphify savings measured once Phase 2+ executors complete (baseline = Phase 1 executors)";
+  }
   var age=d.git.last_epoch?Math.floor(now-d.git.last_epoch):0;
   var stale=age>900;
   document.getElementById("tage").textContent=fmtAge(age);
