@@ -55,7 +55,7 @@ Decimal phases appear between their surrounding integers in numeric order.
   4. A hedge-relationship sub-store holds, per universe name, candidate inverse-payoff peers with mechanism, payoff-direction sign, and citation
   5. Playbook entries are queryable and surface their confidence
 **Plans**: 4 plans (3 waves)
-- [ ] 02-01-PLAN.md — sqlite-vec + migration 003 (kb_node/kb_edge/kb_vec) + deterministic embedder (Wave 1)
+- [x] 02-01-PLAN.md — sqlite-vec + migration 003 (kb_node/kb_edge/kb_vec) + deterministic embedder (Wave 1)
 - [ ] 02-02-PLAN.md — Six pydantic inter-layer contracts with strict boundary rejection (Wave 1)
 - [ ] 02-03-PLAN.md — Provenance-enforced atomic KB claim write-path (Wave 2)
 - [ ] 02-04-PLAN.md — Analog query + hedge sub-store + playbook store (Wave 3)

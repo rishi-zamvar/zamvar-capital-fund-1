@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: verifying
-stopped_at: Completed 01-06-PLAN.md
-last_updated: "2026-08-14T20:19:36.428Z"
+status: executing
+stopped_at: Completed 02-01-PLAN.md
+last_updated: "2026-08-14T22:06:22.899Z"
 last_activity: 2026-08-14
 progress:
   total_phases: 11
   completed_phases: 1
-  total_plans: 6
-  completed_plans: 6
+  total_plans: 10
+  completed_plans: 7
   percent: 0
 ---
 
@@ -21,13 +21,13 @@ progress:
 See: .planning/PROJECT.md (updated 2026-08-14)
 
 **Core value:** Given an imminent biotech catalyst, produce a data-backed, portfolio-aware, hedged one-week trade recommendation the user can trust enough to approve — and get measurably better at it every week.
-**Current focus:** Phase 1 — Data Integrity & Catalyst Feed
+**Current focus:** Phase 2 — Contracts + Knowledge-Base Skeleton
 
 ## Current Position
 
-Phase: 2
-Plan: Not started
-Status: Phase complete — ready for verification
+Phase: 2 (Contracts + Knowledge-Base Skeleton) — EXECUTING
+Plan: 2 of 4
+Status: Ready to execute
 Last activity: 2026-08-14
 
 Progress: [░░░░░░░░░░] 0%
@@ -58,6 +58,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 01-data-integrity-catalyst-feed P04 | 10min | 3 tasks tasks | 8 files files |
 | Phase 01-data-integrity-catalyst-feed P05 | 15min | 3 tasks | 8 files |
 | Phase 01-data-integrity-catalyst-feed P06 | 15min | 2 tasks tasks | 6 files files |
+| Phase 02 P01 | 2min | 3 tasks tasks | 7 files files |
 
 ## Accumulated Context
 
@@ -80,6 +81,8 @@ Recent decisions affecting current work:
 - [Phase 01-data-integrity-catalyst-feed]: refresh restamps last_verified_at only on re-verified catalysts, so a near-event date that cannot re-verify keeps its stale stamp and is excluded (DATA-03 48h re-verify)
 - [Phase 01-data-integrity-catalyst-feed]: Universe snapshots are append-only per as_of_date cohort (never UPDATE/DELETE); universe_as_of returns latest cohort <= D — survivorship-free (DATA-06)
 - [Phase 01-data-integrity-catalyst-feed]: Seed/PDUFA curation is a carry-forward human task (no LLM-invented dates); code+tests complete, data files ship as labelled templates + data/README.md guide
+- [Phase 02]: KB extension loaded in db.connect() (not migrate) so both prod + the shared db fixture get vec0 before migrate() runs (KB-01)
+- [Phase 02]: kb_vec dimension baked at 384 (MiniLM-aligned); deterministic sha256 hash_embed is the offline default, real model is a later one-line swap behind the injectable callable
 
 ### Pending Todos
 
@@ -93,6 +96,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-08-14T20:16:24.148Z
-Stopped at: Completed 01-06-PLAN.md
+Last session: 2026-08-14T22:06:16.913Z
+Stopped at: Completed 02-01-PLAN.md
 Resume file: None
