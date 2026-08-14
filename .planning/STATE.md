@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Completed 01-01-PLAN.md
-last_updated: "2026-08-14T19:31:48.037Z"
+stopped_at: Completed 01-02-PLAN.md
+last_updated: "2026-08-14T19:36:23.448Z"
 last_activity: 2026-08-14
 progress:
   total_phases: 11
   completed_phases: 0
   total_plans: 6
-  completed_plans: 1
+  completed_plans: 2
   percent: 0
 ---
 
@@ -26,7 +26,7 @@ See: .planning/PROJECT.md (updated 2026-08-14)
 ## Current Position
 
 Phase: 1 (Data Integrity & Catalyst Feed) — EXECUTING
-Plan: 2 of 6
+Plan: 3 of 6
 Status: Ready to execute
 Last activity: 2026-08-14
 
@@ -53,6 +53,7 @@ Progress: [░░░░░░░░░░] 0%
 
 *Updated after each plan completion*
 | Phase 01 P01 | 5 | 3 tasks | 15 files |
+| Phase 01 P02 | 5 | 2 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -66,6 +67,7 @@ Recent decisions affecting current work:
 - Research correction: Kùzu is archived (Apple acq. Oct 2025) — KB is SQLite graph-shaped + sqlite-vec, not Kùzu.
 - Long/long is only a hedge if the peer is an inverse-payoff competitor (rises when target falls); honest hedge + ruin-avoidant sizing are inline in Phase 5, not a later hardening pass.
 - [Phase 01]: No-LLM-date invariant enforced at the pydantic boundary (Catalyst.sources may not be empty); per-source date_type persisted so verify.py re-derives uncertainty (DATA-04)
+- [Phase 01]: Partial dates (YYYY-MM/YYYY) are ALWAYS window; firm is structurally unreachable from a partial date (DATA-04 classifier)
 
 ### Pending Todos
 
@@ -79,6 +81,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-08-14T19:31:48.034Z
-Stopped at: Completed 01-01-PLAN.md
+Last session: 2026-08-14T19:36:18.128Z
+Stopped at: Completed 01-02-PLAN.md
 Resume file: None
