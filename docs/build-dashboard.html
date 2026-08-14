@@ -94,14 +94,15 @@
   <div class="banner">
     <div>
       <div class="big" id="bannerBig">▶ Phase 1 / 11 — Data Integrity &amp; Catalyst Feed</div>
-      <div class="sub" id="bannerSub">Stage: plan-check (6 plans / 4 waves) · quality profile · TDD</div>
+      <div class="sub" id="bannerSub">Stage: plan-check re-verify (blocker fixed: date_type persisted) · quality · TDD</div>
     </div>
   </div>
 
   <div class="tiles">
     <div class="tile"><div class="k">Phases complete</div><div class="v" id="tPhases">0<small>/11</small></div></div>
     <div class="tile"><div class="k">Requirements closed</div><div class="v">0<small>/56</small></div></div>
-    <div class="tile"><div class="k">Commits</div><div class="v" id="tCommits">18</div></div>
+    <div class="tile"><div class="k">Tokens (subagent)</div><div class="v" id="tTokens">—</div></div>
+    <div class="tile"><div class="k">Commits</div><div class="v" id="tCommits">20</div></div>
     <div class="tile ok"><div class="k">Run status</div><div class="v" id="tRun" style="font-size:20px">RUNNING</div></div>
   </div>
 
@@ -113,6 +114,12 @@
   <div class="section">
     <h2>All phases</h2>
     <div id="phases"></div>
+  </div>
+
+  <div class="section">
+    <h2>Token spend (subagent, measured)</h2>
+    <div class="commits" id="tokens"></div>
+    <div class="note" style="margin-top:12px">Counts are each subagent's reported total tokens on completion; excludes the orchestrator loop. After every phase, the biggest line items get an <b>optimization directive</b> fed forward into later phases' agent prompts (see <code>.planning/TOKEN-NOTES.md</code>). Next lever: <b>Graphify</b> code-graph so agents traverse instead of re-reading (~71× fewer tokens) — live from Phase 2.</div>
   </div>
 
   <div class="section">
@@ -129,8 +136,8 @@
 
 <script>
   // ---- build state (updated on each redeploy) ----
-  var LAST_COMMIT_EPOCH = 1786734481;      // a14ea3d create phase plan (6 plans, 4 waves)
-  var GENERATED = "2026-08-14 15:08 EDT";
+  var LAST_COMMIT_EPOCH = 1786735218;      // 9d85ecb revise plans — persist date_type
+  var GENERATED = "2026-08-14 15:20 EDT";
   var CURRENT_PHASE = 1, TOTAL = 11;
 
   var STAGES = [
@@ -138,10 +145,19 @@
     {k:"research",  s:"done"},
     {k:"validation",s:"done"},
     {k:"plan (6 plans)", s:"done"},
-    {k:"plan-check",s:"active"},
+    {k:"plan-check (re-check)",s:"active"},
     {k:"execute",   s:"pending"},
     {k:"verify",    s:"pending"},
     {k:"report",    s:"pending"}
+  ];
+
+  // subagent tokens, measured on completion
+  var TOKENS = [
+    {label:"Project research + roadmap (6 agents)", n:419577},
+    {label:"P1 · researcher", n:108962},
+    {label:"P1 · planner", n:139062},
+    {label:"P1 · plan-checker", n:122844},
+    {label:"P1 · revision planner", n:112211}
   ];
 
   var PHASES = [
@@ -159,6 +175,7 @@
   ];
 
   var COMMITS = [
+    {h:"9d85ecb", m:"docs(01): revise plans — persist date_type (plan-check fix)"},
     {h:"a14ea3d", m:"docs(01): create phase plan — 6 plans, 4 waves"},
     {h:"e475cb8", m:"docs(01): add validation strategy"},
     {h:"4d15dec", m:"docs(01): research data integrity & catalyst feed"},
@@ -193,6 +210,24 @@
     var d=document.createElement("div"); d.className="commit";
     d.innerHTML='<span class="h">'+c.h+'</span><span class="m">'+esc(c.m)+'</span>'; cc.appendChild(d);
   });
+
+  // tokens
+  var tks=document.getElementById("tokens"), tot=0, max=0;
+  TOKENS.forEach(function(t){tot+=t.n; if(t.n>max)max=t.n;});
+  TOKENS.forEach(function(t){
+    var pct=Math.round(t.n/max*100);
+    var d=document.createElement("div"); d.className="commit";
+    d.style.cssText="display:grid;grid-template-columns:230px 1fr 78px;align-items:center;gap:12px";
+    d.innerHTML='<span class="m">'+esc(t.label)+'</span>'+
+      '<span style="height:8px;border-radius:4px;background:var(--accent);opacity:.8;width:'+pct+'%"></span>'+
+      '<span class="h" style="text-align:right">'+t.n.toLocaleString()+'</span>';
+    tks.appendChild(d);
+  });
+  var totRow=document.createElement("div"); totRow.className="commit";
+  totRow.style.cssText="grid-template-columns:230px 1fr 78px;display:grid;gap:12px;font-weight:700";
+  totRow.innerHTML='<span class="m">TOTAL (measured so far)</span><span></span><span class="h" style="text-align:right">'+tot.toLocaleString()+'</span>';
+  tks.appendChild(totRow);
+  document.getElementById("tTokens").innerHTML = (tot/1e6).toFixed(2)+"<small>M</small>";
 
   // ---- live clocks ----
   function fmtAge(sec){

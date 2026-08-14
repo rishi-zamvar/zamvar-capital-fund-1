@@ -121,6 +121,10 @@ An event-driven trading system for a curated universe of ~20 life-science / biot
 ## Conventions
 
 **Phase-completion report (MANDATORY, every phase):** At the end of each phase — after verification passes/defers, before advancing to the next phase — generate a published HTML artifact and give the user its URL. Save the file to `docs/phase-reports/phase-{NN}-report.html`, reuse the terminal/brass design language of `docs/architecture-workflows.html` (favicon 🧬, both themes), and cover these sections: **What's done** (delivered this phase, with the requirement IDs closed), **Needs your review / input** (decisions or manual validation awaiting the user — esp. anything money-touching), **What's going well**, **Next steps** (the upcoming phase + what it depends on), and **Project state** (phases complete / total, overall progress, open blockers). Title each `Fund 1 — Phase {N} Report`.
+
+**Token optimization (MANDATORY, every phase):** Maintain `.planning/TOKEN-NOTES.md` — the running subagent-token tally + optimization directives. After each phase closes, add a retrospective identifying the biggest line items and concrete levers, and **carry the "Directives" section forward** by referencing it (or pasting the current directives) into every research/planner/executor agent prompt in later phases. The per-phase report and the build dashboard both surface cumulative token spend.
+
+**Code graph over re-reading (Graphify, from Phase 2):** A local Graphify code knowledge graph (`graphify` CLI + `graphify-mcp` MCP tools + `/graphify` command) indexes the codebase. Agents MUST query the graph (traverse calls/imports/defs, `graphify explore`) to locate code instead of grepping or reading whole files; read only the specific files the graph points to. Re-index after every code-producing phase.
 <!-- GSD:conventions-end -->
 
 <!-- GSD:architecture-start source:ARCHITECTURE.md -->
