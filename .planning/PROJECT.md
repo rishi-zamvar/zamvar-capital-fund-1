@@ -18,6 +18,13 @@ Given an imminent biotech catalyst, produce a data-backed, portfolio-aware, hedg
 
 <!-- Hypotheses until shipped and validated. Grouped by area; formalized in REQUIREMENTS.md. -->
 
+**Hedging — inverse-payoff peer (the most important part of the bet)**
+- [ ] The hedge is a peer that RISES when the target FALLS — typically a direct competitor for the same indication/market (target's failure = competitor's gain). NOT a merely-correlated peer.
+- [ ] Hedge-relationship database in the KB: for each universe name, candidate inverse-hedge peers + mechanism (`Company —COMPETES_ON{indication}→ Company`, payoff-direction sign) + citation
+- [ ] Risk-management agent RE-ANALYZES the hedge relationship before every trade, during trade building: re-confirm the peer pays off inversely on THIS specific catalyst (historical analog gaps + current competitive landscape), compute the conditional payoff matrix (target ↑/↓ × peer ↑/↓)
+- [ ] No-valid-inverse-peer fallback: when no peer reliably rises on the target's decline (e.g. positive-read-through catalysts that lift the whole class), the agent flags it and falls back to size-tiny or exit-before-event — never a fake hedge
+- [ ] Upside cost of hedging is accepted as a given (not optimized against) — the objective is reliably capturing ~1%/week of portfolio net of the hedge; size to combined worst-case
+
 **Quant tool/skill library (deterministic analysis — agents never do the math)**
 - [ ] Any analysis the desk does repeatedly is a deterministic tool/skill the agents call with parameters, then interpret the output — no LLM arithmetic on money-critical numbers
 - [ ] Tool set spans: rNPV / pipeline valuation, cash-runway, Kelly / risk-of-ruin position sizing, pair correlation + beta, options-implied move, IV-crush estimate, Sharpe / returns / performance attribution, stop-loss & take-profit levels, portfolio concentration + exposure, phase-transition / catalyst base-rate lookups
@@ -33,17 +40,17 @@ Given an imminent biotech catalyst, produce a data-backed, portfolio-aware, hedg
 - [ ] Rolling catalyst calendar (auto: PDUFA / trial readouts / conferences / earnings) + manual ad-hoc catalyst injection
 - [ ] Flags catalysts 1–2 days out for the covered universe
 
-**Pipeline 1 — Trade Identifier (layered analyst desk, runs per catalyst)**
-- [ ] Analyst layer: Clinical/Scientific, Regulatory, Financial, Market/Sentiment analysts produce structured signal
-- [ ] Research/debate layer: Bull vs. Bear researchers debate (adapted from a forked TradingAgents-style GitHub framework)
-- [ ] Trade Builder: constructs the concrete long/long pair, entry/exit, stop-loss/take-profit, ~1% sizing
-- [ ] Risk Management layer: stresses downside, hedge-correlation validity, liquidity, event-vol
-- [ ] Portfolio Manager (MD, final): evaluates the single trade against the whole current portfolio → promote or kill
-- [ ] Emits a strategy dossier for review
+**Pipeline 1 — Catalyst Call (binary yes/no + confidence, runs once per catalyst)**
+- [ ] Analyst layer (flat fan-out): Clinical/Scientific, Regulatory, Financial, Market/Sentiment analysts produce structured, source-cited signal
+- [ ] Bull vs. Bear debate (borrowed TradingAgents pattern: bounded rounds + manager synthesis; real context isolation so it's not fake consensus)
+- [ ] Output: a BINARY directional verdict (positive vs. negative catalyst) + calibrated confidence + explicit falsification/kill criteria. Pure prediction — no positioning, no sizing here.
 
-**Pipeline 2 — Trade Diligence (runs on approved trades)**
-- [ ] Independent multi-dimensional DD: trial statistics/endpoints, regulatory precedent, financials/runway, ownership/short interest, options-implied move, pair-correlation validation, liquidity, historical analog from graph KB
-- [ ] Produces a data-backed go/no-go before the trade goes live
+**Pipeline 2 — Portfolio Construction (positioning → the week's portfolio, runs on the set of calls)**
+- [ ] Takes all of the week's catalyst calls and builds ONE recommended portfolio for the week
+- [ ] Trade Builder: per tradeable call, select the inverse-hedge peer (from the hedge DB), set entry, the hold-through-vs-exit-before-event decision, SL/TP
+- [ ] Risk Management (3-way debate: aggressive/conservative/neutral): re-analyze the inverse-hedge relationship per trade + conditional payoff matrix, size for survival / risk-of-ruin (1% is a measured outcome, never a sizing input), liquidity + event-vol
+- [ ] Independent diligence firewall: validates from RAW sources (not Pipeline-1's thesis) — trial stats/endpoints, regulatory precedent, financials/runway, ownership/short interest, options-implied move, historical analog from KB — anti-confirmation-bias
+- [ ] MD / PM (the GP): portfolio-level fit (concentration, correlation to open book, weekly budget) → promote/kill → emits the week's strategy dossier for LP approval
 
 **Backtest / baseline harness (runs before the paper month)**
 - [ ] Historical event set from ~1yr of earnings calendars across the universe (dense, precisely-dated → statistically meaningful N), plus dateable biotech catalysts
@@ -66,7 +73,7 @@ Given an imminent biotech catalyst, produce a data-backed, portfolio-aware, hedg
 
 ### Out of Scope
 
-- Shorting / inverse ETFs — Robinhood constraint; hedging is done via long/long correlated pairs
+- Shorting / options / inverse ETFs — Robinhood agentic MCP is equities-only; hedging is done with a long inverse-payoff peer (a competitor that rises when the target falls)
 - Real-money trading before the 1-month paper shakedown proves out — validate first
 - Non-biotech / non-life-science tickers — universe is deliberately narrow for edge
 - Intraday / HFT — the strategy horizon is one week
@@ -96,7 +103,7 @@ Given an imminent biotech catalyst, produce a data-backed, portfolio-aware, hedg
 
 | Decision | Rationale | Outcome |
 |----------|-----------|---------|
-| Long/long correlated pairs for hedging | Robinhood can't short; a correlated peer long approximates a hedge | — Pending |
+| Hedge = inverse-payoff peer (rises when target falls), not a correlated peer | Only a competitor whose stock gains on the target's failure actually hedges an idiosyncratic binary; maintained as a DB, re-validated per trade by the Risk agent; fallback to tiny-size/exit when none exists | — Pending |
 | Two separate pipelines (Identifier → Diligence) | Independent DD on approved trades reduces confirmation bias from the identifier | — Pending |
 | Graph KB for playbooks + memory | Analog querying ("similar past scenarios") is naturally a graph problem | — Pending |
 | Fork an existing debate framework vs. build from scratch | Reuse proven bull/bear debate structure; adapt for memory + biotech | — Pending |
