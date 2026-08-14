@@ -56,10 +56,13 @@ Given an imminent biotech catalyst, produce a data-backed, portfolio-aware, hedg
 - [ ] Month 1: internal simulated paper-trading ledger against live quotes, tracking P&L — the true out-of-sample test (Layer C)
 - [ ] After shakedown: auto-execute equities buy/sell via Robinhood MCP, only after user approval
 
-**iOS dashboard**
-- [ ] Curated (not overwhelming) KPI set researched from a trader's POV: this-week expected return, live P&L, Sharpe of current strategy, total return, top failure factors + mitigations, stop-loss/take-profit, per-position status — the 1-week picture AND the in-the-moment picture
-- [ ] Review the diligence dossier and approve/reject a trade
-- [ ] Chat interface to the running Claude Code agents
+**iOS dashboard (LP↔GP model — user is the LP; the MD is a Fable agent acting as GP/head of the firm)**
+- [ ] **This Week** page — current week's strategy: expected return vs the 1% benchmark, one-line thesis + kill criteria per position, top failure factors + mitigations, SL/TP, Sharpe/expectancy, catalyst countdown; plus the in-the-moment view (live P&L, per-position status for both legs, distance to SL/TP). Curated, not overwhelming.
+- [ ] **Historical Performance** page — realized track record: equity curve, per-trade outcomes, win rate, attribution, prediction-vs-realized calibration
+- [ ] **Playbook** page — current state of the scenario playbook / knowledge base (what the firm has learned, active playbooks and their confidence)
+- [ ] **Chat with the MD** — talk to the Fable "GP" agent that manages all trades: ask why a trade was taken, current positioning, risk, rationale — LP-to-GP interrogation
+- [ ] Review the diligence dossier and approve/reject a trade (the human gate)
+- [ ] The MD/GP persona is the SAME role as Pipeline-1's final portfolio-manager sign-off — one head-of-firm identity that both gates trades and answers to the LP
 
 ### Out of Scope
 
@@ -87,6 +90,7 @@ Given an imminent biotech catalyst, produce a data-backed, portfolio-aware, hedg
 - **Paper-first**: 1 month simulated before any real capital.
 - **Domain risk**: money-touching + biotech binary events — full rigor (research + plan-check + verifier) is on.
 - **Simplicity + readability**: production-ready, but the simplest codebase that works — the user must be able to read and understand it end-to-end. Efficient, minimal dependencies, boring over clever. This never comes at the cost of insight quality: simplify the code, not the analysis.
+- **Test coverage**: every new module ships with a full test suite (TDD — tests before logic), exhaustive edge cases, especially on money-critical deterministic tools. No new code without tests.
 
 ## Key Decisions
 
