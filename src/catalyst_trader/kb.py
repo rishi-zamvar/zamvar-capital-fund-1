@@ -135,6 +135,55 @@ def get_node(conn, node_id: int) -> dict | None:
     return d
 
 
+def _structural_filter(conn, filters: dict) -> set[int]:
+    """Candidate catalyst node ids whose attrs match every key in `filters` (deterministic SQL).
+
+    A scenario failing the structural filter never reaches the semantic rank, even if
+    embedding-close. Empty filters -> every catalyst is a candidate.
+    """
+    sql = "SELECT id FROM kb_node WHERE kind='catalyst'"
+    params: list = []
+    for key, val in filters.items():
+        sql += f" AND json_extract(attrs_json,'$.{key}')=?"
+        params.append(val)
+    return {r["id"] for r in conn.execute(sql, params).fetchall()}
+
+
+def _with_outcome(conn, node_id: int, distance: float) -> dict:
+    """Attach the catalyst's realized Outcome (via RESULTED_IN edge) so callers cite base rates."""
+    cat = get_node(conn, node_id)
+    row = conn.execute(
+        "SELECT dst_id FROM kb_edge WHERE src_id=? AND rel='RESULTED_IN' ORDER BY id LIMIT 1",
+        (node_id,),
+    ).fetchone()
+    outcome = get_node(conn, row["dst_id"]) if row is not None else None
+    return {
+        "node_id": node_id,
+        "distance": distance,
+        "catalyst": cat["attrs"] if cat else None,
+        "outcome": outcome["attrs"] if outcome else None,
+    }
+
+
+def analog_query(conn, embed, context: str, filters: dict, k: int = 5) -> list[dict]:
+    """Nearest past scenarios matching `filters`, ranked by semantic similarity to `context`,
+    each with its realized Outcome. Structural SQL filter first, then KNN rank (KB-03).
+
+    # ponytail: SQL-filter + python-set intersect avoids sqlite-vec's alpha metadata-filter API;
+    #           brute-force KNN over hundreds of vecs is sub-ms. Over-fetch k*4 then intersect.
+    """
+    cand = _structural_filter(conn, filters)
+    if not cand:
+        return []
+    q = serialize_float32(embed(context))
+    rows = conn.execute(
+        "SELECT node_id, distance FROM kb_vec WHERE embedding MATCH ? ORDER BY distance LIMIT ?",
+        (q, k * 4),
+    ).fetchall()
+    ranked = [r for r in rows if r["node_id"] in cand][:k]
+    return [_with_outcome(conn, r["node_id"], r["distance"]) for r in ranked]
+
+
 def hash_embed(text: str, dim: int = EMBED_DIM) -> list[float]:
     """Deterministic, offline, L2-normalized embedding of `text` (default 384-dim).
 
