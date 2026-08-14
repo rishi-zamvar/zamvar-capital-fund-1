@@ -45,8 +45,15 @@ Given an imminent biotech catalyst, produce a data-backed, portfolio-aware, hedg
 - [ ] Independent multi-dimensional DD: trial statistics/endpoints, regulatory precedent, financials/runway, ownership/short interest, options-implied move, pair-correlation validation, liquidity, historical analog from graph KB
 - [ ] Produces a data-backed go/no-go before the trade goes live
 
+**Backtest / baseline harness (runs before the paper month)**
+- [ ] Historical event set from ~1yr of earnings calendars across the universe (dense, precisely-dated → statistically meaningful N), plus dateable biotech catalysts
+- [ ] Layer A — Mechanical strategy backtest (no LLM): apply deterministic pair-selection + ~1% sizing + entry 1–2d pre-event + SL/TP + 1-week exit against historical prices → baseline distribution (win rate, avg win/loss, Sharpe, max DD) and hedge-effectiveness (how often the peer leg offsets the target leg)
+- [ ] Layer B — Guarded agentic replay: run the real agent pipeline on historical catalysts with look-ahead guardrails (web blocked/archived-only, point-in-time fundamentals, outcome-blind prompts); score predicted direction+confidence vs realized; results labeled biased-optimistic (LLM memorization leaks)
+- [ ] Fill model: fill at historical price around the event with a tunable slippage haircut; skip an event only if halted/delisted/zero-volume/zero-quote (volume caps ignored by design)
+- [ ] Baseline unlocks config tuning (sizing, SL/TP, entry timing) and a go/no-go gate before paper trading
+
 **Execution**
-- [ ] Month 1: internal simulated paper-trading ledger against live quotes, tracking P&L
+- [ ] Month 1: internal simulated paper-trading ledger against live quotes, tracking P&L — the true out-of-sample test (Layer C)
 - [ ] After shakedown: auto-execute equities buy/sell via Robinhood MCP, only after user approval
 
 **iOS dashboard**
@@ -60,6 +67,7 @@ Given an imminent biotech catalyst, produce a data-backed, portfolio-aware, hedg
 - Real-money trading before the 1-month paper shakedown proves out — validate first
 - Non-biotech / non-life-science tickers — universe is deliberately narrow for edge
 - Intraday / HFT — the strategy horizon is one week
+- Volume / market-impact modeling in the backtest — trading size is small; only zero-volume/zero-liquidity events are excluded (a tunable slippage haircut is kept)
 - Fully autonomous trading with no human gate — every live trade requires user approval
 
 ## Context
@@ -90,6 +98,8 @@ Given an imminent biotech catalyst, produce a data-backed, portfolio-aware, hedg
 | Internal sim ledger for paper trading | No external paper broker dependency; simplest path to a 1-month shakedown | — Pending |
 | Claude Code subagents as the agent runtime | Matches user's existing fleet expertise + native MCP access | — Pending |
 | Deterministic analysis as callable tools, not LLM math | Real money — no hallucinated arithmetic; reproducible, testable, auditable financial models | — Pending |
+| Backtest = mechanical (trustworthy) + guarded agentic (optimistic) + paper (true OOS) | LLM memorization + web results leak past outcomes; only mechanical stats and the forward paper month are look-ahead-free | — Pending |
+| Earnings calendar as primary backtest event set | Dense + precisely dated → large N for a meaningful baseline; drug catalysts layered in where dateable | — Pending |
 | iOS-first dashboard | Approve-on-the-go; reuse ZeeChat's Tailscale-to-Claude-Code pattern | — Pending |
 
 ## Evolution
