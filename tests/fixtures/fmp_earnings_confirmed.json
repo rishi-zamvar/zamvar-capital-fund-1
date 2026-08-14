@@ -1,0 +1,22 @@
+[
+  {
+    "symbol": "VRTX",
+    "exchange": "NASDAQ",
+    "time": "16:05",
+    "when": "post market",
+    "date": "2026-08-04",
+    "publicationDate": "2026-07-21",
+    "title": "Vertex Pharmaceuticals Second Quarter 2026 Financial Results",
+    "url": "https://investors.vrtx.com/news-releases"
+  },
+  {
+    "symbol": "REGN",
+    "exchange": "NASDAQ",
+    "time": "08:00",
+    "when": "pre market",
+    "date": "2026-08-06",
+    "publicationDate": "2026-07-23",
+    "title": "Regeneron to Report Second Quarter 2026 Financial Results",
+    "url": "https://investor.regeneron.com/news-releases"
+  }
+]

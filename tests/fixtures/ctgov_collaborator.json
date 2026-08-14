@@ -1,0 +1,87 @@
+{
+  "protocolSection": {
+    "identificationModule": {
+      "nctId": "NCT07700225",
+      "orgStudyIdInfo": {
+        "id": "HM300000528 END-EXT"
+      },
+      "organization": {
+        "fullName": "Virginia Commonwealth University",
+        "class": "OTHER"
+      },
+      "briefTitle": "Establishing Biomarkers and Clinical Endpoints in Myotonic Dystrophy Type 1 (END-DM1) Extension",
+      "officialTitle": "Establishing Biomarkers and Clinical Endpoints in Myotonic Dystrophy Type 1 (END-DM1) Extension",
+      "acronym": "END-EXT"
+    },
+    "statusModule": {
+      "statusVerifiedDate": "2026-08",
+      "overallStatus": "RECRUITING",
+      "expandedAccessInfo": {
+        "hasExpandedAccess": false
+      },
+      "startDateStruct": {
+        "date": "2026-08",
+        "type": "ESTIMATED"
+      },
+      "primaryCompletionDateStruct": {
+        "date": "2032-12",
+        "type": "ESTIMATED"
+      },
+      "completionDateStruct": {
+        "date": "2032-12",
+        "type": "ESTIMATED"
+      },
+      "studyFirstSubmitDate": "2026-07-08",
+      "studyFirstSubmitQcDate": "2026-07-08",
+      "studyFirstPostDateStruct": {
+        "date": "2026-07-13",
+        "type": "ACTUAL"
+      },
+      "lastUpdateSubmitDate": "2026-08-05",
+      "lastUpdatePostDateStruct": {
+        "date": "2026-08-06",
+        "type": "ACTUAL"
+      }
+    },
+    "sponsorCollaboratorsModule": {
+      "responsibleParty": {
+        "type": "SPONSOR"
+      },
+      "leadSponsor": {
+        "name": "Virginia Commonwealth University",
+        "class": "OTHER"
+      },
+      "collaborators": [
+        {
+          "name": "Dyne Therapeutics",
+          "class": "INDUSTRY"
+        },
+        {
+          "name": "Myotonic Dystrophy Clinical Research Network (DMCRN)",
+          "class": "UNKNOWN"
+        },
+        {
+          "name": "Vertex Pharmaceuticals Incorporated",
+          "class": "INDUSTRY"
+        }
+      ]
+    },
+    "designModule": {
+      "studyType": "OBSERVATIONAL",
+      "patientRegistry": true,
+      "targetDuration": "4 Years",
+      "designInfo": {
+        "observationalModel": "COHORT",
+        "timePerspective": "PROSPECTIVE"
+      },
+      "bioSpec": {
+        "retention": "SAMPLES_WITH_DNA",
+        "description": "Blood samples will be collected to extract genomic DNA from peripheral blood leukocytes. DNA, RNA, and proteins are derived from collected blood and other tissue samples."
+      },
+      "enrollmentInfo": {
+        "count": 1000,
+        "type": "ESTIMATED"
+      }
+    }
+  }
+}

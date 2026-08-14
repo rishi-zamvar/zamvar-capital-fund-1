@@ -1,0 +1,83 @@
+{
+  "protocolSection": {
+    "identificationModule": {
+      "nctId": "NCT00923728",
+      "nctIdAliases": [
+        "NCT00890773"
+      ],
+      "orgStudyIdInfo": {
+        "id": "090119"
+      },
+      "secondaryIdInfos": [
+        {
+          "id": "09-C-0119"
+        }
+      ],
+      "organization": {
+        "fullName": "Vertex Pharmaceuticals Incorporated",
+        "class": "INDUSTRY"
+      },
+      "briefTitle": "A Phase I Trial of AVN944, an IMPDH Inhibitor, in Adults With Advanced Stage Solid Tumors",
+      "officialTitle": "A Phase 1 Trial of AVN944, an IMPDH Inhibitor, in Adults With Advanced Stage Solid Tumors"
+    },
+    "statusModule": {
+      "statusVerifiedDate": "2011-08",
+      "overallStatus": "WITHDRAWN",
+      "expandedAccessInfo": {
+        "hasExpandedAccess": false
+      },
+      "startDateStruct": {
+        "date": "2009-04"
+      },
+      "primaryCompletionDateStruct": {
+        "date": "2010-03",
+        "type": "ESTIMATED"
+      },
+      "completionDateStruct": {
+        "date": "2010-03",
+        "type": "ESTIMATED"
+      },
+      "studyFirstSubmitDate": "2009-06-17",
+      "studyFirstSubmitQcDate": "2009-06-17",
+      "studyFirstPostDateStruct": {
+        "date": "2009-06-18",
+        "type": "ESTIMATED"
+      },
+      "lastUpdateSubmitDate": "2014-01-08",
+      "lastUpdatePostDateStruct": {
+        "date": "2014-01-10",
+        "type": "ESTIMATED"
+      }
+    },
+    "sponsorCollaboratorsModule": {
+      "leadSponsor": {
+        "name": "Vertex Pharmaceuticals Incorporated",
+        "class": "INDUSTRY"
+      },
+      "collaborators": [
+        {
+          "name": "National Cancer Institute (NCI)",
+          "class": "NIH"
+        }
+      ]
+    },
+    "designModule": {
+      "studyType": "INTERVENTIONAL",
+      "phases": [
+        "NA"
+      ],
+      "designInfo": {
+        "allocation": "NON_RANDOMIZED",
+        "interventionModel": "SINGLE_GROUP",
+        "primaryPurpose": "TREATMENT",
+        "maskingInfo": {
+          "masking": "NONE"
+        }
+      },
+      "enrollmentInfo": {
+        "count": 0,
+        "type": "ACTUAL"
+      }
+    }
+  }
+}

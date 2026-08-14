@@ -1,0 +1,34 @@
+[
+  {
+    "date": "2026-08-04",
+    "symbol": "VRTX",
+    "epsEstimated": 4.65,
+    "eps": null,
+    "revenueEstimated": 2870000000,
+    "revenue": null
+  },
+  {
+    "date": "2026-08-06",
+    "symbol": "REGN",
+    "epsEstimated": 11.02,
+    "eps": null,
+    "revenueEstimated": 3640000000,
+    "revenue": null
+  },
+  {
+    "date": "2026-08-11",
+    "symbol": "SRPT",
+    "epsEstimated": -0.42,
+    "eps": null,
+    "revenueEstimated": 520000000,
+    "revenue": null
+  },
+  {
+    "date": "2026-07-30",
+    "symbol": "BMRN",
+    "epsEstimated": 0.98,
+    "eps": 1.05,
+    "revenueEstimated": 745000000,
+    "revenue": 761000000
+  }
+]

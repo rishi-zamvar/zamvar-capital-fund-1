@@ -1,0 +1,79 @@
+{
+  "protocolSection": {
+    "identificationModule": {
+      "nctId": "NCT06226454",
+      "orgStudyIdInfo": {
+        "id": "VX23-993-003"
+      },
+      "organization": {
+        "fullName": "Vertex Pharmaceuticals Incorporated",
+        "class": "INDUSTRY"
+      },
+      "briefTitle": "A Phase 1 Study Evaluating the Safety, Pharmacokinetics, and Pharmacodynamics, of VX-993",
+      "officialTitle": "A Phase 1, Randomized, Double-blind, Placebo-controlled Single- and Multiple-dose Escalation Study Evaluating the Safety, Pharmacokinetics, and Pharmacodynamics of Oral VX-993 in Healthy Adult Subjects"
+    },
+    "statusModule": {
+      "statusVerifiedDate": "2024-07",
+      "overallStatus": "COMPLETED",
+      "expandedAccessInfo": {
+        "hasExpandedAccess": false
+      },
+      "startDateStruct": {
+        "date": "2024-01-04",
+        "type": "ACTUAL"
+      },
+      "primaryCompletionDateStruct": {
+        "date": "2024-06-12",
+        "type": "ACTUAL"
+      },
+      "completionDateStruct": {
+        "date": "2024-06-12",
+        "type": "ACTUAL"
+      },
+      "studyFirstSubmitDate": "2023-12-20",
+      "studyFirstSubmitQcDate": "2024-01-17",
+      "studyFirstPostDateStruct": {
+        "date": "2024-01-26",
+        "type": "ACTUAL"
+      },
+      "lastUpdateSubmitDate": "2024-07-11",
+      "lastUpdatePostDateStruct": {
+        "date": "2024-07-12",
+        "type": "ACTUAL"
+      }
+    },
+    "sponsorCollaboratorsModule": {
+      "responsibleParty": {
+        "type": "SPONSOR"
+      },
+      "leadSponsor": {
+        "name": "Vertex Pharmaceuticals Incorporated",
+        "class": "INDUSTRY"
+      }
+    },
+    "designModule": {
+      "studyType": "INTERVENTIONAL",
+      "phases": [
+        "PHASE1"
+      ],
+      "designInfo": {
+        "allocation": "RANDOMIZED",
+        "interventionModel": "SEQUENTIAL",
+        "primaryPurpose": "TREATMENT",
+        "maskingInfo": {
+          "masking": "QUADRUPLE",
+          "whoMasked": [
+            "PARTICIPANT",
+            "CARE_PROVIDER",
+            "INVESTIGATOR",
+            "OUTCOMES_ASSESSOR"
+          ]
+        }
+      },
+      "enrollmentInfo": {
+        "count": 39,
+        "type": "ACTUAL"
+      }
+    }
+  }
+}
