@@ -1,0 +1,215 @@
+<title>Fund 1 Build Monitor</title>
+<style>
+  :root{
+    --bg:#ecefe9;--surface:#fff;--surface-2:#f5f7f2;--ink:#191c18;--muted:#5f655c;--faint:#99a094;
+    --border:#d6dbcf;--border-strong:#c2c8b8;--accent:#8a6a12;--accent-bg:#f3ecd8;
+    --done:#1f7a4d;--done-bg:#e4f2e9;--active:#8a6a12;--active-bg:#f3ecd8;--pending:#99a094;--pending-bg:#f0f1ee;
+    --warn:#b23b30;--warn-bg:#f6e5e3;
+    --font-mono:ui-monospace,"SF Mono","JetBrains Mono",Menlo,Consolas,monospace;
+    --font-sans:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+    --shadow:0 1px 2px rgba(20,25,18,.06),0 4px 14px rgba(20,25,18,.05);
+  }
+  @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+    --bg:#101310;--surface:#191d18;--surface-2:#20241e;--ink:#e8ece4;--muted:#9aa192;--faint:#6b7365;
+    --border:#2c322a;--border-strong:#3a4136;--accent:#d8b45a;--accent-bg:#2a2412;
+    --done:#4cc585;--done-bg:#14271c;--active:#d8b45a;--active-bg:#2a2412;--pending:#6b7365;--pending-bg:#1c201a;
+    --warn:#ef7365;--warn-bg:#2c1714;--shadow:0 1px 2px rgba(0,0,0,.4),0 6px 18px rgba(0,0,0,.35);
+  }}
+  :root[data-theme="dark"]{
+    --bg:#101310;--surface:#191d18;--surface-2:#20241e;--ink:#e8ece4;--muted:#9aa192;--faint:#6b7365;
+    --border:#2c322a;--border-strong:#3a4136;--accent:#d8b45a;--accent-bg:#2a2412;
+    --done:#4cc585;--done-bg:#14271c;--active:#d8b45a;--active-bg:#2a2412;--pending:#6b7365;--pending-bg:#1c201a;
+    --warn:#ef7365;--warn-bg:#2c1714;--shadow:0 1px 2px rgba(0,0,0,.4),0 6px 18px rgba(0,0,0,.35);
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font-sans);line-height:1.5;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:1000px;margin:0 auto;padding:32px 20px 72px}
+  .eyebrow{font-family:var(--font-mono);font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--accent);font-weight:600}
+  h1{font-family:var(--font-mono);font-weight:700;font-size:clamp(24px,4.5vw,36px);margin:8px 0 2px;letter-spacing:-.01em}
+  .top{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap;border-bottom:2px solid var(--ink);padding-bottom:16px;margin-bottom:22px}
+  .clock{font-family:var(--font-mono);font-size:13px;color:var(--muted);text-align:right;white-space:nowrap}
+  .clock b{color:var(--ink)}
+  .livedot{display:inline-block;width:9px;height:9px;border-radius:50%;background:var(--done);margin-right:6px;vertical-align:middle;animation:pulse 1.6s ease-in-out infinite}
+  .livedot.warn{background:var(--warn);animation:none}
+  @keyframes pulse{0%,100%{opacity:1;box-shadow:0 0 0 0 color-mix(in srgb,var(--done) 55%,transparent)}50%{opacity:.55;box-shadow:0 0 0 6px transparent}}
+  @media (prefers-reduced-motion:reduce){.livedot{animation:none}}
+
+  .banner{display:flex;align-items:center;gap:12px;background:var(--active-bg);border:1px solid var(--accent);border-radius:12px;padding:14px 18px;margin-bottom:22px;font-family:var(--font-mono)}
+  .banner .big{font-size:18px;font-weight:700;color:var(--accent)}
+  .banner .sub{font-size:12.5px;color:var(--muted)}
+
+  .tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:26px}
+  .tile{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:14px 16px;box-shadow:var(--shadow)}
+  .tile .k{font-family:var(--font-mono);font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--faint)}
+  .tile .v{font-family:var(--font-mono);font-size:26px;font-weight:700;margin-top:4px;font-variant-numeric:tabular-nums}
+  .tile .v small{font-size:15px;color:var(--muted);font-weight:500}
+  .tile.warn .v{color:var(--warn)} .tile.ok .v{color:var(--done)}
+
+  h2{font-family:var(--font-mono);font-size:14px;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);margin:0 0 12px}
+  .section{margin-bottom:30px}
+
+  /* current-phase stepper */
+  .stepper{display:flex;flex-wrap:wrap;gap:8px;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:14px 16px;box-shadow:var(--shadow)}
+  .step{font-family:var(--font-mono);font-size:12px;padding:5px 10px;border-radius:6px;border:1px solid var(--border-strong);color:var(--muted);display:flex;align-items:center;gap:6px}
+  .step.done{color:var(--done);border-color:var(--done);background:var(--done-bg)}
+  .step.active{color:var(--accent);border-color:var(--accent);background:var(--active-bg);font-weight:700}
+  .step.active::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--accent);animation:pulse 1.6s ease-in-out infinite}
+  .step.done::before{content:"✓"}
+  .step.pending::before{content:"·";color:var(--faint)}
+
+  /* phase list */
+  .phase{display:grid;grid-template-columns:26px 1fr auto;align-items:center;gap:12px;background:var(--surface);border:1px solid var(--border);border-left:4px solid var(--pending);border-radius:9px;padding:11px 15px;margin-bottom:8px;box-shadow:var(--shadow)}
+  .phase.done{border-left-color:var(--done)} .phase.active{border-left-color:var(--accent)}
+  .phase .num{font-family:var(--font-mono);font-size:13px;font-weight:700;color:var(--faint)}
+  .phase.active .num{color:var(--accent)} .phase.done .num{color:var(--done)}
+  .phase .nm{font-size:14px} .phase .nm small{display:block;color:var(--faint);font-family:var(--font-mono);font-size:11px;margin-top:1px}
+  .pill{font-family:var(--font-mono);font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;padding:3px 9px;border-radius:20px;border:1px solid;white-space:nowrap}
+  .pill.done{color:var(--done);border-color:var(--done);background:var(--done-bg)}
+  .pill.active{color:var(--accent);border-color:var(--accent);background:var(--active-bg)}
+  .pill.pending{color:var(--pending);border-color:var(--border-strong)}
+
+  .commits{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:6px 0;box-shadow:var(--shadow)}
+  .commit{display:flex;gap:12px;padding:8px 16px;border-bottom:1px solid var(--border);font-family:var(--font-mono);font-size:12.5px}
+  .commit:last-child{border-bottom:none}
+  .commit .h{color:var(--accent)} .commit .m{color:var(--ink)}
+
+  .note{font-size:12.5px;color:var(--muted);border-left:3px solid var(--accent);padding:6px 0 6px 14px;margin-top:22px}
+  .note b{color:var(--ink)} code{font-family:var(--font-mono);background:var(--surface-2);border:1px solid var(--border);border-radius:4px;padding:1px 6px;font-size:12px}
+  footer{margin-top:26px;font-family:var(--font-mono);font-size:11px;color:var(--faint)}
+</style>
+
+<div class="wrap">
+  <div class="top">
+    <div>
+      <div class="eyebrow">zamvar capital · autonomous build monitor</div>
+      <h1>Fund 1 — Build Monitor</h1>
+    </div>
+    <div class="clock">
+      <div><span class="livedot" id="dot"></span><span id="livestate">active</span></div>
+      <div style="margin-top:6px">now <b id="now">—</b></div>
+      <div>last commit <b id="age">—</b></div>
+    </div>
+  </div>
+
+  <div class="banner">
+    <div>
+      <div class="big" id="bannerBig">▶ Phase 1 / 11 — Data Integrity &amp; Catalyst Feed</div>
+      <div class="sub" id="bannerSub">Stage: plan-check pending · quality profile (Opus) · TDD</div>
+    </div>
+  </div>
+
+  <div class="tiles">
+    <div class="tile"><div class="k">Phases complete</div><div class="v" id="tPhases">0<small>/11</small></div></div>
+    <div class="tile"><div class="k">Requirements closed</div><div class="v">0<small>/56</small></div></div>
+    <div class="tile"><div class="k">Commits</div><div class="v" id="tCommits">15</div></div>
+    <div class="tile ok"><div class="k">Run status</div><div class="v" id="tRun" style="font-size:20px">RUNNING</div></div>
+  </div>
+
+  <div class="section">
+    <h2>Current phase pipeline</h2>
+    <div class="stepper" id="stepper"></div>
+  </div>
+
+  <div class="section">
+    <h2>All phases</h2>
+    <div id="phases"></div>
+  </div>
+
+  <div class="section">
+    <h2>Recent commits</h2>
+    <div class="commits" id="commits"></div>
+  </div>
+
+  <div class="note">
+    <b>Is it stalling?</b> This page is a snapshot, redeployed each build stage — the <b>last-commit clock</b> above ticks live in your browser and turns red past 15 min with no commit. For the always-live view, run in the repo:
+    <code>bash scripts/build-status.sh watch</code>
+  </div>
+  <footer id="gen">generated —</footer>
+</div>
+
+<script>
+  // ---- build state (updated on each redeploy) ----
+  var LAST_COMMIT_EPOCH = 1786733772;      // e475cb8 add validation strategy
+  var GENERATED = "2026-08-14 15:03 EDT";
+  var CURRENT_PHASE = 1, TOTAL = 11;
+
+  var STAGES = [
+    {k:"context",   s:"done"},
+    {k:"research",  s:"done"},
+    {k:"validation",s:"done"},
+    {k:"plan",      s:"done"},
+    {k:"plan-check",s:"active"},
+    {k:"execute",   s:"pending"},
+    {k:"verify",    s:"pending"},
+    {k:"report",    s:"pending"}
+  ];
+
+  var PHASES = [
+    {n:1, name:"Data Integrity & Catalyst Feed", sub:"verified calendar + point-in-time universe", s:"active"},
+    {n:2, name:"Contracts + Knowledge-Base Skeleton", sub:"JSON contracts + provenance SQLite/sqlite-vec", s:"pending"},
+    {n:3, name:"Quant Tools + Rubric & Base-Rates", sub:"deterministic tested money-math", s:"pending"},
+    {n:4, name:"Analyst Desk + Bull/Bear Debate (W1)", sub:"binary catalyst call + confidence", s:"pending"},
+    {n:5, name:"Trade Builder, Hedge & Sizing (W2)", sub:"inverse-hedge + risk-of-ruin sizing", s:"pending"},
+    {n:6, name:"Independent Diligence Firewall (W3)", sub:"firewalled go/no-go", s:"pending"},
+    {n:7, name:"Verifier/Guardrails + Backtest", sub:"monitors + mechanical & agentic backtest", s:"pending"},
+    {n:8, name:"Paper Ledger + Attribution", sub:"true out-of-sample + post-mortems", s:"pending"},
+    {n:9, name:"iOS Dashboard + Approval Gate", sub:"4 pages + human gate", s:"pending"},
+    {n:10, name:"Continuous-Iteration Loop", sub:"gated self-improvement", s:"pending"},
+    {n:11, name:"Robinhood MCP Live Execution", sub:"real equities, last, after paper proof", s:"pending"}
+  ];
+
+  var COMMITS = [
+    {h:"e475cb8", m:"docs(01): add validation strategy"},
+    {h:"4d15dec", m:"docs(01): research data integrity & catalyst feed"},
+    {h:"7d0024e", m:"chore: live build-status script"},
+    {h:"d1ca843", m:"docs: require per-phase completion report artifact"},
+    {h:"34d896a", m:"docs(01): auto-generated context (discuss skipped)"},
+    {h:"4477172", m:"docs: architecture artifact + project rename"},
+    {h:"c614349", m:"docs: create roadmap (11 phases)"}
+  ];
+
+  // ---- render ----
+  function esc(s){return s.replace(/&/g,"&amp;").replace(/</g,"&lt;")}
+  document.getElementById("gen").textContent = "generated " + GENERATED + " · redeployed each build stage";
+  document.getElementById("tPhases").innerHTML = PHASES.filter(function(p){return p.s==="done"}).length + "<small>/11</small>";
+
+  var stepper = document.getElementById("stepper");
+  STAGES.forEach(function(st){
+    var d=document.createElement("div"); d.className="step "+st.s; d.appendChild(document.createTextNode(st.k)); stepper.appendChild(d);
+  });
+
+  var pc=document.getElementById("phases");
+  PHASES.forEach(function(p){
+    var row=document.createElement("div"); row.className="phase "+p.s;
+    row.innerHTML='<div class="num">'+(p.n<10?"0":"")+p.n+'</div>'+
+      '<div class="nm">'+esc(p.name)+'<small>'+esc(p.sub)+'</small></div>'+
+      '<div class="pill '+p.s+'">'+(p.s==="active"?"in progress":p.s)+'</div>';
+    pc.appendChild(row);
+  });
+
+  var cc=document.getElementById("commits");
+  COMMITS.forEach(function(c){
+    var d=document.createElement("div"); d.className="commit";
+    d.innerHTML='<span class="h">'+c.h+'</span><span class="m">'+esc(c.m)+'</span>'; cc.appendChild(d);
+  });
+
+  // ---- live clocks ----
+  function fmtAge(sec){
+    if(sec<60) return sec+"s ago";
+    var m=Math.floor(sec/60), s=sec%60;
+    if(m<60) return m+"m "+s+"s ago";
+    var h=Math.floor(m/60); return h+"h "+(m%60)+"m ago";
+  }
+  function tick(){
+    var now=new Date();
+    document.getElementById("now").textContent = now.toLocaleTimeString();
+    var age=Math.floor(now.getTime()/1000 - LAST_COMMIT_EPOCH);
+    document.getElementById("age").textContent = fmtAge(age);
+    var stale = age > 900;
+    document.getElementById("dot").className = "livedot"+(stale?" warn":"");
+    document.getElementById("livestate").textContent = stale ? "no commit >15m — check session" : "active";
+    var run=document.getElementById("tRun"), tile=run.parentElement;
+    if(stale){ run.textContent="CHECK"; tile.className="tile warn"; }
+  }
+  tick(); setInterval(tick, 1000);
+</script>
