@@ -120,7 +120,7 @@ An event-driven trading system for a curated universe of ~20 life-science / biot
 <!-- GSD:conventions-start source:CONVENTIONS.md -->
 ## Conventions
 
-Conventions not yet established. Will populate as patterns emerge during development.
+**Phase-completion report (MANDATORY, every phase):** At the end of each phase — after verification passes/defers, before advancing to the next phase — generate a published HTML artifact and give the user its URL. Save the file to `docs/phase-reports/phase-{NN}-report.html`, reuse the terminal/brass design language of `docs/architecture-workflows.html` (favicon 🧬, both themes), and cover these sections: **What's done** (delivered this phase, with the requirement IDs closed), **Needs your review / input** (decisions or manual validation awaiting the user — esp. anything money-touching), **What's going well**, **Next steps** (the upcoming phase + what it depends on), and **Project state** (phases complete / total, overall progress, open blockers). Title each `Fund 1 — Phase {N} Report`.
 <!-- GSD:conventions-end -->
 
 <!-- GSD:architecture-start source:ARCHITECTURE.md -->
