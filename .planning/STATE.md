@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: executing
-stopped_at: Completed 01-05-PLAN.md
-last_updated: "2026-08-14T20:07:40.006Z"
+status: verifying
+stopped_at: Completed 01-06-PLAN.md
+last_updated: "2026-08-14T20:16:31.117Z"
 last_activity: 2026-08-14
 progress:
   total_phases: 11
-  completed_phases: 0
+  completed_phases: 1
   total_plans: 6
-  completed_plans: 5
+  completed_plans: 6
   percent: 0
 ---
 
@@ -27,7 +27,7 @@ See: .planning/PROJECT.md (updated 2026-08-14)
 
 Phase: 1 (Data Integrity & Catalyst Feed) — EXECUTING
 Plan: 6 of 6
-Status: Ready to execute
+Status: Phase complete — ready for verification
 Last activity: 2026-08-14
 
 Progress: [░░░░░░░░░░] 0%
@@ -57,6 +57,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 01-data-integrity-catalyst-feed P03 | 5min | 2 tasks | 7 files |
 | Phase 01-data-integrity-catalyst-feed P04 | 10min | 3 tasks tasks | 8 files files |
 | Phase 01-data-integrity-catalyst-feed P05 | 15min | 3 tasks | 8 files |
+| Phase 01-data-integrity-catalyst-feed P06 | 15min | 2 tasks tasks | 6 files files |
 
 ## Accumulated Context
 
@@ -77,6 +78,8 @@ Recent decisions affecting current work:
 - [Phase 01-data-integrity-catalyst-feed]: Single tradeable gate: is_tradeable(c)=status=='verified'; all origins (provider/curated/ad-hoc) flow through the same insert->verify pipeline, no bypass
 - [Phase 01-data-integrity-catalyst-feed]: T-2 trigger is day-precision only + dedup-marker-row (trigger_event UNIQUE catalyst_id+event_date) for exactly-once firing across idempotent runs (DATA-05)
 - [Phase 01-data-integrity-catalyst-feed]: refresh restamps last_verified_at only on re-verified catalysts, so a near-event date that cannot re-verify keeps its stale stamp and is excluded (DATA-03 48h re-verify)
+- [Phase 01-data-integrity-catalyst-feed]: Universe snapshots are append-only per as_of_date cohort (never UPDATE/DELETE); universe_as_of returns latest cohort <= D — survivorship-free (DATA-06)
+- [Phase 01-data-integrity-catalyst-feed]: Seed/PDUFA curation is a carry-forward human task (no LLM-invented dates); code+tests complete, data files ship as labelled templates + data/README.md guide
 
 ### Pending Todos
 
@@ -90,6 +93,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-08-14T20:07:32.407Z
-Stopped at: Completed 01-05-PLAN.md
+Last session: 2026-08-14T20:16:24.148Z
+Stopped at: Completed 01-06-PLAN.md
 Resume file: None
