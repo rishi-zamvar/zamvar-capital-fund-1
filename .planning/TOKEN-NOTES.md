@@ -40,7 +40,20 @@
 | Verifier | 133,453 |
 | **Phase 1 subtotal** | **~1,444,361** |
 
-**Cumulative (measured, so far): ~1,863,938 subagent tokens (project 419,577 + Phase 1 1,444,361)**
+### Phase 2 — Contracts + Knowledge-Base Skeleton (CLOSED)
+| Agent | Tokens |
+|-------|--------|
+| Researcher (narrow + graph-first) | 91,089 |
+| Planner | 131,689 |
+| Plan-checker (passed first try — no revision) | 115,394 |
+| Executor 02-01 | 77,214 |
+| Executor 02-02 | 100,514 |
+| Executor 02-03 | 90,227 |
+| Executor 02-04 | 103,847 |
+| Verifier | 76,347 |
+| **Phase 2 subtotal** | **~786,321** |
+
+**Cumulative (measured, so far): ~2,650,259 subagent tokens (project 419,577 + Phase 1 1,444,361 + Phase 2 786,321)**
 
 ## Per-Phase Retrospective
 
