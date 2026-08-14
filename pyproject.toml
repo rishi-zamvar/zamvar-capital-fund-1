@@ -12,6 +12,7 @@ dependencies = [
     "pydantic==2.13.4",
     "pydantic-settings>=2,<3",
     "sqlite-vec>=0.1.9",
+    "statsmodels==0.14.6",  # cointegration (Engle-Granger/Johansen); pulls numpy/scipy/pandas/patsy
 ]
 
 [project.optional-dependencies]
