@@ -145,13 +145,14 @@ def active_agent():
 
 
 def tokens_total():
+    import re
     try:
         with open(os.path.join(ROOT, ".planning/TOKEN-NOTES.md")) as f:
             for line in f:
                 if "Cumulative" in line:
-                    digits = "".join(c for c in line.split(":")[-1] if c.isdigit())
-                    if digits:
-                        return int(digits)
+                    m = re.search(r"([\d][\d,]{3,})", line.split(":")[-1])  # first number after the colon
+                    if m:
+                        return int(m.group(1).replace(",", ""))
     except Exception:
         pass
     return 0
