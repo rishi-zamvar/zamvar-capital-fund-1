@@ -39,7 +39,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 **Plans**: 6 plans (4 waves)
 - [x] 01-01-PLAN.md — Project skeleton, SQLite schema, pydantic models, live fixtures (Wave 1)
 - [x] 01-02-PLAN.md — Money-critical date-precision + uncertainty classifier, TDD (Wave 2)
-- [ ] 01-03-PLAN.md — CT.gov v2 + FMP earnings providers with attached provenance (Wave 3)
+- [x] 01-03-PLAN.md — CT.gov v2 + FMP earnings providers with attached provenance (Wave 3)
 - [ ] 01-04-PLAN.md — Atomic write-path, two-source verify gate, curated PDUFA loader, ad-hoc CLI (Wave 3)
 - [ ] 01-05-PLAN.md — Idempotent daily refresh, 48h re-verify, T-2 trigger seam, launchd (Wave 4)
 - [ ] 01-06-PLAN.md — Point-in-time universe builder + data-curation checkpoint (Wave 4)

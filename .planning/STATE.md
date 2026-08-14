@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Completed 01-02-PLAN.md
-last_updated: "2026-08-14T19:36:23.448Z"
+stopped_at: Completed 01-03-PLAN.md
+last_updated: "2026-08-14T19:47:57.034Z"
 last_activity: 2026-08-14
 progress:
   total_phases: 11
   completed_phases: 0
   total_plans: 6
-  completed_plans: 2
+  completed_plans: 3
   percent: 0
 ---
 
@@ -26,7 +26,7 @@ See: .planning/PROJECT.md (updated 2026-08-14)
 ## Current Position
 
 Phase: 1 (Data Integrity & Catalyst Feed) — EXECUTING
-Plan: 3 of 6
+Plan: 4 of 6
 Status: Ready to execute
 Last activity: 2026-08-14
 
@@ -54,6 +54,7 @@ Progress: [░░░░░░░░░░] 0%
 *Updated after each plan completion*
 | Phase 01 P01 | 5 | 3 tasks | 15 files |
 | Phase 01 P02 | 5 | 2 tasks | 2 files |
+| Phase 01-data-integrity-catalyst-feed P03 | 5min | 2 tasks | 7 files |
 
 ## Accumulated Context
 
@@ -68,6 +69,8 @@ Recent decisions affecting current work:
 - Long/long is only a hedge if the peer is an inverse-payoff competitor (rises when target falls); honest hedge + ruin-avoidant sizing are inline in Phase 5, not a later hardening pass.
 - [Phase 01]: No-LLM-date invariant enforced at the pydantic boundary (Catalyst.sources may not be empty); per-source date_type persisted so verify.py re-derives uncertainty (DATA-04)
 - [Phase 01]: Partial dates (YYYY-MM/YYYY) are ALWAYS window; firm is structurally unreachable from a partial date (DATA-04 classifier)
+- [Phase 01-data-integrity-catalyst-feed]: [Phase 01]: Providers attach provenance at the boundary (Pattern 1) — every date leaves a provider inside a CatalystSource; no bare/LLM-sourced dates (DATA-01)
+- [Phase 01-data-integrity-catalyst-feed]: [Phase 01]: FMP 'confirmed' expressed via CatalystSource.date_type=actual (no new field); CT.gov attribution by curated exact lead-sponsor name (DATA-04)
 
 ### Pending Todos
 
@@ -81,6 +84,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-08-14T19:36:18.128Z
-Stopped at: Completed 01-02-PLAN.md
+Last session: 2026-08-14T19:47:48.496Z
+Stopped at: Completed 01-03-PLAN.md
 Resume file: None
