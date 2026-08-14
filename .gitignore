@@ -6,3 +6,6 @@ __pycache__/
 *.egg-info/
 .coverage
 tests/fixtures/*.live.json
+
+# graphify code graph (regenerated via `graphify update .`)
+graphify-out/
