@@ -36,7 +36,13 @@ Decimal phases appear between their surrounding integers in numeric order.
   3. A catalyst is re-verified within 48h of the event and, when 1–2 days out, triggers Workflow 1
   4. The ~20-name universe is assembled point-in-time from explicit criteria (catalyst density, market cap, liquidity, therapeutic area) and includes delisted names for later backtesting
   5. The user can inject an ad-hoc catalyst (ticker + type + date/window) and it flows through the same verification rules
-**Plans**: TBD
+**Plans**: 6 plans (4 waves)
+- [ ] 01-01-PLAN.md — Project skeleton, SQLite schema, pydantic models, live fixtures (Wave 1)
+- [ ] 01-02-PLAN.md — Money-critical date-precision + uncertainty classifier, TDD (Wave 2)
+- [ ] 01-03-PLAN.md — CT.gov v2 + FMP earnings providers with attached provenance (Wave 3)
+- [ ] 01-04-PLAN.md — Atomic write-path, two-source verify gate, curated PDUFA loader, ad-hoc CLI (Wave 3)
+- [ ] 01-05-PLAN.md — Idempotent daily refresh, 48h re-verify, T-2 trigger seam, launchd (Wave 4)
+- [ ] 01-06-PLAN.md — Point-in-time universe builder + data-curation checkpoint (Wave 4)
 
 ### Phase 2: Contracts + Knowledge-Base Skeleton
 **Goal**: Every inter-layer message and every stored claim has an enforced shape and a citation — the anti-hallucination spine everything else binds to.
@@ -154,7 +160,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 →
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Data Integrity & Catalyst Feed | 0/TBD | Not started | - |
+| 1. Data Integrity & Catalyst Feed | 0/6 | Planned | - |
 | 2. Contracts + KB Skeleton | 0/TBD | Not started | - |
 | 3. Quant Tool Library + Rubric & Base-Rates | 0/TBD | Not started | - |
 | 4. Analyst Desk + Bull/Bear Debate | 0/TBD | Not started | - |
