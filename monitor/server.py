@@ -176,13 +176,12 @@ def sample():
 
 
 def sampler():
+    global STATE
     while True:
         try:
-            STATE.clear()
-            STATE.update(sample())
+            STATE = sample()  # atomic pointer swap — no partial-state race for readers
         except Exception as e:
-            STATE.clear()
-            STATE.update({"ok": False, "err": str(e)})
+            STATE = {"ok": False, "err": str(e)}
         time.sleep(1.5)
 
 
