@@ -184,6 +184,67 @@ def analog_query(conn, embed, context: str, filters: dict, k: int = 5) -> list[d
     return [_with_outcome(conn, r["node_id"], r["distance"]) for r in ranked]
 
 
+def _get_or_create_company(conn, ticker: str) -> int:
+    """Company nodes are reference nodes (not claims) so they need no citation. Get-or-create by ticker."""
+    row = conn.execute(
+        "SELECT id FROM kb_node WHERE kind='company' AND json_extract(attrs_json,'$.ticker')=?",
+        (ticker,),
+    ).fetchone()
+    if row is not None:
+        return row["id"]
+    return conn.execute(
+        "INSERT INTO kb_node (kind, ref_id, attrs_json, confidence, created_at) "
+        "VALUES ('company', NULL, ?, NULL, ?)",
+        (json.dumps({"ticker": ticker}), _now()),
+    ).lastrowid
+
+
+def insert_hedge_peer(conn, name, peer, mechanism, payoff_direction, weight, evidence) -> int:
+    """Store a hedge relationship for `name` as a CITED hedge_peer claim (KB-04).
+
+    A hedge relationship is a claim, so it MUST carry a citation — routed through insert_claim so
+    the provenance invariant is enforced atomically. Also writes a HEDGE_PEER edge between the two
+    company nodes for graph traversal. `payoff_direction` sign is explicit: +1 correlated co-move,
+    -1 inverse-payoff (PROJECT.md vs ARCHITECTURE.md readings) — store the sign, don't hard-code polarity.
+    """
+    if payoff_direction not in (-1, 1):
+        raise ValueError(f"payoff_direction must be +1 or -1, got {payoff_direction!r}")
+    if not evidence:
+        raise ValueError("cannot store a hedge peer without a CITES->EvidenceSource edge")
+    name_id = _get_or_create_company(conn, name)
+    peer_id = _get_or_create_company(conn, peer)
+    attrs = {"name": name, "peer": peer, "mechanism": mechanism,
+             "payoff_direction": payoff_direction, "weight": weight}
+    # insert_claim commits (companies included); then add the traversal edge and commit it.
+    hp_id = insert_claim(conn, KBNode(kind="hedge_peer", attrs=attrs), evidence)
+    add_edge(conn, name_id, "HEDGE_PEER", peer_id, weight=weight,
+             attrs={"mechanism": mechanism, "payoff_direction": payoff_direction})
+    conn.commit()
+    return hp_id
+
+
+def hedge_peers(conn, name: str) -> list[dict]:
+    """Every hedge_peer claim for `name` with its mechanism, payoff_direction, weight, and citations."""
+    rows = conn.execute(
+        "SELECT id, attrs_json FROM kb_node WHERE kind='hedge_peer' "
+        "AND json_extract(attrs_json,'$.name')=?",
+        (name,),
+    ).fetchall()
+    out = []
+    for r in rows:
+        a = json.loads(r["attrs_json"])
+        cites = conn.execute(
+            "SELECT dst_id FROM kb_edge WHERE src_id=? AND rel='CITES'", (r["id"],)
+        ).fetchall()
+        evidence = [get_node(conn, c["dst_id"])["attrs"] for c in cites]
+        out.append({
+            "peer": a["peer"], "mechanism": a["mechanism"],
+            "payoff_direction": a["payoff_direction"], "weight": a["weight"],
+            "evidence": evidence,
+        })
+    return out
+
+
 def hash_embed(text: str, dim: int = EMBED_DIM) -> list[float]:
     """Deterministic, offline, L2-normalized embedding of `text` (default 384-dim).
 
