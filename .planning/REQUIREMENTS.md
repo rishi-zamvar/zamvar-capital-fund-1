@@ -9,9 +9,9 @@
 
 - [x] **DATA-01**: System maintains a rolling catalyst calendar (PDUFA/AdCom curated, clinical-trial readouts via ClinicalTrials.gov v2, conferences, earnings) for the covered universe
 - [x] **DATA-02**: User can inject an ad-hoc catalyst (ticker + type + date/window)
-- [ ] **DATA-03**: Every catalyst date is verified by a two-source rule and re-verified 48h before the event; unverifiable dates are flagged, never traded
+- [x] **DATA-03**: Every catalyst date is verified by a two-source rule and re-verified 48h before the event; unverifiable dates are flagged, never traded
 - [x] **DATA-04**: Catalyst dates are typed as point-estimate vs. window, with uncertainty carried downstream
-- [ ] **DATA-05**: System flags catalysts 1–2 days out and triggers Workflow 1
+- [x] **DATA-05**: System flags catalysts 1–2 days out and triggers Workflow 1
 - [ ] **DATA-06**: System assembles + maintains the ~20-name universe from criteria (catalyst density, market cap, liquidity, therapeutic area)
 
 ### Knowledge Base (KB)
@@ -125,9 +125,9 @@
 |-------------|-------|--------|
 | DATA-01 | Phase 1 | Complete |
 | DATA-02 | Phase 1 | Complete |
-| DATA-03 | Phase 1 | Pending |
+| DATA-03 | Phase 1 | Complete |
 | DATA-04 | Phase 1 | Complete |
-| DATA-05 | Phase 1 | Pending |
+| DATA-05 | Phase 1 | Complete |
 | DATA-06 | Phase 1 | Pending |
 | KB-01 | Phase 2 | Pending |
 | KB-02 | Phase 2 | Pending |
