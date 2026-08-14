@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Completed 02-01-PLAN.md
-last_updated: "2026-08-14T22:06:22.899Z"
+stopped_at: Completed 02-02-PLAN.md
+last_updated: "2026-08-14T22:10:01.618Z"
 last_activity: 2026-08-14
 progress:
   total_phases: 11
   completed_phases: 1
   total_plans: 10
-  completed_plans: 7
+  completed_plans: 8
   percent: 0
 ---
 
@@ -26,7 +26,7 @@ See: .planning/PROJECT.md (updated 2026-08-14)
 ## Current Position
 
 Phase: 2 (Contracts + Knowledge-Base Skeleton) — EXECUTING
-Plan: 2 of 4
+Plan: 3 of 4
 Status: Ready to execute
 Last activity: 2026-08-14
 
@@ -59,6 +59,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 01-data-integrity-catalyst-feed P05 | 15min | 3 tasks | 8 files |
 | Phase 01-data-integrity-catalyst-feed P06 | 15min | 2 tasks tasks | 6 files files |
 | Phase 02 P01 | 2min | 3 tasks tasks | 7 files files |
+| Phase 02-contracts-knowledge-base-skeleton P02 | 3min | 2 tasks tasks | 2 files files |
 
 ## Accumulated Context
 
@@ -83,6 +84,7 @@ Recent decisions affecting current work:
 - [Phase 01-data-integrity-catalyst-feed]: Seed/PDUFA curation is a carry-forward human task (no LLM-invented dates); code+tests complete, data files ship as labelled templates + data/README.md guide
 - [Phase 02]: KB extension loaded in db.connect() (not migrate) so both prod + the shared db fixture get vec0 before migrate() runs (KB-01)
 - [Phase 02]: kb_vec dimension baked at 384 (MiniLM-aligned); deterministic sha256 hash_embed is the offline default, real model is a later one-line swap behind the injectable callable
+- [Phase 02-contracts-knowledge-base-skeleton]: Six inter-layer contracts enforce extra='forbid' + bounded score/confidence + required non-empty evidence_ref — anti-hallucination at every agent message boundary (contract-side half of KB-02)
 
 ### Pending Todos
 
@@ -96,6 +98,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-08-14T22:06:16.913Z
-Stopped at: Completed 02-01-PLAN.md
+Last session: 2026-08-14T22:09:55.397Z
+Stopped at: Completed 02-02-PLAN.md
 Resume file: None
