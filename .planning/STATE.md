@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Completed 02-02-PLAN.md
-last_updated: "2026-08-14T22:10:01.618Z"
+stopped_at: Completed 02-03-PLAN.md
+last_updated: "2026-08-14T22:14:22.016Z"
 last_activity: 2026-08-14
 progress:
   total_phases: 11
   completed_phases: 1
   total_plans: 10
-  completed_plans: 8
+  completed_plans: 9
   percent: 0
 ---
 
@@ -26,7 +26,7 @@ See: .planning/PROJECT.md (updated 2026-08-14)
 ## Current Position
 
 Phase: 2 (Contracts + Knowledge-Base Skeleton) — EXECUTING
-Plan: 3 of 4
+Plan: 4 of 4
 Status: Ready to execute
 Last activity: 2026-08-14
 
@@ -60,6 +60,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 01-data-integrity-catalyst-feed P06 | 15min | 2 tasks tasks | 6 files files |
 | Phase 02 P01 | 2min | 3 tasks tasks | 7 files files |
 | Phase 02-contracts-knowledge-base-skeleton P02 | 3min | 2 tasks tasks | 2 files files |
+| Phase 02-contracts-knowledge-base-skeleton P03 | 2min | 2 tasks tasks | 3 files files |
 
 ## Accumulated Context
 
@@ -85,6 +86,8 @@ Recent decisions affecting current work:
 - [Phase 02]: KB extension loaded in db.connect() (not migrate) so both prod + the shared db fixture get vec0 before migrate() runs (KB-01)
 - [Phase 02]: kb_vec dimension baked at 384 (MiniLM-aligned); deterministic sha256 hash_embed is the offline default, real model is a later one-line swap behind the injectable callable
 - [Phase 02-contracts-knowledge-base-skeleton]: Six inter-layer contracts enforce extra='forbid' + bounded score/confidence + required non-empty evidence_ref — anti-hallucination at every agent message boundary (contract-side half of KB-02)
+- [Phase 02]: insert_claim mirrors store.insert_catalyst verbatim — reject uncited claim before write + try/commit/except-rollback, application-level invariant not a DB trigger (KB-02); no orphan node/edge/vec on failure
+- [Phase 02]: CITES routed through the same no-commit add_edge helper Plan 02-04 uses for HEDGE_PEER — one edge-insert path; evidence deduped on url+snippet_hash
 
 ### Pending Todos
 
@@ -98,6 +101,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-08-14T22:09:55.397Z
-Stopped at: Completed 02-02-PLAN.md
+Last session: 2026-08-14T22:14:14.439Z
+Stopped at: Completed 02-03-PLAN.md
 Resume file: None

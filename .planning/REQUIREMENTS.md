@@ -16,7 +16,7 @@
 
 ### Knowledge Base (KB)
 
-- [ ] **KB-01**: SQLite graph-shaped store + sqlite-vec for playbooks, memory, base rates, analogs
+- [x] **KB-01**: SQLite graph-shaped store + sqlite-vec for playbooks, memory, base rates, analogs
 - [x] **KB-02**: Every stored claim carries a citation edge; writes without provenance are rejected
 - [ ] **KB-03**: Analog query returns nearest past scenarios ("similar situations") with outcomes
 - [ ] **KB-04**: Hedge-relationship sub-store: per universe name, candidate inverse-hedge peers + mechanism + payoff-direction + citation
@@ -129,7 +129,7 @@
 | DATA-04 | Phase 1 | Complete |
 | DATA-05 | Phase 1 | Complete |
 | DATA-06 | Phase 1 | Complete |
-| KB-01 | Phase 2 | Pending |
+| KB-01 | Phase 2 | Complete |
 | KB-02 | Phase 2 | Complete |
 | KB-03 | Phase 2 | Pending |
 | KB-04 | Phase 2 | Pending |
