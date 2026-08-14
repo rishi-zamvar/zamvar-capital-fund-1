@@ -248,6 +248,7 @@ CREATE TABLE catalyst_source (
   source_url TEXT,                     -- required for external; user note for ad-hoc
   source_type TEXT NOT NULL CHECK (source_type IN ('primary','secondary')),
   reported_date TEXT NOT NULL,         -- date THIS source claims
+  date_type TEXT NOT NULL CHECK (date_type IN ('estimated','actual')) DEFAULT 'estimated', -- DATA-04: source's own ESTIMATED/ACTUAL; verify re-derives uncertainty from this
   agrees INTEGER NOT NULL DEFAULT 1,   -- does it match the catalyst event_date within tolerance
   retrieved_at TEXT NOT NULL
 );
@@ -270,6 +271,7 @@ CREATE TABLE schema_version (version INTEGER NOT NULL);
 - A catalyst is `verified` (and thus `tradeable`) **iff** ≥2 `catalyst_source` rows with `agrees=1`, **at least one `source_type='primary'`** (company IR / FDA / ClinicalTrials.gov), **and** `last_verified_at` within the freshness threshold when the event is near.
 - "Excluded from trading" (DATA-03) = `status='excluded'` (or simply not `verified`). A single computed `tradeable` predicate (`status='verified'`) is the only gate any downstream phase queries. Never a boolean scattered across callers.
 - **No-LLM-date enforcement:** a pydantic validator rejects any `Catalyst` with zero source rows, and the insert path requires the source rows in the same transaction. There is no code path that writes a date without provenance.
+- **Uncertainty re-derivation:** `verify.py` reads the most-authoritative (primary-preferred) source row's `date_type` and passes it to `classify(...)` — it never guesses ESTIMATED vs ACTUAL. This is why `date_type` is persisted per source (DATA-04).
 
 ## Point-in-Time Universe (DATA-06)
 
