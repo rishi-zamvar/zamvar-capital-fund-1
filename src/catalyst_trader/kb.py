@@ -1,7 +1,9 @@
 """Knowledge-base write-path + default deterministic embedder.
 
-The KB stores an L2-normalized vector per node in kb_vec (vec0 float[384] cosine). The default
-embedder here is offline and dependency-free so the whole KB tests with zero network / zero ML deps.
+The KB stores an L2-normalized vector per node in kb_vec (vec0 float[1024] cosine). Production uses
+a real open-source semantic embedder (BAAI/bge-large-en-v1.5, 1024-dim, local via fastembed/ONNX —
+no API, no rate limits, private). The default deterministic hash embedder is offline and
+dependency-free so the whole KB still tests with zero network / zero ML deps.
 
 Provenance invariant (KB-02): a claim node may not be committed without at least one
 :CITES -> EvidenceSource edge. Enforced in ONE transaction, exactly like store.insert_catalyst
@@ -19,7 +21,7 @@ from datetime import datetime, timezone
 from pydantic import BaseModel, field_validator
 from sqlite_vec import serialize_float32
 
-EMBED_DIM = 384
+EMBED_DIM = 1024
 
 # The kind/rel enums are the DB CHECK constraints (migration 003) — kept here so a bad value is
 # rejected at the pydantic boundary too, not only at the SQLite backstop.
@@ -280,7 +282,7 @@ def query_playbooks(conn, scenario_type: str) -> list[dict]:
 
 
 def hash_embed(text: str, dim: int = EMBED_DIM) -> list[float]:
-    """Deterministic, offline, L2-normalized embedding of `text` (default 384-dim).
+    """Deterministic, offline, L2-normalized embedding of `text` (default 1024-dim).
 
     Same text -> same vector, no network, no ML dep. Not semantically meaningful — plumbing only.
     """
@@ -295,5 +297,42 @@ def hash_embed(text: str, dim: int = EMBED_DIM) -> list[float]:
     return [x / n for x in v]  # L2-normalized for cosine
 
 
-# ponytail: hash embedder = plumbing only, not semantic quality; swap to model2vec/MiniLM behind
-#           this callable when analog quality matters (later phase).
+# ponytail: hash embedder = plumbing only, not semantic quality. The real semantic embedder below
+#           is a drop-in behind the same callable; tests keep using hash_embed (offline).
+
+_LOCAL_MODEL = None
+_LOCAL_MODEL_NAME = "BAAI/bge-large-en-v1.5"  # open-source, 1024-dim, local ONNX via fastembed
+
+
+def _local_model():
+    global _LOCAL_MODEL
+    if _LOCAL_MODEL is None:
+        from fastembed import TextEmbedding  # lazy: only imported/loaded when actually embedding
+        _LOCAL_MODEL = TextEmbedding(_LOCAL_MODEL_NAME)
+    return _LOCAL_MODEL
+
+
+def local_embed(text: str) -> list[float]:
+    """Real semantic 1024-dim embedding via a local open-source model (no API, private).
+
+    Meaning-based similarity (unlike hash_embed's lexical vectors). Model loads lazily on first call
+    and is cached for the process. Requires the `fastembed` optional dependency.
+    """
+    vec = next(iter(_local_model().embed([text])))
+    return [float(x) for x in vec]
+
+
+def default_embedder():
+    """Pick the production embedder: local semantic model if available, else the offline hash.
+
+    Force the offline embedder with env CT_EMBEDDER=hash (used to keep any headless run network-free).
+    Tests never call this — they inject hash_embed via the `embed` fixture — so the suite stays offline.
+    """
+    import importlib.util
+    import os
+
+    if os.environ.get("CT_EMBEDDER", "").lower() == "hash":
+        return hash_embed
+    if importlib.util.find_spec("fastembed") is not None:
+        return local_embed
+    return hash_embed

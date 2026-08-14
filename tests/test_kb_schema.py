@@ -38,7 +38,8 @@ def test_003_check_enums_reject_bad_values(db):
 
 
 def test_vec_roundtrip(db):
-    vec = [0.1] * 384
+    from catalyst_trader import kb
+    vec = [0.1] * kb.EMBED_DIM  # tracks the kb_vec dimension (migration 004: 1024)
     db.execute(
         "INSERT INTO kb_vec (node_id, embedding) VALUES (?, ?)",
         (1, serialize_float32(vec)),

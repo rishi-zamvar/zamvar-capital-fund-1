@@ -15,6 +15,11 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
+# Real semantic embeddings for the KB (BAAI/bge-large-en-v1.5, 1024-dim, local ONNX — no API).
+# Optional: without it the KB falls back to the offline deterministic hash embedder.
+embeddings = [
+    "fastembed>=0.4",
+]
 dev = [
     "pytest==9.1.1",
     "pytest-httpx==0.36.2",
