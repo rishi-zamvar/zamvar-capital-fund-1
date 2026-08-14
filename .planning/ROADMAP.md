@@ -12,7 +12,7 @@ Build a real-money, event-driven biotech-catalyst trading desk bottom-up, in str
 
 Decimal phases appear between their surrounding integers in numeric order.
 
-- [ ] **Phase 1: Data Integrity & Catalyst Feed** - Two-source-verified catalyst calendar + point-in-time ~20-name universe (nothing downstream trusts an unverified date)
+- [x] **Phase 1: Data Integrity & Catalyst Feed** - Two-source-verified catalyst calendar + point-in-time ~20-name universe (nothing downstream trusts an unverified date) (completed 2026-08-14)
 - [ ] **Phase 2: Contracts + Knowledge-Base Skeleton** - Validated JSON contracts between agent layers + provenance-enforcing SQLite/sqlite-vec KB
 - [ ] **Phase 3: Quant Tool Library + Rubric & Base-Rates** - Deterministic, unit-tested money tools + biotech scoring rubric + clinical base rates
 - [ ] **Phase 4: Analyst Desk + Bull/Bear Debate (Workflow 1a)** - Four sourced analysts + bounded adversarial debate → binary directional verdict
@@ -160,7 +160,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 →
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Data Integrity & Catalyst Feed | 0/6 | Planned | - |
+| 1. Data Integrity & Catalyst Feed | 0/6 | Complete    | 2026-08-14 |
 | 2. Contracts + KB Skeleton | 0/TBD | Not started | - |
 | 3. Quant Tool Library + Rubric & Base-Rates | 0/TBD | Not started | - |
 | 4. Analyst Desk + Bull/Bear Debate | 0/TBD | Not started | - |
