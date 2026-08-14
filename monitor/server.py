@@ -132,16 +132,51 @@ def tail_events(path, n=14, maxbytes=131072):
     return items[-n:]
 
 
+def agent_title(path):
+    """Best-effort human label from the subagent's prompt (first user message)."""
+    import re
+    try:
+        with open(path, encoding="utf-8", errors="replace") as fh:
+            for _ in range(6):
+                line = fh.readline()
+                if not line:
+                    break
+                line = line.strip()
+                if not line.startswith("{"):
+                    continue
+                try:
+                    o = json.loads(line)
+                except Exception:
+                    continue
+                msg = o.get("message")
+                if isinstance(msg, dict) and msg.get("role") == "user":
+                    c = msg.get("content")
+                    if isinstance(c, list):
+                        txt = " ".join(b.get("text", "") for b in c if isinstance(b, dict) and b.get("type") == "text")
+                    else:
+                        txt = c or ""
+                    m = re.search(r"(Execute plan \S+|Research .*?Phase \d+|Plan Phase \d+|Revise .*?plans|Verify [^\n]{0,40}|Synthesize [^\n]{0,40})", txt)
+                    if m:
+                        return m.group(1).strip()[:72]
+                    for l in txt.splitlines():
+                        if l.strip():
+                            return l.strip()[:72]
+    except Exception:
+        pass
+    return ""
+
+
 def active_agent():
     outs = glob.glob("/private/tmp/claude-501/-Users-rishizamvar/*/tasks/*.output")
     # only agent transcripts (JSONL with parseable events) — skip plain-text bg outputs like this server's
     outs = sorted(outs, key=os.path.getmtime, reverse=True)
     for f in outs[:8]:
-        ev = tail_events(f, n=1)
+        ev = tail_events(f, n=16)
         if ev:
             mt = os.path.getmtime(f)
             age = time.time() - mt
-            return {"active": age < 25, "age": int(age), "mtime": mt, "last": ev[-1]["s"]}
+            return {"active": age < 25, "age": int(age), "mtime": mt,
+                    "last": ev[-1]["s"], "feed": ev, "title": agent_title(f)}
     return None
 
 
@@ -297,7 +332,8 @@ h1{font-size:19px;margin:0;letter-spacing:.02em}
 .b-planned,.b-no_directory{color:var(--faint);border-color:var(--bd)}
 .step{display:inline-block;font-size:11px;padding:3px 8px;margin:2px;border-radius:5px;border:1px solid var(--bd);color:var(--mut)}
 .step.on{color:var(--grn);border-color:var(--grn)}
-#feed{height:340px;overflow-y:auto;background:#0c0f0b;border:1px solid var(--bd);border-radius:7px;padding:10px;font-size:12px;line-height:1.5}
+#subfeed{height:300px;overflow-y:auto;background:#0c0f0b;border:1px solid var(--bd);border-radius:7px;padding:10px;font-size:12px;line-height:1.5}
+#feed{height:200px;overflow-y:auto;background:#0c0f0b;border:1px solid var(--bd);border-radius:7px;padding:10px;font-size:12px;line-height:1.5}
 .fi{padding:2px 0;white-space:pre-wrap;word-break:break-word}
 .fi.tool{color:var(--blue)} .fi.text{color:var(--ink)}
 .ts{color:var(--faint);font-size:11px}
@@ -337,8 +373,12 @@ h1{font-size:19px;margin:0;letter-spacing:.02em}
   </div>
   <div>
     <div class="panel" style="margin-bottom:14px">
-      <h2>Live terminal — this session</h2>
+      <h2>Active subagent — what it's doing now</h2>
       <div class="agent" id="agent"></div>
+      <div id="subfeed"></div>
+    </div>
+    <div class="panel" style="margin-bottom:14px">
+      <h2>Orchestrator — this session</h2>
       <div id="feed"></div>
     </div>
     <div class="panel"><h2>Recent commits</h2><div id="commits"></div></div>
@@ -384,10 +424,15 @@ function render(d){
     document.getElementById("pbar").style.width=pct+"%";
     document.getElementById("eta").innerHTML="elapsed <b>"+fmtAge(c.elapsed)+"</b> · est remaining <b>"+fmtEta(c.remaining)+"</b> (rough)";
   }
-  // agent
-  var a=d.agent,ah="";
-  if(a){ah=a.active?'<span class="run">● agent running</span> · '+esc(a.last):'<span class="idle">○ no agent active ('+fmtAge(a.age)+' idle)</span>'}
+  // active subagent — title + status + its own live feed
+  var ag=d.agent||{};
+  var ah="";
+  if(ag.title)ah='<b>'+esc(ag.title)+'</b> · ';
+  ah+=ag.active?'<span class="run">● working ('+fmtAge(ag.age||0)+')</span>':(ag.feed?'<span class="idle">○ idle '+fmtAge(ag.age||0)+' (last subagent)</span>':'<span class="idle">○ no subagent</span>');
   document.getElementById("agent").innerHTML=ah;
+  var sf="";(ag.feed||[]).forEach(function(x){var t=hhmmss(x.ts);var tp=t?'<span class="ts">'+t+'</span> ':'';var s=x.k=="tool"?"🔧 "+esc(x.s):"💬 "+esc(x.s);sf+='<div class="fi '+x.k+'">'+tp+s+'</div>'});
+  if(!sf)sf='<div class="fi" style="color:var(--faint)">no active subagent</div>';
+  var sfe=document.getElementById("subfeed");var atB=sfe.scrollHeight-sfe.scrollTop-sfe.clientHeight<40;sfe.innerHTML=sf;if(atB)sfe.scrollTop=sfe.scrollHeight;
   // phases
   var ph="";(d.phases||[]).forEach(function(p){
     var eta=phaseEta(p.eta);
