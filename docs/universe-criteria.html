@@ -1,0 +1,176 @@
+<title>Fund 1 Universe Criteria</title>
+<style>
+  :root{
+    --bg:#ecefe9;--surface:#fff;--surface-2:#f5f7f2;--ink:#191c18;--muted:#5f655c;--faint:#99a094;
+    --border:#d6dbcf;--border-strong:#c2c8b8;--accent:#8a6a12;--accent-bg:#f3ecd8;
+    --good:#1f7a4d;--good-bg:#e4f2e9;--bad:#b23b30;--bad-bg:#f6e5e3;--info:#2b6a93;--info-bg:#e2edf4;
+    --mono:ui-monospace,"SF Mono","JetBrains Mono",Menlo,Consolas,monospace;
+    --sans:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+    --shadow:0 1px 2px rgba(20,25,18,.06),0 4px 14px rgba(20,25,18,.05);
+  }
+  @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+    --bg:#101310;--surface:#191d18;--surface-2:#20241e;--ink:#e8ece4;--muted:#9aa192;--faint:#6b7365;
+    --border:#2c322a;--border-strong:#3a4136;--accent:#d8b45a;--accent-bg:#2a2412;
+    --good:#4cc585;--good-bg:#14271c;--bad:#ef7365;--bad-bg:#2c1714;--info:#6bb3e6;--info-bg:#122430;
+    --shadow:0 1px 2px rgba(0,0,0,.4),0 6px 18px rgba(0,0,0,.35);
+  }}
+  :root[data-theme="dark"]{
+    --bg:#101310;--surface:#191d18;--surface-2:#20241e;--ink:#e8ece4;--muted:#9aa192;--faint:#6b7365;
+    --border:#2c322a;--border-strong:#3a4136;--accent:#d8b45a;--accent-bg:#2a2412;
+    --good:#4cc585;--good-bg:#14271c;--bad:#ef7365;--bad-bg:#2c1714;--info:#6bb3e6;--info-bg:#122430;
+    --shadow:0 1px 2px rgba(0,0,0,.4),0 6px 18px rgba(0,0,0,.35);
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);line-height:1.55}
+  .wrap{max-width:960px;margin:0 auto;padding:40px 22px 80px}
+  .ey{font-family:var(--mono);font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--accent);font-weight:600}
+  h1{font-family:var(--mono);font-size:clamp(26px,5vw,40px);margin:8px 0 6px;letter-spacing:-.01em;text-wrap:balance}
+  .lede{color:var(--muted);font-size:15.5px;max-width:70ch;margin:0}
+  .masthead{border-bottom:2px solid var(--ink);padding-bottom:20px;margin-bottom:10px}
+  h2{font-family:var(--mono);font-size:19px;margin:38px 0 4px;letter-spacing:-.01em;display:flex;align-items:baseline;gap:10px}
+  h2 .n{font-size:13px;color:var(--bg);background:var(--accent);padding:2px 8px;border-radius:5px;font-weight:700}
+  .sub{color:var(--muted);font-size:14px;margin:2px 0 16px;max-width:74ch}
+  .crit{background:var(--surface);border:1px solid var(--border);border-left:4px solid var(--accent);border-radius:9px;padding:13px 16px;margin:9px 0;box-shadow:var(--shadow)}
+  .crit .top{display:flex;justify-content:space-between;gap:12px;align-items:baseline;flex-wrap:wrap}
+  .crit h3{font-family:var(--mono);font-size:14.5px;margin:0;font-weight:700}
+  .thr{font-family:var(--mono);font-size:12px;color:var(--accent);background:var(--accent-bg);border:1px solid var(--accent);border-radius:5px;padding:2px 8px;white-space:nowrap}
+  .crit .why{font-size:14px;margin:7px 0 0}
+  .crit .how{font-size:12.5px;color:var(--muted);margin:6px 0 0;font-family:var(--mono)}
+  .crit .how b{color:var(--info);font-weight:600}
+  .crit.crux{border-left-color:var(--good)}
+  .crit.crux .thr{color:var(--good);background:var(--good-bg);border-color:var(--good)}
+  .crit.crux .how b{color:var(--good)}
+  .bad{background:var(--bad-bg);border:1px solid var(--bad);border-radius:9px;padding:12px 16px;margin:8px 0}
+  .bad h3{font-family:var(--mono);font-size:13.5px;color:var(--bad);margin:0 0 4px}
+  .bad p{font-size:13.5px;margin:0;color:var(--ink)}
+  .callout{background:var(--good-bg);border:1px solid var(--good);border-radius:10px;padding:14px 17px;margin:16px 0}
+  .callout b{color:var(--good)}
+  .note{background:var(--info-bg);border:1px solid var(--info);border-radius:10px;padding:13px 16px;margin:16px 0;font-size:14px}
+  .note b{color:var(--info)}
+  ul.src{list-style:none;padding:0;margin:8px 0 0;display:grid;grid-template-columns:1fr 1fr;gap:7px}
+  @media(max-width:680px){ul.src{grid-template-columns:1fr}}
+  ul.src li{font-size:13px;padding:8px 11px;background:var(--surface);border:1px solid var(--border);border-radius:7px}
+  ul.src li b{font-family:var(--mono);font-size:12px;color:var(--accent)}
+  code{font-family:var(--mono);font-size:12.5px;background:var(--surface-2);border:1px solid var(--border);border-radius:4px;padding:1px 6px}
+  footer{margin-top:40px;padding-top:18px;border-top:1px solid var(--border);font-family:var(--mono);font-size:11.5px;color:var(--faint)}
+  .toggle{position:fixed;top:14px;right:14px;font-family:var(--mono);font-size:12px;background:var(--surface);color:var(--muted);border:1px solid var(--border-strong);border-radius:6px;padding:6px 10px;cursor:pointer}
+</style>
+<button class="toggle" onclick="var r=document.documentElement,c=r.getAttribute('data-theme');if(!c)c=matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light';r.setAttribute('data-theme',c==='dark'?'light':'dark')">◑ theme</button>
+
+<div class="wrap">
+  <div class="masthead">
+    <div class="ey">zamvar capital · fund 1 · research reference</div>
+    <h1>Universe &amp; Hedge-Peer Criteria</h1>
+    <p class="lede">Two screens, not one. <b>(A)</b> the ~20 core names you trade around catalysts, and <b>(B)</b> the hedge peers that must <i>rise when a target falls</i>. Thresholds below are calibrated starting points — tune them against the backtest. Every criterion maps to a data source you can research today.</p>
+  </div>
+
+  <div class="callout">
+    <b>The one idea that governs everything:</b> a real hedge is a peer whose stock <b>goes up when your name's catalyst goes badly</b> — a competitive-displacement relationship, not mere correlation. Most of the hard work is in Screen B. A merely "correlated" peer is not a hedge; a peer that <i>rises on your success</i> (positive class read-through) is the opposite of a hedge.
+  </div>
+
+  <h2><span class="n">A</span> Core tradeable universe — the ~20 names</h2>
+  <p class="sub">These are the catalyst subjects. The screen selects names where a single, dateable, binary event moves the stock materially and is analyzable from real data.</p>
+
+  <div class="crit"><div class="top"><h3>1 · Catalyst density</h3><span class="thr">≥ 2 dateable binary catalysts / yr</span></div>
+    <div class="why">The engine only fires on events. A name with one vague readout a year can't earn its slot. Count hard, dated events: PDUFA, AdCom, Ph2/Ph3 topline readouts, key conference data (ASCO/ESMO/AHA), pivotal interim analyses.</div>
+    <div class="how"><b>Research:</b> ClinicalTrials.gov (phase, primary-completion dates) · FDA/PDUFA trackers · company IR "upcoming milestones" decks · conference abstract calendars</div></div>
+
+  <div class="crit"><div class="top"><h3>2 · Catalyst dateability &amp; source-verifiability</h3><span class="thr">date confirmable from ≥ 2 sources</span></div>
+    <div class="why">A wrong date is a total loss. The name qualifies only if its catalysts have dates you can verify from two independent sources and re-check 48h out. Windows (e.g. "1H 2027") are allowed but must be typed as windows, never treated as firm.</div>
+    <div class="how"><b>Research:</b> cross-check ClinicalTrials.gov vs. company guidance vs. a PDUFA tracker; discard names whose catalysts are perpetually "expected soon" with no anchor</div></div>
+
+  <div class="crit"><div class="top"><h3>3 · Market-cap band</h3><span class="thr">~ $200M – $10B</span></div>
+    <div class="why">Small/mid-cap clinical-stage is the sweet spot: one asset's outcome actually moves the whole company. Large pharma dilutes a single readout into noise; sub-$200M micro-caps bring manipulation, halts, and reverse-split risk.</div>
+    <div class="how"><b>Research:</b> FMP market cap; bias toward single-asset / lead-asset-dominant companies where the catalyst is existential</div></div>
+
+  <div class="crit"><div class="top"><h3>4 · Liquidity</h3><span class="thr">ADV ≥ ~$5–10M · spread tight</span></div>
+    <div class="why">You need to build and exit a one-week position without the spread eating the edge. Avg daily <i>dollar</i> volume, not share volume. Screen out chronic-halt names and anything with a persistently wide bid/ask.</div>
+    <div class="how"><b>Research:</b> FMP quote/volume history (compute 30-day ADV) · check historical halt frequency</div></div>
+
+  <div class="crit"><div class="top"><h3>5 · Single-catalyst attributability</h3><span class="thr">one identifiable driver</span></div>
+    <div class="why">The move must be attributable to ONE event, so the desk's call and the P&amp;L attribution are clean. Names whose price is a muddle of pipeline + financing + partnership noise are hard to model and hard to hedge.</div>
+    <div class="how"><b>Research:</b> map the near-term event calendar; flag names with overlapping catalysts in the same window (ambiguous attribution)</div></div>
+
+  <div class="crit"><div class="top"><h3>6 · Historical binary magnitude</h3><span class="thr">peers move ±30–70% on the event class</span></div>
+    <div class="why">Enough move to clear costs and hit the weekly target, but you must respect that the same magnitude is the downside. This sizes the risk-of-ruin math; it does not justify upsizing.</div>
+    <div class="how"><b>Research:</b> event study — pull the name's (and peers') 1–3 day returns around past readouts of the same type</div></div>
+
+  <div class="crit"><div class="top"><h3>7 · Therapeutic-area spread</h3><span class="thr">diversify across ≥ 4 areas</span></div>
+    <div class="why">A book stacked in one biology (e.g. all oncology) is one scientific surprise away from a correlated drawdown. Spread across oncology, CNS, rare disease, immunology/inflammation, cardio-metabolic.</div>
+    <div class="how"><b>Research:</b> tag each name by lead indication + mechanism; enforce area caps at the portfolio layer</div></div>
+
+  <div class="crit"><div class="top"><h3>8 · Data availability for the desk's tools</h3><span class="thr">on CT.gov + FMP + has FDA history</span></div>
+    <div class="why">If the analysts and quant tools can't get trial design, financials, and regulatory history, the name can't be analyzed rigorously — exclude it. Coverage IS a selection criterion.</div>
+    <div class="how"><b>Research:</b> confirm the ticker resolves on FMP (fundamentals/float/SI) and its trials are on ClinicalTrials.gov with a clean lead-sponsor legal name</div></div>
+
+  <div class="crit"><div class="top"><h3>9 · Cash-runway sanity</h3><span class="thr">runway clears the catalyst (or runway IS the catalyst)</span></div>
+    <div class="why">You want the catalyst — not a surprise dilutive raise or going-concern collapse — to drive the move. Either the company is funded past the event, or the financing risk is itself the thesis and modeled explicitly.</div>
+    <div class="how"><b>Research:</b> FMP cash + quarterly burn → runway in quarters; read the latest 10-Q "going concern" language</div></div>
+
+  <div class="crit"><div class="top"><h3>10 · Optionability (forward-looking)</h3><span class="thr">listed options w/ real OI — nice-to-have</span></div>
+    <div class="why">Not required for the equities-only v1, but names with liquid options give you the implied-move signal for diligence and a path to true put-hedges later. Note it; don't gate on it yet.</div>
+    <div class="how"><b>Research:</b> Polygon options (later) — open interest + implied move around events</div></div>
+
+  <div class="crit"><div class="top"><h3>11 · Tradeable venue</h3><span class="thr">US-listed common (RH-supported)</span></div>
+    <div class="why">Must be executable through the Robinhood equities MCP. US-listed common/ADR only; no OTC/pink, no instruments RH can't trade.</div>
+    <div class="how"><b>Research:</b> confirm exchange listing (NASDAQ/NYSE); exclude OTC tickers</div></div>
+
+  <h2><span class="n">B</span> Hedge-peer criteria — the inverse-payoff screen</h2>
+  <p class="sub">For each core name, you need candidate peers that <b>rise when the target falls on its catalyst</b>. This is the crux of the whole strategy — a long-only hedge only works through competitive displacement.</p>
+
+  <div class="crit crux"><div class="top"><h3>1 · Direct competitive overlap</h3><span class="thr">same indication + patient population</span></div>
+    <div class="why">The peer must compete for the same market. If the target's drug fails, the surviving competitor captures that opportunity → its stock rises. Same indication, ideally same line of therapy and overlapping mechanism-of-action battleground.</div>
+    <div class="how"><b>Research:</b> build the competitive landscape per indication (CT.gov by condition; analyst/industry landscape maps; company "competition" risk-factor sections)</div></div>
+
+  <div class="crit crux"><div class="top"><h3>2 · Conditional INVERSE payoff on THIS catalyst</h3><span class="thr">peer ↑ when target ↓ (event-conditional)</span></div>
+    <div class="why">Not unconditional correlation — the payoff <i>conditional on the specific outcome</i>. Estimate a matrix: target fails → peer +X%; target wins → peer −Y%. If the peer doesn't reliably move opposite on this event type, it provides zero protection.</div>
+    <div class="how"><b>Research:</b> event studies of past head-to-head readouts in the indication (how did the competitor trade on the rival's success/failure?)</div></div>
+
+  <div class="crit crux"><div class="top"><h3>3 · Catalyst-clean over the hold window</h3><span class="thr">NO own catalyst during the ~1-week hold</span></div>
+    <div class="why">The single most important biotech-specific screen. If the peer has its own PDUFA / readout / earnings / AdCom / M&amp;A rumor in the window, its move is driven by its own noise, not the target's event — and your "hedge" becomes a second uncontrolled bet.</div>
+    <div class="how"><b>Research:</b> run the peer through the same catalyst calendar; reject if any event falls in the hold window</div></div>
+
+  <div class="crit crux"><div class="top"><h3>4 · Read-through is opposite, not shared</h3><span class="thr">DISQUALIFY positive class read-through</span></div>
+    <div class="why">The subtle killer. For novel-mechanism or first-in-class assets, a target's <i>success</i> often <b>lifts</b> the whole class (validation read-through) — so the "peer" rises with the target, not against it. Those are not hedges. Only zero-sum competitive relationships (my win = your loss) qualify.</div>
+    <div class="how"><b>Research:</b> ask "if the target succeeds, does this peer go up or down?" — if up, it's disqualified as a hedge (may still be a correlated long, but not protection)</div></div>
+
+  <div class="crit crux"><div class="top"><h3>5 · Cointegration / stable long-run relationship</h3><span class="thr">Engle-Granger / Johansen passes</span></div>
+    <div class="why">For the sector-beta portion of the hedge, the pair should share a real, mean-reverting long-run price relationship — not a spurious correlation that decouples exactly when you need it.</div>
+    <div class="how"><b>Research:</b> the desk's cointegration tool runs this; for your prep, eyeball a multi-year price-ratio chart for stability</div></div>
+
+  <div class="crit crux"><div class="top"><h3>6 · Executable liquidity &amp; size parity</h3><span class="thr">peer ADV supports the hedge leg</span></div>
+    <div class="why">A hedge you can't fill isn't a hedge. The peer must be liquid enough to take the hedge-side size without slippage swamping the protection.</div>
+    <div class="how"><b>Research:</b> FMP ADV on the peer; ensure it clears the same liquidity bar as Screen A</div></div>
+
+  <div class="crit crux"><div class="top"><h3>7 · No confounding shared exposure</h3><span class="thr">not co-dependent on the same third party</span></div>
+    <div class="why">If target and peer both hinge on the same platform, partner, supplier, or regulatory ruling, shared bad news sinks both — the hedge fails on common-mode risk. The relationship must be competitive, not co-dependent.</div>
+    <div class="how"><b>Research:</b> check partnerships, licensors, shared platforms/CDMOs, and whether one AdCom/guidance affects both</div></div>
+
+  <div class="crit crux"><div class="top"><h3>8 · Sufficient historical analog data</h3><span class="thr">enough past co-events to estimate payoff</span></div>
+    <div class="why">The conditional-payoff estimate needs evidence. If there's no history of how the peer moved on comparable rival events, the inverse relationship is a guess — and the desk must fall back, not pretend.</div>
+    <div class="how"><b>Research:</b> collect past analog events into the KB; thin evidence → flag for size-tiny / exit-before-event</div></div>
+
+  <div class="note"><b>Fallback rule (built into the desk):</b> when no peer clears criteria 1–8, the trade is <b>not</b> hedged with a fake peer — it's flagged to <b>size tiny</b> or <b>exit before the event resolves</b>. "No valid hedge" is a valid, expected outcome.</div>
+
+  <h2><span class="n">✕</span> Hard disqualifiers (exclude on sight)</h2>
+  <div class="bad"><h3>OTC / pink-sheet / sub-liquidity</h3><p>Not RH-tradeable at size; manipulation and halt risk. Applies to both screens.</p></div>
+  <div class="bad"><h3>Unverifiable or single-source catalyst date</h3><p>A mis-sourced date is a total loss — the DATA layer excludes it from trading automatically.</p></div>
+  <div class="bad"><h3>Mid-acquisition / active M&amp;A</h3><p>Price is deal-driven, not catalyst-driven; the model doesn't apply.</p></div>
+  <div class="bad"><h3>Going-concern / imminent delisting / reverse-split-prone</h3><p>Financing collapse swamps the catalyst signal (unless runway risk is the explicit thesis).</p></div>
+  <div class="bad"><h3>Hedge peer with positive read-through to the target</h3><p>Rises on the target's success → not a hedge. Disqualified from Screen B (see B-4).</p></div>
+
+  <h2><span class="n">↳</span> Per-name research workflow</h2>
+  <p class="sub">A repeatable pass to run on each candidate — the output populates <code>data/seed_universe.csv</code>, <code>data/ticker_sponsor_map.csv</code>, and the hedge-relationship store.</p>
+  <ul class="src">
+    <li><b>Pipeline &amp; indication</b> — ClinicalTrials.gov (lead asset, phase, indication, dates, exact lead-sponsor legal name)</li>
+    <li><b>Regulatory history</b> — FDA / PDUFA-AdCom trackers (prior CRLs, AdCom outcomes) — curate manually</li>
+    <li><b>Competitive map</b> — who else targets this indication → the hedge-peer candidate set</li>
+    <li><b>Financials</b> — FMP (market cap, ADV, float, short interest, cash + burn → runway)</li>
+    <li><b>Event study</b> — historical peer reactions to comparable readouts (the conditional-payoff evidence)</li>
+    <li><b>Options</b> — Polygon later (OI, implied move) for diligence + future put-hedges</li>
+  </ul>
+
+  <div class="note" style="margin-top:22px">These criteria feed the system directly: Screen A → the universe builder's inclusion thresholds; Screen B → the hedge-relationship sub-store (each peer stored with mechanism + payoff-direction + a citation). Give me your researched names + the competitive relationships and I'll load them into the curated data files.</div>
+
+  <footer>Fund 1 · universe &amp; hedge-peer criteria · thresholds are tunable starting points, calibrate against the backtest</footer>
+</div>
