@@ -37,7 +37,7 @@ Decimal phases appear between their surrounding integers in numeric order.
   4. The ~20-name universe is assembled point-in-time from explicit criteria (catalyst density, market cap, liquidity, therapeutic area) and includes delisted names for later backtesting
   5. The user can inject an ad-hoc catalyst (ticker + type + date/window) and it flows through the same verification rules
 **Plans**: 6 plans (4 waves)
-- [ ] 01-01-PLAN.md — Project skeleton, SQLite schema, pydantic models, live fixtures (Wave 1)
+- [x] 01-01-PLAN.md — Project skeleton, SQLite schema, pydantic models, live fixtures (Wave 1)
 - [ ] 01-02-PLAN.md — Money-critical date-precision + uncertainty classifier, TDD (Wave 2)
 - [ ] 01-03-PLAN.md — CT.gov v2 + FMP earnings providers with attached provenance (Wave 3)
 - [ ] 01-04-PLAN.md — Atomic write-path, two-source verify gate, curated PDUFA loader, ad-hoc CLI (Wave 3)
