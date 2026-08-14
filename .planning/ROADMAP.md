@@ -69,7 +69,15 @@ Decimal phases appear between their surrounding integers in numeric order.
   2. Every tool output records the exact inputs used (reproducible and auditable), and every tool ships with an exhaustive edge-case test suite written before its logic (TDD)
   3. A biotech-adapted scoring rubric (rNPV + cash runway + trial design + endpoint credibility + regulatory precedent + pipeline concentration + management + commercial) exists as tunable config the learning loop can later adjust
   4. A clinical base-rate table (phase-transition LoA by phase/indication, prior-CRL penalty, AdCom follow-through) is loaded and citable by agents as data
-**Plans**: TBD
+**Plans**: 8 plans (3 waves)
+- [ ] 03-01-PLAN.md — Dependency (statsmodels) + ToolResult reproducibility contract (Wave 1)
+- [ ] 03-02-PLAN.md — Valuation: rNPV + cash-runway, TDD (Wave 2)
+- [ ] 03-03-PLAN.md — Sizing: Kelly/fractional-Kelly/risk-of-ruin/SL-TP, TDD (Wave 2)
+- [ ] 03-04-PLAN.md — Pairs: cointegration (statsmodels) + correlation/β + conditional-payoff, TDD (Wave 2)
+- [ ] 03-05-PLAN.md — Options (implied-move/IV-crush) + Portfolio (concentration/exposure), TDD (Wave 2)
+- [ ] 03-06-PLAN.md — Performance: Sharpe/Sortino/returns/attribution (explicit periods_per_year), TDD (Wave 2)
+- [ ] 03-07-PLAN.md — Rubric (tunable JSON) + clinical base-rate table (cited CSV), TDD (Wave 2)
+- [ ] 03-08-PLAN.md — Wire import surface + library-wide inputs-snapshot invariant + coverage gate + phase report/TOKEN-NOTES (Wave 3)
 
 ### Phase 4: Analyst Desk + Bull/Bear Debate (Workflow 1a)
 **Goal**: For a flagged catalyst, produce a binary directional verdict with calibrated confidence and explicit kill criteria — pure prediction, no positioning.
