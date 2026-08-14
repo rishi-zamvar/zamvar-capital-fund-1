@@ -1,0 +1,36 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "catalyst-trader"
+version = "0.1.0"
+description = "Zamvar Capital Fund 1 — provenance-enforced catalyst calendar and point-in-time universe."
+requires-python = ">=3.10"
+dependencies = [
+    "httpx==0.28.1",
+    "pydantic==2.13.4",
+    "pydantic-settings>=2,<3",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest==9.1.1",
+    "pytest-httpx==0.36.2",
+    "freezegun==1.5.5",
+    "pytest-cov",
+    "ruff",
+]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+catalyst_trader = ["migrations/*.sql"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-ra"
+
+[tool.ruff]
+line-length = 100
