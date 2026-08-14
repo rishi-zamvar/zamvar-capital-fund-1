@@ -139,8 +139,9 @@ def active_agent():
     for f in outs[:8]:
         ev = tail_events(f, n=1)
         if ev:
-            age = time.time() - os.path.getmtime(f)
-            return {"active": age < 25, "age": int(age), "last": ev[-1]["s"]}
+            mt = os.path.getmtime(f)
+            age = time.time() - mt
+            return {"active": age < 25, "age": int(age), "mtime": mt, "last": ev[-1]["s"]}
     return None
 
 
@@ -163,9 +164,44 @@ def session_jsonl():
     return max(files, key=os.path.getmtime) if files else None
 
 
+def _phase_dir(num):
+    try:
+        padded = f"{int(float(num)):02d}"
+    except Exception:
+        padded = str(num)
+    hits = glob.glob(os.path.join(ROOT, f".planning/phases/{padded}-*/"))
+    return hits[0] if hits else None
+
+
+def _est_total(n_plans):
+    # research + plan + plan_check + verify + revision buffer + plans*executor
+    return 1590 + 350 + max(1, n_plans) * STAGE_SECS["executor"]
+
+
+def phase_eta(p):
+    d = _phase_dir(p["n"])
+    st = p["status"]
+    mt, plans = [], 5
+    if d:
+        md = glob.glob(os.path.join(d, "*.md"))
+        mt = [os.path.getmtime(f) for f in md]
+        plans = len(glob.glob(os.path.join(d, "*-PLAN.md"))) or 5
+    if st == "complete" and mt:
+        return {"kind": "done", "secs": int(max(mt) - min(mt))}
+    if st == "in_progress" and mt:
+        elapsed = time.time() - min(mt)
+        return {"kind": "running", "secs": max(0, int(_est_total(plans) - elapsed)), "elapsed": int(elapsed)}
+    return {"kind": "est", "secs": _est_total(plans)}
+
+
 def sample():
     g = git_state()
     ph = roadmap_phases()
+    for p in ph:
+        try:
+            p["eta"] = phase_eta(p)
+        except Exception:
+            p["eta"] = {"kind": "est", "secs": 0}
     cp = current_phase()
     done = sum(1 for p in ph if p["status"] == "complete")
     sess = session_jsonl()
@@ -264,6 +300,8 @@ h1{font-size:19px;margin:0;letter-spacing:.02em}
 #feed{height:340px;overflow-y:auto;background:#0c0f0b;border:1px solid var(--bd);border-radius:7px;padding:10px;font-size:12px;line-height:1.5}
 .fi{padding:2px 0;white-space:pre-wrap;word-break:break-word}
 .fi.tool{color:var(--blue)} .fi.text{color:var(--ink)}
+.ts{color:var(--faint);font-size:11px}
+.petastr{color:var(--faint);font-size:11px}
 .fi b{color:var(--gold);font-weight:600}
 .agent{font-size:12px;color:var(--mut);margin-bottom:8px}
 .agent .run{color:var(--grn)} .agent .idle{color:var(--faint)}
@@ -276,7 +314,9 @@ h1{font-size:19px;margin:0;letter-spacing:.02em}
 <div class="top">
   <div><div class="ey">zamvar capital · live build monitor</div><h1>Fund 1 — Autonomous Build</h1></div>
   <div class="clk"><div><span class="dot" id="dot"></span><span id="conn">connecting…</span></div>
-  <div id="now" style="margin-top:5px"></div></div>
+  <div id="now" style="margin-top:5px"></div>
+  <div id="lastact" style="margin-top:2px"></div>
+  <div id="lastcommit"></div></div>
 </div>
 <div class="tiles">
   <div class="tile"><div class="k">Phases</div><div class="v"><span id="tph">–</span><small id="tpht">/11</small></div></div>
@@ -308,6 +348,9 @@ h1{font-size:19px;margin:0;letter-spacing:.02em}
 var esc=function(s){return (s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;")};
 function fmtAge(sec){if(sec<60)return sec+"s";var m=(sec/60)|0;if(m<60)return m+"m "+(sec%60)+"s";return ((m/60)|0)+"h "+(m%60)+"m"}
 function fmtEta(sec){if(sec<=0)return "~done";var m=Math.ceil(sec/60);if(m<60)return "~"+m+"m";return "~"+((m/60)|0)+"h "+(m%60)+"m"}
+function fmtDur(sec){var m=Math.round(sec/60);if(m<60)return m+"m";return ((m/60)|0)+"h "+(m%60)+"m"}
+function hhmmss(ts){if(!ts)return "";var dt=new Date(ts);return isNaN(dt)?"":dt.toLocaleTimeString([], {hour12:false})}
+function phaseEta(e){if(!e)return "";if(e.kind=="done")return "took "+fmtDur(e.secs);if(e.kind=="running")return fmtEta(e.secs)+" left";return "est "+fmtDur(e.secs)}
 function render(d){
   if(!d||!d.ok){document.getElementById("conn").textContent="waiting…";return}
   document.getElementById("conn").textContent="live";
@@ -321,7 +364,16 @@ function render(d){
   var stale=age>900;
   document.getElementById("tage").textContent=fmtAge(age);
   document.getElementById("tage").style.color=stale?"var(--red)":"var(--ink)";
-  document.getElementById("dot").className="dot"+(stale?" warn":"");
+  // absolute timestamps
+  var a=d.agent||{};
+  var lastAct=Math.max(d.git.last_epoch||0, a.mtime||0);
+  document.getElementById("lastcommit").textContent="last commit "+(d.git.last_epoch?new Date(d.git.last_epoch*1000).toLocaleTimeString([],{hour12:false})+" ("+fmtAge(age)+" ago)":"–");
+  var actAge=lastAct?Math.floor(now-lastAct):age;
+  document.getElementById("lastact").textContent="last activity "+(lastAct?new Date(lastAct*1000).toLocaleTimeString([],{hour12:false})+" ("+fmtAge(actAge)+" ago)":"–");
+  // smarter stall signal: agent actively writing = working (even between commits)
+  var working=a.active, warn=!working && actAge>600;
+  document.getElementById("dot").className="dot"+(warn?" warn":"");
+  document.getElementById("conn").textContent=working?"agent working":(warn?"idle "+fmtAge(actAge)+" — check for stall":"live");
   // current phase
   var c=d.current;
   if(c){
@@ -338,12 +390,16 @@ function render(d){
   document.getElementById("agent").innerHTML=ah;
   // phases
   var ph="";(d.phases||[]).forEach(function(p){
-    ph+='<div class="phase"><span class="pn">'+p.n+'</span><span>'+esc(p.name)+'</span><span class="badge b-'+p.status+'">'+p.status.replace("_"," ")+'</span></div>'});
+    var eta=phaseEta(p.eta);
+    ph+='<div class="phase"><span class="pn">'+p.n+'</span><span>'+esc(p.name)+
+        '<span class="petastr"> · '+eta+'</span></span>'+
+        '<span class="badge b-'+p.status+'">'+p.status.replace("_"," ")+'</span></div>'});
   document.getElementById("phases").innerHTML=ph;
-  // feed
+  // feed (with timestamps)
   var f="";(d.feed||[]).forEach(function(x){
+    var t=hhmmss(x.ts);var tp=t?'<span class="ts">'+t+'</span> ':'';
     var s=x.k=="tool"?"🔧 "+esc(x.s):"💬 "+esc(x.s);
-    f+='<div class="fi '+x.k+'">'+s+'</div>'});
+    f+='<div class="fi '+x.k+'">'+tp+s+'</div>'});
   var fe=document.getElementById("feed");var atBottom=fe.scrollHeight-fe.scrollTop-fe.clientHeight<40;
   fe.innerHTML=f;if(atBottom)fe.scrollTop=fe.scrollHeight;
   // commits
