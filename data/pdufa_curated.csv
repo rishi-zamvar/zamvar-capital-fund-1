@@ -1,0 +1,15 @@
+ticker,catalyst_type,event_date,source_name,source_url,source_type
+# ---------------------------------------------------------------------------
+# Hand-curated PDUFA / AdCom table (DATA-01). No clean free API exists for these
+# dates, so they are entered BY HAND from a named source and MUST carry a
+# source_url. Every row enters the same verify pipeline as automated feeds and
+# starts UNVERIFIED — a hand-typed date needs a 2nd (ideally primary) source to
+# become tradeable. catalyst_type is one of: pdufa, adcom.
+#
+# The two example rows below are COMMENTED-OUT PLACEHOLDERS ONLY. Do NOT trade
+# them. Real, source-confirmed rows are filled in during the Plan 06 curation
+# checkpoint — the executor must never invent a PDUFA date from memory.
+#
+# EXAMPLE (replace in Plan 06):
+# ACME,pdufa,2026-12-31,FDA Prescription-Drug-User-Fee target,https://www.fda.gov/REPLACE-with-real-source,primary
+# ACME,adcom,2026-11-15,Company IR press release,https://ir.example.com/REPLACE-with-real-source,secondary
