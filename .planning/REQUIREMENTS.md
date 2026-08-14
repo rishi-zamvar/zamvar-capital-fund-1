@@ -121,13 +121,70 @@
 
 ## Traceability
 
-Populated during roadmap creation.
+| Requirement | Phase | Status |
+|-------------|-------|--------|
+| DATA-01 | Phase 1 | Pending |
+| DATA-02 | Phase 1 | Pending |
+| DATA-03 | Phase 1 | Pending |
+| DATA-04 | Phase 1 | Pending |
+| DATA-05 | Phase 1 | Pending |
+| DATA-06 | Phase 1 | Pending |
+| KB-01 | Phase 2 | Pending |
+| KB-02 | Phase 2 | Pending |
+| KB-03 | Phase 2 | Pending |
+| KB-04 | Phase 2 | Pending |
+| KB-05 | Phase 2 | Pending |
+| QUANT-01 | Phase 3 | Pending |
+| QUANT-02 | Phase 3 | Pending |
+| QUANT-03 | Phase 3 | Pending |
+| FRAME-01 | Phase 3 | Pending |
+| FRAME-02 | Phase 3 | Pending |
+| FRAME-03 | Phase 3 | Pending |
+| OPS-04 | Phase 3 | Pending |
+| CALL-01 | Phase 4 | Pending |
+| CALL-02 | Phase 4 | Pending |
+| CALL-03 | Phase 4 | Pending |
+| CALL-04 | Phase 4 | Pending |
+| PORT-01 | Phase 5 | Pending |
+| PORT-02 | Phase 5 | Pending |
+| PORT-03 | Phase 5 | Pending |
+| PORT-04 | Phase 5 | Pending |
+| PORT-05 | Phase 5 | Pending |
+| HEDGE-01 | Phase 5 | Pending |
+| HEDGE-02 | Phase 5 | Pending |
+| HEDGE-03 | Phase 5 | Pending |
+| HEDGE-04 | Phase 5 | Pending |
+| HEDGE-05 | Phase 5 | Pending |
+| OPS-01 | Phase 5 | Pending |
+| OPS-02 | Phase 5 | Pending |
+| DILIG-01 | Phase 6 | Pending |
+| DILIG-02 | Phase 6 | Pending |
+| DILIG-03 | Phase 6 | Pending |
+| BACK-01 | Phase 7 | Pending |
+| BACK-02 | Phase 7 | Pending |
+| BACK-03 | Phase 7 | Pending |
+| BACK-04 | Phase 7 | Pending |
+| BACK-05 | Phase 7 | Pending |
+| OPS-03 | Phase 7 | Pending |
+| EXEC-01 | Phase 8 | Pending |
+| EXEC-02 | Phase 8 | Pending |
+| LEARN-03 | Phase 8 | Pending |
+| IOS-01 | Phase 9 | Pending |
+| IOS-02 | Phase 9 | Pending |
+| IOS-03 | Phase 9 | Pending |
+| IOS-04 | Phase 9 | Pending |
+| IOS-05 | Phase 9 | Pending |
+| IOS-06 | Phase 9 | Pending |
+| LEARN-01 | Phase 10 | Pending |
+| LEARN-02 | Phase 10 | Pending |
+| EXEC-03 | Phase 11 | Pending |
+| EXEC-04 | Phase 11 | Pending |
 
 **Coverage:**
-- v1 requirements: 48 total
-- Mapped to phases: (roadmapper fills)
-- Unmapped: (roadmapper fills)
+- v1 requirements: 56 total
+- Mapped to phases: 56
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-08-14*
-*Last updated: 2026-08-14 after initial definition*
+*Last updated: 2026-08-14 after roadmap creation (traceability populated)*

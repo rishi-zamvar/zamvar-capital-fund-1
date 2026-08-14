@@ -1,4 +1,6 @@
-# catalyst-trader
+# Zamvar Capital — Fund 1
+
+<sub>codename: catalyst-trader · repo: zamvar-capital-fund-1</sub>
 
 ## What This Is
 
