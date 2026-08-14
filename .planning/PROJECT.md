@@ -86,6 +86,7 @@ Given an imminent biotech catalyst, produce a data-backed, portfolio-aware, hedg
 - **Human gate**: no live trade without explicit user approval; DD pipeline is a hard prerequisite to going live.
 - **Paper-first**: 1 month simulated before any real capital.
 - **Domain risk**: money-touching + biotech binary events — full rigor (research + plan-check + verifier) is on.
+- **Simplicity + readability**: production-ready, but the simplest codebase that works — the user must be able to read and understand it end-to-end. Efficient, minimal dependencies, boring over clever. This never comes at the cost of insight quality: simplify the code, not the analysis.
 
 ## Key Decisions
 
