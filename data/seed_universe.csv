@@ -1,0 +1,21 @@
+ticker,company_name,market_cap,adv_usd,therapeutic_area,delisted
+# ---------------------------------------------------------------------------
+# Curated seed universe (DATA-06). The universe builder scores each name on
+# catalyst density (from the catalyst table), market cap, liquidity (ADV $), and
+# therapeutic area, then writes an append-only point-in-time snapshot.
+#
+# STARTER TEMPLATE — REQUIRES HUMAN CURATION (Plan 06 curation checkpoint).
+# The two rows below are labelled EXAMPLES so the pipeline runs end-to-end. Their
+# market_cap / adv_usd are APPROXIMATE placeholders pending FMP-live enrichment
+# (a documented follow-up, not this phase) — do NOT treat them as exact figures.
+# ticker / company_name / therapeutic_area are public facts and are correct.
+#
+# TO CURATE: add ~20-30 real life-science/biotech tickers with known upcoming
+# catalysts (seed by hand from a free source such as BiopharmaWatch's 2026 PDUFA
+# calendar). Fill market_cap, adv_usd, therapeutic_area from FMP. Include a few
+# delisted names (delisted=1) for backtest realism — the builder retains them.
+# Columns: ticker,company_name,market_cap(USD),adv_usd(USD avg daily $ vol),
+#          therapeutic_area,delisted(0/1). Quote any field containing a comma.
+# ---------------------------------------------------------------------------
+VRTX,Vertex Pharmaceuticals Incorporated,120000000000,500000000,Cystic Fibrosis,0
+REGN,Regeneron Pharmaceuticals Inc,70000000000,400000000,Immunology,0
