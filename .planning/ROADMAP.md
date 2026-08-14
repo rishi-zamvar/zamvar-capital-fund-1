@@ -58,7 +58,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] 02-01-PLAN.md — sqlite-vec + migration 003 (kb_node/kb_edge/kb_vec) + deterministic embedder (Wave 1)
 - [x] 02-02-PLAN.md — Six pydantic inter-layer contracts with strict boundary rejection (Wave 1)
 - [x] 02-03-PLAN.md — Provenance-enforced atomic KB claim write-path (Wave 2)
-- [ ] 02-04-PLAN.md — Analog query + hedge sub-store + playbook store (Wave 3)
+- [x] 02-04-PLAN.md — Analog query + hedge sub-store + playbook store (Wave 3)
 
 ### Phase 3: Quant Tool Library + Rubric & Base-Rates
 **Goal**: Agents never do money arithmetic — they call deterministic, reproducible, exhaustively-tested tools and interpret the output against a concrete rubric.

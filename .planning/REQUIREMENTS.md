@@ -18,9 +18,9 @@
 
 - [x] **KB-01**: SQLite graph-shaped store + sqlite-vec for playbooks, memory, base rates, analogs
 - [x] **KB-02**: Every stored claim carries a citation edge; writes without provenance are rejected
-- [ ] **KB-03**: Analog query returns nearest past scenarios ("similar situations") with outcomes
-- [ ] **KB-04**: Hedge-relationship sub-store: per universe name, candidate inverse-hedge peers + mechanism + payoff-direction + citation
-- [ ] **KB-05**: Playbook entries are readable/queryable and surface their confidence
+- [x] **KB-03**: Analog query returns nearest past scenarios ("similar situations") with outcomes
+- [x] **KB-04**: Hedge-relationship sub-store: per universe name, candidate inverse-hedge peers + mechanism + payoff-direction + citation
+- [x] **KB-05**: Playbook entries are readable/queryable and surface their confidence
 
 ### Fundamental Framework & Base Rates (FRAME)
 
@@ -131,9 +131,9 @@
 | DATA-06 | Phase 1 | Complete |
 | KB-01 | Phase 2 | Complete |
 | KB-02 | Phase 2 | Complete |
-| KB-03 | Phase 2 | Pending |
-| KB-04 | Phase 2 | Pending |
-| KB-05 | Phase 2 | Pending |
+| KB-03 | Phase 2 | Complete |
+| KB-04 | Phase 2 | Complete |
+| KB-05 | Phase 2 | Complete |
 | QUANT-01 | Phase 3 | Pending |
 | QUANT-02 | Phase 3 | Pending |
 | QUANT-03 | Phase 3 | Pending |
