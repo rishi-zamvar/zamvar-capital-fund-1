@@ -41,9 +41,11 @@ def test_parse_precision_raises_on_malformed_never_defaults(raw):
 
 
 def test_parse_precision_returns_enum_not_datetime():
+    import datetime
+
     result = parse_precision("2027-04")
     assert isinstance(result, DatePrecision)
-    assert not hasattr(result, "day")  # not a datetime.date
+    assert not isinstance(result, (datetime.date, datetime.datetime))  # never a coerced date
 
 
 def test_parse_precision_does_not_coerce_partial_to_day():
