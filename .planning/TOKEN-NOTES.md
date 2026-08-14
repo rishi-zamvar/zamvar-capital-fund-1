@@ -30,10 +30,12 @@
 | Planner | 139,062 |
 | Plan-checker | 122,844 |
 | Revision planner | 112,211 |
-| Plan-checker (re-check) | (pending) |
+| Plan-checker (re-check) | 119,586 |
 | Execution + verify | (pending) |
 
-**Cumulative (measured, so far): ~902,656 subagent tokens**
+**Cumulative (measured, so far): ~1,022,242 subagent tokens**
+
+> Planning round-trip for Phase 1 (research→plan→check→revise→re-check) = ~603k tokens. Lever for future phases: the plan-check found a real blocker so the round-trip earned its cost, but graphify (Phase 2+) + narrower per-phase research should cut the research/plan legs materially.
 
 ## Per-Phase Retrospective (filled at each phase close)
 
