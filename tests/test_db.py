@@ -24,16 +24,18 @@ def test_migrate_creates_all_four_tables():
     assert {"catalyst", "catalyst_source", "universe_snapshot", "schema_version"} <= names
 
 
-def test_migrate_records_version_one():
+def test_migrate_records_latest_version():
     conn = _fresh()
-    assert conn.execute("SELECT max(version) AS v FROM schema_version").fetchone()["v"] == 1
+    latest = db._pending()[-1][0]  # highest numbered migration on disk
+    assert conn.execute("SELECT max(version) AS v FROM schema_version").fetchone()["v"] == latest
 
 
 def test_migrate_is_idempotent():
     conn = _fresh()
+    latest = db._pending()[-1][0]
     db.migrate(conn)  # second run must not error or re-apply
     db.migrate(conn)
-    assert conn.execute("SELECT max(version) AS v FROM schema_version").fetchone()["v"] == 1
+    assert conn.execute("SELECT max(version) AS v FROM schema_version").fetchone()["v"] == latest
 
 
 def test_catalyst_type_check_constraint():
