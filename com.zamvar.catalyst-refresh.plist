@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+  launchd LaunchAgent — runs the idempotent daily catalyst refresh.
+
+  This file ships with __REPO_ROOT__ placeholders and is NOT auto-loaded: a stray
+  daily job hitting live APIs during development is undesirable, so installation is
+  a deliberate user step.
+
+  Install (substitute the repo's absolute path, then load):
+
+    REPO="$(pwd)"                          # from the repo root
+    mkdir -p "$REPO/logs"
+    sed "s#__REPO_ROOT__#$REPO#g" com.zamvar.catalyst-refresh.plist \
+      > ~/Library/LaunchAgents/com.zamvar.catalyst-refresh.plist
+    launchctl load ~/Library/LaunchAgents/com.zamvar.catalyst-refresh.plist
+
+  Uninstall:
+
+    launchctl unload ~/Library/LaunchAgents/com.zamvar.catalyst-refresh.plist
+-->
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>com.zamvar.catalyst-refresh</string>
+
+    <key>ProgramArguments</key>
+    <array>
+        <string>__REPO_ROOT__/.venv/bin/python</string>
+        <string>-m</string>
+        <string>catalyst_trader.calendar.refresh</string>
+    </array>
+
+    <key>WorkingDirectory</key>
+    <string>__REPO_ROOT__</string>
+
+    <!-- Daily at 07:30 local. Daily resolution is sufficient: the trigger window
+         is 1-2 days and holds are one week, so a daily sample catches T-2/T-1. -->
+    <key>StartCalendarInterval</key>
+    <dict>
+        <key>Hour</key>
+        <integer>7</integer>
+        <key>Minute</key>
+        <integer>30</integer>
+    </dict>
+
+    <!-- Do not fire on load: installation is a user step, not an immediate run. -->
+    <key>RunAtLoad</key>
+    <false/>
+
+    <key>StandardOutPath</key>
+    <string>__REPO_ROOT__/logs/catalyst-refresh.out.log</string>
+    <key>StandardErrorPath</key>
+    <string>__REPO_ROOT__/logs/catalyst-refresh.err.log</string>
+</dict>
+</plist>
