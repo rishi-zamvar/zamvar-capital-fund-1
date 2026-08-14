@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Completed 01-03-PLAN.md
-last_updated: "2026-08-14T19:47:57.034Z"
+stopped_at: Completed 01-04-PLAN.md
+last_updated: "2026-08-14T19:55:50.566Z"
 last_activity: 2026-08-14
 progress:
   total_phases: 11
   completed_phases: 0
   total_plans: 6
-  completed_plans: 3
+  completed_plans: 4
   percent: 0
 ---
 
@@ -26,7 +26,7 @@ See: .planning/PROJECT.md (updated 2026-08-14)
 ## Current Position
 
 Phase: 1 (Data Integrity & Catalyst Feed) — EXECUTING
-Plan: 4 of 6
+Plan: 5 of 6
 Status: Ready to execute
 Last activity: 2026-08-14
 
@@ -55,6 +55,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 01 P01 | 5 | 3 tasks | 15 files |
 | Phase 01 P02 | 5 | 2 tasks | 2 files |
 | Phase 01-data-integrity-catalyst-feed P03 | 5min | 2 tasks | 7 files |
+| Phase 01-data-integrity-catalyst-feed P04 | 10min | 3 tasks tasks | 8 files files |
 
 ## Accumulated Context
 
@@ -71,6 +72,8 @@ Recent decisions affecting current work:
 - [Phase 01]: Partial dates (YYYY-MM/YYYY) are ALWAYS window; firm is structurally unreachable from a partial date (DATA-04 classifier)
 - [Phase 01-data-integrity-catalyst-feed]: [Phase 01]: Providers attach provenance at the boundary (Pattern 1) — every date leaves a provider inside a CatalystSource; no bare/LLM-sourced dates (DATA-01)
 - [Phase 01-data-integrity-catalyst-feed]: [Phase 01]: FMP 'confirmed' expressed via CatalystSource.date_type=actual (no new field); CT.gov attribution by curated exact lead-sponsor name (DATA-04)
+- [Phase 01-data-integrity-catalyst-feed]: Atomic write-path (store.insert_catalyst) is the physical no-LLM-date enforcement: catalyst+sources in one transaction, rollback on failure, sourceless rejected
+- [Phase 01-data-integrity-catalyst-feed]: Single tradeable gate: is_tradeable(c)=status=='verified'; all origins (provider/curated/ad-hoc) flow through the same insert->verify pipeline, no bypass
 
 ### Pending Todos
 
@@ -84,6 +87,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-08-14T19:47:48.496Z
-Stopped at: Completed 01-03-PLAN.md
+Last session: 2026-08-14T19:55:43.576Z
+Stopped at: Completed 01-04-PLAN.md
 Resume file: None

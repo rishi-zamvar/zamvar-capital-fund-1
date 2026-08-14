@@ -8,7 +8,7 @@
 ### Data Integrity & Catalyst Feed (DATA)
 
 - [x] **DATA-01**: System maintains a rolling catalyst calendar (PDUFA/AdCom curated, clinical-trial readouts via ClinicalTrials.gov v2, conferences, earnings) for the covered universe
-- [ ] **DATA-02**: User can inject an ad-hoc catalyst (ticker + type + date/window)
+- [x] **DATA-02**: User can inject an ad-hoc catalyst (ticker + type + date/window)
 - [ ] **DATA-03**: Every catalyst date is verified by a two-source rule and re-verified 48h before the event; unverifiable dates are flagged, never traded
 - [x] **DATA-04**: Catalyst dates are typed as point-estimate vs. window, with uncertainty carried downstream
 - [ ] **DATA-05**: System flags catalysts 1–2 days out and triggers Workflow 1
@@ -124,7 +124,7 @@
 | Requirement | Phase | Status |
 |-------------|-------|--------|
 | DATA-01 | Phase 1 | Complete |
-| DATA-02 | Phase 1 | Pending |
+| DATA-02 | Phase 1 | Complete |
 | DATA-03 | Phase 1 | Pending |
 | DATA-04 | Phase 1 | Complete |
 | DATA-05 | Phase 1 | Pending |
