@@ -96,9 +96,11 @@ def test_refresh_is_idempotent(db, tmp_path):
     csv = _curated_csv(tmp_path)
     with freeze_time("2026-08-14T12:00:00Z"):
         now = datetime.now(timezone.utc)
-        refresh.refresh(db, ["VRTX", "SRPT"], now=now, ct_fetch=ct, fmp_fetch=fm, pdufa_csv=csv)
+        refresh.refresh(db, ["VRTX", "SRPT"], now=now, ct_fetch=ct, fmp_fetch=fm,
+                        pdufa_csv=csv, fmp_enabled=True)
         first = _count(db)
-        refresh.refresh(db, ["VRTX", "SRPT"], now=now, ct_fetch=ct, fmp_fetch=fm, pdufa_csv=csv)
+        refresh.refresh(db, ["VRTX", "SRPT"], now=now, ct_fetch=ct, fmp_fetch=fm,
+                        pdufa_csv=csv, fmp_enabled=True)
         second = _count(db)
     assert first == 3  # 1 CT + 1 FMP + 1 curated
     assert second == first  # re-run produces no duplicate rows

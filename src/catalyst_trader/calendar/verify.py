@@ -103,9 +103,11 @@ def load_curated_pdufa(conn: sqlite3.Connection, csv_path: str) -> list[int]:
             date_type=DateType.estimated,
             retrieved_at=now,
         )
+        ticker = row["ticker"].strip()
+        catalyst_type = row["catalyst_type"].strip()
         catalyst = Catalyst(
-            ticker=row["ticker"].strip(),
-            catalyst_type=CatalystType(row["catalyst_type"].strip()),
+            ticker=ticker,
+            catalyst_type=CatalystType(catalyst_type),
             event_date=event_date,
             date_precision=parse_precision(event_date),
             uncertainty_type=classify(
@@ -113,6 +115,9 @@ def load_curated_pdufa(conn: sqlite3.Connection, csv_path: str) -> list[int]:
                 has_primary=(source_type == SourceType.primary),
             ),
             source_origin=SourceOrigin.curated_pdufa,
+            # Deterministic external_ref so a daily re-run dedups the curated rows
+            # (they have no NCTId/symbol of their own) instead of duplicating them.
+            external_ref=f"curated:{ticker}:{catalyst_type}:{event_date}",
             status=Status.unverified,
             sources=[source],
         )
