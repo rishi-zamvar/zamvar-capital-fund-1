@@ -7,6 +7,7 @@ import pytest
 from freezegun import freeze_time
 
 from catalyst_trader import db as _db
+from catalyst_trader import kb as _kb
 
 FIXTURES = Path(__file__).parent / "fixtures"
 
@@ -29,6 +30,12 @@ def load_fixture():
         return json.loads(path.read_text())
 
     return _load
+
+
+@pytest.fixture
+def embed():
+    """Return the deterministic offline hash embedder shared across KB tests."""
+    return _kb.hash_embed
 
 
 @pytest.fixture
