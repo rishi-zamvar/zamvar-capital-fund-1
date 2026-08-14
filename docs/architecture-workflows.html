@@ -1,0 +1,751 @@
+<title>Catalyst Desk Architecture</title>
+<style>
+  :root {
+    --bg: #ecefe9;
+    --surface: #ffffff;
+    --surface-2: #f5f7f2;
+    --ink: #191c18;
+    --muted: #5f655c;
+    --faint: #99a094;
+    --border: #d6dbcf;
+    --border-strong: #c2c8b8;
+    --accent: #8a6a12;      /* brass — the firm / GP / MD */
+    --accent-bg: #f3ecd8;
+    --bull: #1f7a4d;        /* positive / bull */
+    --bull-bg: #e4f2e9;
+    --bear: #b23b30;        /* negative / bear */
+    --bear-bg: #f6e5e3;
+    --tool: #2b6a93;        /* deterministic tools / data feeds */
+    --tool-bg: #e2edf4;
+    --monitor: #6b4bc0;     /* monitors / guardrails */
+    --monitor-bg: #ece5f7;
+    --kb: #147a72;          /* knowledge base */
+    --kb-bg: #dff1ef;
+    --shadow: 0 1px 2px rgba(20,25,18,.06), 0 4px 14px rgba(20,25,18,.05);
+    --font-mono: ui-monospace, "SF Mono", "JetBrains Mono", Menlo, Consolas, monospace;
+    --font-sans: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, sans-serif;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #101310;
+      --surface: #191d18;
+      --surface-2: #20241e;
+      --ink: #e8ece4;
+      --muted: #9aa192;
+      --faint: #6b7365;
+      --border: #2c322a;
+      --border-strong: #3a4136;
+      --accent: #d8b45a;
+      --accent-bg: #2a2412;
+      --bull: #4cc585;
+      --bull-bg: #14271c;
+      --bear: #ef7365;
+      --bear-bg: #2c1714;
+      --tool: #6bb3e6;
+      --tool-bg: #122430;
+      --monitor: #b39cf0;
+      --monitor-bg: #201933;
+      --kb: #4fc9c0;
+      --kb-bg: #0f2725;
+      --shadow: 0 1px 2px rgba(0,0,0,.4), 0 6px 18px rgba(0,0,0,.35);
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #101310;
+    --surface: #191d18;
+    --surface-2: #20241e;
+    --ink: #e8ece4;
+    --muted: #9aa192;
+    --faint: #6b7365;
+    --border: #2c322a;
+    --border-strong: #3a4136;
+    --accent: #d8b45a;
+    --accent-bg: #2a2412;
+    --bull: #4cc585;
+    --bull-bg: #14271c;
+    --bear: #ef7365;
+    --bear-bg: #2c1714;
+    --tool: #6bb3e6;
+    --tool-bg: #122430;
+    --monitor: #b39cf0;
+    --monitor-bg: #201933;
+    --kb: #4fc9c0;
+    --kb-bg: #0f2725;
+    --shadow: 0 1px 2px rgba(0,0,0,.4), 0 6px 18px rgba(0,0,0,.35);
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: var(--font-sans);
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap { max-width: 1140px; margin: 0 auto; padding: 40px 24px 80px; }
+
+  /* ---- header ---- */
+  header.masthead { border-bottom: 2px solid var(--ink); padding-bottom: 20px; margin-bottom: 8px; }
+  .eyebrow {
+    font-family: var(--font-mono); font-size: 12px; letter-spacing: .18em;
+    text-transform: uppercase; color: var(--accent); font-weight: 600;
+  }
+  h1 {
+    font-family: var(--font-mono); font-weight: 700; font-size: clamp(28px, 5vw, 44px);
+    line-height: 1.05; margin: 10px 0 6px; letter-spacing: -.01em; text-wrap: balance;
+  }
+  .sub { color: var(--muted); font-size: 16px; max-width: 68ch; margin: 0; }
+  .topline { display: flex; justify-content: space-between; align-items: flex-start; gap: 20px; flex-wrap: wrap; }
+  .toggle {
+    font-family: var(--font-mono); font-size: 12px; letter-spacing: .05em;
+    background: var(--surface); color: var(--muted); border: 1px solid var(--border-strong);
+    border-radius: 6px; padding: 7px 11px; cursor: pointer; white-space: nowrap;
+  }
+  .toggle:hover { color: var(--ink); border-color: var(--ink); }
+  .toggle:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+  /* ---- legend ---- */
+  .legend {
+    display: flex; flex-wrap: wrap; gap: 8px 18px; margin: 22px 0 40px;
+    padding: 14px 16px; background: var(--surface); border: 1px solid var(--border);
+    border-radius: 10px;
+  }
+  .legend .li { display: inline-flex; align-items: center; gap: 7px; font-family: var(--font-mono); font-size: 12px; color: var(--muted); }
+  .swatch { width: 13px; height: 13px; border-radius: 3px; border: 1.5px solid; flex: none; }
+  .sw-agent { background: var(--surface-2); border-color: var(--faint); }
+  .sw-firm { background: var(--accent-bg); border-color: var(--accent); }
+  .sw-bull { background: var(--bull-bg); border-color: var(--bull); }
+  .sw-bear { background: var(--bear-bg); border-color: var(--bear); }
+  .sw-tool { background: var(--tool-bg); border-color: var(--tool); }
+  .sw-mon  { background: var(--monitor-bg); border-color: var(--monitor); }
+  .sw-kb   { background: var(--kb-bg); border-color: var(--kb); }
+
+  /* ---- sections ---- */
+  section { margin: 0 0 52px; }
+  .sec-head { display: flex; align-items: baseline; gap: 14px; margin: 0 0 6px; }
+  .sec-num {
+    font-family: var(--font-mono); font-weight: 700; font-size: 14px; letter-spacing: .1em;
+    color: var(--bg); background: var(--accent); padding: 3px 9px; border-radius: 5px; flex: none;
+  }
+  h2 { font-family: var(--font-mono); font-size: clamp(19px, 3vw, 24px); font-weight: 700; margin: 0; letter-spacing: -.01em; }
+  .sec-desc { color: var(--muted); font-size: 15px; margin: 4px 0 22px; max-width: 78ch; }
+  .io-flag { font-family: var(--font-mono); font-size: 12px; color: var(--muted); }
+  .io-flag b { color: var(--ink); font-weight: 600; }
+
+  /* ---- figures ---- */
+  figure { margin: 0 0 26px; }
+  .fig { overflow-x: auto; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 18px; box-shadow: var(--shadow); }
+  .fig svg { display: block; max-width: 100%; height: auto; min-width: 620px; margin: 0 auto; }
+  figcaption { font-family: var(--font-mono); font-size: 12px; color: var(--faint); margin-top: 10px; text-align: center; letter-spacing: .02em; }
+
+  /* svg text defaults */
+  svg text { font-family: var(--font-mono); fill: var(--ink); }
+  .n-label { font-size: 12px; font-weight: 600; }
+  .n-sub { font-size: 10px; fill: var(--muted); }
+  .edge { stroke: var(--muted); stroke-width: 1.5; fill: none; opacity: .8; }
+  .edge-dash { stroke: var(--faint); stroke-width: 1.4; fill: none; stroke-dasharray: 4 4; opacity: .9; }
+  .edge-label { font-size: 10px; fill: var(--muted); }
+  .lane-label { font-size: 10.5px; fill: var(--faint); letter-spacing: .12em; }
+
+  /* ---- agent card grid ---- */
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 14px; }
+  .card {
+    background: var(--surface); border: 1px solid var(--border); border-left: 4px solid var(--faint);
+    border-radius: 10px; padding: 14px 15px; box-shadow: var(--shadow);
+  }
+  .card.role-analyst { border-left-color: var(--tool); }
+  .card.role-bull { border-left-color: var(--bull); }
+  .card.role-bear { border-left-color: var(--bear); }
+  .card.role-firm { border-left-color: var(--accent); }
+  .card.role-dd { border-left-color: var(--kb); }
+  .card.role-risk { border-left-color: var(--accent); }
+  .card h3 { font-family: var(--font-mono); font-size: 14px; margin: 0 0 2px; font-weight: 700; }
+  .card .role {
+    font-family: var(--font-mono); font-size: 10px; letter-spacing: .1em; text-transform: uppercase;
+    color: var(--faint); margin-bottom: 10px;
+  }
+  .card dl { margin: 0; display: grid; grid-template-columns: auto 1fr; gap: 4px 10px; }
+  .card dt {
+    font-family: var(--font-mono); font-size: 10px; letter-spacing: .06em; text-transform: uppercase;
+    color: var(--accent); padding-top: 2px; font-weight: 600;
+  }
+  .card.role-analyst dt { color: var(--tool); }
+  .card.role-bull dt { color: var(--bull); }
+  .card.role-bear dt { color: var(--bear); }
+  .card.role-dd dt { color: var(--kb); }
+  .card dd { margin: 0; font-size: 13px; color: var(--ink); }
+  .card dd.dim { color: var(--muted); font-size: 12.5px; }
+  .chips { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 3px; }
+  .chip {
+    font-family: var(--font-mono); font-size: 10.5px; padding: 2px 7px; border-radius: 5px;
+    border: 1px solid; white-space: nowrap;
+  }
+  .chip.tool { color: var(--tool); border-color: var(--tool); background: var(--tool-bg); }
+  .chip.mon  { color: var(--monitor); border-color: var(--monitor); background: var(--monitor-bg); }
+  .chip.kb   { color: var(--kb); border-color: var(--kb); background: var(--kb-bg); }
+
+  /* ---- inventory tables ---- */
+  .tbl-wrap { overflow-x: auto; border: 1px solid var(--border); border-radius: 10px; }
+  table { border-collapse: collapse; width: 100%; min-width: 560px; background: var(--surface); }
+  th, td { text-align: left; padding: 10px 14px; font-size: 13px; border-bottom: 1px solid var(--border); vertical-align: top; }
+  th { font-family: var(--font-mono); font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); background: var(--surface-2); }
+  td.mono { font-family: var(--font-mono); font-size: 12px; color: var(--ink); white-space: nowrap; }
+  tr:last-child td { border-bottom: none; }
+
+  .twocol { display: grid; grid-template-columns: 1fr 1fr; gap: 22px; }
+  @media (max-width: 720px) { .twocol { grid-template-columns: 1fr; } }
+
+  .note { font-size: 13px; color: var(--muted); border-left: 3px solid var(--accent); padding: 4px 0 4px 14px; margin: 16px 0; }
+  .note b { color: var(--ink); }
+  footer { margin-top: 40px; padding-top: 20px; border-top: 1px solid var(--border); font-family: var(--font-mono); font-size: 12px; color: var(--faint); }
+</style>
+
+<div class="wrap">
+  <header class="masthead">
+    <div class="topline">
+      <div>
+        <div class="eyebrow">catalyst-trader · agent architecture</div>
+        <h1>The Catalyst Desk</h1>
+        <p class="sub">A biotech event-driven trading firm run by agents. Three workflows, one GP on top: predict the catalyst, build the week's hedged portfolio, then diligence it independently — every claim sourced, every number computed by a tool.</p>
+      </div>
+      <button class="toggle" id="themeToggle" aria-label="Toggle light or dark theme">◑ theme</button>
+    </div>
+  </header>
+
+  <div class="legend" aria-label="Diagram legend">
+    <span class="li"><span class="swatch sw-firm"></span> GP / MD (Fable) &amp; risk-desk</span>
+    <span class="li"><span class="swatch sw-agent"></span> agent</span>
+    <span class="li"><span class="swatch sw-bull"></span> bull</span>
+    <span class="li"><span class="swatch sw-bear"></span> bear</span>
+    <span class="li"><span class="swatch sw-tool"></span> deterministic tool / feed</span>
+    <span class="li"><span class="swatch sw-mon"></span> monitor / guardrail</span>
+    <span class="li"><span class="swatch sw-kb"></span> knowledge base</span>
+  </div>
+
+  <!-- ============ OVERVIEW ============ -->
+  <section>
+    <div class="sec-head"><span class="sec-num">ORG</span><h2>The firm, top to bottom</h2></div>
+    <p class="sec-desc">The MD/GP (a Fable agent) presides over all three workflows and is the only voice the LP (you, via the iOS app) talks to. The knowledge base feeds every workflow and learns from every realized outcome. No trade reaches the market without passing the human gate.</p>
+    <figure>
+      <div class="fig">
+        <svg viewBox="0 0 1000 560" role="img" aria-label="Org chart: the MD/GP agent sits on top, connected to the LP via chat and approval, and oversees three sequential workflows — Catalyst Call, Portfolio Construction, and Independent Diligence — which feed the human gate and execution. A shared knowledge base reads and writes to all workflows, and realized outcomes loop back into it.">
+          <defs>
+            <marker id="ah" markerWidth="9" markerHeight="9" refX="7.5" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 Z" fill="var(--muted)"/></marker>
+            <marker id="ahd" markerWidth="9" markerHeight="9" refX="7.5" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 Z" fill="var(--faint)"/></marker>
+            <marker id="ah2" markerWidth="9" markerHeight="9" refX="1" refY="4" orient="auto"><path d="M8,0 L0,4 L8,8 Z" fill="var(--muted)"/></marker>
+          </defs>
+
+          <!-- MD / GP -->
+          <g>
+            <rect x="380" y="24" width="240" height="70" rx="10" fill="var(--accent-bg)" stroke="var(--accent)" stroke-width="2"/>
+            <text x="500" y="52" text-anchor="middle" class="n-label" fill="var(--accent)">MD / GP · Fable</text>
+            <text x="500" y="70" text-anchor="middle" class="n-sub">head of firm · signs off · answers to LP</text>
+            <text x="500" y="84" text-anchor="middle" class="n-sub">= the PM gate in Workflow 2</text>
+          </g>
+
+          <!-- LP -->
+          <g>
+            <rect x="770" y="30" width="200" height="58" rx="10" fill="var(--surface-2)" stroke="var(--border-strong)" stroke-width="1.5"/>
+            <text x="870" y="54" text-anchor="middle" class="n-label">LP · iOS app</text>
+            <text x="870" y="72" text-anchor="middle" class="n-sub">4 pages + chat</text>
+          </g>
+          <line x1="770" y1="59" x2="624" y2="59" class="edge" marker-end="url(#ah)" marker-start="url(#ah2)"/>
+          <text x="695" y="50" text-anchor="middle" class="edge-label">chat · approve</text>
+
+          <!-- workflow boxes -->
+          <g>
+            <rect x="40" y="180" width="270" height="66" rx="10" fill="var(--surface)" stroke="var(--border-strong)" stroke-width="1.5"/>
+            <text x="175" y="207" text-anchor="middle" class="n-label">WORKFLOW 1</text>
+            <text x="175" y="225" text-anchor="middle" class="n-sub">Catalyst Call — yes / no + confidence</text>
+            <text x="175" y="239" text-anchor="middle" class="n-sub">analysts → bull/bear debate</text>
+          </g>
+          <g>
+            <rect x="365" y="180" width="270" height="66" rx="10" fill="var(--surface)" stroke="var(--border-strong)" stroke-width="1.5"/>
+            <text x="500" y="207" text-anchor="middle" class="n-label">WORKFLOW 2</text>
+            <text x="500" y="225" text-anchor="middle" class="n-sub">Portfolio Construction — the week</text>
+            <text x="500" y="239" text-anchor="middle" class="n-sub">build · hedge · risk · PM sign-off</text>
+          </g>
+          <g>
+            <rect x="690" y="180" width="270" height="66" rx="10" fill="var(--surface)" stroke="var(--border-strong)" stroke-width="1.5"/>
+            <text x="825" y="207" text-anchor="middle" class="n-label">WORKFLOW 3</text>
+            <text x="825" y="225" text-anchor="middle" class="n-sub">Independent Diligence — firewalled</text>
+            <text x="825" y="239" text-anchor="middle" class="n-sub">multi-dimensional go / no-go</text>
+          </g>
+
+          <!-- MD oversees (dashed down to each) -->
+          <path d="M420,94 C300,120 200,140 175,180" class="edge-dash" marker-end="url(#ahd)"/>
+          <line x1="500" y1="94" x2="500" y2="180" class="edge-dash" marker-end="url(#ahd)"/>
+          <path d="M580,94 C700,120 800,140 825,180" class="edge-dash" marker-end="url(#ahd)"/>
+          <text x="330" y="150" text-anchor="middle" class="edge-label">oversees</text>
+
+          <!-- sequential flow -->
+          <line x1="310" y1="213" x2="365" y2="213" class="edge" marker-end="url(#ah)"/>
+          <text x="337" y="205" text-anchor="middle" class="edge-label">calls</text>
+          <line x1="635" y1="213" x2="690" y2="213" class="edge" marker-end="url(#ah)"/>
+          <text x="662" y="205" text-anchor="middle" class="edge-label">portfolio</text>
+
+          <!-- human gate -->
+          <g>
+            <rect x="365" y="330" width="270" height="54" rx="10" fill="var(--accent-bg)" stroke="var(--accent)" stroke-width="1.5" stroke-dasharray="5 3"/>
+            <text x="500" y="354" text-anchor="middle" class="n-label" fill="var(--accent)">HUMAN GATE — LP approval</text>
+            <text x="500" y="372" text-anchor="middle" class="n-sub">inviolable · also blocks prompt-injection</text>
+          </g>
+          <path d="M825,246 C825,300 640,320 636,350" class="edge" marker-end="url(#ah)"/>
+          <text x="770" y="300" text-anchor="middle" class="edge-label">diligence dossier</text>
+
+          <!-- execution -->
+          <g>
+            <rect x="365" y="440" width="270" height="54" rx="10" fill="var(--surface)" stroke="var(--border-strong)" stroke-width="1.5"/>
+            <text x="500" y="464" text-anchor="middle" class="n-label">EXECUTION</text>
+            <text x="500" y="482" text-anchor="middle" class="n-sub">paper ledger (mo. 1) → Robinhood MCP</text>
+          </g>
+          <line x1="500" y1="384" x2="500" y2="440" class="edge" marker-end="url(#ah)"/>
+          <text x="540" y="415" text-anchor="middle" class="edge-label">approved</text>
+
+          <!-- KB -->
+          <g>
+            <path d="M40,300 a95,14 0 0 1 190,0 l0,110 a95,14 0 0 1 -190,0 Z" fill="var(--kb-bg)" stroke="var(--kb)" stroke-width="1.5"/>
+            <path d="M40,300 a95,14 0 0 0 190,0" fill="none" stroke="var(--kb)" stroke-width="1.5"/>
+            <text x="135" y="345" text-anchor="middle" class="n-label" fill="var(--kb)">KNOWLEDGE BASE</text>
+            <text x="135" y="362" text-anchor="middle" class="n-sub">SQLite graph + sqlite-vec</text>
+            <text x="135" y="376" text-anchor="middle" class="n-sub">playbooks · hedge DB</text>
+            <text x="135" y="390" text-anchor="middle" class="n-sub">base rates · analogs · provenance</text>
+          </g>
+          <path d="M230,320 C300,300 320,270 360,246" class="edge-dash" marker-end="url(#ahd)" marker-start="url(#ahd)"/>
+          <path d="M175,300 C160,275 168,260 175,246" class="edge-dash" marker-end="url(#ahd)" marker-start="url(#ahd)"/>
+          <text x="250" y="285" text-anchor="middle" class="edge-label">read / write</text>
+
+          <!-- learning loop -->
+          <path d="M365,467 C210,467 135,455 135,420" class="edge" marker-end="url(#ah)"/>
+          <text x="250" y="482" text-anchor="middle" class="edge-label">outcomes → eval → playbooks (gated)</text>
+        </svg>
+      </div>
+      <figcaption>The GP presides over three sequential workflows; the KB feeds all of them and learns from realized outcomes; nothing trades without LP approval.</figcaption>
+    </figure>
+  </section>
+
+  <!-- ============ WORKFLOW 1 ============ -->
+  <section>
+    <div class="sec-head"><span class="sec-num">W1</span><h2>Catalyst Call</h2></div>
+    <p class="sec-desc">Runs once per imminent catalyst (T-2 to T-1). Four analysts pull sourced signal; a bull and a bear build opposing cases in isolation and debate for bounded rounds; a manager synthesizes a single <b>binary verdict</b>. Pure prediction — no sizing, no positioning here.</p>
+    <p class="io-flag"><b>IN:</b> ticker + catalyst (from the calendar monitor) &nbsp;·&nbsp; <b>OUT:</b> <span class="io-flag">CatalystCall {direction ↑/↓, confidence, falsification criteria}</span></p>
+
+    <figure>
+      <div class="fig">
+        <svg viewBox="0 0 1000 400" role="img" aria-label="Workflow 1 flow: the catalyst monitor triggers four analysts (clinical, regulatory, financial, market) which write onto a shared analyst-signals bus. A bull and a bear researcher each read the bus in isolation, then debate for bounded rounds, and a debate manager emits the binary catalyst call. A fact-check verifier monitors all analyst output; the knowledge base is read for base rates and analogs.">
+          <defs>
+            <marker id="w1ah" markerWidth="9" markerHeight="9" refX="7.5" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 Z" fill="var(--muted)"/></marker>
+            <marker id="w1ah2" markerWidth="9" markerHeight="9" refX="1" refY="4" orient="auto"><path d="M8,0 L0,4 L8,8 Z" fill="var(--muted)"/></marker>
+          </defs>
+
+          <text x="80" y="20" text-anchor="middle" class="lane-label">TRIGGER</text>
+          <text x="300" y="20" text-anchor="middle" class="lane-label">ANALYST DESK</text>
+          <text x="620" y="20" text-anchor="middle" class="lane-label">DEBATE</text>
+          <text x="890" y="20" text-anchor="middle" class="lane-label">VERDICT</text>
+
+          <!-- trigger -->
+          <rect x="20" y="150" width="120" height="80" rx="9" fill="var(--monitor-bg)" stroke="var(--monitor)" stroke-width="1.5"/>
+          <text x="80" y="182" text-anchor="middle" class="n-label" fill="var(--monitor)">Catalyst</text>
+          <text x="80" y="198" text-anchor="middle" class="n-label" fill="var(--monitor)">Feed</text>
+          <text x="80" y="214" text-anchor="middle" class="n-sub">monitor · T-2</text>
+
+          <!-- analysts -->
+          <g>
+            <rect x="200" y="40" width="150" height="42" rx="8" fill="var(--tool-bg)" stroke="var(--tool)" stroke-width="1.5"/>
+            <text x="275" y="66" text-anchor="middle" class="n-label" fill="var(--tool)">Clinical Analyst</text>
+            <rect x="200" y="100" width="150" height="42" rx="8" fill="var(--tool-bg)" stroke="var(--tool)" stroke-width="1.5"/>
+            <text x="275" y="126" text-anchor="middle" class="n-label" fill="var(--tool)">Regulatory Analyst</text>
+            <rect x="200" y="160" width="150" height="42" rx="8" fill="var(--tool-bg)" stroke="var(--tool)" stroke-width="1.5"/>
+            <text x="275" y="186" text-anchor="middle" class="n-label" fill="var(--tool)">Financial Analyst</text>
+            <rect x="200" y="220" width="150" height="42" rx="8" fill="var(--tool-bg)" stroke="var(--tool)" stroke-width="1.5"/>
+            <text x="275" y="246" text-anchor="middle" class="n-label" fill="var(--tool)">Market Analyst</text>
+          </g>
+          <line x1="140" y1="180" x2="196" y2="61" class="edge" marker-end="url(#w1ah)"/>
+          <line x1="140" y1="185" x2="196" y2="121" class="edge" marker-end="url(#w1ah)"/>
+          <line x1="140" y1="190" x2="196" y2="181" class="edge" marker-end="url(#w1ah)"/>
+          <line x1="140" y1="195" x2="196" y2="241" class="edge" marker-end="url(#w1ah)"/>
+
+          <!-- signals bus -->
+          <line x1="378" y1="45" x2="378" y2="258" stroke="var(--faint)" stroke-width="2.5" stroke-dasharray="2 3"/>
+          <text x="378" y="278" text-anchor="middle" class="edge-label">AnalystSignals bus</text>
+          <line x1="350" y1="61" x2="376" y2="61" class="edge"/>
+          <line x1="350" y1="121" x2="376" y2="121" class="edge"/>
+          <line x1="350" y1="181" x2="376" y2="181" class="edge"/>
+          <line x1="350" y1="241" x2="376" y2="241" class="edge"/>
+
+          <!-- bull / bear -->
+          <rect x="470" y="80" width="150" height="46" rx="8" fill="var(--bull-bg)" stroke="var(--bull)" stroke-width="1.5"/>
+          <text x="545" y="102" text-anchor="middle" class="n-label" fill="var(--bull)">Bull Researcher</text>
+          <text x="545" y="117" text-anchor="middle" class="n-sub">strongest ↑ case</text>
+          <rect x="470" y="180" width="150" height="46" rx="8" fill="var(--bear-bg)" stroke="var(--bear)" stroke-width="1.5"/>
+          <text x="545" y="202" text-anchor="middle" class="n-label" fill="var(--bear)">Bear Researcher</text>
+          <text x="545" y="217" text-anchor="middle" class="n-sub">strongest ↓ case</text>
+          <line x1="380" y1="103" x2="466" y2="103" class="edge" marker-end="url(#w1ah)"/>
+          <line x1="380" y1="203" x2="466" y2="203" class="edge" marker-end="url(#w1ah)"/>
+          <!-- debate between -->
+          <line x1="545" y1="126" x2="545" y2="180" class="edge" marker-end="url(#w1ah)" marker-start="url(#w1ah2)"/>
+          <text x="600" y="156" text-anchor="middle" class="edge-label">N rounds</text>
+
+          <!-- manager -->
+          <rect x="690" y="120" width="140" height="66" rx="9" fill="var(--accent-bg)" stroke="var(--accent)" stroke-width="1.5"/>
+          <text x="760" y="148" text-anchor="middle" class="n-label" fill="var(--accent)">Debate</text>
+          <text x="760" y="164" text-anchor="middle" class="n-label" fill="var(--accent)">Manager</text>
+          <text x="760" y="179" text-anchor="middle" class="n-sub">synthesize · calibrate</text>
+          <line x1="620" y1="110" x2="686" y2="140" class="edge" marker-end="url(#w1ah)"/>
+          <line x1="620" y1="200" x2="686" y2="168" class="edge" marker-end="url(#w1ah)"/>
+
+          <!-- output -->
+          <rect x="862" y="120" width="118" height="66" rx="9" fill="var(--surface-2)" stroke="var(--ink)" stroke-width="1.5"/>
+          <text x="921" y="146" text-anchor="middle" class="n-label">Catalyst</text>
+          <text x="921" y="162" text-anchor="middle" class="n-label">Call</text>
+          <text x="921" y="177" text-anchor="middle" class="n-sub">↑/↓ · conf · kill</text>
+          <line x1="830" y1="153" x2="858" y2="153" class="edge" marker-end="url(#w1ah)"/>
+
+          <!-- verifier monitor -->
+          <rect x="200" y="300" width="420" height="34" rx="7" fill="var(--monitor-bg)" stroke="var(--monitor)" stroke-width="1.4" stroke-dasharray="5 3"/>
+          <text x="410" y="322" text-anchor="middle" class="n-sub" fill="var(--monitor)">MONITOR: fact-check verifier — every claim source-quoted or dropped · date re-verify</text>
+          <line x1="275" y1="264" x2="275" y2="298" class="edge-dash"/>
+          <line x1="545" y1="228" x2="545" y2="298" class="edge-dash"/>
+
+          <!-- KB -->
+          <path d="M690,300 a70,10 0 0 1 140,0 l0,50 a70,10 0 0 1 -140,0 Z" fill="var(--kb-bg)" stroke="var(--kb)" stroke-width="1.4"/>
+          <path d="M690,300 a70,10 0 0 0 140,0" fill="none" stroke="var(--kb)" stroke-width="1.4"/>
+          <text x="760" y="328" text-anchor="middle" class="n-sub" fill="var(--kb)">KB: base rates · analogs</text>
+          <line x1="760" y1="300" x2="760" y2="188" class="edge-dash" marker-end="url(#w1ah)" marker-start="url(#w1ah)"/>
+        </svg>
+      </div>
+      <figcaption>Analysts feed a shared signal bus; bull and bear reason in isolation then debate; the manager emits one calibrated binary call.</figcaption>
+    </figure>
+
+    <div class="grid">
+      <div class="card role-analyst">
+        <h3>Clinical / Scientific Analyst</h3>
+        <div class="role">Analyst desk</div>
+        <dl>
+          <dt>In</dt><dd>ticker, catalyst, trial record</dd>
+          <dt>Do</dt><dd class="dim">Assess trial design, endpoint credibility, statistical power, phase-transition probability of success</dd>
+          <dt>Out</dt><dd>ClinicalSignal (score + cited evidence)</dd>
+          <dt>Tools</dt><dd><span class="chips"><span class="chip tool">ClinicalTrials.gov v2</span><span class="chip tool">base-rate lookup</span><span class="chip tool">endpoint-credibility</span></span></dd>
+          <dt>Mon</dt><dd><span class="chips"><span class="chip mon">fact-check verifier</span></span></dd>
+        </dl>
+      </div>
+      <div class="card role-analyst">
+        <h3>Regulatory Analyst</h3>
+        <div class="role">Analyst desk</div>
+        <dl>
+          <dt>In</dt><dd>ticker, drug, FDA history</dd>
+          <dt>Do</dt><dd class="dim">Precedent, prior-CRL penalty (~−28% approval), AdCom read-through, label risk</dd>
+          <dt>Out</dt><dd>RegSignal (score + cited evidence)</dd>
+          <dt>Tools</dt><dd><span class="chips"><span class="chip tool">PDUFA/AdCom curated DB</span><span class="chip tool">precedent lookup</span></span></dd>
+          <dt>Mon</dt><dd><span class="chips"><span class="chip mon">date re-verify</span></span></dd>
+        </dl>
+      </div>
+      <div class="card role-analyst">
+        <h3>Financial Analyst</h3>
+        <div class="role">Analyst desk</div>
+        <dl>
+          <dt>In</dt><dd>ticker</dd>
+          <dt>Do</dt><dd class="dim">Cash runway, dilution/raise risk, burn — interprets tool output, never computes it</dd>
+          <dt>Out</dt><dd>FinSignal (score + cited evidence)</dd>
+          <dt>Tools</dt><dd><span class="chips"><span class="chip tool">FMP fundamentals</span><span class="chip tool">cash-runway calc</span></span></dd>
+        </dl>
+      </div>
+      <div class="card role-analyst">
+        <h3>Market / Sentiment Analyst</h3>
+        <div class="role">Analyst desk</div>
+        <dl>
+          <dt>In</dt><dd>ticker</dd>
+          <dt>Do</dt><dd class="dim">Short interest, options-implied move, ownership/Form-4, pre-event run-up — corroborating only, weighted low</dd>
+          <dt>Out</dt><dd>MktSignal (score + cited evidence)</dd>
+          <dt>Tools</dt><dd><span class="chips"><span class="chip tool">Polygon options</span><span class="chip tool">implied-move</span><span class="chip tool">FMP flow</span></span></dd>
+        </dl>
+      </div>
+      <div class="card role-bull">
+        <h3>Bull Researcher</h3>
+        <div class="role">Debate</div>
+        <dl>
+          <dt>In</dt><dd>AnalystSignals bus</dd>
+          <dt>Do</dt><dd class="dim">Build the strongest sourced positive case; context-isolated from Bear</dd>
+          <dt>Out</dt><dd>BullBrief</dd>
+          <dt>Tools</dt><dd><span class="chips"><span class="chip kb">KB analogs</span></span></dd>
+        </dl>
+      </div>
+      <div class="card role-bear">
+        <h3>Bear Researcher</h3>
+        <div class="role">Debate</div>
+        <dl>
+          <dt>In</dt><dd>AnalystSignals bus</dd>
+          <dt>Do</dt><dd class="dim">Build the strongest sourced negative case; isolated so it isn't laundered consensus</dd>
+          <dt>Out</dt><dd>BearBrief</dd>
+          <dt>Tools</dt><dd><span class="chips"><span class="chip kb">KB analogs</span></span></dd>
+        </dl>
+      </div>
+      <div class="card role-firm">
+        <h3>Debate Manager</h3>
+        <div class="role">Verdict</div>
+        <dl>
+          <dt>In</dt><dd>BullBrief + BearBrief</dd>
+          <dt>Do</dt><dd class="dim">Run bounded debate rounds, weigh against base rates, calibrate confidence, force a "no-call" when evidence is thin</dd>
+          <dt>Out</dt><dd>CatalystCall {↑/↓, confidence, falsification criteria}</dd>
+          <dt>Tools</dt><dd><span class="chips"><span class="chip tool">calibration</span><span class="chip kb">KB write</span></span></dd>
+        </dl>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ WORKFLOW 2 ============ -->
+  <section>
+    <div class="sec-head"><span class="sec-num">W2</span><h2>Portfolio Construction</h2></div>
+    <p class="sec-desc">Takes the week's set of calls and turns them into <b>one hedged portfolio</b>. The trade builder picks the inverse-hedge peer; the risk desk re-validates the hedge and sizes for survival; the MD/GP fits it to the whole book and signs off.</p>
+    <p class="io-flag"><b>IN:</b> week's CatalystCalls &nbsp;·&nbsp; <b>OUT:</b> WeeklyPortfolio + StrategyDossier (for diligence → LP)</p>
+
+    <figure>
+      <div class="fig">
+        <svg viewBox="0 0 1000 380" role="img" aria-label="Workflow 2 flow: the week's catalyst calls enter a trade builder, which selects an inverse-hedge peer from the hedge database and sets entry, exit-or-hold, and stop/take-profit. A hedge validator re-analyzes the inverse relationship for this specific catalyst. A three-way risk committee sizes for survival. The MD/PM fits every trade to the whole book and emits the weekly portfolio and dossier. Deterministic quant tools attach to the builder, validator, and risk desk.">
+          <defs>
+            <marker id="w2ah" markerWidth="9" markerHeight="9" refX="7.5" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 Z" fill="var(--muted)"/></marker>
+          </defs>
+          <text x="90" y="20" text-anchor="middle" class="lane-label">INPUT</text>
+          <text x="290" y="20" text-anchor="middle" class="lane-label">BUILD</text>
+          <text x="500" y="20" text-anchor="middle" class="lane-label">HEDGE CHECK</text>
+          <text x="710" y="20" text-anchor="middle" class="lane-label">RISK (3-WAY)</text>
+          <text x="915" y="20" text-anchor="middle" class="lane-label">SIGN-OFF</text>
+
+          <rect x="30" y="120" width="120" height="70" rx="9" fill="var(--surface-2)" stroke="var(--ink)" stroke-width="1.5"/>
+          <text x="90" y="148" text-anchor="middle" class="n-label">Week's</text>
+          <text x="90" y="164" text-anchor="middle" class="n-label">Calls</text>
+          <text x="90" y="179" text-anchor="middle" class="n-sub">from W1</text>
+
+          <rect x="210" y="115" width="160" height="80" rx="9" fill="var(--accent-bg)" stroke="var(--accent)" stroke-width="1.5"/>
+          <text x="290" y="142" text-anchor="middle" class="n-label" fill="var(--accent)">Trade Builder</text>
+          <text x="290" y="159" text-anchor="middle" class="n-sub">pick inverse peer</text>
+          <text x="290" y="173" text-anchor="middle" class="n-sub">entry · hold/exit</text>
+          <text x="290" y="187" text-anchor="middle" class="n-sub">SL / TP</text>
+          <line x1="150" y1="155" x2="206" y2="155" class="edge" marker-end="url(#w2ah)"/>
+
+          <rect x="420" y="115" width="160" height="80" rx="9" fill="var(--accent-bg)" stroke="var(--accent)" stroke-width="1.5"/>
+          <text x="500" y="140" text-anchor="middle" class="n-label" fill="var(--accent)">Hedge Validator</text>
+          <text x="500" y="157" text-anchor="middle" class="n-sub">inverse payoff on</text>
+          <text x="500" y="171" text-anchor="middle" class="n-sub">THIS catalyst?</text>
+          <text x="500" y="185" text-anchor="middle" class="n-sub">catalyst-clean peer?</text>
+          <line x1="370" y1="155" x2="416" y2="155" class="edge" marker-end="url(#w2ah)"/>
+          <text x="393" y="147" text-anchor="middle" class="edge-label">proposal</text>
+
+          <!-- 3-way risk -->
+          <rect x="630" y="100" width="160" height="34" rx="7" fill="var(--bear-bg)" stroke="var(--bear)" stroke-width="1.3"/>
+          <text x="710" y="121" text-anchor="middle" class="n-sub" fill="var(--bear)">Aggressive</text>
+          <rect x="630" y="140" width="160" height="34" rx="7" fill="var(--surface-2)" stroke="var(--muted)" stroke-width="1.3"/>
+          <text x="710" y="161" text-anchor="middle" class="n-sub">Neutral</text>
+          <rect x="630" y="180" width="160" height="34" rx="7" fill="var(--bull-bg)" stroke="var(--bull)" stroke-width="1.3"/>
+          <text x="710" y="201" text-anchor="middle" class="n-sub" fill="var(--bull)">Conservative</text>
+          <text x="710" y="234" text-anchor="middle" class="edge-label">Risk Committee · size for survival</text>
+          <line x1="580" y1="150" x2="626" y2="150" class="edge" marker-end="url(#w2ah)"/>
+          <text x="605" y="142" text-anchor="middle" class="edge-label">verdict</text>
+
+          <rect x="850" y="115" width="130" height="80" rx="9" fill="var(--accent-bg)" stroke="var(--accent)" stroke-width="2"/>
+          <text x="915" y="142" text-anchor="middle" class="n-label" fill="var(--accent)">MD / PM</text>
+          <text x="915" y="158" text-anchor="middle" class="n-sub">book fit ·</text>
+          <text x="915" y="172" text-anchor="middle" class="n-sub">concentration</text>
+          <text x="915" y="186" text-anchor="middle" class="n-sub">promote / kill</text>
+          <line x1="790" y1="150" x2="846" y2="150" class="edge" marker-end="url(#w2ah)"/>
+
+          <!-- tools row -->
+          <rect x="210" y="270" width="580" height="36" rx="7" fill="var(--tool-bg)" stroke="var(--tool)" stroke-width="1.3" stroke-dasharray="5 3"/>
+          <text x="500" y="292" text-anchor="middle" class="n-sub" fill="var(--tool)">DETERMINISTIC TOOLS: cointegration · β/correlation · conditional-payoff matrix · Kelly / risk-of-ruin · event-vol · liquidity</text>
+          <line x1="290" y1="195" x2="290" y2="268" class="edge-dash"/>
+          <line x1="500" y1="195" x2="500" y2="268" class="edge-dash"/>
+          <line x1="710" y1="214" x2="710" y2="268" class="edge-dash"/>
+
+          <!-- hedge DB -->
+          <path d="M840,250 a68,10 0 0 1 136,0 l0,52 a68,10 0 0 1 -136,0 Z" fill="var(--kb-bg)" stroke="var(--kb)" stroke-width="1.3"/>
+          <path d="M840,250 a68,10 0 0 0 136,0" fill="none" stroke="var(--kb)" stroke-width="1.3"/>
+          <text x="908" y="280" text-anchor="middle" class="n-sub" fill="var(--kb)">Hedge DB</text>
+          <text x="908" y="294" text-anchor="middle" class="n-sub" fill="var(--kb)">(KB)</text>
+          <path d="M840,270 C700,250 560,210 500,196" class="edge-dash" marker-end="url(#w2ah)"/>
+        </svg>
+      </div>
+      <figcaption>Calls become a hedged, survival-sized portfolio; the hedge is re-validated per trade and the GP fits it to the whole book.</figcaption>
+    </figure>
+
+    <div class="grid">
+      <div class="card role-firm">
+        <h3>Trade Builder</h3>
+        <div class="role">Build</div>
+        <dl>
+          <dt>In</dt><dd>CatalystCall</dd>
+          <dt>Do</dt><dd class="dim">Select the inverse-hedge peer from the hedge DB; set entry, hold-through vs. exit-before-event, SL/TP, initial size draft</dd>
+          <dt>Out</dt><dd>TradeProposal (target leg + hedge leg)</dd>
+          <dt>Tools</dt><dd><span class="chips"><span class="chip kb">hedge DB</span><span class="chip tool">SL/TP calc</span></span></dd>
+        </dl>
+      </div>
+      <div class="card role-firm">
+        <h3>Hedge Validator</h3>
+        <div class="role">Hedge check · risk desk</div>
+        <dl>
+          <dt>In</dt><dd>TradeProposal</dd>
+          <dt>Do</dt><dd class="dim">Re-analyze the inverse relationship <b>for this specific catalyst</b>; conditional payoff matrix (target ↑/↓ × peer ↑/↓); confirm peer is catalyst-clean; else flag fallback (tiny-size / exit)</dd>
+          <dt>Out</dt><dd>HedgeVerdict (valid | fallback)</dd>
+          <dt>Tools</dt><dd><span class="chips"><span class="chip tool">cointegration</span><span class="chip tool">conditional-payoff</span><span class="chip tool">β/correlation</span></span></dd>
+        </dl>
+      </div>
+      <div class="card role-risk">
+        <h3>Risk Committee (3-way)</h3>
+        <div class="role">Risk · aggressive/neutral/conservative</div>
+        <dl>
+          <dt>In</dt><dd>TradeProposal + HedgeVerdict</dd>
+          <dt>Do</dt><dd class="dim">Debate downside, event-vol, liquidity; size for survival via risk-of-ruin — the 1% target is never a sizing input</dd>
+          <dt>Out</dt><dd>RiskedTrade (final size + caps)</dd>
+          <dt>Tools</dt><dd><span class="chips"><span class="chip tool">Kelly / risk-of-ruin</span><span class="chip tool">event-vol</span><span class="chip tool">liquidity</span></span></dd>
+          <dt>Mon</dt><dd><span class="chips"><span class="chip mon">net-long exposure</span></span></dd>
+        </dl>
+      </div>
+      <div class="card role-firm">
+        <h3>MD / PM — the GP</h3>
+        <div class="role">Sign-off · same identity as the top-of-firm MD</div>
+        <dl>
+          <dt>In</dt><dd>all RiskedTrades for the week</dd>
+          <dt>Do</dt><dd class="dim">Portfolio fit — concentration, correlation to the open book, weekly budget; promote or kill each</dd>
+          <dt>Out</dt><dd>WeeklyPortfolio + StrategyDossier</dd>
+          <dt>Tools</dt><dd><span class="chips"><span class="chip tool">portfolio exposure</span><span class="chip kb">KB write</span></span></dd>
+          <dt>Mon</dt><dd><span class="chips"><span class="chip mon">concentration</span></span></dd>
+        </dl>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ WORKFLOW 3 ============ -->
+  <section>
+    <div class="sec-head"><span class="sec-num">W3</span><h2>Independent Diligence</h2></div>
+    <p class="sec-desc">A firewalled second opinion on the proposed portfolio. It receives <b>only</b> <span class="io-flag">{ticker, catalyst, pair}</span> — never Workflow 1/2's thesis — and rebuilds the case from <b>raw sources</b> across independent dimensions, adversarially trying to break the trade before capital touches it.</p>
+    <p class="io-flag"><b>IN:</b> {ticker, catalyst, pair} only (firewall) &nbsp;·&nbsp; <b>OUT:</b> DiligenceDossier {go / no-go, evidence, residual risks}</p>
+
+    <figure>
+      <div class="fig">
+        <svg viewBox="0 0 1000 360" role="img" aria-label="Workflow 3 flow: a firewall passes only ticker, catalyst, and pair into eight independent diligence agents working from raw sources — trial statistics, regulatory, financials, ownership and flow, options implied move, hedge and correlation, liquidity, and historical analog. A synthesizer adversarially combines them into a go or no-go diligence dossier. A provenance monitor requires a citation on every stored claim; a firewall monitor ensures no upstream thesis leaks in.">
+          <defs>
+            <marker id="w3ah" markerWidth="9" markerHeight="9" refX="7.5" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 Z" fill="var(--muted)"/></marker>
+          </defs>
+
+          <!-- firewall -->
+          <rect x="24" y="130" width="120" height="90" rx="9" fill="var(--monitor-bg)" stroke="var(--monitor)" stroke-width="1.8" stroke-dasharray="6 3"/>
+          <text x="84" y="162" text-anchor="middle" class="n-label" fill="var(--monitor)">FIREWALL</text>
+          <text x="84" y="180" text-anchor="middle" class="n-sub">{ticker,</text>
+          <text x="84" y="193" text-anchor="middle" class="n-sub">catalyst,</text>
+          <text x="84" y="206" text-anchor="middle" class="n-sub">pair} only</text>
+
+          <!-- 8 DD agents in 2 cols x 4 rows -->
+          <g>
+            <rect x="200" y="34" width="180" height="34" rx="7" fill="var(--kb-bg)" stroke="var(--kb)" stroke-width="1.4"/><text x="290" y="55" text-anchor="middle" class="n-sub" fill="var(--kb)">Trial-Stats DD</text>
+            <rect x="200" y="78" width="180" height="34" rx="7" fill="var(--kb-bg)" stroke="var(--kb)" stroke-width="1.4"/><text x="290" y="99" text-anchor="middle" class="n-sub" fill="var(--kb)">Regulatory DD</text>
+            <rect x="200" y="122" width="180" height="34" rx="7" fill="var(--kb-bg)" stroke="var(--kb)" stroke-width="1.4"/><text x="290" y="143" text-anchor="middle" class="n-sub" fill="var(--kb)">Financials / Runway DD</text>
+            <rect x="200" y="166" width="180" height="34" rx="7" fill="var(--kb-bg)" stroke="var(--kb)" stroke-width="1.4"/><text x="290" y="187" text-anchor="middle" class="n-sub" fill="var(--kb)">Ownership / Flow DD</text>
+            <rect x="410" y="34" width="180" height="34" rx="7" fill="var(--kb-bg)" stroke="var(--kb)" stroke-width="1.4"/><text x="500" y="55" text-anchor="middle" class="n-sub" fill="var(--kb)">Options / Implied-Move DD</text>
+            <rect x="410" y="78" width="180" height="34" rx="7" fill="var(--kb-bg)" stroke="var(--kb)" stroke-width="1.4"/><text x="500" y="99" text-anchor="middle" class="n-sub" fill="var(--kb)">Hedge / Correlation DD</text>
+            <rect x="410" y="122" width="180" height="34" rx="7" fill="var(--kb-bg)" stroke="var(--kb)" stroke-width="1.4"/><text x="500" y="143" text-anchor="middle" class="n-sub" fill="var(--kb)">Liquidity DD</text>
+            <rect x="410" y="166" width="180" height="34" rx="7" fill="var(--kb-bg)" stroke="var(--kb)" stroke-width="1.4"/><text x="500" y="187" text-anchor="middle" class="n-sub" fill="var(--kb)">Historical-Analog DD</text>
+          </g>
+          <line x1="144" y1="160" x2="196" y2="90" class="edge" marker-end="url(#w3ah)"/>
+          <line x1="144" y1="170" x2="196" y2="180" class="edge" marker-end="url(#w3ah)"/>
+          <path d="M144,150 C170,110 380,60 406,51" class="edge" marker-end="url(#w3ah)"/>
+          <path d="M144,180 C180,210 380,200 406,183" class="edge" marker-end="url(#w3ah)"/>
+
+          <!-- synthesizer -->
+          <rect x="640" y="80" width="150" height="90" rx="9" fill="var(--accent-bg)" stroke="var(--accent)" stroke-width="1.6"/>
+          <text x="715" y="112" text-anchor="middle" class="n-label" fill="var(--accent)">DD Synthesizer</text>
+          <text x="715" y="130" text-anchor="middle" class="n-sub">adversarial:</text>
+          <text x="715" y="144" text-anchor="middle" class="n-sub">"find the failure"</text>
+          <text x="715" y="158" text-anchor="middle" class="n-sub">go / no-go</text>
+          <line x1="590" y1="100" x2="636" y2="115" class="edge" marker-end="url(#w3ah)"/>
+          <line x1="590" y1="140" x2="636" y2="135" class="edge" marker-end="url(#w3ah)"/>
+          <line x1="590" y1="183" x2="636" y2="150" class="edge" marker-end="url(#w3ah)"/>
+
+          <!-- dossier out -->
+          <rect x="850" y="95" width="130" height="60" rx="9" fill="var(--surface-2)" stroke="var(--ink)" stroke-width="1.5"/>
+          <text x="915" y="120" text-anchor="middle" class="n-label">Diligence</text>
+          <text x="915" y="136" text-anchor="middle" class="n-label">Dossier</text>
+          <text x="915" y="150" text-anchor="middle" class="n-sub">→ LP gate</text>
+          <line x1="790" y1="125" x2="846" y2="125" class="edge" marker-end="url(#w3ah)"/>
+
+          <!-- monitors -->
+          <rect x="200" y="250" width="590" height="34" rx="7" fill="var(--monitor-bg)" stroke="var(--monitor)" stroke-width="1.4" stroke-dasharray="5 3"/>
+          <text x="495" y="272" text-anchor="middle" class="n-sub" fill="var(--monitor)">MONITORS: provenance — no claim stored without a :CITES source · firewall — no upstream thesis leaks in</text>
+          <line x1="290" y1="200" x2="290" y2="248" class="edge-dash"/>
+          <line x1="500" y1="200" x2="500" y2="248" class="edge-dash"/>
+          <line x1="715" y1="170" x2="715" y2="248" class="edge-dash"/>
+        </svg>
+      </div>
+      <figcaption>Eight independent DD agents rebuild the case from raw sources; the synthesizer tries to break it before it reaches you.</figcaption>
+    </figure>
+
+    <div class="grid">
+      <div class="card role-dd"><h3>Trial-Stats DD</h3><div class="role">Dimension</div><dl><dt>Do</dt><dd class="dim">Re-derive endpoints, power, p-values from source</dd><dt>Tools</dt><dd><span class="chips"><span class="chip tool">stats calc</span><span class="chip tool">ClinicalTrials.gov</span></span></dd></dl></div>
+      <div class="card role-dd"><h3>Regulatory DD</h3><div class="role">Dimension</div><dl><dt>Do</dt><dd class="dim">Independent precedent + CRL/AdCom read from raw filings</dd><dt>Tools</dt><dd><span class="chips"><span class="chip tool">FDA sources</span></span></dd></dl></div>
+      <div class="card role-dd"><h3>Financials / Runway DD</h3><div class="role">Dimension</div><dl><dt>Do</dt><dd class="dim">Recompute runway + dilution risk from filings</dd><dt>Tools</dt><dd><span class="chips"><span class="chip tool">cash-runway calc</span><span class="chip tool">FMP</span></span></dd></dl></div>
+      <div class="card role-dd"><h3>Ownership / Flow DD</h3><div class="role">Dimension</div><dl><dt>Do</dt><dd class="dim">Short interest, insider Form-4, institutional flow</dd><dt>Tools</dt><dd><span class="chips"><span class="chip tool">FMP / FINRA</span></span></dd></dl></div>
+      <div class="card role-dd"><h3>Options / Implied-Move DD</h3><div class="role">Dimension</div><dl><dt>Do</dt><dd class="dim">Implied move vs. the proposed target — is the edge already priced?</dd><dt>Tools</dt><dd><span class="chips"><span class="chip tool">Polygon options</span><span class="chip tool">implied-move</span></span></dd></dl></div>
+      <div class="card role-dd"><h3>Hedge / Correlation DD</h3><div class="role">Dimension</div><dl><dt>Do</dt><dd class="dim">Independently re-verify inverse payoff + catalyst-clean peer</dd><dt>Tools</dt><dd><span class="chips"><span class="chip tool">cointegration</span><span class="chip tool">conditional-payoff</span></span></dd></dl></div>
+      <div class="card role-dd"><h3>Liquidity DD</h3><div class="role">Dimension</div><dl><dt>Do</dt><dd class="dim">Spread, depth, halt/zero-liquidity guard on both legs</dd><dt>Tools</dt><dd><span class="chips"><span class="chip tool">liquidity</span></span></dd></dl></div>
+      <div class="card role-dd"><h3>Historical-Analog DD</h3><div class="role">Dimension</div><dl><dt>Do</dt><dd class="dim">Pull nearest past scenarios + how they resolved</dd><dt>Tools</dt><dd><span class="chips"><span class="chip kb">KB analogs (vec)</span></span></dd></dl></div>
+      <div class="card role-firm"><h3>DD Synthesizer / Verifier</h3><div class="role">Go / no-go</div><dl><dt>In</dt><dd>all 8 DD outputs</dd><dt>Do</dt><dd class="dim">Adversarially combine, reward "no-go", require data-backed confidence</dd><dt>Out</dt><dd>DiligenceDossier</dd><dt>Mon</dt><dd><span class="chips"><span class="chip mon">provenance</span><span class="chip mon">firewall</span></span></dd></dl></div>
+    </div>
+  </section>
+
+  <!-- ============ CROSS-CUTTING ============ -->
+  <section>
+    <div class="sec-head"><span class="sec-num">SYS</span><h2>Runs across everything</h2></div>
+    <p class="sec-desc">The knowledge base, the monitors, and the learning loop aren't a workflow — they wrap all three. This is what makes the desk auditable and self-improving.</p>
+    <div class="twocol">
+      <div>
+        <h3 style="font-family:var(--font-mono);font-size:15px;margin:0 0 10px">Monitors &amp; guardrails</h3>
+        <div class="tbl-wrap">
+          <table>
+            <thead><tr><th>Monitor</th><th>Watches</th></tr></thead>
+            <tbody>
+              <tr><td class="mono">catalyst-date</td><td>re-verifies every date 48h out; two-source rule (a bad date = total loss)</td></tr>
+              <tr><td class="mono">fact-check</td><td>every analyst claim source-quoted or dropped</td></tr>
+              <tr><td class="mono">provenance</td><td>no KB write without a citation edge</td></tr>
+              <tr><td class="mono">firewall</td><td>W3 never sees W1/W2 thesis</td></tr>
+              <tr><td class="mono">net-long / concentration</td><td>true combined exposure, not netted</td></tr>
+              <tr><td class="mono">live-position</td><td>SL/TP, catalyst countdown, paper P&amp;L</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div>
+        <h3 style="font-family:var(--font-mono);font-size:15px;margin:0 0 10px">Learning loop</h3>
+        <p style="font-size:14px;color:var(--muted);margin:0 0 12px">After each catalyst resolves: score prediction vs. reality, run an LLM-judge calibrated to your graded labels, and propose a playbook/config diff — but only merge it if it passes a <b>golden-set regression replay</b>. That gate is what makes "gets better" real instead of drift.</p>
+        <div class="fig" style="padding:14px">
+          <svg viewBox="0 0 460 120" role="img" aria-label="Learning loop: realized outcome feeds a scorer, then an LLM judge, then a proposed playbook or config diff, which only merges into the knowledge base after passing a golden-set regression replay.">
+            <defs><marker id="llah" markerWidth="9" markerHeight="9" refX="7.5" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 Z" fill="var(--muted)"/></marker></defs>
+            <rect x="8" y="46" width="86" height="30" rx="6" fill="var(--surface-2)" stroke="var(--ink)" stroke-width="1.3"/><text x="51" y="65" text-anchor="middle" class="n-sub">outcome</text>
+            <rect x="120" y="46" width="86" height="30" rx="6" fill="var(--surface-2)" stroke="var(--muted)" stroke-width="1.3"/><text x="163" y="65" text-anchor="middle" class="n-sub">score + judge</text>
+            <rect x="232" y="46" width="96" height="30" rx="6" fill="var(--accent-bg)" stroke="var(--accent)" stroke-width="1.3"/><text x="280" y="65" text-anchor="middle" class="n-sub" fill="var(--accent)">diff proposal</text>
+            <rect x="354" y="40" width="98" height="42" rx="6" fill="var(--monitor-bg)" stroke="var(--monitor)" stroke-width="1.3"/><text x="403" y="58" text-anchor="middle" class="n-sub" fill="var(--monitor)">golden-set</text><text x="403" y="71" text-anchor="middle" class="n-sub" fill="var(--monitor)">regression gate</text>
+            <line x1="94" y1="61" x2="118" y2="61" class="edge" marker-end="url(#llah)"/>
+            <line x1="206" y1="61" x2="230" y2="61" class="edge" marker-end="url(#llah)"/>
+            <line x1="328" y1="61" x2="352" y2="61" class="edge" marker-end="url(#llah)"/>
+            <path d="M403,82 C403,105 60,105 51,78" class="edge-dash" marker-end="url(#llah)"/>
+            <text x="230" y="102" text-anchor="middle" class="edge-label">merge to KB if it passes</text>
+          </svg>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    catalyst-trader · architecture draft · every number computed by a deterministic tool, every claim carries a source · design subject to roadmap
+  </footer>
+</div>
+
+<script>
+  (function () {
+    var btn = document.getElementById('themeToggle');
+    var root = document.documentElement;
+    btn.addEventListener('click', function () {
+      var cur = root.getAttribute('data-theme');
+      if (!cur) { cur = matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'; }
+      root.setAttribute('data-theme', cur === 'dark' ? 'light' : 'dark');
+    });
+  })();
+</script>
