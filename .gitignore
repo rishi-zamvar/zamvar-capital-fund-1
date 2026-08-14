@@ -1,0 +1,26 @@
+# secrets
+.env
+.env.*
+*.key
+secrets/
+# python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+# node / swift build
+node_modules/
+.build/
+DerivedData/
+# local data / db (KB + ledger are local runtime state)
+*.db
+*.sqlite
+*.sqlite3
+data/local/
+# os / editor
+.DS_Store
+.idea/
+*.xcuserstate
