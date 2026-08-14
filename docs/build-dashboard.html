@@ -94,14 +94,14 @@
   <div class="banner">
     <div>
       <div class="big" id="bannerBig">▶ Phase 1 / 11 — Data Integrity &amp; Catalyst Feed</div>
-      <div class="sub" id="bannerSub">Stage: plan-check pending · quality profile (Opus) · TDD</div>
+      <div class="sub" id="bannerSub">Stage: plan-check (6 plans / 4 waves) · quality profile · TDD</div>
     </div>
   </div>
 
   <div class="tiles">
     <div class="tile"><div class="k">Phases complete</div><div class="v" id="tPhases">0<small>/11</small></div></div>
     <div class="tile"><div class="k">Requirements closed</div><div class="v">0<small>/56</small></div></div>
-    <div class="tile"><div class="k">Commits</div><div class="v" id="tCommits">15</div></div>
+    <div class="tile"><div class="k">Commits</div><div class="v" id="tCommits">18</div></div>
     <div class="tile ok"><div class="k">Run status</div><div class="v" id="tRun" style="font-size:20px">RUNNING</div></div>
   </div>
 
@@ -129,15 +129,15 @@
 
 <script>
   // ---- build state (updated on each redeploy) ----
-  var LAST_COMMIT_EPOCH = 1786733772;      // e475cb8 add validation strategy
-  var GENERATED = "2026-08-14 15:03 EDT";
+  var LAST_COMMIT_EPOCH = 1786734481;      // a14ea3d create phase plan (6 plans, 4 waves)
+  var GENERATED = "2026-08-14 15:08 EDT";
   var CURRENT_PHASE = 1, TOTAL = 11;
 
   var STAGES = [
     {k:"context",   s:"done"},
     {k:"research",  s:"done"},
     {k:"validation",s:"done"},
-    {k:"plan",      s:"done"},
+    {k:"plan (6 plans)", s:"done"},
     {k:"plan-check",s:"active"},
     {k:"execute",   s:"pending"},
     {k:"verify",    s:"pending"},
@@ -159,6 +159,7 @@
   ];
 
   var COMMITS = [
+    {h:"a14ea3d", m:"docs(01): create phase plan — 6 plans, 4 waves"},
     {h:"e475cb8", m:"docs(01): add validation strategy"},
     {h:"4d15dec", m:"docs(01): research data integrity & catalyst feed"},
     {h:"7d0024e", m:"chore: live build-status script"},
