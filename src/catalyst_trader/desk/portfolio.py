@@ -41,14 +41,19 @@ class Candidate:
         return self.size_pct if self.weight is None else self.weight
 
 
-def select_book(candidates, open_book, weekly_budget, heat_cap, target_weekly=0.01):
+def select_book(candidates, open_book, weekly_budget, heat_cap, target_weekly=0.01,
+                *, defensive_book=None):
     """Greedily include survivable legs (best expected_move/size first) toward ~`target_weekly`
     aggregate expected return, subject to the weekly budget + a concentration heat cap over the
     COMBINED (promoted + open) book.
 
     NEVER resizes a leg: legs are only included or dropped. If survivable legs cannot reach the
-    target, the book stays below it (no forced upsizing); if none clear the constraints, the
-    promoted set is empty — a zero-trade week is a valid success (PORT-01/04).
+    target, the book stays below it (no forced upsizing).
+
+    WEEK-03 — no zero-trade weeks: if nothing clears the bar AND a `defensive_book` (a prebuilt
+    list[Candidate] of cash-like anchors) is supplied, that defensive book is deployed instead of
+    an empty week. With `defensive_book=None` (default) the empty/zero-trade catalyst path is
+    preserved byte-for-byte (a zero-trade week stays a valid success — PORT-01/04).
 
     Returns (promoted_subset, aggregate_expected_return) where aggregate = Σ(size_pct·expected_move).
     """
@@ -74,6 +79,10 @@ def select_book(candidates, open_book, weekly_budget, heat_cap, target_weekly=0.
         budget_used += c.size_pct
         aggregate += c.size_pct * c.expected_move
 
+    if not promoted and defensive_book is not None:
+        # WEEK-03: no cell cleared the bar -> deploy the defensive book (cash-like anchors),
+        # never an empty week. defensive_book is a prebuilt list[Candidate].
+        return list(defensive_book), sum(c.size_pct * c.expected_move for c in defensive_book)
     return promoted, aggregate
 
 

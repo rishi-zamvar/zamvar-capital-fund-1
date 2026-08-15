@@ -73,15 +73,26 @@ def test_select_book_heat_cap_drops_a_leg():
     assert concentration([c.book_weight() for c in promoted]).value <= 0.3
 
 
-def test_select_book_zero_trade_when_nothing_clears_budget():
-    cands = [_cand(0.03, 0.20)]
-    promoted, agg = select_book(cands, open_book=[], weekly_budget=0.0, heat_cap=1.0)
-    assert promoted == []       # no leg fits the (zero) budget -> zero-trade week, not an error
-    assert agg == 0.0
+# INVERTED in Phase 6.5 (WEEK-03): no zero-trade weeks. When nothing clears the bar AND a
+# defensive_book is supplied, the week is a DEFENSIVE book, not empty. (was
+# test_select_book_zero_trade_when_nothing_clears_budget + test_select_book_empty_candidates_is_zero_trade
+# — both original zero-trade scenarios preserved below as parametrized cases.)
+@pytest.mark.parametrize("candidates,weekly_budget", [
+    ([], 1.0),                       # (a) empty candidates -> nothing to promote
+    ([_cand(0.03, 0.20)], 0.0),      # (b) candidates present but zero budget -> nothing clears
+])
+def test_select_book_no_signal_yields_defensive_book(candidates, weekly_budget):
+    defensive = [_cand(0.01, 0.02), _cand(0.01, 0.02)]  # cash-like anchors (SGOV/BIL-style)
+    promoted, agg = select_book(candidates, open_book=[], weekly_budget=weekly_budget,
+                                heat_cap=1.0, defensive_book=defensive)
+    assert promoted == defensive     # the defensive book is deployed, never an empty week
+    assert agg == pytest.approx(sum(c.size_pct * c.expected_move for c in defensive))
 
 
-def test_select_book_empty_candidates_is_zero_trade():
-    promoted, agg = select_book([], open_book=[], weekly_budget=1.0, heat_cap=1.0)
+def test_select_book_no_signal_defensive_none_stays_zero_trade():
+    """Catalyst path preserved: defensive_book=None (default) keeps the empty/zero-trade week."""
+    assert select_book([], open_book=[], weekly_budget=1.0, heat_cap=1.0) == ([], 0.0)
+    promoted, agg = select_book([_cand(0.03, 0.20)], open_book=[], weekly_budget=0.0, heat_cap=1.0)
     assert promoted == [] and agg == 0.0
 
 
