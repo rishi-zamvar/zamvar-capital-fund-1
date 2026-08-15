@@ -11,6 +11,7 @@ from catalyst_trader.contracts import (
     AnalystSignal,
     DebateVerdict,
     DiligenceDossier,
+    DiligenceInput,
     EstimateVetting,
     Hedge,
     RiskAssessment,
@@ -395,3 +396,75 @@ def test_strategy_dossier_empty_kill_criteria_rejected():
     payload["kill_criteria"] = []
     with pytest.raises(ValidationError):
         StrategyDossier.model_validate(payload)
+
+
+# --- DiligenceInput: the firewall boundary (DILIG-01) ------------------------------
+# The firewall is a pydantic + type-signature property, not a runtime check: extra="forbid"
+# makes any Workflow-1/2 reasoning field UNREPRESENTABLE, so a leaked DebateVerdict/
+# TradeProposal/thesis is a model_validate error, not a policy violation (the Hedge.covers
+# move applied to the input boundary).
+
+
+def valid_diligence_input() -> dict:
+    return {
+        "ticker": "ACME",
+        "catalyst": {
+            "catalyst_id": "cat-001",
+            "catalyst_type": "pdufa",
+            "event_date": "2026-11-28",
+        },
+    }
+
+
+def test_diligence_input_firewall_field_disjoint():
+    """DiligenceInput field names share NOTHING with any Workflow-1/2 artifact — no
+    Pipeline-1/2 reasoning can be structurally carried across the firewall."""
+    workflow_fields = (
+        set(DebateVerdict.model_fields)
+        | set(TradeProposal.model_fields)
+        | set(StrategyDossier.model_fields)
+        | set(RiskAssessment.model_fields)
+    )
+    assert set(DiligenceInput.model_fields).isdisjoint(workflow_fields)
+
+
+def test_diligence_input_rejects_workflow_reasoning():
+    # a Workflow-1 thesis field is unrepresentable (extra="forbid")
+    payload = valid_diligence_input()
+    payload["thesis"] = "positive readout likely"
+    with pytest.raises(ValidationError):
+        DiligenceInput.model_validate(payload)
+
+    # a verdict-shaped field (direction) is likewise rejected
+    payload = valid_diligence_input()
+    payload["direction"] = "positive"
+    with pytest.raises(ValidationError):
+        DiligenceInput.model_validate(payload)
+
+    # pair is a BARE TICKER string — a Hedge object as pair is rejected (str | None)
+    payload = valid_diligence_input()
+    payload["pair"] = Hedge.model_validate(valid_hedge())
+    with pytest.raises(ValidationError):
+        DiligenceInput.model_validate(payload)
+
+
+def test_diligence_input_valid_minimal():
+    obj = DiligenceInput.model_validate(valid_diligence_input())
+    assert obj.ticker == "ACME"
+    assert obj.pair is None  # defaults to None
+    # pair as a bare peer ticker validates
+    obj2 = DiligenceInput(
+        ticker="ACME",
+        catalyst={"catalyst_id": "cat-001", "catalyst_type": "pdufa", "event_date": "2026-11-28"},
+        pair="XYZ",
+    )
+    assert obj2.pair == "XYZ"
+
+
+def test_diligence_dossier_has_residual_risks():
+    payload = valid_diligence_dossier()
+    payload["residual_risks"] = ["net-long beta exposure"]
+    obj = DiligenceDossier.model_validate(payload)
+    assert obj.residual_risks == ["net-long beta exposure"]
+    # defaults to [] when omitted
+    assert DiligenceDossier.model_validate(valid_diligence_dossier()).residual_risks == []

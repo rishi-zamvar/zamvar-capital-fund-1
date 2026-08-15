@@ -182,6 +182,20 @@ class StrategyDossier(BaseModel):
         return v
 
 
+class DiligenceInput(BaseModel):
+    """The firewall boundary (DILIG-01). extra='forbid' makes any Workflow-1/2 field
+    UNREPRESENTABLE, so run_diligence accepts ONLY this type — a leaked DebateVerdict/
+    TradeProposal/thesis is a type error at model_validate, not a policy violation (the
+    Hedge.covers move applied to the input). `catalyst` stays a raw `dict` (minimal facts:
+    {catalyst_id, catalyst_type, event_date, ...}) to keep the boundary minimal; `pair` is
+    the hedge peer TICKER only — never a Hedge object or its rationale."""
+
+    model_config = ConfigDict(extra="forbid")
+    ticker: str
+    catalyst: dict
+    pair: str | None = None
+
+
 class DiligenceDossier(BaseModel):
     model_config = ConfigDict(extra="forbid")
     verdict: Literal["go", "no_go"]
@@ -189,3 +203,4 @@ class DiligenceDossier(BaseModel):
     red_flags: list[str] = []
     strongest_disconfirming_evidence: str
     all_evidence_refs: list[str] = []
+    residual_risks: list[str] = []  # mirrors RiskAssessment.residual_risks
