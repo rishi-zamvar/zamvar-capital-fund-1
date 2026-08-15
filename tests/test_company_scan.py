@@ -105,7 +105,7 @@ def test_flag_vocabulary_fixed():
         _flag(verification_needed="yolo")
 
 
-def test_flag_carries_gap_not_answer():
+def test_opportunity_flag_contract_gap_not_answer():
     """OpportunityFlag exposes the gap-not-answer payload and NO answer-shaped field."""
     fields = set(OpportunityFlag.model_fields.keys())
     assert {"thesis_to_verify", "verification_needed"} <= fields
