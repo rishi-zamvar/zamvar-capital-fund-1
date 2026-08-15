@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Completed 03-06-PLAN.md
-last_updated: "2026-08-15T02:23:39.429Z"
+stopped_at: Completed 03-07-PLAN.md
+last_updated: "2026-08-15T02:29:34.412Z"
 last_activity: 2026-08-15
 progress:
   total_phases: 11
   completed_phases: 2
   total_plans: 18
-  completed_plans: 16
+  completed_plans: 17
   percent: 0
 ---
 
@@ -26,7 +26,7 @@ See: .planning/PROJECT.md (updated 2026-08-14)
 ## Current Position
 
 Phase: 3 (Quant Tool Library + Rubric & Base-Rates) — EXECUTING
-Plan: 6 of 8
+Plan: 7 of 8
 Status: Ready to execute
 Last activity: 2026-08-15
 
@@ -67,6 +67,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 03 P04 | 6min | 2 tasks tasks | 1 file files |
 | Phase 03 P05 | 4min | 3 tasks tasks | 4 files files |
 | Phase 03 P06 | 4min | 2 tasks tasks | 2 files files |
+| Phase 03-quant-tool-library-rubric-base-rates P07 | 4min | 3 tasks | 6 files |
 
 ## Accumulated Context
 
@@ -102,6 +103,8 @@ Recent decisions affecting current work:
 - [Phase 03]: implied_move: straddle method preferred (model-free) and wins when both methods supplied; gross exposure uses abs so two longs show 2× not netted (PITFALLS #1)
 - [Phase 03]: periods_per_year is a REQUIRED arg on sharpe+sortino — freq-footgun cured by design; tested 252==52×√(252/52)
 - [Phase 03]: Sortino denominator = target semideviation over all obs; attribution reconciles components to total within 1e-6 rel tolerance or raises
+- [Phase 03]: load_weights rejects any weight outside [0,1] (not just Σ≈1) — a learning-loop rewrite with a negative/>1 weight could score nonsensically even when the row sums to 1.0 (plan-checker addendum)
+- [Phase 03]: base_rate raises on both zero matches (unknown key) and multiple matches (ambiguous) — no silent None, no arbitrary first-row pick; caller narrows phase/indication (FRAME-03)
 
 ### Pending Todos
 
@@ -115,6 +118,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-08-15T02:23:31.505Z
-Stopped at: Completed 03-06-PLAN.md
+Last session: 2026-08-15T02:29:27.276Z
+Stopped at: Completed 03-07-PLAN.md
 Resume file: None

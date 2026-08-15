@@ -24,9 +24,9 @@
 
 ### Fundamental Framework & Base Rates (FRAME)
 
-- [ ] **FRAME-01**: Ingest online descriptions of fundamental-analysis frameworks and distill a concrete scoring rubric (biotech-adapted: rNPV, cash runway, trial design, endpoint credibility, regulatory precedent, pipeline concentration, management, commercial)
-- [ ] **FRAME-02**: Rubric weights are a tunable config the learning loop can adjust
-- [ ] **FRAME-03**: Clinical base-rate table (phase-transition LoA by phase/indication, prior-CRL penalty, AdCom follow-through) available to agents as data
+- [x] **FRAME-01**: Ingest online descriptions of fundamental-analysis frameworks and distill a concrete scoring rubric (biotech-adapted: rNPV, cash runway, trial design, endpoint credibility, regulatory precedent, pipeline concentration, management, commercial)
+- [x] **FRAME-02**: Rubric weights are a tunable config the learning loop can adjust
+- [x] **FRAME-03**: Clinical base-rate table (phase-transition LoA by phase/indication, prior-CRL penalty, AdCom follow-through) available to agents as data
 
 ### Deterministic Quant Tools (QUANT)
 
@@ -137,9 +137,9 @@
 | QUANT-01 | Phase 3 | Complete |
 | QUANT-02 | Phase 3 | Complete |
 | QUANT-03 | Phase 3 | Complete |
-| FRAME-01 | Phase 3 | Pending |
-| FRAME-02 | Phase 3 | Pending |
-| FRAME-03 | Phase 3 | Pending |
+| FRAME-01 | Phase 3 | Complete |
+| FRAME-02 | Phase 3 | Complete |
+| FRAME-03 | Phase 3 | Complete |
 | OPS-04 | Phase 3 | Complete |
 | CALL-01 | Phase 4 | Pending |
 | CALL-02 | Phase 4 | Pending |
