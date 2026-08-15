@@ -5,8 +5,10 @@ Mirrors the price-bar store discipline (tests/test_price_store.py): write-once p
 """
 
 import pytest
+from pydantic import ValidationError
 
 from catalyst_trader import store
+from catalyst_trader.contracts import KeyFinding, OpportunityFlag, ScanInput
 
 
 # --- Task 1: company_card + scan_flag store ------------------------------------------------
@@ -55,3 +57,56 @@ def test_scan_flag_round_trips_and_is_pointintime(db):
 
     asof = store.scan_flags_asof(db, "ABCD", "2026-01-09")
     assert asof == [{"opportunity_type": "squeeze_setup"}]  # future W3 flag excluded
+
+
+# --- Task 2: ScanInput firewall + OpportunityFlag contract ---------------------------------
+
+
+def test_scan_input_firewall_forbids_desk_artifacts():
+    """ScanInput carries ONLY {ticker, week_end, card_prev, card_cur, tripped} — any desk
+    artifact (verdict/thesis/position/direction) is a ValidationError, not a policy check."""
+    # clean construction succeeds
+    ok = ScanInput(ticker="ABCD", week_end="2026-01-02", card_cur={"price": 10.0})
+    assert ok.card_prev is None and ok.tripped == []
+
+    for leak in ("verdict", "thesis", "position", "direction"):
+        with pytest.raises(ValidationError):
+            ScanInput(ticker="ABCD", week_end="2026-01-02", card_cur={}, **{leak: "x"})
+
+
+def _flag(**over):
+    base = dict(
+        ticker="ABCD",
+        week_end="2026-01-02",
+        opportunity_type="catalyst_vol",
+        thesis_to_verify="PDUFA within 2 weeks could drive a >20% move",
+        verification_needed="catalyst_call",
+        key_findings=[KeyFinding(claim="PDUFA 2026-01-20", evidence_ref="kb:1")],
+        confidence=0.4,
+    )
+    base.update(over)
+    return OpportunityFlag(**base)
+
+
+def test_flag_vocabulary_fixed():
+    """opportunity_type + verification_needed accept ONLY their fixed vocabularies."""
+    for ot in ("catalyst_vol", "squeeze_setup", "dilution_risk", "technical_reversal",
+               "continuation", "competitor_event", "unknown_vol", "no_opportunity"):
+        _flag(opportunity_type=ot)
+    for vn in ("catalyst_call", "measured_edge", "mini_backtest", "diligence"):
+        _flag(verification_needed=vn)
+    with pytest.raises(ValidationError):
+        _flag(opportunity_type="buy")
+    with pytest.raises(ValidationError):
+        _flag(verification_needed="yolo")
+
+
+def test_flag_carries_gap_not_answer():
+    """OpportunityFlag exposes the gap-not-answer payload and NO answer-shaped field."""
+    fields = set(OpportunityFlag.model_fields.keys())
+    assert {"thesis_to_verify", "verification_needed"} <= fields
+    assert fields.isdisjoint({"direction", "size", "size_pct", "target", "route"})
+    # no_opportunity is a first-class outcome; confidence bounded [0,1]
+    _flag(opportunity_type="no_opportunity")
+    with pytest.raises(ValidationError):
+        _flag(confidence=1.5)
