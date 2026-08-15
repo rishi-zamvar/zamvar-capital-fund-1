@@ -73,6 +73,16 @@ Given an imminent biotech catalyst, produce a data-backed, portfolio-aware, hedg
 - [ ] Independent diligence firewall: validates from RAW sources (not Pipeline-1's thesis) — trial stats/endpoints, regulatory precedent, financials/runway, ownership/short interest, options-implied move, historical analog from KB — anti-confirmation-bias
 - [ ] MD / PM (the GP): portfolio-level fit (concentration, correlation to open book, weekly budget) → promote/kill → emits the week's strategy dossier for LP approval
 
+**MD/GP reconciliation loop (RECON — added 2026-08-15)**
+- [ ] DD feeds UP to the MD/GP (same head-of-firm persona as the PM sign-off), who reviews catalyst-call + portfolio + diligence together — the one integration point that sees all three workflows.
+- [ ] GP flags a catalyst-call issue → re-triggers the bull/bear debate with the key info DD surfaced that they left out (debate re-reasons, isn't handed the answer) → new verdict → portfolio builder. Vice-versa for a portfolio-build issue → builder gets the missing info → new build → back to DD.
+- [ ] Bounded loop: iterate to convergence or a hard cap; residual caveats relayed to the LP. Firewall preserved — DD inputs stay sealed; only DD findings flow up/back.
+
+**Intra-week position monitor (MON — added 2026-08-15, BUILD DEFERRED to Phase 8.5)**
+- [ ] A separate, LIGHT/FAST workflow watches open positions through the week, distinct from the weekly build/exit cycle.
+- [ ] Event-triggered by deterministic monitors (technical-indicator thresholds, news on a held name) — not continuous LLM polling; runs on lighter models (Haiku-class), many times/on the fly, cheap.
+- [ ] If it flags a position for adjustment → routes THAT position back to the portfolio builder; never places orders itself.
+
 **Backtest / baseline harness (runs before the paper month)**
 - [ ] Historical event set from ~1yr of earnings calendars across the universe (dense, precisely-dated → statistically meaningful N), plus dateable biotech catalysts
 - [ ] Layer A — Mechanical strategy backtest (no LLM): apply deterministic pair-selection + ~1% sizing + entry 1–2d pre-event + SL/TP + 1-week exit against historical prices → baseline distribution (win rate, avg win/loss, Sharpe, max DD) and hedge-effectiveness (how often the peer leg offsets the target leg)
