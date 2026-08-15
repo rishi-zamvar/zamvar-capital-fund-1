@@ -36,10 +36,10 @@
 
 ### Hedging (HEDGE)
 
-- [ ] **HEDGE-01**: Hedge is an inverse-payoff peer (rises when target falls), typically a direct competitor for the same indication — not a merely-correlated peer
-- [ ] **HEDGE-02**: Risk agent re-analyzes the hedge relationship before every trade, conditional on THIS catalyst (historical analog gaps + current landscape), producing a conditional payoff matrix
-- [ ] **HEDGE-03**: Peer must be catalyst-clean over the hold window (no own PDUFA/readout/earnings/M&A)
-- [ ] **HEDGE-04**: No-valid-inverse-peer fallback: flag and fall back to size-tiny or exit-before-event — never a fake hedge
+- [x] **HEDGE-01**: Hedge is an inverse-payoff peer (rises when target falls), typically a direct competitor for the same indication — not a merely-correlated peer
+- [x] **HEDGE-02**: Risk agent re-analyzes the hedge relationship before every trade, conditional on THIS catalyst (historical analog gaps + current landscape), producing a conditional payoff matrix
+- [x] **HEDGE-03**: Peer must be catalyst-clean over the hold window (no own PDUFA/readout/earnings/M&A)
+- [x] **HEDGE-04**: No-valid-inverse-peer fallback: flag and fall back to size-tiny or exit-before-event — never a fake hedge
 - [ ] **HEDGE-05**: Dossier states residual net-long risk and which risk (idiosyncratic vs. sector) is actually covered
 
 ### Workflow 1 — Catalyst Call (CALL)
@@ -150,10 +150,10 @@
 | PORT-03 | Phase 5 | Complete |
 | PORT-04 | Phase 5 | Pending |
 | PORT-05 | Phase 5 | Pending |
-| HEDGE-01 | Phase 5 | Pending |
-| HEDGE-02 | Phase 5 | Pending |
-| HEDGE-03 | Phase 5 | Pending |
-| HEDGE-04 | Phase 5 | Pending |
+| HEDGE-01 | Phase 5 | Complete |
+| HEDGE-02 | Phase 5 | Complete |
+| HEDGE-03 | Phase 5 | Complete |
+| HEDGE-04 | Phase 5 | Complete |
 | HEDGE-05 | Phase 5 | Pending |
 | OPS-01 | Phase 5 | Pending |
 | OPS-02 | Phase 5 | Pending |

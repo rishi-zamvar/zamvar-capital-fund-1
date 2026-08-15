@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Completed 05-03-PLAN.md
-last_updated: "2026-08-15T07:10:01.003Z"
+stopped_at: Completed 05-04-PLAN.md
+last_updated: "2026-08-15T07:25:26.432Z"
 last_activity: 2026-08-15
 progress:
   total_phases: 11
   completed_phases: 4
   total_plans: 32
-  completed_plans: 28
+  completed_plans: 29
   percent: 0
 ---
 
@@ -26,7 +26,7 @@ See: .planning/PROJECT.md (updated 2026-08-14)
 ## Current Position
 
 Phase: 05 (trade-builder-honest-hedge-ruin-avoidant-sizing-workflow-1b-2) — EXECUTING
-Plan: 4 of 7
+Plan: 5 of 7
 Status: Ready to execute
 Last activity: 2026-08-15
 
@@ -79,6 +79,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 05 P01 | 3min | 2 tasks | 2 files |
 | Phase 05 P02 | 20min | 3 tasks tasks | 5 files files |
 | Phase 05 P03 | 8min | 2 tasks | 3 files |
+| Phase 05 P04 | 18min | 3 tasks | 6 files |
 
 ## Accumulated Context
 
@@ -134,6 +135,8 @@ Recent decisions affecting current work:
 - [Phase 05]: hold_vs_exit decides by expected-LOG-growth at the survival-constrained f (Kelly-consistent), never raw EV — a positive-EV hold with a fat down-tail provably exits (BLOCKER-2); non-survivable (1+f·R)<=0 raises, never silent -inf
 - [Phase 05]: adaptive_sl_tp_levels delegates to sl_tp_levels so the gap-exposed advisory gate lives in one place; every quant threshold read from params (missing key raises, no numeric fallback)
 - [Phase 05]: load_params is the frozen model-fit param seam (top-confidence fitted_params:<type> row, else labeled BOOTSTRAP_DEFAULT deep-copy); fitted param sets are cited, confidence-versioned playbook claims, builder thresholds homed in the default/CSV — 05-06 reads them, Phase-9 refit replaces the SOURCE without rewrite
+- [Phase 05]: size_for_survival has no return-target param (structural anti-1%-coupling); sizes on risk_of_ruin down-move, 1% is never a sizing input (PORT-03)
+- [Phase 05]: validate_hedge: a hedge is only a -1 inverse peer passing conditional_payoff worst-cell + cointegration + catalyst-clean THIS catalyst, else None (honest fallback, HEDGE-01..04); assess calls it ONCE, threads onto both hedge object + hedge_valid (BLOCKER-1)
 
 ### Pending Todos
 
@@ -147,6 +150,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-08-15T07:09:54.166Z
-Stopped at: Completed 05-03-PLAN.md
+Last session: 2026-08-15T07:25:16.011Z
+Stopped at: Completed 05-04-PLAN.md
 Resume file: None
