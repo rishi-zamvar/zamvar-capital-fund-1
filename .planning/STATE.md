@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Completed 03-04-PLAN.md
-last_updated: "2026-08-15T02:14:00.030Z"
+stopped_at: Completed 03-05-PLAN.md
+last_updated: "2026-08-15T02:18:08.268Z"
 last_activity: 2026-08-15
 progress:
   total_phases: 11
   completed_phases: 2
   total_plans: 18
-  completed_plans: 14
+  completed_plans: 15
   percent: 0
 ---
 
@@ -26,7 +26,7 @@ See: .planning/PROJECT.md (updated 2026-08-14)
 ## Current Position
 
 Phase: 3 (Quant Tool Library + Rubric & Base-Rates) — EXECUTING
-Plan: 4 of 8
+Plan: 5 of 8
 Status: Ready to execute
 Last activity: 2026-08-15
 
@@ -65,6 +65,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 03 P02 | 5min | 2 tasks tasks | 1 file files |
 | Phase 03 P03 | 4min | 2 tasks tasks | 1 file files |
 | Phase 03 P04 | 6min | 2 tasks tasks | 1 file files |
+| Phase 03 P05 | 4min | 3 tasks tasks | 4 files files |
 
 ## Accumulated Context
 
@@ -97,6 +98,7 @@ Recent decisions affecting current work:
 - [Phase 03]: risk_of_ruin has NO return-target parameter — structural guarantee sizing is never coupled to the 1%/week target (survival-first)
 - [Phase 03]: risk_of_ruin = bankroll recurrence (loss_length) + exact streak-probability DP over n_trades, deterministic (no Monte Carlo), reproducible + testable
 - [Phase 03]: cointegration delegates to statsmodels coint (Engle-Granger) + coint_johansen (Johansen trace); hedge ratio = OLS slope np.polyfit(price_b, price_a); conditional_payoff value = un-netted worst cell (PITFALLS #1 honest hedge)
+- [Phase 03]: implied_move: straddle method preferred (model-free) and wins when both methods supplied; gross exposure uses abs so two longs show 2× not netted (PITFALLS #1)
 
 ### Pending Todos
 
@@ -110,6 +112,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-08-15T02:13:52.838Z
-Stopped at: Completed 03-04-PLAN.md
+Last session: 2026-08-15T02:18:02.731Z
+Stopped at: Completed 03-05-PLAN.md
 Resume file: None
