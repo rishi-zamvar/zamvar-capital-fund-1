@@ -168,3 +168,53 @@ def tradeable_catalysts(conn: sqlite3.Connection) -> list[Catalyst]:
         "SELECT * FROM catalyst WHERE status=? ORDER BY id", (Status.verified.value,)
     ).fetchall()
     return [_hydrate(conn, r) for r in rows]
+
+
+# --- price bars (WEEK-02) --------------------------------------------------------------------
+# The GATING weekly-OHLCV substrate. Survivorship-free (delisted names + XBI retained) and read
+# point-in-time via bars_asof. Storage only — no money math, no literals leak into base rates.
+
+
+def upsert_bars(
+    conn: sqlite3.Connection,
+    ticker: str,
+    bars: list[dict],
+    *,
+    delisted: bool = False,
+    source: str = "fixture",
+) -> int:
+    """UPSERT weekly OHLCV bars for one ticker; return the count written.
+
+    Each dict = {"week_end","open","high","low","close","volume"}. Idempotent on
+    (ticker, week_end): an existing week is UPDATED in place, never duplicated (mirrors
+    insert_catalyst). Atomic — the whole batch commits or rolls back. XBI is just another
+    ticker; delisted names are retained (survivorship-free).
+    """
+    now = _now()
+    d = 1 if delisted else 0
+    try:
+        for b in bars:
+            existing = conn.execute(
+                "SELECT id FROM price_bar WHERE ticker=? AND week_end=?",
+                (ticker, b["week_end"]),
+            ).fetchone()
+            if existing is not None:
+                conn.execute(
+                    "UPDATE price_bar SET open=?, high=?, low=?, close=?, volume=?, "
+                    "delisted=?, source=?, retrieved_at=? WHERE id=?",
+                    (b.get("open"), b.get("high"), b.get("low"), b["close"],
+                     b.get("volume"), d, source, now, existing["id"]),
+                )
+            else:
+                conn.execute(
+                    "INSERT INTO price_bar "
+                    "(ticker, week_end, open, high, low, close, volume, delisted, source, retrieved_at) "
+                    "VALUES (?,?,?,?,?,?,?,?,?,?)",
+                    (ticker, b["week_end"], b.get("open"), b.get("high"), b.get("low"),
+                     b["close"], b.get("volume"), d, source, now),
+                )
+        conn.commit()
+        return len(bars)
+    except Exception:
+        conn.rollback()
+        raise
