@@ -91,7 +91,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 **Plans**: 7 plans (3 waves)
 - [x] 04-01-PLAN.md — Extend DebateVerdict: binary direction + required kill_criteria (CALL-03 contract)
 - [x] 04-02-PLAN.md — Async foundation: claude-agent-sdk + run_structured() SDK seam + evidence_ref mint/resolve + fixture harness
-- [ ] 04-03-PLAN.md — Quant/KB tools as an in-process SDK MCP server (analysts interpret, never compute)
+- [x] 04-03-PLAN.md — Quant/KB tools as an in-process SDK MCP server (analysts interpret, never compute)
 - [ ] 04-04-PLAN.md — Analyst layer: 4 dimension prompts + run_analyst → source-cited AnalystSignal (CALL-01)
 - [ ] 04-05-PLAN.md — Bounded, isolated bull/bear debate + moderator → binary grounded verdict (CALL-02/03)
 - [ ] 04-06-PLAN.md — Fact-check verifier: deterministic source-quote-or-drop + gated semantic check (CALL-04)
