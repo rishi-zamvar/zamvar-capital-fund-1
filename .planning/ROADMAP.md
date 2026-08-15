@@ -109,7 +109,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 **Plans**: 7 plans (4 waves)
 - [x] 05-01-PLAN.md — Contract extensions: Hedge + EstimateVetting + extended TradeProposal/RiskAssessment/StrategyDossier (Wave 1)
 - [x] 05-02-PLAN.md — Quant tools: catalyst_move_estimate (events.py) + adaptive_sl_tp_levels, param-driven, TDD (Wave 1)
-- [ ] 05-03-PLAN.md — KB model-fit param seam: kb.load_params + cited bootstrap fitted_params per catalyst type (Wave 1)
+- [x] 05-03-PLAN.md — KB model-fit param seam: kb.load_params + cited bootstrap fitted_params per catalyst type (Wave 1)
 - [ ] 05-04-PLAN.md — desk/risk.py: size_for_survival + honest per-catalyst hedge validation + 3-way committee (Wave 2)
 - [ ] 05-05-PLAN.md — Estimate vetting gate: verifier.enforce_estimate (cite-or-drop + consistency + blocking) (Wave 2)
 - [ ] 05-06-PLAN.md — desk/builder.py: DebateVerdict → TradeProposal estimated-move construction + vetting (Wave 3)
