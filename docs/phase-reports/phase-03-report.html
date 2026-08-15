@@ -1,0 +1,122 @@
+<title>Fund 1 — Phase 3 Report</title>
+<style>
+  :root{
+    --bg:#ecefe9;--surface:#fff;--surface-2:#f5f7f2;--ink:#191c18;--muted:#5f655c;--faint:#99a094;
+    --border:#d6dbcf;--border-strong:#c2c8b8;--accent:#8a6a12;--accent-bg:#f3ecd8;
+    --done:#1f7a4d;--done-bg:#e4f2e9;--warn:#b23b30;--warn-bg:#f6e5e3;--info:#2b6a93;--info-bg:#e2edf4;
+    --mono:ui-monospace,"SF Mono","JetBrains Mono",Menlo,Consolas,monospace;
+    --sans:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+    --shadow:0 1px 2px rgba(20,25,18,.06),0 4px 14px rgba(20,25,18,.05);
+  }
+  @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+    --bg:#101310;--surface:#191d18;--surface-2:#20241e;--ink:#e8ece4;--muted:#9aa192;--faint:#6b7365;
+    --border:#2c322a;--border-strong:#3a4136;--accent:#d8b45a;--accent-bg:#2a2412;
+    --done:#4cc585;--done-bg:#14271c;--warn:#ef7365;--warn-bg:#2c1714;--info:#6bb3e6;--info-bg:#122430;
+    --shadow:0 1px 2px rgba(0,0,0,.4),0 6px 18px rgba(0,0,0,.35);
+  }}
+  :root[data-theme="dark"]{
+    --bg:#101310;--surface:#191d18;--surface-2:#20241e;--ink:#e8ece4;--muted:#9aa192;--faint:#6b7365;
+    --border:#2c322a;--border-strong:#3a4136;--accent:#d8b45a;--accent-bg:#2a2412;
+    --done:#4cc585;--done-bg:#14271c;--warn:#ef7365;--warn-bg:#2c1714;--info:#6bb3e6;--info-bg:#122430;
+    --shadow:0 1px 2px rgba(0,0,0,.4),0 6px 18px rgba(0,0,0,.35);
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);line-height:1.55}
+  .wrap{max-width:900px;margin:0 auto;padding:40px 22px 72px}
+  .ey{font-family:var(--mono);font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--accent);font-weight:600}
+  h1{font-family:var(--mono);font-size:clamp(26px,5vw,38px);margin:8px 0 4px;letter-spacing:-.01em}
+  .status{display:inline-flex;align-items:center;gap:8px;font-family:var(--mono);font-size:13px;color:var(--done);background:var(--done-bg);border:1px solid var(--done);border-radius:20px;padding:4px 13px;margin-top:6px}
+  .masthead{border-bottom:2px solid var(--ink);padding-bottom:18px;margin-bottom:26px}
+  .meta{font-family:var(--mono);font-size:12px;color:var(--muted);margin-top:10px}
+  h2{font-family:var(--mono);font-size:16px;margin:32px 0 12px;display:flex;align-items:center;gap:9px}
+  h2 .ic{width:22px;height:22px;border-radius:5px;display:inline-grid;place-items:center;font-size:13px;flex:none}
+  .ic.d{background:var(--done-bg);color:var(--done);border:1px solid var(--done)}
+  .ic.w{background:var(--warn-bg);color:var(--warn);border:1px solid var(--warn)}
+  .ic.g{background:var(--accent-bg);color:var(--accent);border:1px solid var(--accent)}
+  .ic.n{background:var(--info-bg);color:var(--info);border:1px solid var(--info)}
+  ul{margin:0;padding-left:2px;list-style:none}
+  li{position:relative;padding:5px 0 5px 22px;font-size:14.5px}
+  li::before{content:"";position:absolute;left:2px;top:12px;width:6px;height:6px;border-radius:50%;background:var(--accent)}
+  li.done::before{content:"✓";background:none;color:var(--done);font-family:var(--mono);font-size:13px;top:6px;left:0}
+  li b{font-weight:600}
+  code{font-family:var(--mono);font-size:12.5px;background:var(--surface-2);border:1px solid var(--border);border-radius:4px;padding:1px 6px}
+  .card{background:var(--surface);border:1px solid var(--border);border-left:4px solid var(--warn);border-radius:9px;padding:14px 16px;margin:10px 0;box-shadow:var(--shadow)}
+  .card.i{border-left-color:var(--info)}
+  .card h3{font-family:var(--mono);font-size:14px;margin:0 0 4px;color:var(--warn)}
+  .card.i h3{color:var(--info)}
+  .card p{margin:4px 0 0;font-size:14px;color:var(--ink)}
+  .tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin:8px 0 4px}
+  .tile{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:13px 15px;box-shadow:var(--shadow)}
+  .tile .k{font-family:var(--mono);font-size:10px;letter-spacing:.07em;text-transform:uppercase;color:var(--faint)}
+  .tile .v{font-family:var(--mono);font-size:23px;font-weight:700;margin-top:3px}
+  .tile .v small{font-size:14px;color:var(--muted)}
+  .bar{height:9px;background:var(--surface-2);border:1px solid var(--border);border-radius:5px;overflow:hidden;margin:14px 0 4px}
+  .bar>i{display:block;height:100%;width:27.3%;background:var(--accent)}
+  .next{background:var(--accent-bg);border:1px solid var(--accent);border-radius:10px;padding:16px 18px;margin-top:10px}
+  .next h3{font-family:var(--mono);font-size:15px;margin:0 0 6px;color:var(--accent)}
+  .next p{margin:0;font-size:14px}
+  .win{background:var(--done-bg);border:1px solid var(--done);border-radius:8px;padding:10px 14px;margin:10px 0;font-size:14px}
+  .win b{color:var(--done)}
+  footer{margin-top:34px;padding-top:18px;border-top:1px solid var(--border);font-family:var(--mono);font-size:11.5px;color:var(--faint)}
+</style>
+
+<div class="wrap">
+  <div class="masthead">
+    <div class="ey">zamvar capital · fund 1 · phase report</div>
+    <h1>Phase 3 — Quant Tools + Rubric &amp; Base-Rates</h1>
+    <div class="status">● VERIFIED · 10/10 truths · 451 tests · 98% coverage</div>
+    <div class="meta">2026-08-14 · QUANT-01…03, FRAME-01…03, OPS-04 closed · goal: <i>agents never do money arithmetic — they call deterministic, reproducible, exhaustively-tested tools.</i></div>
+  </div>
+
+  <h2><span class="ic d">✓</span> What's done</h2>
+  <ul>
+    <li class="done"><b>17 deterministic money tools</b> across 6 modules (valuation · sizing · pairs · options · portfolio · performance), one clean import surface — rNPV, cash-runway, Kelly/fractional-Kelly, <b>risk-of-ruin</b>, SL/TP, cointegration, correlation/β, conditional-payoff, implied-move, IV-crush, Sharpe/Sortino/returns/attribution, concentration/exposure</li>
+    <li class="done"><b>Every tool returns a reproducible result</b> — a frozen record carrying its exact inputs (enforced library-wide by one invariant test), so any number can be audited and re-derived. Agents interpret; they never compute.</li>
+    <li class="done"><b>Survival-first sizing is structural</b> — <code>risk_of_ruin</code> has <i>no</i> return-target parameter (can't be gamed toward the 1% goal); Kelly clamps to 0 on poor binary odds; sizing math built for a −70% gap</li>
+    <li class="done"><b>Freq footgun killed</b> — Sharpe/Sortino require <code>periods_per_year</code> (no silent default), proven by a √-scaling test</li>
+    <li class="done"><b>Hedge-validation math ready</b> — cointegration (statsmodels) + the conditional-payoff matrix that scores whether a peer truly pays off inversely (the honest replacement for "0.7 correlated = hedged")</li>
+    <li class="done"><b>Tunable scoring rubric</b> (8 factors, Σ=1, rejects out-of-range weights so the learning loop can't corrupt it) + <b>13 clinical base rates, each with a citation</b> (Phase-I odds 7.9%, prior-CRL −28%, AdCom follow-through 90%…)</li>
+    <li class="done"><b>OPS-04 exhaustive edge cases</b> — every tool RED-tested for div-by-zero, negatives, empty/short series, NaN, extremes before its logic; 451 tests, quant lib 98% (sizing 100%)</li>
+  </ul>
+
+  <h2><span class="ic g">★</span> What's going well</h2>
+  <div class="win"><b>Graphify is measurably paying off:</b> ~303k tokens saved so far, <b>−23% per executor</b> (118k pre-Graphify → 90k with it live, across 11 executors). And it survived a rough patch cleanly.</div>
+  <ul>
+    <li><b>Recovered from a mass stall with near-zero rework</b> — a battery-sleep wave killed ~10 background agents at once, but per-task commits + incremental research writes meant work resumed exactly where it stopped. (Plug into AC to avoid the naps entirely.)</li>
+    <li><b>The quality loop keeps catching real things</b> — the plan-checker's two notes (reject negative rubric weights; add a pipeline aggregator) were folded straight into execution, no revision round-trip.</li>
+    <li><b>The universe research ran alongside</b> and delivered a ranked candidate list + real event studies (see the separate reports).</li>
+  </ul>
+
+  <h2><span class="ic w">!</span> Needs your review / input</h2>
+  <div class="card i">
+    <h3>1. Strategic: options access is the top unlock</h3>
+    <p>The universe research found only <b>~1 in 5 names is genuinely hedgeable</b> with stocks alone. The single biggest improvement would be <b>put options</b> (real insurance) to hedge the other ~75% — but the Robinhood connection is equities-only in v1. Worth deciding whether to prioritize options sooner than planned.</p>
+  </div>
+  <div class="card">
+    <h3>2. Data curation (still yours to do)</h3>
+    <p>Seed universe + source-cited PDUFA dates in <code>data/*.csv</code>. The research now hands you a ranked candidate list to work from — nearest live catalyst is <b>Ultragenyx, ~Aug 23</b>.</p>
+  </div>
+  <div class="card i">
+    <h3>3. Statistical rigor on the pairs (in progress)</h3>
+    <p>You asked whether the pairs are statistically significant — honest answer: not yet (mostly single events + mechanism reasoning). A yfinance-powered agent is now measuring event co-movement across ~60–100 names, both directions, to put real sample sizes + t-stats on it.</p>
+  </div>
+
+  <h2><span class="ic n">→</span> Next steps</h2>
+  <div class="next">
+    <h3>Phase 4 — Analyst Desk + Bull/Bear Debate (the first AGENTIC pipeline)</h3>
+    <p>Everything so far was the foundation the agents stand on. Phase 4 builds the desk: four analyst agents (clinical, regulatory, financial, market) produce source-cited signals; a bull and a bear argue it out; a manager issues a single <b>yes/no catalyst call + confidence + kill criteria</b>. This is where the LLM agents start <i>using</i> the tools, KB, and base rates from Phases 1–3 — and where the anti-hallucination discipline (cite-or-drop, calibrated confidence) really earns its keep.</p>
+  </div>
+
+  <h2><span class="ic g">▤</span> Project state</h2>
+  <div class="bar"><i></i></div>
+  <div class="tiles">
+    <div class="tile"><div class="k">Phases</div><div class="v">3<small>/11</small></div></div>
+    <div class="tile"><div class="k">Requirements</div><div class="v">18<small>/56</small></div></div>
+    <div class="tile"><div class="k">Tests</div><div class="v">451</div></div>
+    <div class="tile"><div class="k">Graphify saved</div><div class="v" style="color:var(--done)">~303k</div></div>
+    <div class="tile"><div class="k">Blockers</div><div class="v" style="color:var(--done)">0</div></div>
+  </div>
+  <p style="font-size:13.5px;color:var(--muted);margin-top:10px">No blockers. ~3.9M build tokens. Live monitor at <code>http://127.0.0.1:8799</code>; universe + pairs research + plain-English explainer all published. Autonomous run continues to Phase 4.</p>
+
+  <footer>Fund 1 · Phase 3 of 11 · generated 2026-08-14 · every number computed by a tested tool, every rate cited</footer>
+</div>
