@@ -11,6 +11,14 @@ an LLM decision).
 from catalyst_trader.contracts import DebateVerdict, DiligenceDossier, StrategyDossier
 
 
+def _answered(item: str, coverage: list[str]) -> bool:
+    """True iff some coverage string MENTIONS `item` (case/space-normalized substring).
+    A red_flag/residual is 'answered' only when a kill criterion / priced residual / hedge
+    mechanism actually names it — deterministic, the MD interprets the unanswered remainder."""
+    n = " ".join(item.lower().split())
+    return any(n in " ".join(c.lower().split()) for c in coverage if c)
+
+
 def cross_check(
     verdict: DebateVerdict,
     dossier: StrategyDossier,
@@ -40,7 +48,35 @@ def cross_check(
     # --- direction drift between the debate verdict and the built trade (regression guard) ---
     direction_consistent = verdict.direction == dossier.trade.direction
 
-    clean = catalyst_id_consistent and direction_consistent and not dd_vs_portfolio
+    # --- uncovered DD red_flags: not answered by any kill criterion / priced residual (dissent_log)
+    #     / hedge mechanism coverage (RECON-04). ---
+    coverage = [*dossier.kill_criteria, *dossier.dissent_log]
+    if dossier.trade.hedge is not None:
+        coverage.append(dossier.trade.hedge.mechanism)
+    uncovered_red_flags = [f for f in dd.red_flags if not _answered(f, coverage)]
+
+    # --- DD residuals absent from the dossier's residual accounting (dissent_log surface) ---
+    dd_vs_risk_residuals = [
+        r for r in dd.residual_risks if not _answered(r, dossier.dissent_log)
+    ]
+
+    # --- net-long uncovered exposure held THROUGH the binary: the coverage/net-long/hold-through
+    #     TRIPLE (RiskAssessment.ruin_at_size is NOT on the dossier). The 'tiny' floor is the
+    #     threaded min_tradeable_size param — no magic number, no conn/kb inside. ---
+    sizing_vs_survival = (
+        dossier.which_risk_covered == "none"
+        and dossier.trade.size_pct > min_tradeable_size
+        and dossier.trade.holds_through_catalyst
+    )
+
+    clean = (
+        catalyst_id_consistent
+        and direction_consistent
+        and not dd_vs_portfolio
+        and not uncovered_red_flags
+        and not dd_vs_risk_residuals
+        and not sizing_vs_survival
+    )
 
     return {
         "clean": clean,
@@ -49,4 +85,7 @@ def cross_check(
         "dd_vs_portfolio": dd_vs_portfolio,
         "direction_consistent": direction_consistent,
         "directions": {"verdict": verdict.direction, "trade": dossier.trade.direction},
+        "uncovered_red_flags": uncovered_red_flags,
+        "dd_vs_risk_residuals": dd_vs_risk_residuals,
+        "sizing_vs_survival": sizing_vs_survival,
     }

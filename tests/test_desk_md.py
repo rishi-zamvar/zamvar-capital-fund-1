@@ -165,3 +165,65 @@ def test_cross_check_direction_drift():
     )
     assert out["direction_consistent"] is False
     assert out["clean"] is False
+
+
+# --- Task 2: uncovered red_flags / residual gaps / net-long-held-through ---
+
+
+def test_cross_check_uncovered_red_flags():
+    # one red_flag IS answered by a kill criterion (drops out); one is NOT covered anywhere.
+    dd = _dd(red_flags=["primary endpoint is missed", "insider selling spike last quarter"])
+    out = cross_check(
+        _verdict(), _dossier(), dd,
+        catalyst_id="cat-1", min_tradeable_size=0.01,
+    )
+    assert out["uncovered_red_flags"] == ["insider selling spike last quarter"]
+    assert out["clean"] is False
+
+
+def test_cross_check_dd_residual_gap():
+    # one residual IS in the dossier's residual surface (dissent_log); one is absent -> the gap.
+    dd = _dd(residual_risks=["FX exposure on EU sales", "second-source supply chain risk"])
+    dossier = _dossier(dissent_log=["priced residual: FX exposure on EU sales carried in the memo"])
+    out = cross_check(
+        _verdict(), dossier, dd,
+        catalyst_id="cat-1", min_tradeable_size=0.01,
+    )
+    assert out["dd_vs_risk_residuals"] == ["second-source supply chain risk"]
+    assert out["clean"] is False
+
+
+def test_cross_check_net_long_held_through():
+    # net-long uncovered exposure held THROUGH the binary: which_risk_covered=="none"
+    # AND size_pct > the threaded floor AND holds_through_catalyst.
+    trade = _trade(hedge=None, holds_through_catalyst=True, size_pct=0.05)
+    dossier = _dossier(trade=trade, which_risk_covered="none")
+    out = cross_check(
+        _verdict(), dossier, _dd(),
+        catalyst_id="cat-1", min_tradeable_size=0.01,
+    )
+    assert out["sizing_vs_survival"] is True
+    assert out["clean"] is False
+
+    # below the floor -> not flagged (the floor is a real threshold, not a magic number).
+    tiny = _dossier(trade=_trade(hedge=None, holds_through_catalyst=True, size_pct=0.005),
+                    which_risk_covered="none")
+    out2 = cross_check(
+        _verdict(), tiny, _dd(),
+        catalyst_id="cat-1", min_tradeable_size=0.01,
+    )
+    assert out2["sizing_vs_survival"] is False
+
+
+def test_cross_check_all_clean_still_clean():
+    out = cross_check(
+        _verdict(), _dossier(), _dd(),
+        catalyst_id="cat-1", min_tradeable_size=0.01,
+    )
+    assert out["catalyst_id_consistent"] is True
+    assert out["direction_consistent"] is True
+    assert out["dd_vs_portfolio"] is False
+    assert out["uncovered_red_flags"] == []
+    assert out["dd_vs_risk_residuals"] == []
+    assert out["sizing_vs_survival"] is False
+    assert out["clean"] is True
