@@ -145,6 +145,29 @@
 
 **Cumulative build (measured, so far): ~9,441,000 subagent tokens (+ P6.5 ~1,328,000).**
 
+### Phase 6.7 — MD/GP Reconciliation Loop (CLOSED)
+| Agent | Tokens |
+|-------|--------|
+| Researcher | 123,374 |
+| Planner | 207,665 |
+| Plan-checker (2 blockers → revised) | 130,670 |
+| Revision planner | 123,210 |
+| Plan-checker (re-check, PASSED) | 108,168 |
+| Executor 06.7-01 (4 contracts) | 94,440 |
+| Executor 06.7-02 (extra_context plumbing) | 124,195 |
+| Executor 06.7-03 (cross_check) | 109,165 |
+| Executor 06.7-04 (reconcile loop + router + escalation) | 172,000 |
+| Verifier | 126,279 |
+| **Phase 6.7 subtotal** | **~1,319,000** |
+
+**Cumulative build (measured, so far): ~10,760,000 subagent tokens (+ P6.7 ~1,319,000). Crossed 10M.**
+
+### Phase 6.7 Retrospective
+- **Spend:** ~1.32M, in line with the other agentic phases. Reuse-heavy (the research verdict was "almost entirely reuse") kept executors lean; 06.7-04 (capstone loop) was the priciest at 172k.
+- **Plan-check earned its cost a 5th straight money phase:** caught 2 real blockers — `cross_check`'s 3-arg signature couldn't reach `catalyst_id` (DebateVerdict has no such field) or `min_tradeable_size` for two of its six checks. Fix = widen the signature, thread from `reconcile`. TDD would have hit a NameError only at execution; the check caught it at plan time.
+- **The MD hub came online cleanly** because the firewall/gap-not-answer discipline was a TYPE fact (extra="forbid" contracts) rather than a runtime check — same technique as the Phase-5 fake-hedge and Phase-6 DiligenceInput invariants. This pattern (make the dangerous state unrepresentable) has now paid off across 3 money phases.
+- Directives carried forward: reuse-vs-new + signature-reachability audit in research/plan-check; plan-check ON for money phases; graph re-index each code phase (now 2478 nodes).
+
 ### Phase 6.5 Retrospective
 - **Spend:** ~1.33M — in line with P6. The 06.5-04 executor was the priciest (~221k): the weekly runner threads target + sleeve-cap + defensive + WEEK-05 across run_portfolio, the most integration-heavy single plan of the phase.
 - **Plan-check earned its cost again (4th money phase):** caught the missing statistical-sleeve budget cap — a real risk-control gap (efficient mean-reversion legs could crowd out the catalyst moat + uncapped cost drag). All 6 money invariants otherwise confirmed sound on first pass — the research's reuse-vs-new verdict + the gating price-store catch kept execution clean.
