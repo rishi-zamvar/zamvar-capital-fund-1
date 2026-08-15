@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Completed 06.5-01-PLAN.md
-last_updated: "2026-08-15T19:16:32.457Z"
+stopped_at: Completed 06.5-02-PLAN.md
+last_updated: "2026-08-15T19:22:38.582Z"
 last_activity: 2026-08-15
 progress:
   total_phases: 14
   completed_phases: 6
   total_plans: 40
-  completed_plans: 37
+  completed_plans: 38
   percent: 0
 ---
 
@@ -26,7 +26,7 @@ See: .planning/PROJECT.md (updated 2026-08-14)
 ## Current Position
 
 Phase: 06.5 (weekly-strategy-correction) — EXECUTING
-Plan: 2 of 4
+Plan: 3 of 4
 Status: Ready to execute
 Last activity: 2026-08-15
 
@@ -88,6 +88,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 06-independent-diligence-firewall-workflow-3 P03 | 10min | 2 tasks tasks | 2 files files |
 | Phase 06-independent-diligence-firewall-workflow-3 P04 | 5min | 2 tasks tasks | 2 files files |
 | Phase 06.5 P01 | 2min | 3 tasks tasks | 5 files files |
+| Phase 06.5 P02 | 3 | 2 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -155,6 +156,8 @@ Recent decisions affecting current work:
 - [Phase 06]: diligence.py MIRRORS analysts.py (own DILIGENCE_PROMPTS + sibling run_dimension) since run_analyst hard-refs the 4-dim PROMPTS; DILIGENCE_PARAMS is the module-level, seed-proof diligence threshold source (not kb.load_params); validate_hedge gains a backward-compatible keyword-only candidate_peer for the independent per-pair hedge re-run (DILIG-02)
 - [Phase 06-independent-diligence-firewall-workflow-3]: DILIG-03 synthesizer: synthesize_verdict is the deterministic money-owner (zero-liq/one-money-fail/tie -> no_go; GO needs FULL money set present AND data-backed); DiligenceNarrative is verdict-free so the LLM cannot flip it (assemble_dossier model_copy-stamps the verdict); enforce_dossier mirrors the verifier two-stage shape + reuses evidence.resolve/quote_supported, never the DebateVerdict gate
 - [Phase 06-independent-diligence-firewall-workflow-3]: DILIG-01/02/03 CLOSED: run_diligence is the firewalled Workflow-3 entry point (signature accepts ONLY DiligenceInput, proven via get_type_hints); an ungrounded money dim (no raw-data seam value) forces NO-GO so no hallucinated finding yields a false GO; full second desk composes end-to-end offline into an evidence-backed DiligenceDossier
+- [Phase 06.5]: Sizing amended: chosen = clamp(target_return/expected_move, FLOOR, survival_cap) — the survival sweep is the max= clamp bound so the ruin cap is structurally un-crossable; target_return=None == Phase-5 (PORT-03 amended/WEEK-04)
+- [Phase 06.5]: No zero-trade weeks: select_book gains keyword-only defensive_book; empty greedy promote + defensive_book supplied returns it, defensive_book=None keeps the catalyst path byte-for-byte (WEEK-03)
 
 ### Pending Todos
 
@@ -168,6 +171,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-08-15T19:16:32.453Z
-Stopped at: Completed 06.5-01-PLAN.md
+Last session: 2026-08-15T19:22:31.619Z
+Stopped at: Completed 06.5-02-PLAN.md
 Resume file: None
