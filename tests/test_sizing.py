@@ -14,6 +14,7 @@ import pytest
 
 from catalyst_trader.quant.result import ToolResult
 from catalyst_trader.quant.sizing import (
+    adaptive_sl_tp_levels,
     fractional_kelly,
     kelly,
     risk_of_ruin,
@@ -263,3 +264,85 @@ def test_sl_tp_inputs_snapshot():  # QUANT-03
         "tp_pct": 0.2,
         "holds_through_catalyst": False,
     }
+
+
+# --------------------------------------------------------------- adaptive_sl_tp_levels
+
+# fitted SL/TP params; tests remove keys to prove missing-key raises (no magic numbers).
+SLTP_PARAMS = {"sl_tp": {"sl_vol_mult": 1.5, "tp_frac": 0.5}}
+
+
+def test_adaptive_derives_levels_from_params_and_estimate_hand_computed():
+    # sl_pct = 1.5*vol_move(0.10) = 0.15 ; tp_pct = 0.5*up_move(0.20) = 0.10
+    res = adaptive_sl_tp_levels(
+        entry=100.0, up_move=0.20, vol_move=0.10, params=SLTP_PARAMS
+    )
+    assert isinstance(res, ToolResult)
+    assert res.value == pytest.approx(0.10 / 0.15)  # reward:risk from delegate
+    assert res.detail["stop"] == pytest.approx(85.0)  # 100*(1-0.15)
+    assert res.detail["target"] == pytest.approx(110.0)  # 100*(1+0.10)
+
+
+def test_adaptive_delegates_advisory_gate_to_sl_tp_levels():
+    # holds_through_catalyst=True → advisory flag INHERITED from the delegate (one place)
+    res = adaptive_sl_tp_levels(
+        entry=100.0,
+        up_move=0.20,
+        vol_move=0.10,
+        params=SLTP_PARAMS,
+        holds_through_catalyst=True,
+    )
+    assert res.detail["advisory"] is True
+    assert "gap" in res.detail["reason"].lower()
+    # the delegate owns the tool identity — proves it is not a re-implementation
+    assert res.tool == "sl_tp_levels"
+
+
+def test_adaptive_not_advisory_when_not_held_through():
+    res = adaptive_sl_tp_levels(
+        entry=100.0, up_move=0.20, vol_move=0.10, params=SLTP_PARAMS
+    )
+    assert res.detail.get("advisory") is not True
+
+
+def test_adaptive_missing_sl_vol_mult_raises_no_magic_number():
+    bad = {"sl_tp": {"tp_frac": 0.5}}  # no sl_vol_mult
+    with pytest.raises((KeyError, ValueError)):
+        adaptive_sl_tp_levels(entry=100.0, up_move=0.20, vol_move=0.10, params=bad)
+
+
+def test_adaptive_missing_tp_frac_raises_no_magic_number():
+    bad = {"sl_tp": {"sl_vol_mult": 1.5}}  # no tp_frac
+    with pytest.raises((KeyError, ValueError)):
+        adaptive_sl_tp_levels(entry=100.0, up_move=0.20, vol_move=0.10, params=bad)
+
+
+@pytest.mark.parametrize("bad_vol", [0.0, -0.1])
+def test_adaptive_nonpositive_vol_move_raises(bad_vol):
+    # sl_pct must stay > 0 or the delegate's R:R is undefined
+    with pytest.raises(ValueError):
+        adaptive_sl_tp_levels(
+            entry=100.0, up_move=0.20, vol_move=bad_vol, params=SLTP_PARAMS
+        )
+
+
+def test_adaptive_negative_up_move_raises():
+    with pytest.raises(ValueError):
+        adaptive_sl_tp_levels(
+            entry=100.0, up_move=-0.10, vol_move=0.10, params=SLTP_PARAMS
+        )
+
+
+@pytest.mark.parametrize("bad", [float("nan"), float("inf")])
+def test_adaptive_nonfinite_inputs_raise(bad):
+    with pytest.raises(ValueError):
+        adaptive_sl_tp_levels(
+            entry=bad, up_move=0.20, vol_move=0.10, params=SLTP_PARAMS
+        )
+
+
+def test_adaptive_deterministic_same_inputs_same_result():
+    a = adaptive_sl_tp_levels(entry=100.0, up_move=0.2, vol_move=0.1, params=SLTP_PARAMS)
+    b = adaptive_sl_tp_levels(entry=100.0, up_move=0.2, vol_move=0.1, params=SLTP_PARAMS)
+    assert a.value == b.value
+    assert a.detail == b.detail
