@@ -72,6 +72,28 @@
 
 **Cumulative build (measured, so far): ~3,857,000 subagent tokens (project 419,577 + P1 1,444,361 + P2 786,321 + P3 ~1,207,000)**
 
+### Phase 4 — Analyst Desk + Bull/Bear Debate (CLOSED)
+| Agent | Tokens |
+|-------|--------|
+| Researcher | 110,852 |
+| Planner | 129,896 |
+| Plan-checker (1 blocker → revised) | 105,078 |
+| Revision planner | 74,868 |
+| Plan-checker (re-check) | 89,600 |
+| Executor 04-01 | 67,452 |
+| Executor 04-02 | 106,009 |
+| Executor 04-03 | 98,868 |
+| Executor 04-04 | 82,361 |
+| Executor 04-05 | 79,242 |
+| Executor 04-06 | 90,101 |
+| Executor 04-07 | 106,422 |
+| Verifier | 97,387 |
+| **Phase 4 subtotal** | **~1,238,000** |
+
+**Cumulative build (measured, so far): ~5,095,000 subagent tokens (project 419,577 + P1 1,444,361 + P2 786,321 + P3 ~1,207,000 + P4 ~1,238,000)**
+
+> Executor avg holding ~90k across P2-P4 with Graphify live (vs ~118k P1) — steady ~23% executor-token saving. Plan-check caught a real money-critical blocker in P4 (silent CALL-04 hole) — the round-trip keeps earning its cost.
+
 ### Out-of-band research (user-requested, NOT in the build total above)
 Fable universe + pairs-discovery agents (event studies, FMP/yfinance metrics). Tracked separately so they don't distort the build/Graphify metric. Several hundred k tokens; the first universe run's fan-out mass-stalled (battery sleep) and was re-run as a single sequential agent.
 
