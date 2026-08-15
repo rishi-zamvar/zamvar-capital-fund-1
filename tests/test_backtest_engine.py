@@ -121,3 +121,113 @@ def test_direction_proxy_never_returns_none_or_coinflip(monkeypatch):
     assert p is not None
     assert p != 0.5      # a COMPUTED base rate — never the 0.5 coin-flip / None default
     assert p == 0.61
+
+
+# ============================== Task 2: run_layer_a — the deterministic loop ==========
+
+# CAT's crafted decision-week drop (trigger) + hold-week down-gap, reused across the loop tests.
+_CAT_BARS = [
+    {"week_end": None, "open": 10.0, "high": 10.5, "low": 9.8, "close": 10.0, "volume": 2_000_000.0},
+    {"week_end": None, "open": 9.9, "high": 10.0, "low": 9.3, "close": 9.4, "volume": 2_000_000.0},  # -6% vs 10.0 -> drop_le_-0.05
+    {"week_end": None, "open": 7.0, "high": 8.0, "low": 6.0, "close": 7.5, "volume": 2_000_000.0},   # gap-open down at 7.0
+]
+
+
+def _seed_std(conn, *, cat_verified_at=None):
+    """A small offline universe (XBI required by classify_drop) with ONE verified catalyst on CAT,
+    CAT's bars crafted for a decision-week trigger drop + a hold-week down-gap."""
+    weeks = week_ends(12)
+    cat = {"ticker": "CAT", "event_date": weeks[6], "last_verified_at": cat_verified_at or weeks[4]}
+    seed_history(conn, tickers=["XBI", "AAAA", "BBBB", "CAT", "DEAD"], weeks=12,
+                 delisted=["DEAD"], catalysts=[cat])
+    bars = [dict(b, week_end=weeks[4 + i]) for i, b in enumerate(_CAT_BARS)]
+    upsert_bars(conn, "CAT", bars)
+    return weeks
+
+
+def _run_results(conn, **kw):
+    out = run_layer_a(conn, None, **kw)
+    return out[0] if isinstance(out, tuple) else out   # Task 3 makes it a (results, dist) tuple
+
+
+def test_layer_a_never_calls_run_desk(monkeypatch):
+    import catalyst_trader.desk.orchestrator as orch
+    import catalyst_trader.desk.weekly as dweekly
+
+    def _boom(*a, **k):
+        raise AssertionError("Layer A must be NO-LLM — the LLM desk was invoked")
+
+    monkeypatch.setattr(orch, "run_desk", _boom)
+    monkeypatch.setattr(dweekly, "run_weekly", _boom)
+
+    conn = _conn()
+    weeks = _seed_std(conn)
+    results = _run_results(conn, start=weeks[2], end=weeks[10])
+    assert results  # ran end-to-end without ever touching the LLM desk (proves NO-LLM)
+
+
+def test_layer_a_no_zero_trade_week():
+    conn = _conn()
+    weeks = _seed_std(conn)
+    results = _run_results(conn, start=weeks[2], end=weeks[10])
+    assert len(results) == 9
+    for wk in results:
+        assert len(wk.legs) >= 1  # defensive fallback -> never a zero-trade week (WEEK-03)
+
+
+def test_layer_a_held_through_fills_at_gap_open():
+    conn = _conn()
+    weeks = _seed_std(conn)
+    results = _run_results(conn, start=weeks[5], end=weeks[5], slippage=0.01)
+    cat_legs = [l for l in results[0].legs if l.ticker == "CAT" and l.is_catalyst]
+    assert cat_legs, "the verified catalyst should have produced a held-through leg"
+    leg = cat_legs[0]
+    assert leg.held_through is True
+    assert leg.fill == pytest.approx(7.0 * (1 - 0.01))   # the gap OPEN far side
+    assert leg.fill != pytest.approx(6.0 * (1 - 0.01))   # NOT the action-bar low / a jumped stop
+
+
+def test_layer_a_catalyst_direction_is_computed_base_rate(monkeypatch):
+    seen = []
+
+    def fake_base_rate(ticker, trigger, drop_class, turnover, as_of, store, conn, *, params,
+                       window_years=None):
+        seen.append((ticker, trigger))
+        return _R(value=0.66, detail={"mean_next": 0.02})
+
+    monkeypatch.setattr(qw, "weekly_base_rate", fake_base_rate)
+    conn = _conn()
+    weeks = _seed_std(conn)
+    cat_legs = [l for wk in _run_results(conn, start=weeks[5], end=weeks[5])
+                for l in wk.legs if l.ticker == "CAT" and l.is_catalyst]
+    assert cat_legs
+    assert cat_legs[0].p == 0.66   # the COMPUTED base-rate p (never None/0.5) — BLOCKER-2 closed
+    # the trigger was COMPUTED via classify_drop -> _match_trigger, not read off the null catalyst row
+    assert any(tk == "CAT" and trig == "drop_le_-0.05" for tk, trig in seen)
+
+
+def test_layer_a_reuses_tools_not_recompute(monkeypatch):
+    used = []
+
+    def sentinel(ticker, trigger, drop_class, turnover, as_of, store, conn, *, params,
+                 window_years=None):
+        used.append(ticker)
+        return _R(value=0.58, detail={"mean_next": 0.015})
+
+    monkeypatch.setattr(qw, "weekly_base_rate", sentinel)
+    conn = _conn()
+    weeks = _seed_std(conn)
+    cat_legs = [l for wk in _run_results(conn, start=weeks[5], end=weeks[5])
+                for l in wk.legs if l.ticker == "CAT" and l.is_catalyst]
+    assert cat_legs and cat_legs[0].p == 0.58   # used the SHIPPED weekly_base_rate (no re-derivation)
+    assert "CAT" in used
+
+
+def test_layer_a_excludes_catalyst_verified_after_as_of():
+    conn = _conn()
+    # verified AFTER the week it would trade in (last_verified_at = weeks[8] > as_of weeks[5])
+    weeks = _seed_std(conn, cat_verified_at=week_ends(12)[8])
+    results = _run_results(conn, start=weeks[5], end=weeks[5])
+    # NOT in the 07-02 filtered event set at weeks[5] -> no catalyst leg; and thesis_scan's
+    # unguarded catalyst-precedence keeps CAT out of the statistical sleeve too -> no CAT leg at all.
+    assert not any(l.ticker == "CAT" for l in results[0].legs)
