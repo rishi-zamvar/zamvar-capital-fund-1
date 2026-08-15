@@ -197,3 +197,131 @@ def test_estimate_inputs_snapshot_is_verbatim():  # QUANT-03
     assert res.inputs["down_moves"] == [0.1]
     assert res.inputs["implied_move"] == 0.3
     assert res.inputs["params"] == PARAMS
+
+
+# ------------------------------------------------------------------ expected_log_growth
+
+
+def _elg(**kw):
+    from catalyst_trader.quant.events import expected_log_growth
+
+    return expected_log_growth(**kw)
+
+
+def _hve(**kw):
+    from catalyst_trader.quant.events import hold_vs_exit
+
+    return hold_vs_exit(**kw)
+
+
+def test_log_growth_hand_computed():
+    # 0.5*log(1+1*1.0) + 0.5*log(1+1*0.0) = 0.5*log(2) + 0 = 0.34657
+    res = _elg(f=1.0, outcomes=[(0.5, 1.0), (0.5, 0.0)])
+    assert isinstance(res, ToolResult)
+    assert res.value == pytest.approx(0.5 * math.log(2.0))
+
+
+def test_log_growth_fair_bet_is_zero_growth():
+    # 0.5*log(2) + 0.5*log(0.5) = 0 — the classic no-growth double-or-halve
+    res = _elg(f=1.0, outcomes=[(0.5, 1.0), (0.5, -0.5)])
+    assert res.value == pytest.approx(0.0, abs=1e-12)
+
+
+def test_log_growth_f_nonpositive_raises():
+    for bad_f in (0.0, -0.5):
+        with pytest.raises(ValueError):
+            _elg(f=bad_f, outcomes=[(0.5, 1.0), (0.5, -0.5)])
+
+
+def test_log_growth_probs_must_sum_to_one():
+    with pytest.raises(ValueError):
+        _elg(f=1.0, outcomes=[(0.5, 0.1), (0.4, 0.1)])  # sums to 0.9
+
+
+def test_log_growth_nonsurvivable_size_raises_never_silent_neg_inf():
+    # 1 + f*ret <= 0 is a sizing bug — must RAISE, never return a silent -inf
+    with pytest.raises(ValueError):
+        _elg(f=2.0, outcomes=[(0.6, 1.0), (0.4, -0.7)])  # 1 + 2*(-0.7) = -0.4
+
+
+@pytest.mark.parametrize("bad_p", [float("nan"), -0.1, 1.1])
+def test_log_growth_bad_prob_raises(bad_p):
+    with pytest.raises(ValueError):
+        _elg(f=1.0, outcomes=[(bad_p, 0.1), (1.0 - bad_p, 0.1)])
+
+
+def test_log_growth_deterministic():
+    a = _elg(f=0.5, outcomes=[(0.6, 0.2), (0.4, -0.1)])
+    b = _elg(f=0.5, outcomes=[(0.6, 0.2), (0.4, -0.1)])
+    assert a.value == b.value
+
+
+# ---------------------------------------------------------------------- hold_vs_exit
+
+
+def test_hold_vs_exit_positive_ev_but_tail_favors_exit():
+    # THE CRUX (BLOCKER-2): hold has POSITIVE raw EV that EXCEEDS the run-up EV, yet the
+    # fat -70% down-tail makes expected-LOG-growth favor EXIT → decision must be 0.0.
+    f = 1.0
+    hold = [(0.6, 1.0), (0.4, -0.7)]  # raw EV = 0.6 - 0.28 = +0.32
+    exit_ = [(0.6, 0.05), (0.4, -0.02)]  # raw EV = 0.03 - 0.008 = +0.022
+    raw_ev_hold = sum(p * r for p, r in hold)
+    raw_ev_exit = sum(p * r for p, r in exit_)
+    assert raw_ev_hold > 0 and raw_ev_hold > raw_ev_exit  # raw EV would say HOLD
+
+    res = _hve(f=f, hold_outcomes=hold, exit_outcomes=exit_)
+    assert res.value == 0.0  # log-growth says EXIT — the tail penalty fired
+    assert res.detail["decision"] == "exit"
+    assert res.detail["g_hold"] < res.detail["g_exit"]
+
+
+def test_hold_vs_exit_confident_asymmetric_payoff_holds():
+    # a confident, asymmetric-in-our-favor payoff → HOLD wins on log-growth too
+    res = _hve(
+        f=0.5,
+        hold_outcomes=[(0.8, 0.5), (0.2, -0.2)],
+        exit_outcomes=[(0.6, 0.03), (0.4, -0.01)],
+    )
+    assert res.value == 1.0
+    assert res.detail["decision"] == "hold"
+    assert res.detail["g_hold"] > res.detail["g_exit"]
+
+
+def test_hold_vs_exit_margin_requires_a_clear_edge_to_hold():
+    # a positive but tiny hold edge is suppressed once a margin is demanded
+    hold = [(0.55, 0.10), (0.45, -0.08)]
+    exit_ = [(0.55, 0.09), (0.45, -0.08)]
+    base = _hve(f=0.5, hold_outcomes=hold, exit_outcomes=exit_)
+    gated = _hve(f=0.5, hold_outcomes=hold, exit_outcomes=exit_, margin=1.0)
+    assert base.value == 1.0  # hold marginally better with no margin
+    assert gated.value == 0.0  # a large required margin flips it to exit
+
+
+def test_hold_vs_exit_nonsurvivable_size_raises():
+    with pytest.raises(ValueError):
+        _hve(
+            f=2.0,
+            hold_outcomes=[(0.6, 1.0), (0.4, -0.7)],  # 1 + 2*(-0.7) < 0
+            exit_outcomes=[(0.6, 0.05), (0.4, -0.02)],
+        )
+
+
+def test_hold_vs_exit_deterministic():
+    kw = dict(
+        f=0.5,
+        hold_outcomes=[(0.6, 0.3), (0.4, -0.2)],
+        exit_outcomes=[(0.6, 0.05), (0.4, -0.02)],
+    )
+    assert _hve(**kw).value == _hve(**kw).value
+
+
+def test_hold_vs_exit_inputs_snapshot():  # QUANT-03
+    res = _hve(
+        f=0.5,
+        hold_outcomes=[(0.6, 0.3), (0.4, -0.2)],
+        exit_outcomes=[(0.6, 0.05), (0.4, -0.02)],
+        margin=0.01,
+    )
+    assert res.inputs["f"] == 0.5
+    assert res.inputs["margin"] == 0.01
+    assert res.inputs["hold_outcomes"] == [(0.6, 0.3), (0.4, -0.2)]
