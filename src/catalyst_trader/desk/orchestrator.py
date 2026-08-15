@@ -82,7 +82,7 @@ async def run_portfolio(
     conn, embed, verdicts, open_book, *,
     weekly_budget: float = 0.10, heat_cap: float = 1.0, target_weekly: float = 0.01,
     target_return: float | None = None, defensive_book=None, extra_candidates=None,
-    statistical_sleeve_cap: float | None = None,
+    statistical_sleeve_cap: float | None = None, extra_context: str | None = None,
 ) -> list[StrategyDossier]:
     """Workflow-1b entry point: turn the week's calls into ONE recommended portfolio (PORT-01).
 
@@ -105,7 +105,9 @@ async def run_portfolio(
     reconciled = []
     for item in verdicts:
         verdict, catalyst = item["verdict"], item["catalyst"]
-        proposal = await builder.build(conn, embed, verdict, catalyst, entry=item["entry"])
+        # extra_context=None -> the kwarg is omitted (byte-for-byte the pre-6.7 builder call).
+        build_kw = {} if extra_context is None else {"extra_context": extra_context}
+        proposal = await builder.build(conn, embed, verdict, catalyst, entry=item["entry"], **build_kw)
         if proposal is None:
             continue  # below-min size / rejected estimate -> no trade this leg (zero-trade allowed)
 

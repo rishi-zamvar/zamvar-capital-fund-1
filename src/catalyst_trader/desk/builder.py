@@ -88,11 +88,18 @@ catalyst), and the kill criteria that would falsify the thesis.
 """
 
 
-async def build(conn, embed, verdict, catalyst, *, entry: float) -> TradeProposal | None:
+async def build(conn, embed, verdict, catalyst, *, entry: float,
+                extra_context: str | None = None) -> TradeProposal | None:
     """Turn a `DebateVerdict` into a `TradeProposal` (or None = no trade this week, HEDGE-04).
 
     `entry` is the current leg price (the caller — 05-07 — supplies it; the builder can't invent a
     price). Fully offline under test: the narrative + comparability calls route through run_structured.
+
+    `extra_context` (RECON-03): a GP/DD re-trigger appended to the narrative prompt's extra= slot.
+    Default None -> no suffix -> identical prompt -> identical TradeProposal (no-regression).
+    # ponytail: extra_context re-reasons the NARRATIVE only; sizing/hold/SL-TP are deterministic +
+    # input-driven. A sizing-related gap MUST also reach the refreshed risk_inputs/entry the work-item
+    # carries (Plan 04 cascade) — text alone won't move deterministic sizing.
     """
     target = _get(catalyst, "ticker")
     catalyst_id = _get(catalyst, "catalyst_id")
@@ -154,7 +161,8 @@ async def build(conn, embed, verdict, catalyst, *, entry: float) -> TradeProposa
     # 6. Narrative (the ONLY LLM-authored field) — cite the hold-vs-exit decision for the memo.
     narrative = await run_structured(
         _narrative_prompt(verdict, target, candidate, ctype,
-                          extra=f"HOLD-VS-EXIT   {hv.detail['decision']} (cite {evidence.tool_ref(hv)})"),
+                          extra=f"HOLD-VS-EXIT   {hv.detail['decision']} (cite {evidence.tool_ref(hv)})"
+                                + (f"\nMD RE-TRIGGER: {extra_context}" if extra_context else "")),
         BuilderNarrative, model="sonnet",
     )
 

@@ -546,6 +546,12 @@ def test_run_diligence_signature_is_firewalled():
     forbidden = {DebateVerdict, TradeProposal, StrategyDossier, RiskAssessment}
     assert not (forbidden & set(hints.values()))
 
+    # 06.7-02 (RECON-06): the re-trigger plumbing added to debate.run/builder.build/orchestrators
+    # must NOT leak into the DD firewall — run_diligence gains NO extra_context (and no WF-1/2 param).
+    import inspect
+    params = inspect.signature(diligence.run_diligence).parameters
+    assert "extra_context" not in params  # DD only ever re-runs on a sealed DiligenceInput
+
 
 async def test_run_diligence_end_to_end(db, monkeypatch, load_fixture):
     """Fully-grounded market_data + all-passing dimension fixtures -> a GO DiligenceDossier with

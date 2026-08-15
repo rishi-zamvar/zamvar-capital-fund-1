@@ -340,6 +340,30 @@ async def test_run_portfolio_full_week_composition(monkeypatch, load_fixture):
     assert PositionMemo in schemas[:first_pm] and PreMortem in schemas[:first_pm]
 
 
+async def test_run_portfolio_passes_extra_context(monkeypatch, load_fixture):
+    """06.7-02 (RECON-03): run_portfolio threads extra_context THROUGH to each builder.build."""
+    captured = []
+
+    async def _b(conn, embed, verdict, catalyst, *, entry, extra_context=None):
+        captured.append(extra_context)
+        return _proposal(hedge=None, size_pct=0.02)
+
+    async def _a(conn, embed, proposal, catalyst, *, p_loss, gap, analog_gaps, prices):
+        return _risk(load_fixture, _hedge())
+
+    monkeypatch.setattr(builder, "build", _b)
+    monkeypatch.setattr(risk, "assess", _a)
+    monkeypatch.setattr(portfolio, "run_structured", _pm_seam([]))
+
+    await orchestrator.run_portfolio(None, None, [_item(), _item()], open_book=[],
+                                     extra_context="GP: reconsider the runway gap")
+    assert captured == ["GP: reconsider the runway gap", "GP: reconsider the runway gap"]
+
+    captured.clear()
+    await orchestrator.run_portfolio(None, None, [_item()], open_book=[])  # default -> None
+    assert captured == [None]
+
+
 async def test_run_portfolio_zero_trade_week_all_pass_returns_empty(monkeypatch):
     async def _none_build(conn, embed, verdict, catalyst, *, entry):
         return None   # every candidate passes (below-min / rejected estimate)

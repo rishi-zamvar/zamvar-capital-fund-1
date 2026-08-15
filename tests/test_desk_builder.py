@@ -294,6 +294,43 @@ async def test_missing_builder_param_raises_no_magic_number(db, monkeypatch):
         await builder.build(db, kb.hash_embed, _verdict(), CAT, entry=100.0)
 
 
+# ---------------------------------------------------------------------------
+# 06.7-02 Task 2 — extra_context re-trigger (RECON-03): default None is byte-for-byte;
+# a non-None gap reaches the narrative prompt's extra= slot (the ONLY LLM surface).
+# ---------------------------------------------------------------------------
+
+async def test_build_extra_context_none_unchanged(db, monkeypatch):
+    """Default path byte-for-byte: build(..., entry=E) and build(..., entry=E, extra_context=None)
+    produce the IDENTICAL narrative prompt (no MD RE-TRIGGER line) AND an identical TradeProposal."""
+    _seed_analogs(db)
+    calls_default, calls_explicit = [], []
+
+    _patch_seams(monkeypatch, calls=calls_default)
+    out_default = await builder.build(db, kb.hash_embed, _verdict(confidence=0.62), CAT, entry=100.0)
+
+    _patch_seams(monkeypatch, calls=calls_explicit)
+    out_explicit = await builder.build(db, kb.hash_embed, _verdict(confidence=0.62), CAT,
+                                       entry=100.0, extra_context=None)
+
+    assert [c["prompt"] for c in calls_default] == [c["prompt"] for c in calls_explicit]
+    assert all("MD RE-TRIGGER" not in c["prompt"] for c in calls_default)
+    assert out_default == out_explicit   # byte-for-byte TradeProposal
+
+
+async def test_build_extra_context_injects_gap(db, monkeypatch):
+    """A non-None extra_context appears in the narrative prompt's extra= slot (the LLM re-reasons)."""
+    _seed_analogs(db)
+    calls = []
+    _patch_seams(monkeypatch, calls=calls)
+    fact = "DD found insider selling the prior round did not weigh"
+
+    await builder.build(db, kb.hash_embed, _verdict(), CAT, entry=100.0, extra_context=fact)
+
+    narrative_prompt = next(c["prompt"] for c in calls if c["schema"] is builder.BuilderNarrative)
+    assert fact in narrative_prompt
+    assert "MD RE-TRIGGER" in narrative_prompt
+
+
 def test_no_raw_ev_hold_branch_in_source():
     # structural BLOCKER-2 guard: the builder must never branch on the raw estimate value
     src = (builder.__file__)
