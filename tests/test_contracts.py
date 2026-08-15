@@ -14,6 +14,8 @@ from catalyst_trader.contracts import (
     DiligenceInput,
     EstimateVetting,
     Hedge,
+    MDDecision,
+    ReconciliationRound,
     RetriggerFlag,
     RiskAssessment,
     StrategyDossier,
@@ -569,3 +571,131 @@ def test_weeklyflag_rejects_empty(field, bad):
     payload[field] = bad
     with pytest.raises(ValidationError):
         WeeklyFlag.model_validate(payload)
+
+
+# --- ReconciliationRound: one immutable per-round audit record (RECON-04/08) --------
+
+
+def valid_reconciliation_round() -> dict:
+    return {
+        "round": 1,
+        "md_flags": [valid_retrigger_flag()],
+        "logged_flags": [valid_weekly_flag()],
+        "response_delta": "debate re-ran on the SAP finding; verdict flipped to negative",
+        "convergence": {"stable_verdict": False, "no_new_flags": False},
+        "cross_check": {"catalyst_id": "cat-001", "net_long": 0.02},
+        "disposition": "continue",
+    }
+
+
+def test_reconciliationround_valid():
+    obj = ReconciliationRound.model_validate(valid_reconciliation_round())
+    assert obj.round == 1
+    assert isinstance(obj.md_flags[0], RetriggerFlag)
+    assert obj.disposition == "continue"
+
+
+def test_reconciliationround_extra_field_rejected():
+    payload = valid_reconciliation_round()
+    payload["hallucinated"] = "nope"
+    with pytest.raises(ValidationError):
+        ReconciliationRound.model_validate(payload)
+
+
+def test_reconciliationround_bad_disposition_rejected():
+    payload = valid_reconciliation_round()
+    payload["disposition"] = "escalate"  # not a round disposition
+    with pytest.raises(ValidationError):
+        ReconciliationRound.model_validate(payload)
+
+
+def test_reconciliationround_logged_flags():
+    """logged_flags is the unactioned-flag home (RECON-08/WEEK-06): a list[WeeklyFlag]
+    the MD chose NOT to action — logged, never forced. Defaults empty."""
+    obj = ReconciliationRound.model_validate(valid_reconciliation_round())
+    assert isinstance(obj.logged_flags[0], WeeklyFlag)
+    payload = valid_reconciliation_round()
+    del payload["md_flags"]
+    del payload["logged_flags"]
+    obj2 = ReconciliationRound.model_validate(payload)
+    assert obj2.md_flags == []
+    assert obj2.logged_flags == []
+
+
+# --- MDDecision: the MD's sole output record, STANDALONE (RECON-04/05/07/08) --------
+
+
+def valid_md_decision() -> dict:
+    return {
+        "decision": "enter",
+        "rationale": "verdict survived reconciliation; hedge validated inverse THIS catalyst",
+        "accepted_residuals": ["net-long beta priced via half-size"],
+        "dissent_preserved": ["bear: financing overhang unresolved"],
+        "round_log": [valid_reconciliation_round()],
+    }
+
+
+def test_mddecision_enter_valid():
+    obj = MDDecision.model_validate(valid_md_decision())
+    assert obj.decision == "enter"
+    assert obj.blocker_class is None
+    assert obj.recommended_resolution is None
+    assert isinstance(obj.round_log[0], ReconciliationRound)
+
+
+def test_mddecision_escalation_requires_resolution():
+    """RECON-07 completed-staff-work: an escalation MUST carry BOTH blocker_class and
+    recommended_resolution, else ValidationError."""
+    # missing both
+    payload = valid_md_decision()
+    payload["decision"] = "escalate"
+    with pytest.raises(ValidationError):
+        MDDecision.model_validate(payload)
+    # blocker_class only
+    payload = valid_md_decision()
+    payload["decision"] = "escalate"
+    payload["blocker_class"] = "data_gap"
+    with pytest.raises(ValidationError):
+        MDDecision.model_validate(payload)
+    # recommended_resolution only
+    payload = valid_md_decision()
+    payload["decision"] = "escalate"
+    payload["recommended_resolution"] = "pull the AdCom briefing doc"
+    with pytest.raises(ValidationError):
+        MDDecision.model_validate(payload)
+    # both present -> constructs
+    payload = valid_md_decision()
+    payload["decision"] = "escalate"
+    payload["blocker_class"] = "data_gap"
+    payload["recommended_resolution"] = "pull the AdCom briefing doc"
+    obj = MDDecision.model_validate(payload)
+    assert obj.decision == "escalate"
+    assert obj.blocker_class == "data_gap"
+
+
+@pytest.mark.parametrize("decision", ["enter", "pass"])
+@pytest.mark.parametrize(
+    "extra", [{"blocker_class": "mandate"}, {"recommended_resolution": "do X"}]
+)
+def test_mddecision_escalation_only_fields(decision, extra):
+    payload = valid_md_decision()
+    payload["decision"] = decision
+    payload.update(extra)
+    with pytest.raises(ValidationError):
+        MDDecision.model_validate(payload)
+
+
+def test_mddecision_carries_residuals_and_dissent():
+    """RECON-05: accepted_residuals + dissent_preserved round-trip verbatim; round_log is
+    a list[ReconciliationRound]."""
+    obj = MDDecision.model_validate(valid_md_decision())
+    assert obj.accepted_residuals == ["net-long beta priced via half-size"]
+    assert obj.dissent_preserved == ["bear: financing overhang unresolved"]
+    assert all(isinstance(r, ReconciliationRound) for r in obj.round_log)
+
+
+def test_mddecision_not_a_strategydossier_field():
+    """MDDecision is STANDALONE — never a StrategyDossier field (regression guard)."""
+    assert "md_decision" not in StrategyDossier.model_fields
+    for name, field in StrategyDossier.model_fields.items():
+        assert field.annotation is not MDDecision, name

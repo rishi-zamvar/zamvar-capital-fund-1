@@ -11,7 +11,7 @@ contract boundary (the DB-write half of KB-02 lives in kb.py).
 
 from typing import Literal
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 
 class KeyFinding(BaseModel):
@@ -242,3 +242,35 @@ class WeeklyFlag(BaseModel):
         if not v or not v.strip():
             raise ValueError("WeeklyFlag needs non-empty ticker/finding/why_material/evidence_ref")
         return v
+
+
+class ReconciliationRound(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    round: int                               # 1..3
+    md_flags: list[RetriggerFlag] = []        # actioned re-triggers routed this round (auditable proof the answer wasn't handed down)
+    logged_flags: list[WeeklyFlag] = []       # incoming flags the MD chose NOT to action — logged, never forced (RECON-08/WEEK-06)
+    response_delta: str                      # what changed vs prior, or "unmoved + rebuttal"
+    convergence: dict                        # each convergence criterion -> pass/fail (deterministic)
+    cross_check: dict                        # the cross_check() snapshot the MD reviewed
+    disposition: Literal["continue", "converged", "cap_hit", "diverged_pass"]
+
+
+class MDDecision(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    decision: Literal["enter", "pass", "escalate"]
+    rationale: str
+    accepted_residuals: list[str] = []       # each unresolved caveat + how it's priced (size/kill/hedge) — RECON-05
+    overrides: list[str] = []                # any workflow recommendation the MD overrode + reason
+    dissent_preserved: list[str] = []        # DebateVerdict.unresolved_dissent + DD.strongest_disconfirming_evidence, VERBATIM
+    round_log: list[ReconciliationRound]     # the immutable per-round log
+    blocker_class: Literal["mandate", "data_gap", "factual_conflict", "infra"] | None = None
+    recommended_resolution: str | None = None
+
+    @model_validator(mode="after")
+    def _escalation_shape(self):
+        if self.decision == "escalate":
+            if not self.blocker_class or not (self.recommended_resolution or "").strip():
+                raise ValueError("an escalation MUST carry blocker_class + recommended_resolution (completed-staff-work)")
+        elif self.blocker_class or self.recommended_resolution:
+            raise ValueError("blocker_class/recommended_resolution are escalation-only fields")
+        return self
