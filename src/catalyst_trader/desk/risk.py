@@ -4,8 +4,11 @@ that mirrors `debate.py`'s flat fan-out over the one `run_structured` seam.
 
 The committee AGENTS interpret (argue p_loss / gap / hedge validity from analogs); every
 money number is a DETERMINISTIC quant output the committee can never inject:
-  - the size is `size_for_survival()` — swept from `risk_of_ruin`, with NO return-target
-    parameter, so sizing is structurally decoupled from the 1%/week objective (PITFALLS #2/#5).
+  - the size is `size_for_survival()` — the `risk_of_ruin` down-sweep is the survival cap (the
+    HARD ceiling), and an optional `target_return` drives the size UP toward, but provably never
+    past, that cap: `chosen = clamp(target_return/expected_move, FLOOR, survival_cap)`. With
+    `target_return=None` it collapses to the pure survival cap (Phase-5 behavior). Sizing thus
+    SERVES the ~1%/week objective within the ruin ceiling (PORT-03 amended / WEEK-04; PITFALLS #2/#5).
   - the hedge is `validate_hedge()` — a peer only counts if it is a -1 inverse peer that passes
     conditional_payoff + cointegration + catalyst-clean THIS catalyst; otherwise None (honest
     fallback, HEDGE-04). The validated Hedge OBJECT is carried on the RiskAssessment (BLOCKER-1).
@@ -36,15 +39,28 @@ def size_for_survival(
     ruin_cap: float = 0.02,
     per_event_cap: float = 0.03,
     n_trades: int = 52,
+    *,
+    target_return: float | None = None,
+    expected_move: float | None = None,
 ) -> ToolResult:
-    """Largest size_pct whose risk_of_ruin(p_loss, size_pct, gap).value <= ruin_cap, also clamped
-    to per_event_cap. Sweep size DOWNWARD from per_event_cap in fixed STEPs; risk_of_ruin rises
-    monotonically with size, so the first size that clears the cap from the top is the largest one.
+    """Size a leg to SERVE the ~1%/week target WITHIN the risk-of-ruin survival ceiling.
 
-    There is deliberately NO return / target / weekly parameter — sizing mirrors risk_of_ruin's own
-    omission (the structural anti-1%-coupling). Returns the chosen size + the risk_of_ruin snapshot
-    at that size as its audit citation. No size clears → the tiny FLOOR (never an error): a zero-ish
-    position the caller turns into size-tiny / exit-before-event.
+    The `survival_cap` — the largest size_pct whose risk_of_ruin(p_loss, size_pct, gap).value
+    <= ruin_cap, also clamped to per_event_cap — is the HARD upper bound. It is found by sweeping
+    size DOWNWARD from per_event_cap in fixed STEPs (risk_of_ruin rises monotonically with size,
+    so the first size clearing the cap from the top is the largest one). This sweep is UNCHANGED
+    from Phase 5.
+
+    Sizing WITHIN that cap (PORT-03 amended / WEEK-04):
+      - target_return=None  -> chosen = survival_cap  (EXACT Phase-5 behavior; back-compat).
+      - else                -> target_implied = target_return / expected_move (needs expected_move>0,
+                               else FLOOR), and chosen = clamp(target_implied, FLOOR, survival_cap).
+    Because survival_cap is the clamp's upper bound, a target can raise the size TOWARD but provably
+    never PAST the ruin ceiling — the cap is structurally un-crossable.
+
+    Returns the chosen size + the risk_of_ruin snapshot AT the chosen size as its audit citation.
+    No size clears the cap → the tiny FLOOR (never an error): a zero-ish position the caller turns
+    into size-tiny / exit-before-event.
     """
     inputs = {
         "p_loss": p_loss,
@@ -52,17 +68,27 @@ def size_for_survival(
         "ruin_cap": ruin_cap,
         "per_event_cap": per_event_cap,
         "n_trades": n_trades,
+        "target_return": target_return,
+        "expected_move": expected_move,
     }
+    # survival_cap = the EXISTING downward sweep result (the hard ceiling). BYTE-FOR-BYTE.
     n = int(round(per_event_cap / STEP))  # candidate sizes: n*STEP (== per_event_cap) down to STEP
-    chosen = FLOOR
-    snapshot = risk_of_ruin(p_loss, FLOOR, gap, n_trades=n_trades)
+    survival_cap = FLOOR
     for i in range(n, 0, -1):
         size = round(i * STEP, 10)
         ror = risk_of_ruin(p_loss, size, gap, n_trades=n_trades)
         if ror.value <= ruin_cap:
-            chosen, snapshot = size, ror
+            survival_cap = size
             break
 
+    if target_return is None:
+        chosen = survival_cap
+    else:
+        target_implied = target_return / expected_move if expected_move and expected_move > 0 else FLOOR
+        chosen = min(max(target_implied, FLOOR), survival_cap)  # survival_cap is the ceiling
+
+    # snapshot at the CHOSEN size (recomputed so ruin_at_size reflects what we actually sized to)
+    snapshot = risk_of_ruin(p_loss, chosen, gap, n_trades=n_trades)
     return ToolResult(
         tool="size_for_survival",
         tool_version=_VERSION,
@@ -213,6 +239,8 @@ async def assess(
     exit_by_date: str | None = None,
     ruin_cap: float = 0.02,
     per_event_cap: float = 0.03,
+    target_return: float | None = None,
+    expected_move: float | None = None,
 ) -> RiskAssessment:
     """The 3-way Risk Committee: three isolated `run_structured` views (sonnet) then an opus synthesis,
     mirroring `debate.py`'s flat fan-out over the one seam. The committee INTERPRETS; the money numbers
@@ -234,7 +262,10 @@ async def assess(
     ]
 
     # Deterministic money + hedge — the committee can never inject any of these.
-    size_res = size_for_survival(p_loss, gap, ruin_cap, per_event_cap)
+    size_res = size_for_survival(
+        p_loss, gap, ruin_cap, per_event_cap,
+        target_return=target_return, expected_move=expected_move,
+    )
     cp = conditional_payoff(
         analog_gaps["target_up"], analog_gaps["target_down"],
         analog_gaps["peer_up"], analog_gaps["peer_down"],

@@ -23,12 +23,53 @@ from catalyst_trader.quant.sizing import risk_of_ruin
 # ---------------------------------------------------------------------------
 
 
-def test_no_return_target_parameter():
-    """Structural anti-1%-coupling: the signature carries NO return/target/weekly param."""
-    params = inspect.signature(risk.size_for_survival).parameters
-    banned = ("target", "return", "weekly", "one_pct", "benchmark")
-    for name in params:
-        assert not any(b in name.lower() for b in banned), f"{name} couples sizing to a return target"
+# INVERTED in Phase 6.5 (PORT-03 amended, WEEK-04): sizing SERVES the ~1% target WITHIN the
+# survival cap. The cap remains the hard ceiling — see test_target_never_exceeds_survival_cap.
+# (was test_no_return_target_parameter, which asserted the signature carried NO return/target
+#  param; that structural anti-1%-coupling invariant is now inverted, not deleted.)
+def test_target_param_drives_size_within_survival_cap():
+    """The signature NOW carries keyword-only target_return/expected_move; a target drives the
+    size WITHIN the survival cap: a modest target sizes below the ceiling, a large target is
+    clamped to (never past) the cap."""
+    # a cell where the ruin cap binds below per_event_cap (cap == 0.05 < 0.08)
+    kw = dict(p_loss=0.65, gap=0.90, ruin_cap=0.02, per_event_cap=0.08)
+    cap = risk.size_for_survival(**kw).value  # pure survival sweep (target_return=None)
+    small = risk.size_for_survival(**kw, target_return=0.001, expected_move=0.10).value
+    large = risk.size_for_survival(**kw, target_return=1.0, expected_move=0.10).value
+    assert large == cap          # target implies far more than the cap -> clamped to the ceiling
+    assert small < cap           # a modest target sizes BELOW the survival ceiling
+    assert small <= large <= cap  # never past the cap
+
+
+def test_target_never_exceeds_survival_cap():
+    """THE money gate: over a grid of (p_loss, gap, target_return, expected_move) INCLUDING
+    target_implied_size >> survival_cap, the chosen size is ALWAYS <= the pure survival cap AND
+    its risk_of_ruin is ALWAYS <= ruin_cap — the ruin cap is structurally un-crossable."""
+    ruin_cap, per_event_cap = 0.02, 0.08
+    for p_loss in (0.35, 0.45, 0.55, 0.65, 0.75):
+        for gap in (0.30, 0.50, 0.70, 0.90):
+            cap = risk.size_for_survival(
+                p_loss=p_loss, gap=gap, ruin_cap=ruin_cap, per_event_cap=per_event_cap
+            ).value
+            for target_return in (0.005, 0.01, 0.05, 1.0):      # last few imply >> the cap
+                for expected_move in (0.05, 0.10, 0.30):
+                    res = risk.size_for_survival(
+                        p_loss=p_loss, gap=gap, ruin_cap=ruin_cap, per_event_cap=per_event_cap,
+                        target_return=target_return, expected_move=expected_move,
+                    )
+                    assert res.value <= cap, (p_loss, gap, target_return, expected_move, res.value, cap)
+                    assert risk_of_ruin(p_loss, res.value, gap).value <= ruin_cap, (
+                        p_loss, gap, target_return, expected_move, res.value)
+
+
+def test_target_return_none_matches_pure_survival_sweep():
+    """Back-compat: target_return=None reproduces the Phase-5 survival sweep byte-for-byte."""
+    for p_loss in (0.30, 0.45, 0.60):
+        for gap in (0.30, 0.70, 0.90):
+            base = risk.size_for_survival(p_loss=p_loss, gap=gap)
+            with_none = risk.size_for_survival(p_loss=p_loss, gap=gap, target_return=None)
+            assert with_none.value == base.value
+            assert with_none.detail["ruin_at_size"] == base.detail["ruin_at_size"]
 
 
 def test_chosen_size_is_survivable_and_is_the_largest():
