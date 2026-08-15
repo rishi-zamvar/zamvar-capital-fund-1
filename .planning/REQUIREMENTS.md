@@ -68,7 +68,7 @@
 ### Workflow 3 — Independent Diligence (DILIG)
 
 - [x] **DILIG-01**: Runs on the proposed portfolio, receiving only {ticker, catalyst, pair} — an enforced firewall from Workflow 1/2 reasoning
-- [ ] **DILIG-02**: Multi-dimensional DD from raw sources (trial stats/endpoints, regulatory precedent, financials/runway, ownership/flow, options-implied move, hedge/correlation, liquidity, historical analog)
+- [x] **DILIG-02**: Multi-dimensional DD from raw sources (trial stats/endpoints, regulatory precedent, financials/runway, ownership/flow, options-implied move, hedge/correlation, liquidity, historical analog)
 - [x] **DILIG-03**: Synthesizer adversarially combines dimensions, rewards "no-go", and requires data-backed confidence → DiligenceDossier {go/no-go, evidence, residual risks}
 
 ### MD/GP Reconciliation Loop (RECON) — added 2026-08-15
@@ -183,7 +183,7 @@
 | OPS-01 | Phase 5 | Complete |
 | OPS-02 | Phase 5 | Complete |
 | DILIG-01 | Phase 6 | Complete |
-| DILIG-02 | Phase 6 | Pending |
+| DILIG-02 | Phase 6 | Complete |
 | DILIG-03 | Phase 6 | Complete |
 | BACK-01 | Phase 7 | Pending |
 | BACK-02 | Phase 7 | Pending |

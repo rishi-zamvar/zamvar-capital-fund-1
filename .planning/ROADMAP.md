@@ -128,7 +128,7 @@ Decimal phases appear between their surrounding integers in numeric order.
   3. A synthesizer adversarially combines dimensions, rewards "no-go", and emits a DiligenceDossier {go/no-go, evidence, residual risks} where a single failing money-touching dimension forces NO-GO
 **Plans**: 4 plans (4 waves)
 - [x] 06-01-PLAN.md — DiligenceInput firewall contract + residual_risks + offline test harness/fixtures (Wave 1)
-- [ ] 06-02-PLAN.md — 8 adversarial DD dimensions + options degradation + independent hedge re-validation (Wave 2)
+- [x] 06-02-PLAN.md — 8 adversarial DD dimensions + options degradation + independent hedge re-validation (Wave 2)
 - [ ] 06-03-PLAN.md — Deterministic NO-GO synthesizer + verdict-immutable narrative + enforce_dossier cite-or-drop (Wave 3)
 - [ ] 06-04-PLAN.md — run_diligence firewalled orchestrator + end-to-end (Wave 4)
 
