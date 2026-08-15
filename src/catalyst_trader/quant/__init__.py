@@ -18,7 +18,13 @@ from .performance import attribution, cumulative_return, sharpe, sortino
 from .portfolio import concentration, exposure
 from .result import ToolResult
 from .rubric import load_weights, score_rubric
-from .sizing import fractional_kelly, kelly, risk_of_ruin, sl_tp_levels
+from .sizing import (
+    adaptive_sl_tp_levels,
+    fractional_kelly,
+    kelly,
+    risk_of_ruin,
+    sl_tp_levels,
+)
 from .valuation import cash_runway, rnpv
 
 __all__ = [
@@ -31,6 +37,7 @@ __all__ = [
     "fractional_kelly",
     "risk_of_ruin",
     "sl_tp_levels",
+    "adaptive_sl_tp_levels",
     # pairs
     "cointegration",
     "correlation_beta",

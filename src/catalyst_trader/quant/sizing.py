@@ -196,3 +196,33 @@ def sl_tp_levels(
         value=tp_pct / sl_pct,
         detail=detail,
     )
+
+
+def adaptive_sl_tp_levels(
+    entry: float,
+    up_move: float,
+    vol_move: float,
+    params: dict,
+    holds_through_catalyst: bool = False,
+) -> ToolResult:
+    """Derive SL/TP from the catalyst move estimate, then DELEGATE to sl_tp_levels.
+
+    sl_pct = params["sl_tp"]["sl_vol_mult"]·vol_move (vol proxy: estimator down_move or
+    implied_move); tp_pct = params["sl_tp"]["tp_frac"]·up_move (the estimator TP anchor).
+    Delegation keeps the gap-exposed advisory gate in ONE place (PITFALLS #2) — the advisory
+    flag + reason come for free from sl_tp_levels. NO magic numbers: sl_vol_mult and tp_frac
+    are read from params and a missing key RAISES.
+    """
+    _finite(entry, "entry")
+    _finite(up_move, "up_move")
+    _finite(vol_move, "vol_move")
+    if vol_move <= 0:
+        raise ValueError("vol_move must be > 0 (sl_pct must stay > 0)")
+    if up_move < 0:
+        raise ValueError("up_move must be >= 0")
+
+    sltp = params["sl_tp"]  # missing block → KeyError (no literal fallback)
+    sl_pct = sltp["sl_vol_mult"] * vol_move
+    tp_pct = sltp["tp_frac"] * up_move
+
+    return sl_tp_levels(entry, sl_pct, tp_pct, holds_through_catalyst)
