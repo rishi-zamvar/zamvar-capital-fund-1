@@ -1,0 +1,116 @@
+<title>Fund 1 — Phase 4 Report</title>
+<style>
+  :root{
+    --bg:#ecefe9;--surface:#fff;--surface-2:#f5f7f2;--ink:#191c18;--muted:#5f655c;--faint:#99a094;
+    --border:#d6dbcf;--border-strong:#c2c8b8;--accent:#8a6a12;--accent-bg:#f3ecd8;
+    --done:#1f7a4d;--done-bg:#e4f2e9;--warn:#b23b30;--warn-bg:#f6e5e3;--info:#2b6a93;--info-bg:#e2edf4;
+    --mono:ui-monospace,"SF Mono","JetBrains Mono",Menlo,Consolas,monospace;
+    --sans:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+    --shadow:0 1px 2px rgba(20,25,18,.06),0 4px 14px rgba(20,25,18,.05);
+  }
+  @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+    --bg:#101310;--surface:#191d18;--surface-2:#20241e;--ink:#e8ece4;--muted:#9aa192;--faint:#6b7365;
+    --border:#2c322a;--border-strong:#3a4136;--accent:#d8b45a;--accent-bg:#2a2412;
+    --done:#4cc585;--done-bg:#14271c;--warn:#ef7365;--warn-bg:#2c1714;--info:#6bb3e6;--info-bg:#122430;
+    --shadow:0 1px 2px rgba(0,0,0,.4),0 6px 18px rgba(0,0,0,.35);
+  }}
+  :root[data-theme="dark"]{
+    --bg:#101310;--surface:#191d18;--surface-2:#20241e;--ink:#e8ece4;--muted:#9aa192;--faint:#6b7365;
+    --border:#2c322a;--border-strong:#3a4136;--accent:#d8b45a;--accent-bg:#2a2412;
+    --done:#4cc585;--done-bg:#14271c;--warn:#ef7365;--warn-bg:#2c1714;--info:#6bb3e6;--info-bg:#122430;
+    --shadow:0 1px 2px rgba(0,0,0,.4),0 6px 18px rgba(0,0,0,.35);
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);line-height:1.55}
+  .wrap{max-width:900px;margin:0 auto;padding:40px 22px 72px}
+  .ey{font-family:var(--mono);font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--accent);font-weight:600}
+  h1{font-family:var(--mono);font-size:clamp(26px,5vw,38px);margin:8px 0 4px;letter-spacing:-.01em}
+  .status{display:inline-flex;align-items:center;gap:8px;font-family:var(--mono);font-size:13px;color:var(--done);background:var(--done-bg);border:1px solid var(--done);border-radius:20px;padding:4px 13px;margin-top:6px}
+  .masthead{border-bottom:2px solid var(--ink);padding-bottom:18px;margin-bottom:26px}
+  .meta{font-family:var(--mono);font-size:12px;color:var(--muted);margin-top:10px}
+  h2{font-family:var(--mono);font-size:16px;margin:32px 0 12px;display:flex;align-items:center;gap:9px}
+  h2 .ic{width:22px;height:22px;border-radius:5px;display:inline-grid;place-items:center;font-size:13px;flex:none}
+  .ic.d{background:var(--done-bg);color:var(--done);border:1px solid var(--done)}
+  .ic.w{background:var(--warn-bg);color:var(--warn);border:1px solid var(--warn)}
+  .ic.g{background:var(--accent-bg);color:var(--accent);border:1px solid var(--accent)}
+  .ic.n{background:var(--info-bg);color:var(--info);border:1px solid var(--info)}
+  ul{margin:0;padding-left:2px;list-style:none}
+  li{position:relative;padding:5px 0 5px 22px;font-size:14.5px}
+  li::before{content:"";position:absolute;left:2px;top:12px;width:6px;height:6px;border-radius:50%;background:var(--accent)}
+  li.done::before{content:"✓";background:none;color:var(--done);font-family:var(--mono);font-size:13px;top:6px;left:0}
+  li b{font-weight:600}
+  code{font-family:var(--mono);font-size:12.5px;background:var(--surface-2);border:1px solid var(--border);border-radius:4px;padding:1px 6px}
+  .card{background:var(--surface);border:1px solid var(--border);border-left:4px solid var(--warn);border-radius:9px;padding:14px 16px;margin:10px 0;box-shadow:var(--shadow)}
+  .card.i{border-left-color:var(--info)} .card.decide{border-left-color:var(--accent);background:var(--accent-bg)}
+  .card h3{font-family:var(--mono);font-size:14px;margin:0 0 4px;color:var(--warn)}
+  .card.i h3{color:var(--info)} .card.decide h3{color:var(--accent)}
+  .card p{margin:4px 0 0;font-size:14px;color:var(--ink)}
+  .tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin:8px 0 4px}
+  .tile{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:13px 15px;box-shadow:var(--shadow)}
+  .tile .k{font-family:var(--mono);font-size:10px;letter-spacing:.07em;text-transform:uppercase;color:var(--faint)}
+  .tile .v{font-family:var(--mono);font-size:23px;font-weight:700;margin-top:3px}
+  .tile .v small{font-size:14px;color:var(--muted)}
+  .bar{height:9px;background:var(--surface-2);border:1px solid var(--border);border-radius:5px;overflow:hidden;margin:14px 0 4px}
+  .bar>i{display:block;height:100%;width:36.4%;background:var(--accent)}
+  .next{background:var(--accent-bg);border:1px solid var(--accent);border-radius:10px;padding:16px 18px;margin-top:10px}
+  .next h3{font-family:var(--mono);font-size:15px;margin:0 0 6px;color:var(--accent)}
+  .next p{margin:0;font-size:14px}
+  .win{background:var(--done-bg);border:1px solid var(--done);border-radius:8px;padding:10px 14px;margin:10px 0;font-size:14px}
+  .win b{color:var(--done)}
+  footer{margin-top:34px;padding-top:18px;border-top:1px solid var(--border);font-family:var(--mono);font-size:11.5px;color:var(--faint)}
+</style>
+
+<div class="wrap">
+  <div class="masthead">
+    <div class="ey">zamvar capital · fund 1 · phase report</div>
+    <h1>Phase 4 — Analyst Desk + Bull/Bear Debate</h1>
+    <div class="status">● VERIFIED · 7/7 truths · 498 tests · first agentic pipeline live</div>
+    <div class="meta">2026-08-14 · CALL-01…04 closed · goal: <i>for a flagged catalyst, produce a binary yes/no verdict with calibrated confidence + kill criteria — pure prediction, no positioning.</i></div>
+  </div>
+
+  <h2><span class="ic d">✓</span> What's done</h2>
+  <ul>
+    <li class="done"><b>The first agentic pipeline is assembled and working</b> — <code>run_desk</code> fans out 4 analysts → bull/bear debate → verifier → a binary verdict, all in one async flow</li>
+    <li class="done"><b>Four analyst agents</b> (clinical · regulatory · financial · market) each produce a <b>source-cited signal</b> — they call the Phase-3 quant tools + the knowledge base (they interpret, never do the math), and any uncited claim is rejected at the boundary</li>
+    <li class="done"><b>A real debate, not laundered consensus</b> — bull and bear run in <i>separate isolated sessions</i> (their private notes never cross); the moderator issues a verdict that names the <i>losing</i> side's strongest point</li>
+    <li class="done"><b>Binary verdict + calibrated confidence + explicit kill criteria</b>, confidence anchored to cited base rates — and structurally <b>no sizing or positioning</b> (that's Phase 5)</li>
+    <li class="done"><b>A fact-check gate</b> enforces "quote your source or the claim is dropped" (fast deterministic check first, LLM only for load-bearing claims); unsupported verdicts are blocked from finalizing</li>
+    <li class="done"><b>498 tests, entirely offline</b> — the whole desk is tested against recorded responses through one seam, so the suite never makes a live API call; plus 8 shareable agent role-definition files</li>
+  </ul>
+
+  <h2><span class="ic g">★</span> What's going well</h2>
+  <div class="win"><b>The desk is evidence-grounded by construction</b> — "cite it or drop it" is enforced in code, not by hoping the model behaves. That's the anti-hallucination discipline you asked for, made structural.</div>
+  <ul>
+    <li>The plan-check caught a <b>silent hole</b> before any code shipped — KB-sourced claims would have failed the citation check invisibly; fixed at the root.</li>
+    <li>Graphify keeps saving ~23% per builder; the run recovered cleanly from the earlier battery-sleep stalls.</li>
+  </ul>
+
+  <h2><span class="ic w">!</span> Needs your review / input</h2>
+  <div class="card decide">
+    <h3>★ THE Phase 5 decision — how do we hedge?</h3>
+    <p>Phase 5 builds the trade + hedge + sizing. But the research proved long-only <b>stock</b> pairs mostly <i>don't</i> hedge (only ~1-in-5, none statistically airtight). So how should Phase 5 handle it? <b>(a)</b> build for <b>options/puts</b> as the real hedge (needs options access — currently equities-only), <b>(b)</b> accept mostly <b>naked bets, survival-sized</b>, pairing only the rare mechanism+data-backed case, or <b>(c) both</b>. I'll ask you directly before planning Phase 5.</p>
+  </div>
+  <div class="card i">
+    <h3>Live run needs API auth (optional now)</h3>
+    <p>The desk is fully tested offline. To watch it actually reason over a real catalyst needs <code>ANTHROPIC_API_KEY</code> / CC auth — a nice smoke-test, not required to keep building.</p>
+  </div>
+
+  <h2><span class="ic n">→</span> Next steps</h2>
+  <div class="next">
+    <h3>Phase 5 — Trade Builder, Honest Hedge &amp; Ruin-Avoidant Sizing</h3>
+    <p>Take the catalyst call from this phase and turn it into an actual position: pick the hedge (per your decision above), size it for <i>survival</i> using the risk-of-ruin tool (never toward the 1% target), run the 3-way risk debate, and have the PM promote or kill it into a StrategyDossier. This is the most judgment-heavy phase — and where the hedging reality we uncovered gets confronted head-on.</p>
+  </div>
+
+  <h2><span class="ic g">▤</span> Project state</h2>
+  <div class="bar"><i></i></div>
+  <div class="tiles">
+    <div class="tile"><div class="k">Phases</div><div class="v">4<small>/11</small></div></div>
+    <div class="tile"><div class="k">Requirements</div><div class="v">22<small>/56</small></div></div>
+    <div class="tile"><div class="k">Tests</div><div class="v">498</div></div>
+    <div class="tile"><div class="k">Graphify saved</div><div class="v" style="color:var(--done)">~370k</div></div>
+    <div class="tile"><div class="k">Blockers</div><div class="v" style="color:var(--done)">0</div></div>
+  </div>
+  <p style="font-size:13.5px;color:var(--muted);margin-top:10px">No blockers. ~5.1M build tokens. Monitor live at <code>http://127.0.0.1:8799</code>. Autonomous run pauses for your Phase-5 hedging decision, then continues.</p>
+
+  <footer>Fund 1 · Phase 4 of 11 · generated 2026-08-14 · the desk reasons; it never fabricates</footer>
+</div>
