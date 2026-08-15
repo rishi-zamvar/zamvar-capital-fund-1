@@ -16,6 +16,7 @@ import pytest
 from catalyst_trader.contracts import (
     DebateVerdict,
     DiligenceDossier,
+    DiligenceInput,
     EstimateVetting,
     Hedge,
     MDDecision,
@@ -33,6 +34,7 @@ from catalyst_trader.desk.md import (
     _md_decide_prompt,
     _md_review_prompt,
     cross_check,
+    reconcile,
 )
 
 _UNSET = object()
@@ -308,3 +310,194 @@ def test_mdreview_model():
     assert r.flags == [] and r.rerun_diligence is False
     with pytest.raises(Exception):
         MDReview(satisfied=True, response_delta="x", bogus=1)
+
+
+# --- Task 2: reconcile loop + general flag router + cascade + sizing-gap ---
+
+
+def _item(incoming_flags=None, p_loss=0.4):
+    return {
+        "verdict": _verdict(),
+        "dossier": _dossier(),
+        "dd": _dd(),
+        "catalyst": {"catalyst_id": "cat-1", "catalyst_type": "pdufa"},
+        "entry": 10.0,
+        "risk_inputs": {"p_loss": p_loss, "gap": 0.1, "analog_gaps": [0.1], "prices": [10.0, 9.0]},
+        "dd_input": DiligenceInput(ticker="ACME", catalyst={"catalyst_id": "cat-1"}, pair="PEER"),
+        "market_data": {"options": {}, "financials": {}},
+        "open_book": [],
+        "incoming_flags": incoming_flags or [],
+    }
+
+
+def _install(monkeypatch, reviews, decision, calls):
+    """Offline seam: route run_structured by schema to the fixtured MDReview sequence / MDDecision,
+    and stub run_desk/run_portfolio/run_diligence on desk.md — isolates the loop control."""
+    review_iter = iter(reviews)
+
+    async def _rs(prompt, schema, *, model="opus"):
+        calls.append(("run_structured", schema))
+        if schema is MDReview:
+            return next(review_iter)
+        if schema is MDDecision:
+            return decision
+        raise AssertionError(f"unexpected schema {schema!r}")
+
+    async def _rdesk(conn, catalyst, *, extra_context=None):
+        calls.append(("run_desk", extra_context))
+        return _verdict()
+
+    async def _rport(conn, embed, verdicts, open_book, *, extra_context=None, **kw):
+        calls.append(("run_portfolio", extra_context, verdicts))
+        return [_dossier()]
+
+    async def _rdil(conn, dd_input, *, market_data, embed=None):
+        calls.append(("run_diligence", dd_input, market_data))
+        return _dd()
+
+    monkeypatch.setattr(md_mod, "run_structured", _rs)
+    monkeypatch.setattr(md_mod, "run_desk", _rdesk)
+    monkeypatch.setattr(md_mod, "run_portfolio", _rport)
+    monkeypatch.setattr(md_mod, "run_diligence", _rdil)
+
+
+async def test_reconcile_is_sole_decision_point(db, monkeypatch):
+    calls = []
+    _install(monkeypatch,
+             [MDReview(satisfied=True, response_delta="clean", flags=[])],
+             MDDecision(decision="enter", rationale="clean", round_log=[]), calls)
+    out = await reconcile(db, None, _item())
+    assert isinstance(out, MDDecision)
+    assert out.decision == "enter"
+    assert len(out.round_log) == 1
+    assert out.round_log[0].disposition == "converged"
+    assert not any(c[0] in ("run_desk", "run_portfolio", "run_diligence") for c in calls)
+
+
+async def test_catalyst_flag_retriggers_debate_gap_only(db, monkeypatch):
+    calls = []
+    _install(monkeypatch, [
+        MDReview(satisfied=False, response_delta="gap", flags=[_rf(target="catalyst_call")]),
+        MDReview(satisfied=True, response_delta="resolved", flags=[]),
+    ], MDDecision(decision="enter", rationale="ok", round_log=[]), calls)
+    await reconcile(db, None, _item())
+    rd = [c for c in calls if c[0] == "run_desk"]
+    assert len(rd) == 1
+    # extra_context is EXACTLY the pure gap string — no verdict/direction/size can be in it (RECON-06)
+    assert rd[0][1] == _gap_only([_rf(target="catalyst_call")], "catalyst_call")
+    assert "endpoint powered at 80%" in rd[0][1]
+    # cascade 1 -> 2 -> 3
+    assert any(c[0] == "run_portfolio" for c in calls)
+    assert any(c[0] == "run_diligence" for c in calls)
+
+
+async def test_portfolio_flag_retriggers_builder_then_dd(db, monkeypatch):
+    calls = []
+    _install(monkeypatch, [
+        MDReview(satisfied=False, response_delta="gap",
+                 flags=[_rf(target="portfolio_build", evidence_ref="kb:ev-p")]),
+        MDReview(satisfied=True, response_delta="ok", flags=[]),
+    ], MDDecision(decision="enter", rationale="ok", round_log=[]), calls)
+    await reconcile(db, None, _item())
+    assert not any(c[0] == "run_desk" for c in calls)     # debate NOT re-run
+    rp = [c for c in calls if c[0] == "run_portfolio"]
+    assert len(rp) == 1 and rp[0][1] is not None          # builder re-run WITH a gap
+    assert any(c[0] == "run_diligence" for c in calls)     # then a fresh DD (2 -> 3)
+
+
+async def test_dd_reruns_firewalled(db, monkeypatch):
+    calls = []
+    item = _item()
+    _install(monkeypatch, [
+        MDReview(satisfied=False, response_delta="dd", flags=[], rerun_diligence=True),
+        MDReview(satisfied=True, response_delta="ok", flags=[]),
+    ], MDDecision(decision="enter", rationale="ok", round_log=[]), calls)
+    await reconcile(db, None, item)
+    rdd = [c for c in calls if c[0] == "run_diligence"]
+    assert len(rdd) == 1
+    _, dd_input, market_data = rdd[0]
+    assert isinstance(dd_input, DiligenceInput)            # sealed input only — never a verdict/gap
+    assert market_data == item["market_data"]
+    assert not any(c[0] == "run_desk" for c in calls)
+
+
+def test_sizing_gap_refreshes_risk_inputs():
+    # a sizing-related portfolio flag refreshes risk_inputs (the deterministic size path changes),
+    # not just the narrative extra_context.
+    flag = RetriggerFlag(
+        target="portfolio_build",
+        finding="true p_loss is 0.6 given the endpoint miss risk",
+        evidence_ref="kb:ev-size",
+        why_material="raises risk-of-ruin; the position must be resized smaller",
+    )
+    wi = md_mod._workitem(_verdict(), _item(p_loss=0.4), [flag])
+    assert wi["risk_inputs"]["p_loss"] == 0.6
+    # a NON-sizing catalyst flag leaves risk_inputs untouched
+    wi2 = md_mod._workitem(_verdict(), _item(p_loss=0.4), [_rf(target="catalyst_call")])
+    assert wi2["risk_inputs"]["p_loss"] == 0.4
+
+
+async def test_loop_caps_at_three(db, monkeypatch):
+    calls = []
+    reviews = [
+        MDReview(satisfied=False, response_delta=f"r{i}", flags=[_rf(evidence_ref=f"kb:ev-{i}")])
+        for i in range(3)
+    ]
+    _install(monkeypatch, reviews,
+             MDDecision(decision="pass", rationale="cap", round_log=[]), calls)
+    out = await reconcile(db, None, _item(), max_rounds=3)
+    assert len(out.round_log) == 3
+    assert out.round_log[-1].disposition == "cap_hit"
+    assert len([c for c in calls if c[0] == "run_structured" and c[1] is MDReview]) == 3
+
+
+async def test_oscillation_forces_pass(db, monkeypatch):
+    calls = []
+    _install(monkeypatch, [
+        MDReview(satisfied=False, response_delta="r1", flags=[_rf(evidence_ref="kb:same")]),
+        MDReview(satisfied=False, response_delta="r2", flags=[_rf(evidence_ref="kb:same")]),
+    ], MDDecision(decision="enter", rationale="model wanted enter", round_log=[]), calls)
+    out = await reconcile(db, None, _item())
+    assert out.round_log[-1].disposition == "diverged_pass"
+    assert out.decision == "pass"                          # forced, overrides the model's "enter"
+
+
+async def test_every_round_logged(db, monkeypatch):
+    calls = []
+    _install(monkeypatch, [
+        MDReview(satisfied=False, response_delta="gap", flags=[_rf(evidence_ref="kb:ev-a")]),
+        MDReview(satisfied=True, response_delta="ok", flags=[]),
+    ], MDDecision(decision="enter", rationale="ok", round_log=[]), calls)
+    out = await reconcile(db, None, _item())
+    assert len(out.round_log) == 2
+    for r in out.round_log:
+        assert isinstance(r, ReconciliationRound)
+        assert r.response_delta
+        assert "clean" in r.cross_check
+        assert r.convergence
+        assert r.disposition in ("continue", "converged", "cap_hit", "diverged_pass")
+
+
+async def test_general_flag_router_act(db, monkeypatch):
+    calls = []
+    wf = _wf(evidence_ref="tool:si#1")
+    _install(monkeypatch, [
+        # the MD ACTS on the incoming weekly flag -> raises a RetriggerFlag sharing its evidence_ref
+        MDReview(satisfied=False, response_delta="act",
+                 flags=[_rf(target="catalyst_call", evidence_ref="tool:si#1")]),
+        MDReview(satisfied=True, response_delta="ok", flags=[]),
+    ], MDDecision(decision="enter", rationale="ok", round_log=[]), calls)
+    out = await reconcile(db, None, _item(incoming_flags=[wf]))
+    assert any(c[0] == "run_desk" for c in calls)          # routed to WF1 via the re-trigger machinery
+    assert out.round_log[0].logged_flags == []             # actioned -> NOT logged
+
+
+async def test_general_flag_router_log_not_forced(db, monkeypatch):
+    calls = []
+    wf = _wf(evidence_ref="tool:x#9")
+    _install(monkeypatch,
+             [MDReview(satisfied=True, response_delta="log it", flags=[])],
+             MDDecision(decision="enter", rationale="ok", round_log=[]), calls)
+    out = await reconcile(db, None, _item(incoming_flags=[wf]))
+    assert wf in out.round_log[0].logged_flags             # unactioned -> logged
+    assert not any(c[0] in ("run_desk", "run_portfolio", "run_diligence") for c in calls)  # never forced

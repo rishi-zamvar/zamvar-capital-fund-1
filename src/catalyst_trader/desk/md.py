@@ -9,16 +9,23 @@ an LLM decision).
 """
 
 import json
+import re
 
 from pydantic import BaseModel, ConfigDict
 
+from catalyst_trader import kb
 from catalyst_trader.contracts import (
     DebateVerdict,
     DiligenceDossier,
+    MDDecision,
+    ReconciliationRound,
     RetriggerFlag,
     StrategyDossier,
     WeeklyFlag,
 )
+from catalyst_trader.desk.diligence import run_diligence
+from catalyst_trader.desk.orchestrator import run_desk, run_portfolio
+from catalyst_trader.desk.runtime import run_structured
 
 
 def _answered(item: str, coverage: list[str]) -> bool:
@@ -202,3 +209,149 @@ STRONGEST DISCONFIRMING (preserve verbatim): {dd.strongest_disconfirming_evidenc
 ROUND LOG:
 {log}
 """
+
+
+# --- deterministic loop control (agents-never-do-arithmetic) ---
+
+
+def _classify(review: "MDReview", sheet: dict, dd: DiligenceDossier, seen_refs: set) -> tuple:
+    """Deterministic disposition/convergence — NOT an LLM call. Returns (disposition, converged,
+    diverged). converged = a Python `and` over cross_check['clean'] + (dd go OR the per-round MD
+    boolean) + no-actioned-flags + review.satisfied. diverged (oscillation) = a RetriggerFlag whose
+    evidence_ref was already seen. `cap_hit` is applied by the loop (it owns round_n)."""
+    diverged = any(f.evidence_ref in seen_refs for f in review.flags)
+    converged = (
+        sheet["clean"]
+        and (dd.verdict == "go" or review.satisfied)
+        and not review.flags               # actioned re-triggers pending -> not converged (or only-refinements)
+        and review.satisfied               # the ONE per-round MD boolean (NOT MDDecision.accepted_residuals)
+    )
+    if diverged:
+        disposition = "diverged_pass"
+    elif converged:
+        disposition = "converged"
+    else:
+        disposition = "continue"
+    return disposition, converged, diverged
+
+
+def _criteria(sheet: dict, dd: DiligenceDossier, review: "MDReview") -> dict:
+    """The per-round convergence criteria snapshot (each deterministic sub-check -> bool)."""
+    return {
+        "cross_check_clean": sheet["clean"],
+        "dd_go": dd.verdict == "go",
+        "md_satisfied": review.satisfied,
+        "no_actioned_flags": not review.flags,
+    }
+
+
+def _unactioned(incoming_flags: list, actioned: list) -> list:
+    """The incoming flags the MD did NOT convert into a RetriggerFlag this round (matched on
+    evidence_ref). These go to ReconciliationRound.logged_flags — logged, never forced (RECON-08)."""
+    actioned_refs = {f.evidence_ref for f in actioned}
+    return [wf for wf in incoming_flags if wf.evidence_ref not in actioned_refs]
+
+
+_SIZING_TOKENS = ("p_loss", "loss", "gap", "ruin", "size", "sizing")
+
+
+def _workitem(verdict: DebateVerdict, item: dict, flags: list) -> dict:
+    """Build the run_portfolio work-item {verdict, catalyst, entry, risk_inputs}. SIZING-GAP RULE:
+    a sizing-related portfolio_build flag REFRESHES risk_inputs (p_loss/gap) from the flag's material
+    fact BEFORE re-running — text extra_context alone won't move the deterministic size path.
+    # ponytail: naive first-number extraction; upgrade to a typed sizing payload if flags carry structure.
+    """
+    ri = dict(item["risk_inputs"])
+    entry = item["entry"]
+    for f in flags:
+        if f.target != "portfolio_build":
+            continue
+        text = f"{f.finding} {f.why_material}".lower()
+        if not any(tok in text for tok in _SIZING_TOKENS):
+            continue
+        m = re.search(r"[-+]?\d*\.?\d+", f.finding)
+        if not m:
+            continue
+        val = float(m.group())
+        key = "p_loss" if ("loss" in text or "ruin" in text) else ("gap" if "gap" in text else "p_loss")
+        ri[key] = val
+    return {"verdict": verdict, "catalyst": item["catalyst"], "entry": entry, "risk_inputs": ri}
+
+
+async def reconcile(conn, embed, item, *, max_rounds: int = 3,
+                    blocker_path: str = ".monitor/blocker.json") -> MDDecision:
+    """The bounded MD/GP reconciliation loop AND the general flag router (RECON-01..08).
+
+    The SOLE MDDecision emitter and the one point consuming all three artifacts (verdict + dossier +
+    dd). Incoming flags from ANY source (item['incoming_flags']) enter the round-1 review; the MD
+    decides act-or-log. The MD's judgment is ONE run_structured(MDReview) per round + one terminal
+    run_structured(MDDecision); convergence/oscillation/cascade/cap/act-or-log are deterministic.
+    """
+    verdict, dossier, dd = item["verdict"], item["dossier"], item["dd"]
+    # Threaded cross_check inputs (loaded ONCE, pre-loop): the authoritative catalyst_id + the size floor.
+    catalyst_id = item["catalyst"]["catalyst_id"]
+    min_tradeable_size = kb.load_params(conn, item["catalyst"]["catalyst_type"])["builder"]["min_tradeable_size"]
+    incoming_flags = list(item.get("incoming_flags", []))
+
+    rounds: list[ReconciliationRound] = []
+    seen_refs: set = set()
+    packet = {"verdict": verdict, "dossier": dossier, "dd": dd}
+
+    for round_n in range(1, max_rounds + 1):
+        sheet = cross_check(verdict, dossier, dd, catalyst_id=catalyst_id,
+                            min_tradeable_size=min_tradeable_size)
+        packet = {"verdict": verdict, "dossier": dossier, "dd": dd}
+        review = await run_structured(_md_review_prompt(packet, sheet, incoming_flags),
+                                      MDReview, model="opus")
+
+        disposition, converged, diverged = _classify(review, sheet, dd, seen_refs)
+        for f in review.flags:
+            seen_refs.add(f.evidence_ref)
+        if round_n == max_rounds and not converged and not diverged:
+            disposition = "cap_hit"
+
+        rounds.append(ReconciliationRound(
+            round=round_n,
+            md_flags=review.flags,
+            logged_flags=_unactioned(incoming_flags, review.flags),
+            response_delta=review.response_delta,
+            convergence=_criteria(sheet, dd, review),
+            cross_check=sheet,
+            disposition=disposition,
+        ))
+        incoming_flags = []                    # consumed in round 1 — never re-fed
+
+        if converged or diverged or round_n == max_rounds:
+            break
+
+        # --- cascade: re-trigger with a GAP (never the answer); DD always re-runs SEALED ---
+        # ponytail: full cascade; gate WF-2 rerun on verdict-delta if token cost bites.
+        if any(f.target == "catalyst_call" for f in review.flags):          # 1 -> 2 -> 3
+            verdict = await run_desk(conn, item["catalyst"],
+                                     extra_context=_gap_only(review.flags, "catalyst_call"))
+            built = await run_portfolio(conn, embed, [_workitem(verdict, item, review.flags)],
+                                        item["open_book"])
+            dossier = built[0] if built else dossier
+            dd = await run_diligence(conn, item["dd_input"], market_data=item["market_data"], embed=embed)
+        elif any(f.target == "portfolio_build" for f in review.flags):      # 2 -> 3
+            built = await run_portfolio(conn, embed, [_workitem(verdict, item, review.flags)],
+                                        item["open_book"],
+                                        extra_context=_gap_only(review.flags, "portfolio_build"))
+            dossier = built[0] if built else dossier
+            dd = await run_diligence(conn, item["dd_input"], market_data=item["market_data"], embed=embed)
+        elif review.rerun_diligence:                                        # act-route to WF3 (sealed)
+            dd = await run_diligence(conn, item["dd_input"], market_data=item["market_data"], embed=embed)
+
+    decision = await run_structured(_md_decide_prompt(packet, rounds), MDDecision, model="opus")
+    # Stamp the immutable record deterministically (audit integrity — the model never fabricates the log
+    # or the preserved dissent; accepted_residuals stays the MD's decide-time judgment).
+    decision = decision.model_copy(update={
+        "round_log": rounds,
+        "dissent_preserved": [*verdict.unresolved_dissent, dd.strongest_disconfirming_evidence],
+    })
+    # oscillation -> forced PASS (never leave PASS to the model); clear escalate-only fields.
+    if rounds and rounds[-1].disposition == "diverged_pass" and decision.decision != "pass":
+        decision = decision.model_copy(update={
+            "decision": "pass", "blocker_class": None, "recommended_resolution": None,
+        })
+    return decision
