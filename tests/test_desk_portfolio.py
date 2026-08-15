@@ -91,3 +91,151 @@ def test_select_book_heat_cap_uses_combined_book_with_open_positions():
     promoted, _ = select_book(cands, open_book=[{"ticker": "OPEN", "weight": 0.9, "catalyst_id": "c0"}],
                               weekly_budget=1.0, heat_cap=0.5)
     assert promoted == []   # [0.9, 0.5] Herfindahl 1.06 > 0.5 -> the candidate is dropped
+
+
+# ---------------------------------------------------------------------------
+# Task 2 — PM pass + memo + pre-mortem (author != approver) -> StrategyDossier
+# ---------------------------------------------------------------------------
+
+from catalyst_trader.contracts import (
+    EstimateVetting,
+    Hedge,
+    PortfolioContext,
+    RiskAssessment,
+    StrategyDossier,
+    TradeProposal,
+)
+from catalyst_trader.desk.portfolio import (
+    PMDecision,
+    PositionMemo,
+    PreMortem,
+    author_memo,
+    author_pre_mortem,
+    pm_decide,
+)
+
+_KILL = ["a Complete Response Letter is issued", "label carve-out on the lead indication"]
+
+
+def _hedge(instrument="equity_peer", validated=True, payoff=-1, covers="idiosyncratic"):
+    return Hedge(instrument=instrument, ticker="RIVAL", payoff_direction=payoff,
+                 validated=validated, covers=covers, mechanism="same-indication competitor",
+                 conditional_worst=-0.35)
+
+
+def _proposal(hedge=None, size_pct=0.02):
+    return TradeProposal(
+        target_long="ACME", hedge=hedge, pair_rationale="long ACME, RIVAL inverse hedge",
+        entry=100.0, exit_by_date="2026-11-22", stop_loss=45.0, take_profit=120.0,
+        size_pct=size_pct, expected_return_pct=0.25, kb_analogs=["n1"],
+        holds_through_catalyst=True, catalyst_id="cat-1", direction="positive",
+        estimate_vetting=EstimateVetting(verdict="endorse", input_refs=["tool:x#1"], reasons=["ok"]),
+        sl_advisory=True,
+    )
+
+
+def _risk(load_fixture, hedge=None):
+    base = RiskAssessment.model_validate(load_fixture("agent_responses/risk_synthesis"))
+    return base.model_copy(update={"recommended_size_pct": 0.02, "hedge": hedge,
+                                   "hedge_valid": hedge is not None and hedge.validated})
+
+
+def _pctx():
+    return PortfolioContext(concentration=0.25, corr_to_open_positions=[], weekly_budget_remaining=0.08)
+
+
+def _pm_seam(calls):
+    """Fake run_structured for the portfolio module: record every call, dispatch by schema."""
+    memo = PositionMemo(memo="LLM memo body")
+    pre = PreMortem(scenarios=["it lost because the CRL hit", "sector read-through sank both"])
+    decision = PMDecision(verdict_summary="promote it", dissent_log=["hedge fragility"],
+                          all_evidence_refs=["tool:size_for_survival#a"])
+
+    async def _fake(prompt, schema, *, mcp_servers=None, allowed_tools=None, model="sonnet"):
+        calls.append({"prompt": prompt, "schema": schema, "model": model})
+        if schema is PositionMemo:
+            return memo
+        if schema is PreMortem:
+            return pre
+        if schema is PMDecision:
+            return decision
+        raise AssertionError(f"unexpected schema {schema!r}")
+
+    return _fake
+
+
+async def test_memo_and_premortem_authored_separately_from_pm(monkeypatch, load_fixture):
+    calls = []
+    monkeypatch.setattr(portfolio, "run_structured", _pm_seam(calls))
+    prop, risk = _proposal(_hedge()), _risk(load_fixture, _hedge())
+
+    await author_memo(prop, _KILL, risk)
+    await author_pre_mortem(prop, risk)
+    await pm_decide(None, None, prop, risk, "memo", ["s1"], _pctx(),
+                    decision="promote", kill_criteria=_KILL, promoted_weights=[0.02])
+
+    schemas = [c["schema"] for c in calls]
+    assert schemas == [PositionMemo, PreMortem, PMDecision]   # separate calls, memo+pre-mortem FIRST
+    pm_idx = schemas.index(PMDecision)
+    assert schemas.index(PositionMemo) < pm_idx and schemas.index(PreMortem) < pm_idx  # author != approver
+    assert calls[pm_idx]["model"] == "opus"   # the PM decision is the opus call
+
+
+async def test_author_memo_returns_the_llm_memo_string(monkeypatch, load_fixture):
+    monkeypatch.setattr(portfolio, "run_structured", _pm_seam([]))
+    out = await author_memo(_proposal(_hedge()), _KILL, _risk(load_fixture, _hedge()))
+    assert out == "LLM memo body"
+
+
+async def test_author_pre_mortem_returns_scenarios_list(monkeypatch, load_fixture):
+    monkeypatch.setattr(portfolio, "run_structured", _pm_seam([]))
+    out = await author_pre_mortem(_proposal(_hedge()), _risk(load_fixture, _hedge()))
+    assert out == ["it lost because the CRL hit", "sector read-through sank both"]
+
+
+async def test_residual_net_long_is_exposure_net_and_gross_ge_abs_net(monkeypatch, load_fixture):
+    monkeypatch.setattr(portfolio, "run_structured", _pm_seam([]))
+    weights = [0.02, 0.03]
+    dossier = await pm_decide(None, None, _proposal(_hedge()), _risk(load_fixture, _hedge()),
+                              "memo", ["s1"], _pctx(), decision="promote",
+                              kill_criteria=_KILL, promoted_weights=weights)
+    from catalyst_trader.quant.portfolio import exposure
+    exp = exposure(weights)
+    assert dossier.residual_net_long == exp.detail["net"]        # HEDGE-05 wiring
+    assert exp.value >= abs(dossier.residual_net_long)           # gross >= |net| (Pitfall C, never netted away)
+
+
+async def test_which_risk_covered_idiosyncratic_from_validated_inverse(monkeypatch, load_fixture):
+    monkeypatch.setattr(portfolio, "run_structured", _pm_seam([]))
+    dossier = await pm_decide(None, None, _proposal(_hedge()), _risk(load_fixture, _hedge()),
+                              "m", ["s"], _pctx(), decision="promote",
+                              kill_criteria=_KILL, promoted_weights=[0.02])
+    assert dossier.which_risk_covered == "idiosyncratic"
+
+
+async def test_which_risk_covered_sector_beta_from_inverse_etf(monkeypatch, load_fixture):
+    monkeypatch.setattr(portfolio, "run_structured", _pm_seam([]))
+    labd = _hedge(instrument="inverse_etf", covers="sector_beta")
+    dossier = await pm_decide(None, None, _proposal(labd), _risk(load_fixture, labd),
+                              "m", ["s"], _pctx(), decision="promote",
+                              kill_criteria=_KILL, promoted_weights=[0.02])
+    assert dossier.which_risk_covered == "sector_beta"
+
+
+async def test_which_risk_covered_none_when_no_hedge(monkeypatch, load_fixture):
+    monkeypatch.setattr(portfolio, "run_structured", _pm_seam([]))
+    dossier = await pm_decide(None, None, _proposal(None), _risk(load_fixture, None),
+                              "m", ["s"], _pctx(), decision="kill",
+                              kill_criteria=_KILL, promoted_weights=[])
+    assert dossier.which_risk_covered == "none"      # honest fallback: no hedge covers nothing
+
+
+async def test_dossier_kill_criteria_carried_and_non_empty(monkeypatch, load_fixture):
+    monkeypatch.setattr(portfolio, "run_structured", _pm_seam([]))
+    dossier = await pm_decide(None, None, _proposal(_hedge()), _risk(load_fixture, _hedge()),
+                              "the memo body", ["scenario a"], _pctx(), decision="promote",
+                              kill_criteria=_KILL, promoted_weights=[0.02])
+    assert dossier.kill_criteria == _KILL and dossier.kill_criteria     # non-empty (contract-enforced)
+    assert dossier.position_memo == "the memo body"                     # the authored memo is read in
+    assert dossier.pre_mortem == ["scenario a"]                         # the pre-mortem is read in
+    assert isinstance(dossier, StrategyDossier) and dossier.trade is not None

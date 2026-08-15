@@ -1,0 +1,5 @@
+{
+  "verdict_summary": "Promote: survivable size, validated inverse hedge, fits the weekly budget and concentration cap.",
+  "dissent_log": ["Conservative member flagged hedge fragility on a class-wide read-through."],
+  "all_evidence_refs": ["tool:size_for_survival#abc123", "tool:conditional_payoff#def456"]
+}

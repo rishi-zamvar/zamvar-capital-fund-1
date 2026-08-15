@@ -1,0 +1,7 @@
+{
+  "scenarios": [
+    "The FDA issues a Complete Response Letter and RIVAL fails to pop on a class-wide re-rating.",
+    "A sector-wide negative read-through sinks both legs together (residual net-long is exposed).",
+    "Liquidity dries up around the event and the advisory stop fills far below the level."
+  ]
+}
