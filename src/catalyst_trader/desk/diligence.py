@@ -19,11 +19,14 @@ tool results into a dimension's context; the agent interprets and cites, tools c
 import asyncio
 from typing import Literal
 
-from ..contracts import AnalystSignal, DiligenceInput
+from pydantic import BaseModel, ConfigDict
+
+from ..contracts import AnalystSignal, DiligenceDossier, DiligenceInput
 from ..quant.options import implied_move
-from . import risk
+from . import evidence, risk
 from .runtime import run_structured
 from .tools import build_quant_server
+from .verifier import SupportCheck  # pure model reuse — the DebateVerdict-typed enforce() is NEVER called here
 
 # The SINGLE source of diligence thresholds (BLOCKER-2). Module-level + always present, read via
 # direct subscript (missing-key-raises), NEVER `.get`. It is deliberately DECOUPLED from the KB
@@ -352,3 +355,128 @@ def synthesize_verdict(
     if any(not dimension_passed(s, params=params) for s in money):
         return "no_go"
     return "go"
+
+
+# ---------------------------------------------------------------------------
+# The LLM narrative pass (verdict-IMMUTABLE) + the cite-or-drop dossier gate.
+#
+# The narrative model has NO verdict field, so a confident LLM literally cannot
+# emit a go/no-go. assemble_dossier stamps the DETERMINISTIC verdict onto the
+# dossier — exactly risk.assess's model_copy money-overwrite pattern. enforce_dossier
+# MIRRORS the verifier's two-stage shape (structural resolve + gated semantic)
+# and REUSES the desk.evidence primitives, but it NEVER calls the DebateVerdict-typed
+# verifier gate (a DiligenceDossier has no thesis/evidence_refs/model_copy-of-refs
+# shape it expects).
+# ---------------------------------------------------------------------------
+
+
+class DiligenceNarrative(BaseModel):
+    """The LLM's synthesis of a decision it CANNOT change: prose only, structurally
+    verdict-free (no `verdict` field → the go/no-go is unrepresentable here)."""
+
+    model_config = ConfigDict(extra="forbid")
+    strongest_disconfirming_evidence: str
+    red_flags: list[str] = []
+    residual_risks: list[str] = []
+
+
+def _narrative_prompt(findings: list[AnalystSignal], verdict: str) -> str:
+    lines = [
+        f"  {s.dimension}: score={s.score:+.2f} conf={s.confidence:.2f} "
+        f"findings={[kf.claim for kf in s.key_findings]}"
+        for s in findings
+    ]
+    return (
+        "You are the diligence SYNTHESIZER writing the narrative for an independent go/no-go "
+        f"that has ALREADY been decided: the verdict is FIXED as {verdict!r} and you CANNOT change "
+        "it. Do not argue the verdict; write the adversarial story of it. From the per-dimension "
+        "findings below, surface the strongest DISCONFIRMING evidence, the red flags, and the "
+        "residual risks. Cite only what the dimensions cited — invent nothing.\n"
+        "PER-DIMENSION FINDINGS:\n" + "\n".join(lines)
+    )
+
+
+async def _narrative(findings: list[AnalystSignal], verdict: str, *, model: str = "opus") -> DiligenceNarrative:
+    """One opus pass that writes the narrative of the ALREADY-DECIDED verdict. It returns a
+    verdict-free DiligenceNarrative — it cannot flip the go/no-go (that lives in synthesize_verdict)."""
+    return await run_structured(_narrative_prompt(findings, verdict), DiligenceNarrative, model=model)
+
+
+def assemble_dossier(
+    findings: list[AnalystSignal],
+    verdict: str,
+    narrative: DiligenceNarrative,
+    *,
+    liquidity_zero: bool,
+    params: dict = DILIGENCE_PARAMS,
+) -> DiligenceDossier:
+    """Build the DiligenceDossier. The verdict is the DETERMINISTIC synthesize_verdict result —
+    NEVER the narrative's (which has no verdict field). This is the model_copy money-overwrite
+    guard: the LLM narrative supplies only red_flags / disconfirming-evidence / residual_risks."""
+    per_dimension = [
+        {**s.model_dump(), "passed": dimension_passed(s, params=params)}
+        for s in findings
+    ]
+    all_refs = [kf.evidence_ref for s in findings for kf in s.key_findings]
+    return DiligenceDossier(
+        verdict=verdict,
+        per_dimension=per_dimension,
+        red_flags=narrative.red_flags,
+        strongest_disconfirming_evidence=narrative.strongest_disconfirming_evidence,
+        all_evidence_refs=all_refs,
+        residual_risks=narrative.residual_risks,
+    )
+
+
+def _claim_for(ref: str, signals) -> str | None:
+    """The claim text cited under `ref` (from a signal's key_findings), or None.
+    Mirrors verifier._claim_for — the ref->claim table quote_supported needs."""
+    for sig in signals or []:
+        for kf in sig.key_findings:
+            if kf.evidence_ref == ref:
+                return kf.claim
+    return None
+
+
+def _dossier_support_prompt(ref: str, claim: str, dossier: DiligenceDossier) -> str:
+    return (
+        "Judge whether the cited source SUPPORTS the claim backing this diligence dossier's "
+        f"go/no-go.\nVerdict: {dossier.verdict}\n"
+        f"Strongest disconfirming evidence: {dossier.strongest_disconfirming_evidence}\n"
+        f"Claim: {claim}\nCited evidence_ref: {ref}\n"
+        "Answer supported=true only if the source substantively backs the claim."
+    )
+
+
+async def enforce_dossier(conn, dossier: DiligenceDossier, *, signals=None) -> DiligenceDossier:
+    """Cite-or-drop over the dossier's all_evidence_refs, mirroring the verifier's two-stage
+    shape and reusing evidence.resolve / quote_supported — but NEVER calling the verifier gate
+    (that is DebateVerdict-typed). A NO-GO that loses ALL evidence support is surfaced as an
+    audit red flag (never silently passed)."""
+    # 1. STRUCTURAL — deterministic, no LLM.
+    structural: list[str] = []
+    for ref in dossier.all_evidence_refs:
+        source = evidence.resolve(conn, ref)
+        if source is None:
+            continue  # unresolvable -> drop
+        if ref.startswith("kb:"):
+            claim = _claim_for(ref, signals)
+            if not claim or not evidence.quote_supported(source, claim):
+                continue  # cited quote not found in the source -> drop
+        # tool: refs are resolved-by-construction: no KB lookup, no quote gate.
+        structural.append(ref)
+
+    # 2. SEMANTIC — LLM (opus), gated on the structural survivors.
+    survivors: list[str] = []
+    for ref in structural:
+        claim = _claim_for(ref, signals) or dossier.strongest_disconfirming_evidence
+        check = await run_structured(_dossier_support_prompt(ref, claim, dossier), SupportCheck, model="opus")
+        if check.supported:
+            survivors.append(ref)
+
+    red_flags = list(dossier.red_flags)
+    if dossier.verdict == "no_go" and not survivors:
+        red_flags.append(
+            "AUDIT: no_go rests on unsupported evidence — every disconfirming ref failed cite-or-drop"
+        )
+    return dossier.model_copy(update={"all_evidence_refs": survivors, "red_flags": red_flags})

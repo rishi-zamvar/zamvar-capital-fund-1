@@ -383,3 +383,106 @@ def test_dimension_passed_reads_params():
     # zero cited findings (constructed to bypass the AnalystSignal validator) -> False (defense).
     empty = _sig("financials").model_copy(update={"key_findings": []})
     assert diligence.dimension_passed(empty, params=PARAMS) is False
+
+
+# ---------------------------------------------------------------------------
+# Wave 3 — Task 2: verdict-immutable LLM narrative + enforce_dossier cite-or-drop
+# ---------------------------------------------------------------------------
+
+
+def _seed_evidence(db, *, snippet, quote):
+    """Insert one resolvable EvidenceSource node; return its node id (a kb: ref target)."""
+    from catalyst_trader.kb import EvidenceSource, KBNode, insert_claim
+
+    insert_claim(
+        db, KBNode(kind="playbook", attrs={"x": 1}),
+        [EvidenceSource(url="https://ct.gov/NCT", retrieved_at="2026-08-14",
+                        snippet_hash=snippet, quote=quote)],
+    )
+    row = db.execute(
+        "SELECT id FROM kb_node WHERE kind='evidence_source' "
+        "AND json_extract(attrs_json,'$.snippet_hash')=?",
+        (snippet,),
+    ).fetchone()
+    return row["id"]
+
+
+def test_narrative_schema_is_narrative_only():
+    """The narrative model structurally CANNOT carry a verdict — the go/no-go is not
+    representable in the LLM's output schema."""
+    from catalyst_trader.desk import diligence
+
+    assert "verdict" not in diligence.DiligenceNarrative.model_fields
+
+
+async def test_llm_narrative_cannot_override_verdict(monkeypatch, load_fixture):
+    """A findings set that deterministically yields no_go, plus a narrative fixture that
+    argues (in prose) for going ahead: the assembled dossier's verdict is the DETERMINISTIC
+    no_go (overwritten via model_copy), and the narrative TEXT is carried through."""
+    from catalyst_trader.desk import diligence
+
+    calls = []
+    _patch_dd_seam(monkeypatch, _dd_router(load_fixture, calls))
+
+    findings = [
+        _sig(d, confidence=0.1) if d == "financials" else _sig(d)
+        for d in DD_DIMENSIONS
+    ]
+    verdict = diligence.synthesize_verdict(findings, liquidity_zero=False, params=PARAMS)
+    assert verdict == "no_go"
+
+    narrative = await diligence._narrative(findings, verdict)
+    dossier = diligence.assemble_dossier(findings, verdict, narrative, liquidity_zero=False, params=PARAMS)
+
+    assert dossier.verdict == "no_go"  # deterministic verdict wins
+    assert dossier.red_flags == narrative.red_flags  # narrative text carried through
+    assert dossier.strongest_disconfirming_evidence == narrative.strongest_disconfirming_evidence
+    assert dossier.residual_risks == narrative.residual_risks
+    # the narrative call ran against the verdict-free schema
+    assert any(c["schema"] is diligence.DiligenceNarrative for c in calls)
+
+
+async def test_dossier_cite_or_drop(db, monkeypatch):
+    """enforce_dossier drops unresolvable refs (garbage, kb:999999); a tool: ref survives
+    by construction; a kb: ref survives only if its cited claim is quote_supported. Mirrors
+    the verifier two-stage shape, reuses evidence primitives, NEVER calls verifier.enforce."""
+    from catalyst_trader.desk import diligence
+
+    nid = _seed_evidence(db, snippet="h1", quote="Short interest spiked to 18% before the event.")
+    tool_ref = evidence.tool_ref_for("cash_runway", {"cash_usd": 1})
+    signals = [
+        _sig("ownership_flow").model_copy(update={
+            "key_findings": [KeyFinding(claim="short interest spiked to 18%", evidence_ref=f"kb:{nid}")],
+        }),
+    ]
+    dossier = DiligenceDossier(
+        verdict="no_go", per_dimension=[], strongest_disconfirming_evidence="x",
+        all_evidence_refs=[f"kb:{nid}", tool_ref, "garbage", "kb:999999"],
+    )
+
+    async def _fake(prompt, schema, *, mcp_servers=None, allowed_tools=None, model="sonnet"):
+        return schema(supported=True, reason="ok")
+
+    monkeypatch.setattr(diligence, "run_structured", _fake)
+
+    out = await diligence.enforce_dossier(db, dossier, signals=signals)
+
+    assert f"kb:{nid}" in out.all_evidence_refs   # supported quote survives
+    assert tool_ref in out.all_evidence_refs       # resolved-by-construction survives
+    assert "garbage" not in out.all_evidence_refs  # unresolvable dropped
+    assert "kb:999999" not in out.all_evidence_refs  # missing node dropped
+
+
+async def test_dossier_no_go_all_unsupported_flags_audit(db):
+    """A NO-GO whose disconfirming evidence loses ALL support is surfaced as an audit flag,
+    not silently passed."""
+    from catalyst_trader.desk import diligence
+
+    dossier = DiligenceDossier(
+        verdict="no_go", per_dimension=[], strongest_disconfirming_evidence="x",
+        all_evidence_refs=["garbage", "kb:999999"],
+    )
+    out = await diligence.enforce_dossier(db, dossier, signals=[])
+
+    assert out.all_evidence_refs == []
+    assert any("AUDIT" in f for f in out.red_flags)
