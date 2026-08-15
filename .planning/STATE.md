@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: verifying
-stopped_at: Completed 06.5-04-PLAN.md
-last_updated: "2026-08-15T20:05:25.204Z"
+status: executing
+stopped_at: Completed 06.7-01-PLAN.md
+last_updated: "2026-08-15T20:53:52.097Z"
 last_activity: 2026-08-15
 progress:
-  total_phases: 14
+  total_phases: 15
   completed_phases: 7
-  total_plans: 40
-  completed_plans: 40
+  total_plans: 44
+  completed_plans: 41
   percent: 0
 ---
 
@@ -21,13 +21,13 @@ progress:
 See: .planning/PROJECT.md (updated 2026-08-14)
 
 **Core value:** Given an imminent biotech catalyst, produce a data-backed, portfolio-aware, hedged one-week trade recommendation the user can trust enough to approve — and get measurably better at it every week.
-**Current focus:** Phase 06.5 — weekly-strategy-correction
+**Current focus:** Phase 06.7 — md-gp-reconciliation-loop
 
 ## Current Position
 
-Phase: 6.7
-Plan: Not started
-Status: Phase complete — ready for verification
+Phase: 06.7 (md-gp-reconciliation-loop) — EXECUTING
+Plan: 2 of 4
+Status: Ready to execute
 Last activity: 2026-08-15
 
 Progress: [░░░░░░░░░░] 0%
@@ -91,6 +91,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 06.5 P02 | 3 | 2 tasks | 4 files |
 | Phase 06.5-weekly-strategy-correction P03 | 9min | 3 tasks tasks | 3 files files |
 | Phase 06.5 P04 | 22min | 3 tasks tasks | 4 files files |
+| Phase 06.7 P01 | 8min | 2 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -165,6 +166,8 @@ Recent decisions affecting current work:
 - [Phase 06.5]: run_weekly is a thin cadence composition (scan->shortlist->desk->book); statistical/defensive legs are deterministic no-LLM StrategyDossiers; one anchor for measurement + execution
 - [Phase 06.5]: run_portfolio threads target_return (net-EV expected_move) + statistical_sleeve_cap (catalyst-week only) + defensive_book; catalyst path byte-for-byte when target_return=None (WEEK-01)
 - [Phase 06.5]: WEEK-05 record seam: per-leg weekly outcomes persist as KB outcome claims cited by a resolved-by-construction tool:weekly_base_rate ref; refit deferred to Phase 10
+- [Phase 06.7]: gap-not-answer firewall as a TYPE FACT: RetriggerFlag/WeeklyFlag use extra='forbid' + absence of any answer-shaped field ⇒ handing a conclusion down/up is a ValidationError, not a policy check (mirrors DiligenceInput); WeeklyFlag has NO target (the MD assigns the route)
+- [Phase 06.7]: MDDecision is standalone (NOT a StrategyDossier field, regression-guarded); escalation gated by completed-staff-work via model_validator (blocker_class + recommended_resolution required iff escalate, forbidden otherwise); ReconciliationRound.logged_flags is the unactioned-flag home (RECON-08/WEEK-06)
 
 ### Pending Todos
 
@@ -178,6 +181,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-08-15T20:00:36.357Z
-Stopped at: Completed 06.5-04-PLAN.md
+Last session: 2026-08-15T20:53:44.438Z
+Stopped at: Completed 06.7-01-PLAN.md
 Resume file: None
