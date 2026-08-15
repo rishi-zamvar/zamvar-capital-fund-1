@@ -193,7 +193,12 @@ Decimal phases appear between their surrounding integers in numeric order.
   3. Layer A mechanical backtest (no LLM) runs deterministic pair selection + sizing + entry + SL/TP + 1-week exit with a pessimistic fill model (far-side + gap-open on held-through events), producing a baseline distribution (win rate, avg win/loss, Sharpe, max DD) and hedge-effectiveness stats
   4. Layer B guarded agentic replay runs the real pipeline with look-ahead guardrails (web blocked/archived, point-in-time fundamentals, outcome-blind prompts) and its results are labeled biased-optimistic
   5. The baseline unlocks config tuning and produces an explicit go/no-go gate before paper trading
-**Plans**: TBD
+**Plans**: 5 plans (3 waves)
+- [ ] 07-01-PLAN.md — 4 new baseline metrics (max_drawdown/win_rate/avg_win_loss/hedge_effectiveness) in performance.py, TDD (Wave 1)
+- [ ] 07-02-PLAN.md — Backtest data foundation: synthetic-history fixture + events.py (point-in-time survivorship-free event set, BACK-01) + fill.py (pessimistic gap-open + slippage + data-latency effective_asof, BACK-04) (Wave 1)
+- [ ] 07-03-PLAN.md — desk/guardrails.py: fail-closed pre-trade runtime gate aggregating the shipped OPS-03 invariants (Wave 1)
+- [ ] 07-04-PLAN.md — backtest/engine.py: Layer A deterministic weekly loop (NO run_desk) + base-rate direction proxy + baseline distribution, BACK-02 (Wave 2)
+- [ ] 07-05-PLAN.md — backtest/layerb.py (guarded replay + biased_optimistic label + sample/drop-log, BACK-03) + backtest/gate.py (sample-based go/no-go, BACK-05) (Wave 3)
 
 ### Phase 8: Paper Ledger, Attribution & Post-Mortem (Layer C)
 **Goal**: Run the full desk forward against live quotes for the true out-of-sample test, and learn from every resolved trade.
@@ -264,7 +269,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 →
 | 4. Analyst Desk + Bull/Bear Debate | 0/TBD | Complete    | 2026-08-15 |
 | 5. Trade Builder, Hedge & Sizing | 0/7 | Not started | - |
 | 6. Independent Diligence Firewall | 0/4 | Planned | - |
-| 7. Verifier/Guardrails + Backtest Harness | 0/TBD | Not started | - |
+| 7. Verifier/Guardrails + Backtest Harness | 0/5 | Planned | - |
 | 8. Paper Ledger, Attribution & Post-Mortem | 0/TBD | Not started | - |
 | 9. iOS Dashboard + Approval Gate | 0/TBD | Not started | - |
 | 10. Continuous-Iteration Loop | 0/TBD | Not started | - |
