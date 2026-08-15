@@ -45,7 +45,7 @@
 ### Workflow 1 — Catalyst Call (CALL)
 
 - [x] **CALL-01**: Four analysts (Clinical, Regulatory, Financial, Market) produce structured, source-cited signals
-- [ ] **CALL-02**: Bull and Bear researchers build opposing cases in real context isolation
+- [x] **CALL-02**: Bull and Bear researchers build opposing cases in real context isolation
 - [x] **CALL-03**: Debate manager runs bounded rounds and emits a binary directional verdict + calibrated confidence + explicit falsification/kill criteria
 - [x] **CALL-04**: A fact-check verifier enforces source-quote-or-drop on every claim
 
@@ -142,7 +142,7 @@
 | FRAME-03 | Phase 3 | Complete |
 | OPS-04 | Phase 3 | Complete |
 | CALL-01 | Phase 4 | Complete |
-| CALL-02 | Phase 4 | Pending |
+| CALL-02 | Phase 4 | Complete |
 | CALL-03 | Phase 4 | Complete |
 | CALL-04 | Phase 4 | Complete |
 | PORT-01 | Phase 5 | Pending |
