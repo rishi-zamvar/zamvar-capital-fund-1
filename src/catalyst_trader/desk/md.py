@@ -9,7 +9,9 @@ an LLM decision).
 """
 
 import json
+import os
 import re
+import time
 
 from pydantic import BaseModel, ConfigDict
 
@@ -354,4 +356,43 @@ async def reconcile(conn, embed, item, *, max_rounds: int = 3,
         decision = decision.model_copy(update={
             "decision": "pass", "blocker_class": None, "recommended_resolution": None,
         })
+    # Escalate ONLY: surface the live decision-blocker banner (enter/pass never touch the file).
+    if decision.decision == "escalate":
+        _write_blocker(decision, catalyst_id, blocker_path)
     return decision
+
+
+def _write_blocker(decision: MDDecision, packet_ref: str, path: str) -> None:
+    """Write the live .monitor/blocker.json ATOMICALLY (tmp + os.replace) on escalate ONLY. Schema
+    is the live {active,title,detail,options,since}; blocker_class rides in the title and the
+    recommended_resolution (completed staff work) + a packet ref ride in the detail (RECON-07)."""
+    payload = {
+        "active": True,
+        "title": f"MD escalation: {decision.blocker_class}",
+        "detail": f"{decision.recommended_resolution}\n\nPacket: {packet_ref}",
+        "options": ["confirm", "override"],
+        "since": int(time.time()),
+    }
+    tmp = f"{path}.tmp"
+    parent = os.path.dirname(path)
+    if parent:
+        os.makedirs(parent, exist_ok=True)
+    with open(tmp, "w") as fh:
+        json.dump(payload, fh)
+    os.replace(tmp, path)               # atomic swap — a reader never sees a half-written file
+
+
+def lp_summary(decision: MDDecision) -> str:
+    """GENERATE the LP relay FROM the decision record (RECON-05) — accepted_residuals + preserved
+    dissent VERBATIM + the round count + a cap-hit flag. Source-quote-or-drop: nothing not traceable
+    to the record."""
+    cap_hit = bool(decision.round_log) and decision.round_log[-1].disposition == "cap_hit"
+    lines = [
+        f"MD decision: {decision.decision}",
+        f"Reconciliation rounds: {len(decision.round_log)}",
+    ]
+    if cap_hit:
+        lines.append("Reached the round cap without full convergence.")
+    lines += [f"Accepted residual (priced): {r}" for r in decision.accepted_residuals]
+    lines += [f"Preserved dissent: {d}" for d in decision.dissent_preserved]
+    return "\n".join(lines)

@@ -11,6 +11,8 @@ critical, OPS-04 exhaustive edges): flip exactly one thing, assert exactly that 
 and `clean is False`; the all-consistent baseline is `clean is True`.
 """
 
+import json
+
 import pytest
 
 from catalyst_trader.contracts import (
@@ -34,6 +36,7 @@ from catalyst_trader.desk.md import (
     _md_decide_prompt,
     _md_review_prompt,
     cross_check,
+    lp_summary,
     reconcile,
 )
 
@@ -501,3 +504,65 @@ async def test_general_flag_router_log_not_forced(db, monkeypatch):
     out = await reconcile(db, None, _item(incoming_flags=[wf]))
     assert wf in out.round_log[0].logged_flags             # unactioned -> logged
     assert not any(c[0] in ("run_desk", "run_portfolio", "run_diligence") for c in calls)  # never forced
+
+
+# --- Task 3: escalation blocker-file write + LP summary from record (RECON-05/07) ---
+
+
+async def test_escalate_writes_blocker_file(db, monkeypatch, tmp_path):
+    bp = tmp_path / "blocker.json"
+    decision = MDDecision(decision="escalate", rationale="catalyst id conflict persists",
+                          round_log=[], blocker_class="factual_conflict",
+                          recommended_resolution="LP to confirm the correct catalyst id")
+    _install(monkeypatch, [MDReview(satisfied=True, response_delta="ok", flags=[])], decision, [])
+    out = await reconcile(db, None, _item(), blocker_path=str(bp))
+    assert out.decision == "escalate"
+    data = json.loads(bp.read_text())            # written ATOMICALLY (tmp + os.replace)
+    assert data["active"] is True
+    assert "factual_conflict" in data["title"]                       # blocker_class in title
+    assert "LP to confirm the correct catalyst id" in data["detail"]  # recommended_resolution in detail
+    assert isinstance(data["options"], list) and data["options"]
+    assert isinstance(data["since"], int)
+    assert not (tmp_path / "blocker.json.tmp").exists()               # tmp cleaned by os.replace
+
+
+async def test_enter_pass_do_not_write_blocker(db, monkeypatch, tmp_path):
+    for dec in ("enter", "pass"):
+        bp = tmp_path / f"{dec}.json"
+        decision = MDDecision(decision=dec, rationale="clean", round_log=[])
+        _install(monkeypatch, [MDReview(satisfied=True, response_delta="ok", flags=[])], decision, [])
+        await reconcile(db, None, _item(), blocker_path=str(bp))
+        assert not bp.exists()                    # enter/pass NEVER touch the blocker file
+
+
+def test_lp_summary_from_record():
+    rnd = ReconciliationRound(round=1, response_delta="unmoved", convergence={},
+                              cross_check={"clean": True}, disposition="cap_hit")
+    decision = MDDecision(decision="pass", rationale="capped without convergence", round_log=[rnd],
+                          accepted_residuals=["priced FX residual via a smaller size"],
+                          dissent_preserved=["bear: regulatory precedent thin"])
+    s = lp_summary(decision)
+    assert "priced FX residual via a smaller size" in s      # accepted_residuals VERBATIM
+    assert "bear: regulatory precedent thin" in s            # dissent_preserved VERBATIM
+    assert "1" in s                                          # round count
+    assert "cap" in s.lower()                                # cap-hit flag
+
+
+async def test_reconcile_end_to_end_escalate(db, monkeypatch, tmp_path):
+    bp = tmp_path / "blocker.json"
+    item = _item()
+    item["catalyst"]["catalyst_id"] = "cat-2"    # authoritative id conflicts with trade/dd "cat-1"
+    reviews = [
+        MDReview(satisfied=False, response_delta=f"r{i}", flags=[_rf(evidence_ref=f"kb:e{i}")])
+        for i in range(3)
+    ]
+    decision = MDDecision(decision="escalate", rationale="catalyst id conflict unresolved at cap",
+                          round_log=[], blocker_class="factual_conflict",
+                          recommended_resolution="LP: confirm the correct catalyst id")
+    _install(monkeypatch, reviews, decision, [])
+    out = await reconcile(db, None, item, blocker_path=str(bp), max_rounds=3)
+    assert out.decision == "escalate"
+    assert out.blocker_class == "factual_conflict"
+    assert out.recommended_resolution
+    assert out.round_log[-1].disposition == "cap_hit"
+    assert bp.exists()
