@@ -27,6 +27,11 @@ Given an imminent biotech catalyst, produce a data-backed, portfolio-aware, hedg
 - [ ] No-valid-inverse-peer fallback: when no peer reliably rises on the target's decline (e.g. positive-read-through catalysts that lift the whole class), the agent flags it and falls back to size-tiny or exit-before-event — never a fake hedge
 - [ ] Upside cost of hedging is accepted as a given (not optimized against) — the objective is reliably capturing ~1%/week of portfolio net of the hedge; size to combined worst-case
 
+**Data ingestion — options-implied move + hard-to-API data (dedicated human-like web-scraper agent)**
+- [ ] Options-implied move / IV term-structure IS obtainable — not a dead gap. Sources: Robinhood read endpoints, external options-chain data, and a **dedicated web-scraper agent that interacts as a human** to pull data that has no clean API (PDUFA/AdCom dates, conference schedules, options chains, short interest). Data-layer capability feeding BOTH the Phase-5 move estimator (behind its pluggable `implied_move` source seam) AND Phase-6 diligence (which already needs options-implied move).
+- [ ] The estimator/desk NEVER hard-depend on scraped data: the in-house historical-gap distribution is the always-available offline core; scraped options data enriches when present. Build the seam first (Phase 5), the scraper as its own data-layer component.
+- [ ] Scraper discipline: rate-limited, ToS-aware, cached at ≥5-min cadence (latency is not critical), provenance-tagged (every scraped datum carries its source URL + fetch timestamp → cite-or-drop holds).
+
 **Quant tool/skill library (deterministic analysis — agents never do the math)**
 - [ ] Any analysis the desk does repeatedly is a deterministic tool/skill the agents call with parameters, then interpret the output — no LLM arithmetic on money-critical numbers
 - [ ] Tool set spans: rNPV / pipeline valuation, cash-runway, Kelly / risk-of-ruin position sizing, pair correlation + beta, options-implied move, IV-crush estimate, Sharpe / returns / performance attribution, stop-loss & take-profit levels, portfolio concentration + exposure, phase-transition / catalyst base-rate lookups
