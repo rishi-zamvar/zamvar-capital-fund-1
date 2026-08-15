@@ -14,7 +14,12 @@ Given an imminent biotech catalyst, produce a data-backed, portfolio-aware, hedg
 
 ### Validated
 
-(None yet — ship to validate)
+*(Per-requirement traceability is authoritative in REQUIREMENTS.md; this is the milestone-level summary.)*
+- **Phase 1** — DATA-01..06: verified catalyst feed + point-in-time universe.
+- **Phase 2** — contracts + graph-shaped KB skeleton (analog + provenance).
+- **Phase 3** — deterministic quant tool library (rNPV, sizing, pairs, options, performance) + rubric + base rates.
+- **Phase 4** — CALL-01..04: analyst desk + bull/bear debate → binary verdict, cite-or-drop enforced.
+- **Phase 5** — PORT-01..05, HEDGE-01..05, OPS-01/02: trade builder + honest per-catalyst hedge validation + ruin-avoidant survival sizing + estimated-move single-leg construction (expected-log-growth, not raw EV) + estimate vetting gate + 3-way risk committee + PM promote/kill → StrategyDossier. Model-fit param seam + "assumptions are the moat" calibration hook in place (refit loop deferred to Phase 9). 649 tests, fully offline.
 
 ### Active
 
@@ -143,4 +148,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-08-14 after Phase 1 (Data Integrity & Catalyst Feed) — DATA-01..06 validated; verified catalyst feed + point-in-time universe shipped, 179 tests green. Carry-forward: real seed-universe + PDUFA data curation (templates shipped).*
+*Last updated: 2026-08-15 after Phase 5 (Trade Builder, Honest Hedge & Ruin-Avoidant Sizing) — PORT/HEDGE/OPS validated; Workflow-1b/2 shipped (single-leg estimated-move construction + honest per-catalyst hedge validation + survival sizing + vetting gate + PM dossier), 649 tests green, 12/12 reqs + 9/9 money-critical invariants verified. Phases 1-5 of 11 complete. Carry-forward: real seed-universe + PDUFA curation (templates shipped); Graphify re-index before Phase-6 planning; free-data fetcher + web-scraper data-layer component; backtest must simulate data-gathering timing (Phase 7); refit loop (Phase 9).*

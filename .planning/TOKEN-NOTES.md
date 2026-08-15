@@ -92,6 +92,38 @@
 
 **Cumulative build (measured, so far): ~5,095,000 subagent tokens (project 419,577 + P1 1,444,361 + P2 786,321 + P3 ~1,207,000 + P4 ~1,238,000)**
 
+### Phase 5 — Trade Builder, Honest Hedge & Ruin-Avoidant Sizing (CLOSED)
+| Agent | Tokens |
+|-------|--------|
+| Planner | 180,090 |
+| Plan-checker (2 blockers → revised) | 153,230 |
+| Revision planner | 150,259 |
+| Plan-checker (re-check, PASSED) | 143,470 |
+| Executor 05-01 (contracts) | 85,571 |
+| Executor 05-02 (quant tools) | 111,601 |
+| Executor 05-03 (param seam) | 87,840 |
+| Executor 05-04 (risk committee) | 142,900 |
+| Executor 05-05 (vetting gate) | 123,144 |
+| Executor 05-06 (builder) | 202,807 |
+| Executor 05-07 (portfolio) | 164,832 |
+| Verifier | 132,509 |
+| **Phase 5 subtotal** | **~1,678,000** |
+
+**Cumulative build (measured, so far): ~6,773,000 subagent tokens (+ P5 ~1,678,000).**
+> NOTE: research was done OUT-OF-BAND before planning (5 Fable/Opus researchers: inverse-instruments, disease-pairs, microstructure, free-data, + phase-5 research), tracked separately from the build total per the OOB convention.
+
+### Phase 5 Retrospective
+- **Spend:** ~1.68M — the most expensive phase yet. Split: planning round-trip (planner 180k + checker 153k + revision 150k + re-check 143k = ~627k) ≈ execution (7 executors ~919k) + verify 132k.
+- **The plan-check round-trip earned its cost decisively (again):** it caught 2 real money-critical blockers by tracing data end-to-end — (1) Risk Committee's ruin-capped size + validated Hedge never reconciled onto the promoted trade (would silently promote the builder's un-vetted size), (2) hold-vs-exit used raw EV instead of the locked expected-log-growth (a ruin-risk regression on fat-tailed binaries). Both would have passed all tests green. TDD alone would NOT have caught either — they're wiring/fidelity gaps, not unit-logic bugs. **Keep plan-check on for every money phase.**
+- **Executor spend crept up** (05-06 builder 202k, 05-04 risk 142k) — the judgment-heavy desk modules with many reused symbols cost more even with Graphify. The reuse-vs-new verdicts in RESEARCH kept net-new code minimal (1 tool + 1 extension + 1 selector + 1 seam + 1 gate sibling + 3 desk modules), which is the main lever that stopped it ballooning further.
+- **Sequential-on-main execution** (not parallel-worktree) was a deliberate choice for the money path — clean linear git history, no worktree-merge risk, no fan-out overload. Cost: wall-clock. Worth it here.
+
+### Directives carried to Phase 6+ (append to research/planner/executor prompts)
+1. **Graphify re-index BEFORE Phase-6 planning** — Phase 5 added ~10 new symbols (quant/events.py, desk/risk.py, desk/builder.py, desk/portfolio.py, orchestrator run_portfolio, verifier.enforce_estimate, kb.load_params). Re-index via the `/graphify` skill so Phase-6 agents navigate the current graph, not a Phase-4-era one.
+2. **Reuse-vs-new verdict up front** — the biggest cost-controller in P5 was RESEARCH deciding reuse-vs-rebuild against ACTUAL signatures before planning. Do this in every phase's research.
+3. **Plan-check stays ON for money phases** — it caught what TDD structurally cannot (cross-plan wiring + model-fidelity).
+4. Prior directives still hold: graph-first navigation, narrow per-phase research, tight files_to_read, `.venv/bin/python -m pytest` (bare python NOT on PATH), checker on Sonnet.
+
 > Executor avg holding ~90k across P2-P4 with Graphify live (vs ~118k P1) — steady ~23% executor-token saving. Plan-check caught a real money-critical blocker in P4 (silent CALL-04 hole) — the round-trip keeps earning its cost.
 
 ### Out-of-band research (user-requested, NOT in the build total above)
