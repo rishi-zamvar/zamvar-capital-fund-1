@@ -109,3 +109,76 @@ def catalyst_move_estimate(
             "cold_start": cold_start,
         },
     )
+
+
+def expected_log_growth(f: float, outcomes: list[tuple[float, float]]) -> ToolResult:
+    """E[log(1 + f·R)] over outcomes=[(prob, ret), ...] — the Kelly/growth-optimal objective.
+
+    The right criterion for a hold-through-vs-exit decision (single-leg-microstructure.md §3.2):
+    the log penalizes the fat down-tail, so it can reject a positive-EV bet. Money-critical —
+    RAISES if f<=0, if probs do not sum to ~1, or if any (1 + f·ret) <= 0 (a non-survivable size
+    is a sizing bug, NEVER a silent -inf).
+    """
+    _finite(f, "f")
+    if f <= 0:
+        raise ValueError("f must be > 0")
+
+    p_sum = 0.0
+    contributions: list[float] = []
+    for prob, ret in outcomes:
+        _prob(prob, "prob")
+        _finite(ret, "ret")
+        p_sum += prob
+        wealth = 1.0 + f * ret
+        if wealth <= 0:
+            raise ValueError(
+                f"non-survivable size: 1 + f·ret = {wealth!r} <= 0 (size f={f!r} ruins on "
+                f"ret={ret!r}) — never a silent -inf"
+            )
+        contributions.append(prob * log(wealth))
+    if abs(p_sum - 1.0) >= 1e-9:
+        raise ValueError(f"outcome probabilities must sum to 1 (got {p_sum!r})")
+
+    return ToolResult(
+        tool="expected_log_growth",
+        tool_version=_VERSION,
+        inputs={"f": f, "outcomes": outcomes},
+        value=sum(contributions),
+        detail={"contributions": contributions},
+    )
+
+
+def hold_vs_exit(
+    f: float,
+    hold_outcomes: list[tuple[float, float]],
+    exit_outcomes: list[tuple[float, float]],
+    margin: float = 0.0,
+) -> ToolResult:
+    """Hold through ⇔ E[log(1+f·R_hold)] > E[log(1+f·R_exit)] + margin (research §3.2).
+
+    value = 1.0 (hold) / 0.0 (exit); both branches are evaluated by expected_log_growth at the
+    SAME survival-constrained f — Kelly-consistent, NOT raw EV. `margin` is a param the builder
+    supplies (params["builder"]["log_growth_margin"]); the 0.0 default is the neutral value, not
+    a hidden threshold. Deterministic, no DB.
+    """
+    _finite(margin, "margin")
+    g_hold = expected_log_growth(f, hold_outcomes).value
+    g_exit = expected_log_growth(f, exit_outcomes).value
+    hold = g_hold > g_exit + margin
+    return ToolResult(
+        tool="hold_vs_exit",
+        tool_version=_VERSION,
+        inputs={
+            "f": f,
+            "hold_outcomes": hold_outcomes,
+            "exit_outcomes": exit_outcomes,
+            "margin": margin,
+        },
+        value=1.0 if hold else 0.0,
+        detail={
+            "g_hold": g_hold,
+            "g_exit": g_exit,
+            "decision": "hold" if hold else "exit",
+            "margin": margin,
+        },
+    )
