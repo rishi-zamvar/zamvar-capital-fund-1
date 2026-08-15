@@ -18,11 +18,13 @@ import hashlib
 import json
 import sqlite3
 from datetime import datetime, timezone
+from pathlib import Path
 
 from pydantic import BaseModel, field_validator
 from sqlite_vec import serialize_float32
 
 EMBED_DIM = 1024
+_DATA_DIR = Path(__file__).resolve().parents[2] / "data"  # repo-root/data (mirrors quant/base_rates.py)
 
 # The kind/rel enums are the DB CHECK constraints (migration 003) — kept here so a bad value is
 # rejected at the pydantic boundary too, not only at the SQLite backstop.
@@ -262,6 +264,60 @@ def insert_playbook(conn, scenario_type, scenario, strategy, confidence, evidenc
         attrs={"scenario_type": scenario_type, "scenario": scenario, "strategy": strategy},
     )
     return insert_claim(conn, node, evidence)
+
+
+_BOOTSTRAP_CSV = _DATA_DIR / "fitted_params_bootstrap.csv"
+_SEED_CONFIDENCE = 0.3  # low so any later, better fit shadows the bootstrap (versioning)
+
+
+def seed_fitted_params(conn, csv_path: str | None = None) -> int:
+    """Seed one CITED fitted_params:<type> playbook per row of the bootstrap CSV so the estimator /
+    SL-TP tools AND the trade builder are parameterized from trade #1. Each row becomes a strategy
+    dict {estimator, sl_tp, builder, fit_source} inserted via insert_playbook WITH its EvidenceSource
+    (cite-or-drop — a row missing its evidence URL raises). Seeded at a low confidence so the Phase-9
+    refit loop's higher-confidence fits shadow it automatically. Returns the count seeded.
+    """
+    import csv as _csv
+
+    path = Path(csv_path) if csv_path else _BOOTSTRAP_CSV
+    with path.open(newline="") as f:
+        rows = list(_csv.DictReader(f))
+    seeded = 0
+    for r in rows:
+        ctype = r["catalyst_type"]
+        if not r.get("evidence_url", "").strip():
+            raise ValueError(f"fitted_params bootstrap row {ctype!r} has no evidence URL (cite-or-drop)")
+        strategy = {
+            "estimator": {
+                "method": r["method"],
+                "min_analogs": int(r["min_analogs"]),
+                "implied_blend": float(r["implied_blend"]),
+                "default_down_move": float(r["default_down_move"]),
+            },
+            "sl_tp": {
+                "sl_vol_mult": float(r["sl_vol_mult"]),
+                "tp_frac": float(r["tp_frac"]),
+                "drift_coef": float(r["drift_coef"]),
+            },
+            "builder": {
+                "min_tradeable_size": float(r["min_tradeable_size"]),
+                "log_growth_margin": float(r["log_growth_margin"]),
+                "runup_capture_frac": float(r["runup_capture_frac"]),
+            },
+            "fit_source": r["fit_source"],
+        }
+        ev = EvidenceSource(
+            url=r["evidence_url"],
+            retrieved_at=_now(),
+            snippet_hash=hashlib.sha256(r["evidence_snippet"].encode()).hexdigest(),
+            quote=r["evidence_snippet"] or None,
+        )
+        insert_playbook(
+            conn, f"fitted_params:{ctype}", f"{ctype} bootstrap params",
+            strategy, _SEED_CONFIDENCE, [ev],
+        )
+        seeded += 1
+    return seeded
 
 
 def query_playbooks(conn, scenario_type: str) -> list[dict]:
