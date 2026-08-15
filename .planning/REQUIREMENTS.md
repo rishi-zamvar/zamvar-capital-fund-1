@@ -64,8 +64,7 @@
 - [x] **WEEK-03**: NO zero-trade weeks. Every week produces a portfolio. The survival cap is the safety valve — a weak-signal week deploys SMALLER (tighter sizing / more cash), never zero. (Supersedes the original "zero-trade weeks are allowed".)
 - [x] **WEEK-04**: Sizing serves the ~1%/week target within the survival ceiling (see amended PORT-03). Winrate is fine-tuned week-over-week via the learning loop (LEARN) — the compounding edge is the moat.
 - [x] **WEEK-05**: Weekly portfolio performance is monitored adaptively vs. the 1% goal; realized outcomes feed the fine-tuning loop (which thesis types / names / assumptions actually hit, and get reweighted).
-
-### Workflow 3 — Independent Diligence (DILIG)
+- [ ] **WEEK-06** *(refinement 2026-08-15)*: The weekly per-name thesis is a REFRESH of the SAME standing analysis every week — repeatable + comparable week-over-week, so the signal is the CHANGE vs the standing baseline, not a bespoke re-derivation. The refresh emits FLAGS when something trips: quantitative (a metric/threshold moves materially vs baseline) OR qualitative (an analyst notes a material change/concern/opportunity). Flags route UP to the MD (monitor-by-exception on the weekly cadence); the MD decides whether to act; unactioned flags are logged, never forced. (Implemented as the weekly refresh's flag-emit → the MD router, RECON-08.)
 
 - [x] **DILIG-01**: Runs on the proposed portfolio, receiving only {ticker, catalyst, pair} — an enforced firewall from Workflow 1/2 reasoning
 - [x] **DILIG-02**: Multi-dimensional DD from raw sources (trial stats/endpoints, regulatory precedent, financials/runway, ownership/flow, options-implied move, hedge/correlation, liquidity, historical analog)
@@ -80,6 +79,7 @@
 - [ ] **RECON-05**: Any residual caveats after convergence/cap are relayed to the LP in the final dossier (honest "here's what we're still unsure about").
 - [ ] **RECON-07** *(MD authority model, 2026-08-15)*: The MD is the DECISION HUB — every workflow (incl. the intra-week monitor) proposes portfolio-impacting decisions UP to the MD, each with all supporting deliverables attached so the MD only decides. The MD escalates to the human/LP if-and-only-if a genuine blocker it can't resolve (rare); that escalation is the monitor's decision-blocker banner. Live real-money order placement retains a final human confirmation as the one safety gate (see PROJECT.md Human gate).
 - [ ] **RECON-06**: FIREWALL PRESERVED — DD's INPUTS stay sealed ({ticker,catalyst,pair} only, no Workflow-1/2 reasoning in). Only DD's FINDINGS flow up to the GP and back down as "missing info"; DD re-runs independently each round. The firewall is one-directional (bias-in blocked), not a total barrier.
+- [ ] **RECON-08** *(refinement 2026-08-15)*: The MD is the ROUTER for ALL flags, not only diligence findings — the weekly per-name refresh (WEEK-06) and (later) the intra-week monitor (MON) also emit flags UP to the MD. On a flag the MD decides whether to ACT; if so it routes to the APPROPRIATE team (Workflow 1 catalyst call / Workflow 2 portfolio builder / Workflow 3 diligence) via the same gap-not-answer re-trigger mechanism (RetriggerFlag). Unactioned flags are logged, never forced. Same bounded-loop + escalation machinery as RECON-01..07 — the reconcile input generalizes beyond a single DiligenceDossier to any flag source.
 
 ### Intra-Week Position Monitor (MON) — added 2026-08-15 (scoped now, BUILD DEFERRED per operator)
 

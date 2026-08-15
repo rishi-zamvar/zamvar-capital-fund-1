@@ -151,7 +151,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 ### Phase 6.7: MD/GP Reconciliation Loop
 **Goal**: Wire the MD/GP as the firm's decision hub — integrate the catalyst call, the portfolio build, and independent diligence, run a bounded iterative reconciliation to converge on a decision, and escalate to the LP only on a genuine blocker.
 **Depends on**: Phase 4 (catalyst call / bull-bear debate — re-triggerable), Phase 5 (portfolio builder — re-triggerable), Phase 6 (diligence dossier feeds up)
-**Requirements**: RECON-01, RECON-02, RECON-03, RECON-04, RECON-05, RECON-06, RECON-07
+**Requirements**: RECON-01, RECON-02, RECON-03, RECON-04, RECON-05, RECON-06, RECON-07, RECON-08 (+ WEEK-06 weekly-refresh flag emit)
 **Research**: `.planning/research/md-reconciliation-loop.md` (IC/PM process, bounded-loop convergence, decision-packet contents, escalation criteria)
 **Success Criteria** (what must be TRUE):
   1. MD authority model: every workflow's output is a PROPOSAL to the MD with a full decision packet attached (catalyst verdict + kill criteria, portfolio + survival/sizing math, DD go/no-go + residual risks, conditional payoff, pre-mortem) so the MD is purely deciding. The MD has final say (test-enforced routing: no trade decision bypasses the MD).
