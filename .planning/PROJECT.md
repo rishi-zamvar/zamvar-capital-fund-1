@@ -36,6 +36,7 @@ Given an imminent biotech catalyst, produce a data-backed, portfolio-aware, hedg
 - [ ] Ingest online descriptions of stock fundamental-analysis frameworks and distill a scoring rubric the agents apply
 - [ ] Graph knowledge base storing scenario playbooks + past catalyst outcomes, queryable by analog ("similar situations")
 - [ ] Continuous-iteration loop: score each realized outcome vs. prediction, feed back into playbooks + configs (DoorDash-agentic-framework-inspired)
+- [ ] **Assumptions are the moat, not the models.** The deterministic tools (rNPV, Kelly, implied-move, cointegration) are commodities every desk has — the edge is the ASSUMPTIONS fed into them (P(positive), the analog set, per-catalyst-type gap distributions, drift/vol parameters) and fine-tuning them over time. So assumptions are FIRST-CLASS objects: every estimate records its explicit assumption set (cited, versioned via the KB playbook `confidence` column), and each is CALIBRATED against realized outcomes (Brier score on P(positive); error of estimated-vs-realized gap), with post-trade ATTRIBUTION naming which assumption was wrong on a loss. The LEARN loop refits the assumptions from that calibration signal — that accumulating, calibrated assumption library IS the proprietary moat.
 
 **Universe & catalyst feed**
 - [ ] System builds + maintains the ~20-name universe from criteria (catalyst density, market cap, liquidity, therapeutic area)
