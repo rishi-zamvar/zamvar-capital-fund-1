@@ -11,6 +11,7 @@ pulls those in — that is intentional (the desk always uses the whole toolbox).
 """
 
 from .base_rates import base_rate, load_base_rates
+from .events import catalyst_move_estimate
 from .options import implied_move, iv_crush
 from .pairs import cointegration, conditional_payoff, correlation_beta
 from .performance import attribution, cumulative_return, sharpe, sortino
@@ -51,4 +52,6 @@ __all__ = [
     # base rates
     "load_base_rates",
     "base_rate",
+    # events
+    "catalyst_move_estimate",
 ]
