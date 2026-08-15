@@ -45,12 +45,22 @@ class AnalystSignal(BaseModel):
 class DebateVerdict(BaseModel):
     model_config = ConfigDict(extra="forbid")
     thesis: str
-    direction: str
+    direction: Literal["positive", "negative"]  # binary catalyst verdict (CALL-03)
     confidence: float = Field(ge=0.0, le=1.0)
     bull_strongest_point: str
     bear_strongest_point: str
     unresolved_dissent: list[str] = []
     evidence_refs: list[str] = []
+    kill_criteria: list[str]  # explicit falsification criteria — required, non-empty
+
+    @field_validator("kill_criteria")
+    @classmethod
+    def _at_least_one_kill_criterion(cls, v: list[str]) -> list[str]:
+        if not v:
+            raise ValueError(
+                "a DebateVerdict must carry at least one kill/falsification criterion"
+            )
+        return v
 
 
 class TradeProposal(BaseModel):
