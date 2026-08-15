@@ -347,6 +347,26 @@ BOOTSTRAP_DEFAULT = {
     "estimator": {"method": "median", "min_analogs": 5, "implied_blend": 0.5, "default_down_move": 0.70},
     "sl_tp": {"sl_vol_mult": 1.0, "tp_frac": 0.8, "drift_coef": 0.0},
     "builder": {"min_tradeable_size": 0.002, "log_growth_margin": 0.0, "runup_capture_frac": 0.3},
+    # WEEK-02: the weekly thesis engine reads EVERY threshold from here (never a literal in a tool
+    # body). Not in the fitted_params CSV — that schema is catalyst-shaped; weekly base rates are
+    # bar-computed at query time. Phase-10 LEARN refits the SOURCE, not these consumers.
+    "weekly": {
+        "anchor": "MON_OPEN",          # measurement window == execution window (the trap)
+        "beta_window_weeks": 104,      # rolling beta vs XBI
+        "sector_frac_cut": 0.5,        # |idio| < cut*|ret| -> sector_beta drop
+        "turnover_lookback": 52,       # Medhat-Schmeling turnover switch
+        "window_years": 10,            # base-rate rolling window
+        "min_effective_n": 30,         # tradeability bar: n >= 30
+        "shrink_prior_weight": 30,     # beta-binomial prior pseudo-obs (research 20-50)
+        "edge_min_pts": 0.02,          # tradeability bar: shrunk P(up) - cohort baseline >= 2pts
+        "cost_mult": 2,                # tradeability bar: mean_next > cost_mult * roundtrip_cost
+        "roundtrip_cost": 0.005,       # est. spread+slippage round-trip (~50bp small-biotech)
+        "hard_veto_drop": -0.15,       # -15% falling-knife: NEVER bounce-eligible
+        "shortlist_k": 4,              # desk weekend pass shortlist size
+        "defensive_instruments": ["SGOV", "BIL", "XBI"],
+        "defensive_max_frac": 1.0,     # defensive book may be the whole book
+        "statistical_sleeve_cap": 0.5, # max fraction of the weekly risk budget in statistical legs when catalyst legs exist (research §4.5 knob #4)
+    },
     "fit_source": "bootstrap default (uncalibrated) — refit from realized outcomes in Phase 9",
 }
 

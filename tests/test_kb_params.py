@@ -146,3 +146,41 @@ def test_seed_raises_on_uncited_row(db, tmp_path):
     with pytest.raises(ValueError):
         seed_fitted_params(db, csv_path=str(csv_path))
     assert db.execute("SELECT count(*) FROM kb_node WHERE kind='playbook'").fetchone()[0] == 0
+
+
+# --- Task 3: "weekly" params group (WEEK-02) -------------------------------------------------
+# The weekly thesis engine reads every threshold from params['weekly'] — NEVER a literal in a tool
+# body. Homed in BOOTSTRAP_DEFAULT (not the catalyst-shaped fitted_params CSV). load_params(conn,
+# "weekly") finds no fitted_params:weekly playbook -> returns the deep-copied bootstrap default.
+
+_WEEKLY_KEYS = (
+    "anchor", "beta_window_weeks", "sector_frac_cut", "turnover_lookback", "window_years",
+    "min_effective_n", "shrink_prior_weight", "edge_min_pts", "cost_mult", "roundtrip_cost",
+    "hard_veto_drop", "shortlist_k", "defensive_instruments", "defensive_max_frac",
+    "statistical_sleeve_cap",
+)
+
+
+def test_weekly_group_exposes_every_documented_threshold(db):
+    weekly = load_params(db, "weekly")["weekly"]
+    for k in _WEEKLY_KEYS:
+        assert k in weekly, f"weekly params must expose {k} (no literal fallback in tool bodies)"
+
+
+def test_statistical_sleeve_cap_is_present(db):
+    # research §4.5 knob #4 — the statistical-sleeve cap must live in params, not a literal.
+    assert load_params(db, "weekly")["weekly"]["statistical_sleeve_cap"] == 0.5
+
+
+def test_missing_weekly_key_raises_keyerror(db):
+    # missing-key-raises: plain dict indexing, no numeric fallback hides in the tools.
+    weekly = load_params(db, "weekly")["weekly"]
+    with pytest.raises(KeyError):
+        _ = weekly["not_a_real_weekly_threshold"]
+
+
+def test_weekly_params_are_a_deep_copy(db):
+    # mutating the returned weekly dict must not poison BOOTSTRAP_DEFAULT for the next caller.
+    got = load_params(db, "weekly")
+    got["weekly"]["shortlist_k"] = 999
+    assert BOOTSTRAP_DEFAULT["weekly"]["shortlist_k"] != 999
