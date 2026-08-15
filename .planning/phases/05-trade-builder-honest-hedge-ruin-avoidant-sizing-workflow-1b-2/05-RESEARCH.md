@@ -538,3 +538,64 @@ Seed one `fitted_params:<type>` playbook per catalyst type at seed time (same co
 | Bootstrap present | one cited `fitted_params:<type>` seed exists per catalyst type after seed | unit | `.venv/bin/python -m pytest tests/test_kb_params.py -k "bootstrap" -x` | ❌ Wave 0 |
 
 **New Wave-0 file:** `tests/test_kb_params.py` (loader + versioning + provenance + bootstrap). No new node/table type — reuses `playbook` + `Outcome`. No schema migration needed.
+
+### 7. Estimate vetting gate — the builder audits estimator/SL-TP ASSUMPTIONS before consuming them (LOCKED, PM 2026-08-15)
+
+The builder must VET `catalyst_move_estimate` + `adaptive_sl_tp_levels` outputs before it uses them. The gate audits the **assumptions/inputs behind** the model outputs — NOT the arithmetic (the tools own the math and are unit-tested; agents never recompute money numbers). This is the estimate-layer mirror of `desk/verifier.py`'s source-quote-or-drop, and it **reuses that machinery directly**.
+
+#### Reuse vs new (exact, against `desk/verifier.py` as read)
+
+| Piece | Reused verbatim | New |
+|-------|-----------------|-----|
+| Two-stage **structural (deterministic) → semantic (LLM, gated)** shape | ✅ same shape as `verifier.enforce` | — |
+| `evidence.resolve(conn, ref)` + `evidence.quote_supported(source, claim)` | ✅ the deterministic structural half — every estimator INPUT must carry a resolvable ref; `kb:` refs pass the quote gate; `tool:` refs resolved-by-construction; uncited/unresolvable → dropped | — |
+| `run_structured(prompt, schema, model="opus")` seam | ✅ the semantic half (offline-testable via monkeypatch, exactly like `verifier`) | new prompt + new check schema (below) |
+| Raise-to-block-finalize (`VerdictUnsupportedError`) | ✅ same pattern | new `EstimateRejectedError` |
+| Home | ✅ **add `enforce_estimate(...)` as a sibling of `enforce(...)` in `desk/verifier.py`** (colocates the pattern, max reuse) | the function body |
+| The input-assembly + the specific checks | — | `estimate → [{input, ref, value}]`; the deterministic consistency checks; the comparability/cold-start LLM judgment |
+
+`ponytail: it's verifier.enforce with a different subject (an estimate's inputs, not a verdict's evidence_refs). Same resolve+quote+run_structured+raise; only the checklist and the schema are new.`
+
+#### The five checks (deterministic where possible, LLM only where judgment is needed)
+
+1. **Input provenance (STRUCTURAL, deterministic):** every estimator input carries a resolvable `evidence_ref` — P(positive) (from the Phase-4 `DebateVerdict`, cited), the `analog_query` analog set (`tool:analog_query#…`, resolved-by-construction), the `implied_move` value (`tool:implied_move#…`), the catalyst-**type** classification (from the cited catalyst record), the vol proxy (`tool:` ref). Uncited/unresolvable input → **dropped**, same as an uncited claim in Phase-4.
+2. **Analog comparability (SEMANTIC, LLM):** are the KB analogs actually comparable to THIS catalyst — same type, similar phase/indication/drug class? Off-type or cherry-picked analogs feeding the gap distribution → reject. (This is the one that genuinely needs the LLM; the structural filter in `analog_query` already enforces `type`, so the LLM judges the finer phase/indication/class match.)
+3. **Consistency (mostly DETERMINISTIC):**
+   - P(positive) matches the Phase-4 verdict direction + is within tolerance of its `confidence` — pure numeric check.
+   - estimated down-move consistent with the type's `base_rate` — numeric sanity band.
+   - **hold-through leg with a NON-advisory SL is a rejectable inconsistency** — pure boolean: `holds_through_catalyst and not sl_advisory` → reject (ties to §2's gap-exposed invariant).
+   These are cheap comparisons; do them in the structural stage, no LLM.
+4. **Cold-start / small-n (DETERMINISTIC flag → SEMANTIC handling):** thin analog set (`n_analogs < params["estimator"]["min_analogs"]`) → flag implied-move-fallback reliance and require **widened uncertainty / shrink-to-base-rate** rather than overclaim (`EstimateVetting.uncertainty_widened=True`). Reject if the estimate overclaims precision on thin data.
+5. **Blocking:** a rejected estimate **blocks finalize** (raises `EstimateRejectedError`, mirroring Phase-4 blocking unsupported verdicts) → the builder re-derives with vetted inputs or passes the trade. The endorse/reject verdict is recorded (audit).
+
+#### Which contract carries the vetting verdict
+
+New model + one field on `TradeProposal` (the builder produces it; **it is on the dossier by containment** since `StrategyDossier.trade` IS a `TradeProposal`):
+```python
+class EstimateVetting(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    verdict: Literal["endorse", "reject"]
+    input_refs: list[str]              # vetted (surviving) estimator input refs
+    dropped_inputs: list[str] = []     # uncited/unresolvable inputs dropped in the structural stage
+    reasons: list[str]                 # per-check findings (comparability, consistency, cold-start)
+    uncertainty_widened: bool = False  # cold-start shrink-to-base-rate applied
+
+# TradeProposal += estimate_vetting: EstimateVetting
+```
+- **Carrier = `TradeProposal.estimate_vetting`.** A promoted trade always carries `verdict="endorse"` (reject blocks finalize before promotion). Reachable on the dossier via `dossier.trade.estimate_vetting` — no duplication.
+- `ponytail: one field on TradeProposal, surfaced on the dossier by containment. Add a top-level StrategyDossier mirror ONLY if the PM must restate it at dossier top-level — default: don't duplicate. Need the top-level flag? Say so.`
+
+#### Validation Architecture additions (gate: endorse, each rejection reason, blocking) — all offline via the `run_structured` seam
+
+| Item | Behavior | Type | Automated Command | File |
+|------|----------|------|-------------------|------|
+| Endorse path | fully-cited, comparable, consistent estimate → `verdict="endorse"`, all input_refs survive | unit | `.venv/bin/python -m pytest tests/test_desk_estimate_gate.py -k "endorse" -x` | ❌ Wave 0 |
+| Reject: uncited input | an estimator input with an unresolvable/absent ref is dropped; estimate rejected/blocked | unit | `.venv/bin/python -m pytest tests/test_desk_estimate_gate.py -k "uncited or dropped" -x` | ❌ Wave 0 |
+| Reject: off-type/cherry-picked analogs | non-comparable analogs (LLM judged) → reject | unit | `.venv/bin/python -m pytest tests/test_desk_estimate_gate.py -k "comparab or off_type" -x` | ❌ Wave 0 |
+| Reject: P(positive) vs verdict | P(positive) contradicts Phase-4 direction/confidence → reject (deterministic) | unit | `.venv/bin/python -m pytest tests/test_desk_estimate_gate.py -k "consistency or p_positive" -x` | ❌ Wave 0 |
+| Reject: hold-through + non-advisory SL | `holds_through_catalyst and not sl_advisory` → reject (deterministic) | unit | `.venv/bin/python -m pytest tests/test_desk_estimate_gate.py -k "advisory_inconsistency" -x` | ❌ Wave 0 |
+| Reject: down-move vs base rate | estimated down-move outside the type's base-rate sanity band → reject | unit | `.venv/bin/python -m pytest tests/test_desk_estimate_gate.py -k "base_rate_band" -x` | ❌ Wave 0 |
+| Cold-start widening | thin analog set → `uncertainty_widened=True` / shrink-to-base-rate, not overclaim | unit | `.venv/bin/python -m pytest tests/test_desk_estimate_gate.py -k "cold_start or small_n" -x` | ❌ Wave 0 |
+| Blocking finalize | a `reject` raises `EstimateRejectedError` → trade does not finalize (mirrors verifier) | unit | `.venv/bin/python -m pytest tests/test_desk_estimate_gate.py -k "block or raises" -x` | ❌ Wave 0 |
+
+**New Wave-0 file:** `tests/test_desk_estimate_gate.py`; extend `tests/test_contracts.py` for `EstimateVetting` + `TradeProposal.estimate_vetting`. Reuses `evidence.resolve`/`quote_supported` + the `run_structured` monkeypatch pattern from `tests/test_desk_verifier.py` — fully offline.
