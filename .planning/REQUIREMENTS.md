@@ -30,9 +30,9 @@
 
 ### Deterministic Quant Tools (QUANT)
 
-- [ ] **QUANT-01**: Callable, unit-tested tool library — agents supply parameters and interpret output; no LLM arithmetic on money-critical numbers
-- [ ] **QUANT-02**: Tools include rNPV/pipeline valuation, cash-runway, Kelly/risk-of-ruin sizing, cointegration test, correlation/β, conditional-payoff matrix, options-implied move, IV-crush estimate, Sharpe/returns/attribution, SL/TP levels, portfolio concentration/exposure
-- [ ] **QUANT-03**: Every tool output records the inputs used (reproducible, auditable)
+- [x] **QUANT-01**: Callable, unit-tested tool library — agents supply parameters and interpret output; no LLM arithmetic on money-critical numbers
+- [x] **QUANT-02**: Tools include rNPV/pipeline valuation, cash-runway, Kelly/risk-of-ruin sizing, cointegration test, correlation/β, conditional-payoff matrix, options-implied move, IV-crush estimate, Sharpe/returns/attribution, SL/TP levels, portfolio concentration/exposure
+- [x] **QUANT-03**: Every tool output records the inputs used (reproducible, auditable)
 
 ### Hedging (HEDGE)
 
@@ -98,7 +98,7 @@
 - [ ] **OPS-01**: Position memo per trade with explicit falsification/kill criteria (authorship separated from approval)
 - [ ] **OPS-02**: Pre-mortem step ("assume this lost — why?") before promotion
 - [ ] **OPS-03**: Monitors/guardrails: catalyst-date, fact-check, provenance, firewall, net-long/concentration, live-position (SL/TP, countdown, paper P&L)
-- [ ] **OPS-04**: Full test coverage (TDD) on all new code; money-critical tools have exhaustive edge-case suites
+- [x] **OPS-04**: Full test coverage (TDD) on all new code; money-critical tools have exhaustive edge-case suites
 
 ## v2 Requirements
 
@@ -134,13 +134,13 @@
 | KB-03 | Phase 2 | Complete |
 | KB-04 | Phase 2 | Complete |
 | KB-05 | Phase 2 | Complete |
-| QUANT-01 | Phase 3 | Pending |
-| QUANT-02 | Phase 3 | Pending |
-| QUANT-03 | Phase 3 | Pending |
+| QUANT-01 | Phase 3 | Complete |
+| QUANT-02 | Phase 3 | Complete |
+| QUANT-03 | Phase 3 | Complete |
 | FRAME-01 | Phase 3 | Pending |
 | FRAME-02 | Phase 3 | Pending |
 | FRAME-03 | Phase 3 | Pending |
-| OPS-04 | Phase 3 | Pending |
+| OPS-04 | Phase 3 | Complete |
 | CALL-01 | Phase 4 | Pending |
 | CALL-02 | Phase 4 | Pending |
 | CALL-03 | Phase 4 | Pending |

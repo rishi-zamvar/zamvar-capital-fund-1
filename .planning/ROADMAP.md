@@ -70,8 +70,8 @@ Decimal phases appear between their surrounding integers in numeric order.
   3. A biotech-adapted scoring rubric (rNPV + cash runway + trial design + endpoint credibility + regulatory precedent + pipeline concentration + management + commercial) exists as tunable config the learning loop can later adjust
   4. A clinical base-rate table (phase-transition LoA by phase/indication, prior-CRL penalty, AdCom follow-through) is loaded and citable by agents as data
 **Plans**: 8 plans (3 waves)
-- [ ] 03-01-PLAN.md — Dependency (statsmodels) + ToolResult reproducibility contract (Wave 1)
-- [ ] 03-02-PLAN.md — Valuation: rNPV + cash-runway, TDD (Wave 2)
+- [x] 03-01-PLAN.md — Dependency (statsmodels) + ToolResult reproducibility contract (Wave 1)
+- [x] 03-02-PLAN.md — Valuation: rNPV + cash-runway, TDD (Wave 2)
 - [ ] 03-03-PLAN.md — Sizing: Kelly/fractional-Kelly/risk-of-ruin/SL-TP, TDD (Wave 2)
 - [ ] 03-04-PLAN.md — Pairs: cointegration (statsmodels) + correlation/β + conditional-payoff, TDD (Wave 2)
 - [ ] 03-05-PLAN.md — Options (implied-move/IV-crush) + Portfolio (concentration/exposure), TDD (Wave 2)
@@ -174,7 +174,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 →
 |-------|----------------|--------|-----------|
 | 1. Data Integrity & Catalyst Feed | 0/6 | Complete    | 2026-08-14 |
 | 2. Contracts + KB Skeleton | 0/TBD | Complete    | 2026-08-14 |
-| 3. Quant Tool Library + Rubric & Base-Rates | 0/TBD | Not started | - |
+| 3. Quant Tool Library + Rubric & Base-Rates | 0/8 | Planned    |  |
 | 4. Analyst Desk + Bull/Bear Debate | 0/TBD | Not started | - |
 | 5. Trade Builder, Hedge & Sizing | 0/TBD | Not started | - |
 | 6. Independent Diligence Firewall | 0/TBD | Not started | - |
