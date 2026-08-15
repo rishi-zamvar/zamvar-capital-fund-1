@@ -1,0 +1,190 @@
+"""RED-first exhaustive edge-case suite for the performance tools (OPS-04, QUANT-02/03).
+
+sharpe / sortino / cumulative_return / attribution — hand-rolled numpy math. The headline case
+is the FREQ FOOTGUN (PITFALLS #2): sharpe/sortino take a REQUIRED `periods_per_year`, so the
+annualization factor is an explicit caller decision, never a silent library default. This suite
+proves 252-daily and 52-weekly books produce correctly different (√(252/52)-scaled) Sharpe from
+the same returns. Every money-tool RAISES on empty/single-point series, zero volatility, or any
+NaN rather than emitting inf/NaN (Pattern 2). Written before the logic exists (module absent = RED).
+"""
+
+import math
+
+import pytest
+
+from catalyst_trader.quant.result import ToolResult
+from catalyst_trader.quant.performance import (
+    sharpe,
+    sortino,
+    cumulative_return,
+    attribution,
+)
+
+
+# --------------------------------------------------------------------------- sharpe
+
+
+def test_sharpe_zero_volatility_raises():
+    # constant returns → sd == 0 → Sharpe undefined, must raise not emit inf
+    with pytest.raises(ValueError):
+        sharpe([0.01, 0.01, 0.01], periods_per_year=252)
+
+
+def test_sharpe_empty_raises():
+    with pytest.raises(ValueError):
+        sharpe([], periods_per_year=252)
+
+
+def test_sharpe_single_point_raises():
+    # ddof=1 std is undefined on a single observation
+    with pytest.raises(ValueError):
+        sharpe([0.01], periods_per_year=252)
+
+
+def test_sharpe_nan_raises():
+    with pytest.raises(ValueError):
+        sharpe([0.01, math.nan, 0.02], periods_per_year=252)
+
+
+def test_sharpe_freq_footgun_scales_with_periods_per_year():
+    # THE HEADLINE: same returns, 52 vs 252, must differ AND the 252 value must equal the
+    # 52 value scaled by √(252/52) — proving annualization is applied, not silently dropped.
+    returns = [0.01, 0.02, -0.01, 0.03]
+    weekly = sharpe(returns, periods_per_year=52).value
+    daily = sharpe(returns, periods_per_year=252).value
+    assert weekly != pytest.approx(daily)
+    assert daily == pytest.approx(weekly * math.sqrt(252 / 52))
+
+
+def test_sharpe_happy_hand_computed():
+    # returns=[0.01, 0.03], ppy=52: mean=0.02, sd(ddof=1)=0.01414214,
+    # 0.02/0.01414214 * sqrt(52) = 10.198
+    r = sharpe([0.01, 0.03], periods_per_year=52)
+    assert r.value == pytest.approx(10.198, rel=1e-3)
+    assert isinstance(r, ToolResult)
+
+
+def test_sharpe_risk_free_lowers_value():
+    # a positive risk-free rate reduces excess return → lower Sharpe
+    base = sharpe([0.01, 0.02, 0.03], periods_per_year=252).value
+    with_rf = sharpe([0.01, 0.02, 0.03], periods_per_year=252, risk_free=0.05).value
+    assert with_rf < base
+
+
+def test_sharpe_inputs_snapshot():
+    # QUANT-03: .inputs is the verbatim call args, periods_per_year included
+    r = sharpe([0.01, 0.03], periods_per_year=52, risk_free=0.02)
+    assert r.inputs == {
+        "returns": [0.01, 0.03],
+        "periods_per_year": 52,
+        "risk_free": 0.02,
+    }
+
+
+# -------------------------------------------------------------------------- sortino
+
+
+def test_sortino_no_downside_raises():
+    # upside vol but nothing below mar → zero downside deviation → undefined, must raise
+    with pytest.raises(ValueError):
+        sortino([0.01, 0.02, 0.03], periods_per_year=52)
+
+
+def test_sortino_empty_raises():
+    with pytest.raises(ValueError):
+        sortino([], periods_per_year=52)
+
+
+def test_sortino_single_point_raises():
+    with pytest.raises(ValueError):
+        sortino([-0.01], periods_per_year=52)
+
+
+def test_sortino_nan_raises():
+    with pytest.raises(ValueError):
+        sortino([0.01, math.nan, -0.02], periods_per_year=52)
+
+
+def test_sortino_happy_hand_computed():
+    # returns=[0.02, -0.01, 0.03, -0.02], mar=0, ppy=52:
+    # mean=0.005, downside=[0,-0.01,0,-0.02], dd=sqrt(mean(sq))=0.01118034,
+    # 0.005/0.01118034 * sqrt(52) = 3.225
+    r = sortino([0.02, -0.01, 0.03, -0.02], periods_per_year=52)
+    assert r.value == pytest.approx(3.225, rel=1e-3)
+    assert isinstance(r, ToolResult)
+
+
+def test_sortino_freq_scales_with_periods_per_year():
+    returns = [0.02, -0.01, 0.03, -0.02]
+    weekly = sortino(returns, periods_per_year=52).value
+    daily = sortino(returns, periods_per_year=252).value
+    assert daily == pytest.approx(weekly * math.sqrt(252 / 52))
+
+
+def test_sortino_inputs_snapshot():
+    r = sortino([0.02, -0.01, 0.03], periods_per_year=52, mar=0.0, risk_free=0.01)
+    assert r.inputs == {
+        "returns": [0.02, -0.01, 0.03],
+        "periods_per_year": 52,
+        "mar": 0.0,
+        "risk_free": 0.01,
+    }
+
+
+# ------------------------------------------------------------------ cumulative_return
+
+
+def test_cumulative_return_empty_raises():
+    with pytest.raises(ValueError):
+        cumulative_return([])
+
+
+def test_cumulative_return_nan_raises():
+    with pytest.raises(ValueError):
+        cumulative_return([0.1, math.nan])
+
+
+def test_cumulative_return_wipeout_computed_not_crashed():
+    # a -100% return anywhere zeroes the compounded equity → cumulative == -1.0 exactly
+    r = cumulative_return([0.5, -1.0, 0.3])
+    assert r.value == pytest.approx(-1.0)
+    assert isinstance(r, ToolResult)
+
+
+def test_cumulative_return_happy():
+    # (1.1)(1.1) - 1 = 0.21
+    r = cumulative_return([0.1, 0.1])
+    assert r.value == pytest.approx(0.21)
+
+
+def test_cumulative_return_inputs_snapshot():
+    r = cumulative_return([0.1, 0.1])
+    assert r.inputs == {"returns": [0.1, 0.1]}
+
+
+# ------------------------------------------------------------------------ attribution
+
+
+def test_attribution_components_not_summing_to_total_raises():
+    with pytest.raises(ValueError):
+        attribution({"catalyst": 0.03, "beta": 0.01}, total=0.10)
+
+
+def test_attribution_nan_component_raises():
+    with pytest.raises(ValueError):
+        attribution({"catalyst": math.nan, "beta": 0.01}, total=0.01)
+
+
+def test_attribution_happy():
+    components = {"catalyst": 0.03, "beta": 0.01, "hedge": -0.01}
+    r = attribution(components, total=0.03)
+    assert r.value == pytest.approx(0.03)
+    assert r.detail["residual"] == pytest.approx(0.0, abs=1e-9)
+    assert r.detail["components"] == components
+    assert isinstance(r, ToolResult)
+
+
+def test_attribution_inputs_snapshot():
+    components = {"catalyst": 0.03, "beta": 0.01, "hedge": -0.01}
+    r = attribution(components, total=0.03)
+    assert r.inputs == {"components": components, "total": 0.03}
