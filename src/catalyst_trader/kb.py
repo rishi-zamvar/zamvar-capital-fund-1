@@ -13,6 +13,7 @@ rejects a source-less catalyst — reject before write, roll back completely on 
 #           store.py. No agent writes a claim via raw SQL — that would sidestep the invariant.
 """
 
+import copy
 import hashlib
 import json
 import sqlite3
@@ -279,6 +280,31 @@ def query_playbooks(conn, scenario_type: str) -> list[dict]:
             "scenario_type": a["scenario_type"], "scenario": a["scenario"], "strategy": a["strategy"],
         })
     return out
+
+
+# The ONLY literal fitted-param set allowed anywhere (WARNING fix): the cold-start default so
+# load_params never returns None and the estimator / SL-TP tools + the trade builder are
+# parameterized from trade #1. Every OTHER param set is a cited, versioned fitted_params:<type>
+# playbook (seed_fitted_params + the Phase-9 refit loop). The builder group's hold-vs-exit +
+# tradeable-size thresholds live HERE (and in the cited CSV), never as literals in the builder body.
+BOOTSTRAP_DEFAULT = {
+    "estimator": {"method": "median", "min_analogs": 5, "implied_blend": 0.5, "default_down_move": 0.70},
+    "sl_tp": {"sl_vol_mult": 1.0, "tp_frac": 0.8, "drift_coef": 0.0},
+    "builder": {"min_tradeable_size": 0.002, "log_growth_margin": 0.0, "runup_capture_frac": 0.3},
+    "fit_source": "bootstrap default (uncalibrated) — refit from realized outcomes in Phase 9",
+}
+
+
+def load_params(conn, catalyst_type: str) -> dict:
+    """Top (highest-confidence) fitted_params:<type> playbook's strategy dict, or the bootstrap
+    default when none exists. The ONE seam Phase-9's refit loop replaces the SOURCE of — signature
+    frozen. Only the source of params changes over time; the quant tools + builder stay pure (they
+    take the dict IN). The DB read lives here, not in the tools.
+    """
+    rows = query_playbooks(conn, f"fitted_params:{catalyst_type}")
+    if rows:
+        return rows[0]["strategy"]        # query_playbooks is confidence-desc → [0] is the winning version
+    return copy.deepcopy(BOOTSTRAP_DEFAULT)  # cold-start default (labeled); copy so callers can't poison it
 
 
 def hash_embed(text: str, dim: int = EMBED_DIM) -> list[float]:
