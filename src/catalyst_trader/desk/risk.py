@@ -70,3 +70,60 @@ def size_for_survival(
         value=chosen,
         detail={"ruin_at_size": snapshot.value, "risk_of_ruin": dict(snapshot.detail)},
     )
+
+
+def validate_hedge(conn, embed, target, catalyst, entry, exit_by_date, analog_gaps, prices) -> Hedge | None:
+    """Re-validate an inverse-payoff peer for THIS catalyst, or return None (honest fallback).
+
+    The stored KB payoff sign is a PRIOR, never proof — a peer only becomes a hedge if, for this
+    specific catalyst, it passes ALL THREE gates:
+      1. it is a -1 inverse peer (a +1 co-move peer is never an idiosyncratic hedge, HEDGE-01);
+      2. PAYOFF (HEDGE-02): the un-netted worst cell of conditional_payoff (from the caller's analog
+         gaps) is materially better than holding the target alone, AND the peer has real downside in
+         its own down branch (peer_down < 0) — no fake netting;
+      3. cointegration is True (necessary-not-sufficient gate, PITFALLS #3);
+      4. catalyst-clean (HEDGE-03): the peer has NO own catalyst inside the [entry, exit] hold window.
+
+    All pass → a validated idiosyncratic Hedge OBJECT; anything else → None (size-tiny / exit,
+    HEDGE-04 — never a fabricated hedge). Pure/deterministic: no run_structured here.
+
+    # ponytail: top -1 candidate only — the KB weight already ranks them; multi-candidate search is
+    #           speculative until a real trade needs it.
+    """
+    peers = [p for p in kb.hedge_peers(conn, target) if p["payoff_direction"] == -1]
+    if not peers:
+        return None
+    cand = peers[0]
+    peer_ticker = cand["peer"]
+
+    cp = conditional_payoff(
+        analog_gaps["target_up"], analog_gaps["target_down"],
+        analog_gaps["peer_up"], analog_gaps["peer_down"],
+        analog_gaps["w_target"], analog_gaps["w_peer"],
+    )
+    # target-alone worst = the whole allocation in the target on its worse branch (no hedge)
+    target_alone_worst = (analog_gaps["w_target"] + analog_gaps["w_peer"]) * min(
+        analog_gaps["target_up"], analog_gaps["target_down"]
+    )
+    payoff_ok = cp.value > target_alone_worst and analog_gaps["peer_down"] < 0
+
+    cointegrated = cointegration(prices["target"], prices["peer"]).detail["cointegrated"]
+
+    peer_events = [
+        c for c in store.tradeable_catalysts(conn)
+        if c.ticker == peer_ticker and entry <= c.event_date <= exit_by_date
+    ]
+    catalyst_clean = not peer_events
+
+    if not (payoff_ok and cointegrated and catalyst_clean):
+        return None
+
+    return Hedge(
+        instrument="equity_peer",
+        ticker=peer_ticker,
+        payoff_direction=-1,
+        validated=True,
+        covers="idiosyncratic",
+        mechanism=cand["mechanism"],
+        conditional_worst=cp.value,
+    )
