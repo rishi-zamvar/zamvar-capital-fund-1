@@ -1,0 +1,141 @@
+<title>Why These Pairs</title>
+<style>
+  :root{
+    --bg:#f0f2ec;--surface:#fff;--surface-2:#f6f7f2;--ink:#1a1d18;--muted:#5c625a;--faint:#949a90;
+    --border:#dde1d6;--border-strong:#c7ccbd;--accent:#8a6a12;--accent-bg:#f3ecd8;
+    --up:#1f7a4d;--up-bg:#e4f2e9;--down:#b23b30;--down-bg:#f6e5e3;
+    --mono:ui-monospace,"SF Mono","JetBrains Mono",Menlo,Consolas,monospace;
+    --serif:"Iowan Old Style","Palatino Linotype",Palatino,Georgia,serif;
+    --sans:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+    --shadow:0 1px 2px rgba(20,25,18,.05),0 6px 18px rgba(20,25,18,.06);
+  }
+  @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+    --bg:#111410;--surface:#191d17;--surface-2:#20241d;--ink:#e9ece3;--muted:#9ba296;--faint:#6a7164;
+    --border:#2b3128;--border-strong:#3a4134;--accent:#d8b45a;--accent-bg:#2a2412;
+    --up:#4cc585;--up-bg:#14271c;--down:#ef7365;--down-bg:#2c1714;
+    --shadow:0 1px 2px rgba(0,0,0,.4),0 8px 22px rgba(0,0,0,.35);
+  }}
+  :root[data-theme="dark"]{
+    --bg:#111410;--surface:#191d17;--surface-2:#20241d;--ink:#e9ece3;--muted:#9ba296;--faint:#6a7164;
+    --border:#2b3128;--border-strong:#3a4134;--accent:#d8b45a;--accent-bg:#2a2412;
+    --up:#4cc585;--up-bg:#14271c;--down:#ef7365;--down-bg:#2c1714;
+    --shadow:0 1px 2px rgba(0,0,0,.4),0 8px 22px rgba(0,0,0,.35);
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);line-height:1.6;font-size:16.5px}
+  .wrap{max-width:760px;margin:0 auto;padding:44px 22px 90px}
+  .ey{font-family:var(--mono);font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:var(--accent);font-weight:600}
+  h1{font-family:var(--serif);font-size:clamp(30px,6vw,46px);line-height:1.08;margin:10px 0 8px;letter-spacing:-.01em;text-wrap:balance}
+  .lede{font-size:18px;color:var(--muted);margin:0}
+  .masthead{border-bottom:2px solid var(--ink);padding-bottom:22px;margin-bottom:30px}
+  h2{font-family:var(--serif);font-size:26px;margin:44px 0 6px;letter-spacing:-.01em}
+  h3{font-family:var(--mono);font-size:13px;letter-spacing:.06em;text-transform:uppercase;color:var(--accent);margin:26px 0 8px}
+  p{margin:12px 0}
+  .big-idea{background:var(--accent-bg);border:1px solid var(--accent);border-radius:12px;padding:20px 22px;margin:22px 0}
+  .big-idea p{margin:8px 0}
+  .big-idea b{color:var(--accent)}
+  .proof{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:20px 22px;margin:22px 0;box-shadow:var(--shadow)}
+  .proof .date{font-family:var(--mono);font-size:12px;color:var(--faint);letter-spacing:.04em}
+  .moves{display:grid;grid-template-columns:1fr;gap:10px;margin:16px 0 4px}
+  .move{display:grid;grid-template-columns:1fr auto;align-items:center;gap:14px;padding:12px 15px;border-radius:9px;border:1px solid var(--border)}
+  .move .who{font-size:15px}.move .who b{display:block;font-size:16px}
+  .move .who small{color:var(--muted)}
+  .move .pct{font-family:var(--mono);font-size:22px;font-weight:700;font-variant-numeric:tabular-nums}
+  .move.dn{background:var(--down-bg);border-color:var(--down)} .move.dn .pct{color:var(--down)}
+  .move.up{background:var(--up-bg);border-color:var(--up)} .move.up .pct{color:var(--up)}
+  .move.flat{background:var(--surface-2)} .move.flat .pct{color:var(--down)}
+  .pair{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:20px 22px;margin:16px 0;box-shadow:var(--shadow)}
+  .pair .hd{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:4px}
+  .pair .tick{font-family:var(--mono);font-weight:700;font-size:15px;padding:3px 10px;border-radius:6px;background:var(--surface-2);border:1px solid var(--border-strong)}
+  .pair .arrow{color:var(--faint);font-size:18px}
+  .pair .cluster{font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--faint);margin-left:auto}
+  .pair h4{font-family:var(--serif);font-size:20px;margin:6px 0 2px}
+  .pair .row{margin:10px 0}
+  .pair .k{font-family:var(--mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--accent);display:block;margin-bottom:2px}
+  .pair .k.catch{color:var(--down)}
+  .conf{display:inline-block;font-family:var(--mono);font-size:11px;padding:2px 9px;border-radius:20px;border:1px solid;margin-top:4px}
+  .conf.high{color:var(--up);border-color:var(--up);background:var(--up-bg)}
+  .conf.med{color:var(--accent);border-color:var(--accent);background:var(--accent-bg)}
+  .conf.low{color:var(--down);border-color:var(--down);background:var(--down-bg)}
+  .note{font-size:14.5px;color:var(--muted);border-left:3px solid var(--accent);padding:4px 0 4px 15px;margin:18px 0}
+  .banner{background:var(--surface-2);border:1px dashed var(--border-strong);border-radius:10px;padding:12px 16px;font-size:14px;color:var(--muted);margin:22px 0}
+  footer{margin-top:44px;padding-top:20px;border-top:1px solid var(--border);font-family:var(--mono);font-size:11.5px;color:var(--faint)}
+  .toggle{position:fixed;top:14px;right:14px;font-family:var(--mono);font-size:12px;background:var(--surface);color:var(--muted);border:1px solid var(--border-strong);border-radius:6px;padding:6px 10px;cursor:pointer}
+</style>
+<button class="toggle" onclick="var r=document.documentElement,c=r.getAttribute('data-theme');if(!c)c=matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light';r.setAttribute('data-theme',c==='dark'?'light':'dark')">◑</button>
+
+<div class="wrap">
+  <div class="masthead">
+    <div class="ey">zamvar capital · fund 1</div>
+    <h1>Why These Pairs</h1>
+    <p class="lede">The plain-English reasoning behind every hedge — no jargon, just what we're betting, what protects us, and how sure we are.</p>
+  </div>
+
+  <div class="big-idea">
+    <h3 style="margin-top:0">The whole idea in one paragraph</h3>
+    <p>We bet on a company right before a make-or-break announcement (usually whether a drug worked). A bet like that can swing 50–70% overnight. So we don't bet naked — we pair it with a <b>second stock that should go UP if our main bet goes wrong</b>. That way a nasty surprise doesn't wipe us out.</p>
+    <p>The catch — and it's the whole game: the second stock only protects us if it <b>genuinely benefits from the first one's failure</b>. That means a real competitor fighting for the same patients, where one company's loss is the other's win. If both companies are chasing the same idea the same way, they fall together — and that's a fake hedge, not a real one.</p>
+  </div>
+
+  <h2>The proof this actually works</h2>
+  <p>We didn't just theorize this — we checked a real event. On <b>July 9, 2026</b>, Ionis announced its heart-drug trial <b>failed</b>. Here's what happened that day to Ionis and two rivals who both sell competing heart drugs:</p>
+
+  <div class="proof">
+    <div class="date">Ionis (IONS) heart-drug trial failure · July 9, 2026 · one-day moves</div>
+    <div class="moves">
+      <div class="move dn"><div class="who"><b>Ionis</b><small>the company whose drug failed</small></div><div class="pct">−24%</div></div>
+      <div class="move up"><div class="who"><b>BridgeBio</b><small>sells a competing drug that works a <i>different</i> way</small></div><div class="pct">+15%</div></div>
+      <div class="move flat"><div class="who"><b>Alnylam</b><small>sells a drug that works the <i>same</i> way as the one that failed</small></div><div class="pct">−3%</div></div>
+    </div>
+    <p style="margin-bottom:0"><b style="color:var(--up)">BridgeBio is a real hedge.</b> Its drug works differently, so when the rival approach flopped, doctors were expected to stick with BridgeBio — and it jumped 15% the same day Ionis fell 24%. If we'd been betting against Ionis and holding BridgeBio, the winner would have cushioned the loser.</p>
+    <p style="margin-bottom:0"><b style="color:var(--down)">Alnylam is a fake hedge.</b> Its drug works the <i>same</i> way as the one that failed, so investors got nervous about the whole approach and it fell too. A "competitor" that drops alongside your loser gives you no protection at all.</p>
+  </div>
+  <p>That single event is the rule the whole system runs on: <b>a real hedge is a competitor with a different approach; a same-approach rival is a trap.</b></p>
+
+  <h2>The pairs, one by one</h2>
+  <p class="banner">Covers the clusters verified so far (heart, swelling disorder, liver, muscle, hives). Oncology, brain/mental-health, and the rare-disease group are still being checked — I'll add them and redeploy this page.</p>
+
+  <div class="pair">
+    <div class="hd"><span class="tick">IONS</span><span class="arrow">↔</span><span class="tick">BBIO</span><span class="cluster">heart (ATTR)</span></div>
+    <h4>Bet on Ionis, protected by BridgeBio</h4>
+    <div class="row"><span class="k">Why it works</span>Both make drugs for the same heart condition, but by different methods. If one company's drug stumbles, doctors lean harder on the other's — so bad news for one is good news for the other. They genuinely move in opposite directions.</div>
+    <div class="row"><span class="k">How sure we are</span>The strongest of all — we have the real July 9 numbers above (Ionis −24%, BridgeBio +15% the same day). This isn't a guess.<br><span class="conf high">Proven with real data</span></div>
+    <div class="row"><span class="k catch">The catch</span>The protection mostly pays off on the announcement day itself — a couple days later BridgeBio gave some of it back. So timing the exit matters. Also, do NOT use Alnylam as the hedge here (it's the same-approach trap that fell with Ionis).</div>
+  </div>
+
+  <div class="pair">
+    <div class="hd"><span class="tick">PHVS</span><span class="arrow">↔</span><span class="tick">BCRX</span><span class="cluster">swelling disorder (HAE)</span></div>
+    <h4>Bet on Pharvaris, protected by BioCryst</h4>
+    <div class="row"><span class="k">Why it works</span>Both sell pills for the same rare swelling disease and are fighting over the same patients. Pharvaris has a big trial result coming; if it disappoints, patients and doctors stay with BioCryst's already-approved pill — so BioCryst should rise on Pharvaris's bad day.</div>
+    <div class="row"><span class="k">How sure we are</span>Strong on the logic — direct competitors, same market, similar size, and BioCryst already earns money so it won't have its own funding scare. We don't yet have a past event to measure it against, so it's not "proven" like the heart pair.<br><span class="conf med">Solid reasoning, not yet event-tested</span></div>
+    <div class="row"><span class="k catch">The catch</span>BioCryst's own drug news is quiet right now, which is good (it won't move on its own surprises during our week).</div>
+  </div>
+
+  <div class="pair">
+    <div class="hd"><span class="tick">IVA</span><span class="arrow">↔</span><span class="tick">MDGL</span><span class="cluster">liver (MASH)</span></div>
+    <h4>Bet on Inventiva, protected by Madrigal</h4>
+    <div class="row"><span class="k">Why it works</span>Same liver disease, competing treatments. If Inventiva's big trial fails, Madrigal's already-approved drug keeps the market to itself — so Madrigal should rise.</div>
+    <div class="row"><span class="k">How sure we are</span>Reasonable on the setup, but weaker than the others: we have no past head-to-head event to measure, so keep the hedge modest.<br><span class="conf med">Plausible, thin evidence</span></div>
+    <div class="row"><span class="k catch">The catch</span>Two real problems. (1) Inventiva trades very thinly — hard to buy or sell a meaningful amount in a week. (2) A shared danger: if a big weight-loss-drug company posts strong liver data, it could knock <i>both</i> Inventiva and Madrigal down together — the hedge won't help against that.</div>
+  </div>
+
+  <div class="pair">
+    <div class="hd"><span class="tick">DYN</span><span class="arrow">↔</span><span class="tick" style="opacity:.6">no clean partner</span><span class="cluster">muscle (DMD/DM1)</span></div>
+    <h4>Bet on Dyne — but no good single hedge</h4>
+    <div class="row"><span class="k">Why there's no clean pair</span>Dyne is a strong bet on its own (it has a firm approval-decision date in Jan 2027). Its natural rival, Sarepta, is a mess right now — safety problems, layoffs, a leadership change — so Sarepta's price swings on its <i>own</i> troubles, not on Dyne's news. That makes it useless as a hedge.</div>
+    <div class="row"><span class="k">What we do instead</span>Either protect the sector-wide risk with a basket of biotech stocks (an index fund), which only cushions general market moves, or simply bet <b>small</b> so a bad surprise is survivable.<br><span class="conf low">No proportionate hedge — bet small</span></div>
+  </div>
+
+  <div class="pair">
+    <div class="hd"><span class="tick">CLDX</span><span class="arrow">↔</span><span class="tick" style="opacity:.6">no partner</span><span class="cluster">hives (CSU)</span></div>
+    <h4>Bet on Celldex — no partner that's the right size</h4>
+    <div class="row"><span class="k">Why there's no pair</span>Celldex has a clean, well-dated trial result coming. But its only competitors are giant drug companies (like Novartis and Sanofi) — so big that Celldex's news barely moves them. A hedge that doesn't move can't protect you.</div>
+    <div class="row"><span class="k">What we do instead</span>Bet small, or skip. This is a case where honesty beats forcing a fake hedge.<br><span class="conf low">No proportionate hedge — bet small</span></div>
+  </div>
+
+  <h2>The honest big picture</h2>
+  <p>Here's the uncomfortable truth the research keeps surfacing: <b>most biotech names don't have a good hedge.</b> Usually the only competitor is a $50-billion giant that barely twitches, or a same-approach rival that would fall alongside our bet. Only a handful of situations give us two similar-sized companies genuinely fighting each other where one's loss is the other's win.</p>
+  <p>So the system's rule is deliberately strict: <b>pair a trade only when there's a real, similar-sized competitor that benefits from our bet's failure. Otherwise, bet small or skip it.</b> That's not a weakness — it's the discipline that keeps a bad surprise from becoming a disaster. The three cleanest true pairs so far are the heart, swelling-disorder, and liver clusters; everything else leans on betting small.</p>
+
+  <footer>Fund 1 · why these pairs · built from the research agent's verified findings · updates as remaining clusters are checked</footer>
+</div>
