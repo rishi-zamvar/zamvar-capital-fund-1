@@ -72,7 +72,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 **Plans**: 8 plans (3 waves)
 - [x] 03-01-PLAN.md — Dependency (statsmodels) + ToolResult reproducibility contract (Wave 1)
 - [x] 03-02-PLAN.md — Valuation: rNPV + cash-runway, TDD (Wave 2)
-- [ ] 03-03-PLAN.md — Sizing: Kelly/fractional-Kelly/risk-of-ruin/SL-TP, TDD (Wave 2)
+- [x] 03-03-PLAN.md — Sizing: Kelly/fractional-Kelly/risk-of-ruin/SL-TP, TDD (Wave 2)
 - [ ] 03-04-PLAN.md — Pairs: cointegration (statsmodels) + correlation/β + conditional-payoff, TDD (Wave 2)
 - [ ] 03-05-PLAN.md — Options (implied-move/IV-crush) + Portfolio (concentration/exposure), TDD (Wave 2)
 - [ ] 03-06-PLAN.md — Performance: Sharpe/Sortino/returns/attribution (explicit periods_per_year), TDD (Wave 2)
