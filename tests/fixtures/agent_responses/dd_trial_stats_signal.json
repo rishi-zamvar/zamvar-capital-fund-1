@@ -1,0 +1,16 @@
+{
+  "dimension": "trial_stats",
+  "ticker": "ACME",
+  "catalyst_id": "cat-001",
+  "score": 0.35,
+  "confidence": 0.6,
+  "key_findings": [
+    {
+      "claim": "Primary endpoint is powered at 0.9 with a pre-registered analysis plan on ClinicalTrials.gov.",
+      "evidence_ref": "tool:base_rate#ts01aa",
+      "source_url": null
+    }
+  ],
+  "kb_analogs_queried": ["tool:analog_query#ts02bb"],
+  "unknowns": ["secondary-endpoint hierarchy not disclosed"]
+}

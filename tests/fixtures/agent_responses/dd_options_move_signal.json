@@ -1,0 +1,16 @@
+{
+  "dimension": "options_move",
+  "ticker": "ACME",
+  "catalyst_id": "cat-001",
+  "score": 0.1,
+  "confidence": 0.65,
+  "key_findings": [
+    {
+      "claim": "Straddle-implied move (~28%) is consistent with the in-house historical-gap distribution for this catalyst type.",
+      "evidence_ref": "tool:implied_move#op01ii",
+      "source_url": null
+    }
+  ],
+  "kb_analogs_queried": ["tool:analog_query#op02jj"],
+  "unknowns": ["options quotes are delayed on the free feed"]
+}

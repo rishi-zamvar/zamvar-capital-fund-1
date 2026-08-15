@@ -1,0 +1,16 @@
+{
+  "dimension": "historical_analog",
+  "ticker": "ACME",
+  "catalyst_id": "cat-001",
+  "score": 0.28,
+  "confidence": 0.6,
+  "key_findings": [
+    {
+      "claim": "Three KB analogs with the same phase/indication resolved positive with comparable move magnitude.",
+      "evidence_ref": "tool:analog_query#ha01oo",
+      "source_url": null
+    }
+  ],
+  "kb_analogs_queried": ["tool:analog_query#ha01oo", "tool:query_playbooks#ha02pp"],
+  "unknowns": ["small analog sample size (n=3)"]
+}

@@ -1,0 +1,11 @@
+{
+  "strongest_disconfirming_evidence": "A structurally similar prior PDUFA on the same mechanism drew a surprise CRL despite a met primary endpoint.",
+  "red_flags": [
+    "FATAL: the bi-monthly short-interest lag hides any late crowding into the event",
+    "class-wide read-through could collapse the inverse hedge relationship"
+  ],
+  "residual_risks": [
+    "net-long beta exposure if the whole class sells off",
+    "delayed options feed understates the true implied move"
+  ]
+}

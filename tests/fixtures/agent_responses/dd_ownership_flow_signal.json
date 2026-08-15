@@ -1,0 +1,16 @@
+{
+  "dimension": "ownership_flow",
+  "ticker": "ACME",
+  "catalyst_id": "cat-001",
+  "score": 0.15,
+  "confidence": 0.65,
+  "key_findings": [
+    {
+      "claim": "Short interest is moderate and declining; institutional ownership stable into the event.",
+      "evidence_ref": "tool:short_interest#ow01gg",
+      "source_url": null
+    }
+  ],
+  "kb_analogs_queried": ["tool:analog_query#ow02hh"],
+  "unknowns": ["bi-monthly short-interest lag leaves a 2-week blind spot"]
+}

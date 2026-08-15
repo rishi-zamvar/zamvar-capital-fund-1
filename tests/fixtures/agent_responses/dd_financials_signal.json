@@ -1,0 +1,16 @@
+{
+  "dimension": "financials",
+  "ticker": "ACME",
+  "catalyst_id": "cat-001",
+  "score": 0.2,
+  "confidence": 0.7,
+  "key_findings": [
+    {
+      "claim": "Cash runway extends 6+ quarters past the catalyst; no near-term dilution overhang.",
+      "evidence_ref": "tool:cash_runway#fn01ee",
+      "source_url": null
+    }
+  ],
+  "kb_analogs_queried": ["tool:analog_query#fn02ff"],
+  "unknowns": ["undisclosed off-balance-sheet commitments"]
+}

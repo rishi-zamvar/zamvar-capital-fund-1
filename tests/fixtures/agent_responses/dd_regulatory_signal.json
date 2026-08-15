@@ -1,0 +1,16 @@
+{
+  "dimension": "regulatory",
+  "ticker": "ACME",
+  "catalyst_id": "cat-001",
+  "score": 0.25,
+  "confidence": 0.62,
+  "key_findings": [
+    {
+      "claim": "No AdCom scheduled and prior sponsor PDUFA cycle showed no CRL precedent on this mechanism.",
+      "evidence_ref": "tool:base_rate#rg01cc",
+      "source_url": null
+    }
+  ],
+  "kb_analogs_queried": ["tool:analog_query#rg02dd"],
+  "unknowns": ["label-scope negotiation outcome uncertain"]
+}
