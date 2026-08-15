@@ -4,11 +4,14 @@ Mirrors the price-bar store discipline (tests/test_price_store.py): write-once p
 (ticker, week_end), point-in-time reads with the week_end <= as_of no-look-ahead guard.
 """
 
+import copy
+import inspect
+
 import pytest
 from pydantic import ValidationError
 
 from catalyst_trader import store
-from catalyst_trader.contracts import KeyFinding, OpportunityFlag, ScanInput
+from catalyst_trader.contracts import KeyFinding, OpportunityFlag, ScanInput, WeeklyFlag
 from catalyst_trader.desk import company_scan
 
 
@@ -269,5 +272,333 @@ def test_wakes_tier_gate():
     two_corr = [{"flag": "F7", "tier": "CORROBORATOR"}, {"flag": "F11", "tier": "CORROBORATOR"}]
     assert company_scan._wakes(principal, company_scan.SCAN_PARAMS) is True
     assert company_scan._wakes(one_corr, company_scan.SCAN_PARAMS) is False
+    assert company_scan._wakes(two_corr, company_scan.SCAN_PARAMS) is True
+    assert company_scan._wakes([], company_scan.SCAN_PARAMS) is False
+
+
+# ============================================================================
+# Plan 03 Task 1 — SCAN_PROMPT + run_scan (ONE Haiku pass per woken name, cite-or-drop)
+#
+# Fully offline: every test monkeypatches company_scan.run_structured. Cards are built
+# from raw + (optional) bars; F1 (days_to_catalyst crossing a band) is the cheapest
+# PRINCIPAL wake trigger — no bars needed.
+# ============================================================================
+
+
+def _canned(**over):
+    """A canned Haiku OpportunityFlag (confidence 0.7 -> no escalation) — the fake LLM return."""
+    base = dict(
+        ticker="ABCD",
+        week_end="2026-01-09",
+        opportunity_type="catalyst_vol",
+        thesis_to_verify="a PDUFA inside 2 weeks could drive a >20% move",
+        verification_needed="catalyst_call",
+        key_findings=[KeyFinding(claim="PDUFA 2026-01-19", evidence_ref="tool:analog_query#abc123abc123")],
+        kb_analogs=["tool:query_playbooks#cafe12345678"],
+        tripped_flags=["F1"],
+        confidence=0.7,
+    )
+    base.update(over)
+    return OpportunityFlag(**base)
+
+
+def _fake_llm(op, calls=None):
+    """A fake run_structured that returns `op` (recording the model tier if `calls` given)."""
+    async def _f(prompt, schema, *, mcp_servers=None, allowed_tools=None, model="sonnet"):
+        if calls is not None:
+            calls.append(model)
+        return op
+    return _f
+
+
+def _seed_baseline(db, ticker, *, days, thesis_row=None, week="2026-01-02"):
+    """Write a prior-week card so the trip week has a `prev` to delta against."""
+    card = company_scan.build_card(db, ticker, week, raw={"days_to_catalyst": days},
+                                   thesis_row=thesis_row or {})
+    store.write_card(db, ticker, week, card)
+
+
+def test_scan_prompt_carries_hard_rules_and_three_questions():
+    """SCAN_PROMPT carries the DD HARD RULES (call-the-tool / cite-or-drop / fill-unknowns) + the
+    three scanner questions (interest / explorable / build-or-verify) + the adversarial framing."""
+    low = company_scan.SCAN_PROMPT.lower()
+    assert "cite" in low                       # cite-or-drop
+    assert "call" in low and "mcp__quant__" in low   # call the tool, never compute
+    assert "unknown" in low                    # fill unknowns
+    assert "interest" in low                   # Q1
+    assert "explor" in low or "real opportunity" in low   # Q2
+    assert "verify" in low or "build" in low   # Q3
+    assert "noise" in low or "priced in" in low or "untradeable" in low  # adversarial framing
+
+
+async def test_no_llm_when_no_material_delta(db, monkeypatch):
+    """20 unchanged names (no tripped flag) never reach Stage-2; each gets a stored no-op row."""
+    async def _boom(*a, **k):
+        raise AssertionError("Stage-2 must not run on a no-delta name")
+    monkeypatch.setattr(company_scan, "run_structured", _boom)
+
+    raw_by, rows = {}, {}
+    for i in range(20):
+        t = f"T{i:02d}"
+        _seed_baseline(db, t, days=20)
+        raw_by[t] = {"days_to_catalyst": 20}     # unchanged -> F1 does not cross
+        rows[t] = {}
+
+    out = await company_scan.run_scan(db, None, "2026-01-09", raw_by, rows)
+    assert out == []
+    for t in raw_by:
+        stored = store.scan_flags_asof(db, t, "2026-01-09")
+        assert stored and stored[-1]["opportunity_type"] == "no_opportunity"
+
+
+async def test_corroborator_never_wakes_alone(db, monkeypatch):
+    """A name tripping only F11 (a lone CORROBORATOR) is stored, never woken."""
+    async def _boom(*a, **k):
+        raise AssertionError("a lone corroborator must not wake Stage-2")
+    monkeypatch.setattr(company_scan, "run_structured", _boom)
+
+    store.upsert_bars(db, "ABCD", [
+        {"week_end": "2025-12-26", "close": 100.0, "volume": 100},
+        {"week_end": "2026-01-02", "close": 100.0, "volume": 90},    # prev turnover False
+        {"week_end": "2026-01-09", "close": 100.0, "volume": 500},   # cur turnover True, 5x median
+    ])
+    _seed_baseline(db, "ABCD", days=None)   # baseline card at 2026-01-02 (no catalyst)
+
+    out = await company_scan.run_scan(db, None, "2026-01-09", {"ABCD": {}}, {"ABCD": {}})
+    assert out == []
+    stored = store.scan_flags_asof(db, "ABCD", "2026-01-09")[-1]
+    assert stored["opportunity_type"] == "no_opportunity"
+    assert "F11" in stored.get("tripped_flags", [])   # the corroborator DID trip — it just didn't wake
+
+
+async def test_wake_count_le_flagged_and_cap_batches(db, monkeypatch):
+    """N woken names -> N Haiku passes (no escalation); lowering the cap stores the overflow."""
+    calls = []
+    monkeypatch.setattr(company_scan, "run_structured", _fake_llm(_canned(), calls))
+
+    N = 5
+    raw_by, rows = {}, {}
+    for i in range(N):
+        t = f"W{i}"
+        _seed_baseline(db, t, days=20)
+        raw_by[t] = {"days_to_catalyst": 10}   # crosses the 14-day band -> F1 (PRINCIPAL) wakes
+        rows[t] = {}
+    await company_scan.run_scan(db, None, "2026-01-09", raw_by, rows)
+    assert len(calls) == N and all(m == "haiku" for m in calls)
+
+    calls.clear()
+    capped = copy.deepcopy(company_scan.SCAN_PARAMS)
+    capped["scan"]["max_stage2_wakes"] = 2
+    raw2, rows2 = {}, {}
+    for i in range(N):
+        t = f"X{i}"
+        _seed_baseline(db, t, days=20)
+        raw2[t] = {"days_to_catalyst": 10}
+        rows2[t] = {}
+    await company_scan.run_scan(db, None, "2026-01-09", raw2, rows2, params=capped)
+    assert len(calls) == 2   # cap enforced; overflow names stored, not woken
+
+
+async def test_stage2_allowed_tools_include_analog_and_playbooks(db, monkeypatch):
+    """The Stage-2 call reuses diligence.ALLOWED_TOOLS (analog_query + query_playbooks), model=haiku."""
+    captured = {}
+    async def _f(prompt, schema, *, mcp_servers=None, allowed_tools=None, model="sonnet"):
+        captured.update(allowed_tools=allowed_tools, mcp_servers=mcp_servers, model=model)
+        return _canned()
+    monkeypatch.setattr(company_scan, "run_structured", _f)
+
+    _seed_baseline(db, "ABCD", days=20)
+    await company_scan.run_scan(db, None, "2026-01-09", {"ABCD": {"days_to_catalyst": 10}}, {"ABCD": {}})
+    assert "mcp__quant__analog_query" in captured["allowed_tools"]
+    assert "mcp__quant__query_playbooks" in captured["allowed_tools"]
+    assert captured["model"] == "haiku"
+    assert "quant" in captured["mcp_servers"]
+
+
+async def test_analog_context_built_by_python(db, monkeypatch):
+    """The analog_context handed to build_scan_prompt is the deterministic _analog_context(...) —
+    Python authors it, never the model."""
+    seen = {}
+    orig = company_scan.build_scan_prompt
+    def _spy(scan_input, analog_context):
+        seen.update(si=scan_input, ctx=analog_context)
+        return orig(scan_input, analog_context)
+    monkeypatch.setattr(company_scan, "build_scan_prompt", _spy)
+    monkeypatch.setattr(company_scan, "run_structured", _fake_llm(_canned()))
+
+    _seed_baseline(db, "ABCD", days=20)
+    await company_scan.run_scan(db, None, "2026-01-09", {"ABCD": {"days_to_catalyst": 10}}, {"ABCD": {}})
+    si = seen["si"]
+    assert seen["ctx"] == company_scan._analog_context(si.tripped, si.card_cur)
+    assert "F1" in seen["ctx"]
+
+
+async def test_uncited_finding_dropped(db, monkeypatch):
+    """A key_finding whose evidence_ref fails evidence.resolve is dropped before persist/route."""
+    op = _canned(key_findings=[
+        KeyFinding(claim="resolvable", evidence_ref="tool:analog_query#abc123abc123"),
+        KeyFinding(claim="dangling", evidence_ref="kb:999999"),   # no such node -> unresolvable
+    ])
+    monkeypatch.setattr(company_scan, "run_structured", _fake_llm(op))
+
+    _seed_baseline(db, "ABCD", days=20)
+    out = await company_scan.run_scan(db, None, "2026-01-09", {"ABCD": {"days_to_catalyst": 10}}, {"ABCD": {}})
+    survivors = [kf.evidence_ref for kf in out[0].key_findings]
+    assert "tool:analog_query#abc123abc123" in survivors
+    assert "kb:999999" not in survivors
+    stored = store.scan_flags_asof(db, "ABCD", "2026-01-09")[-1]
+    assert "kb:999999" not in [kf["evidence_ref"] for kf in stored["key_findings"]]
+
+
+async def test_no_opportunity_is_valid_and_stored_not_routed(db, monkeypatch):
+    """no_opportunity is written to scan_flag with routed=False and NOT returned in the routed list."""
+    monkeypatch.setattr(company_scan, "run_structured", _fake_llm(_canned(opportunity_type="no_opportunity")))
+
+    _seed_baseline(db, "ABCD", days=20)
+    out = await company_scan.run_scan(db, None, "2026-01-09", {"ABCD": {"days_to_catalyst": 10}}, {"ABCD": {}})
+    assert out == []
+    stored = store.scan_flags_asof(db, "ABCD", "2026-01-09")[-1]
+    assert stored["opportunity_type"] == "no_opportunity"
+    row = db.execute("SELECT routed FROM scan_flag WHERE ticker='ABCD' AND week_end='2026-01-09'").fetchone()
+    assert row["routed"] == 0
+
+
+async def test_latch_persists_across_weeks(db, monkeypatch):
+    """SCAN-02 replayability money-gate: a flag latched at week T (F1 band-14) is persisted (card
+    written AFTER delta_card mutates fired) and does NOT re-fire at T+1 while the band still stands."""
+    monkeypatch.setattr(company_scan, "run_structured", _fake_llm(_canned()))
+    tr = {"thesis_type": "mean_reversion"}   # NOT catalyst -> no precedence suppression
+    _seed_baseline(db, "ABCD", days=20, thesis_row=tr)   # week T-1 baseline (outside both bands)
+
+    # week T: days 10 crosses the 14-day band -> F1 latches; persisted AFTER delta_card
+    await company_scan.run_scan(db, None, "2026-01-09", {"ABCD": {"days_to_catalyst": 10}}, {"ABCD": tr})
+    card_T = store.card_asof(db, "ABCD", "2026-01-09")
+    assert card_T["fired"]["F1:14"] == "2026-01-09"   # FAILS if write_card ran before delta_card
+
+    # week T+1: days 9 still inside band 14 -> latch stands, F1 must NOT re-fire
+    await company_scan.run_scan(db, None, "2026-01-16", {"ABCD": {"days_to_catalyst": 9}}, {"ABCD": tr})
+    card_T1 = store.card_asof(db, "ABCD", "2026-01-16")
+    assert card_T1["fired"]["F1:14"] == "2026-01-09"   # latch memory preserved, not restamped
+    stored_T1 = store.scan_flags_asof(db, "ABCD", "2026-01-16")[-1]
+    assert stored_T1["opportunity_type"] == "no_opportunity"
+    assert "F1" not in stored_T1.get("tripped_flags", [])   # no spurious re-fire
+
+
+async def test_low_confidence_escalates_to_sonnet(db, monkeypatch):
+    """confidence < escalate_conf_floor triggers ONE re-run on model='sonnet'."""
+    models = []
+    low = _canned(confidence=0.2)     # below the 0.4 floor
+    async def _f(prompt, schema, *, mcp_servers=None, allowed_tools=None, model="sonnet"):
+        models.append(model)
+        return low
+    monkeypatch.setattr(company_scan, "run_structured", _f)
+
+    _seed_baseline(db, "ABCD", days=20)
+    await company_scan.run_scan(db, None, "2026-01-09", {"ABCD": {"days_to_catalyst": 10}}, {"ABCD": {}})
+    assert models == ["haiku", "sonnet"]   # cheap-first, then ONE escalation
+
+
+async def test_catalyst_precedence_suppresses_bare_f1(db, monkeypatch):
+    """A bare-F1 fire on a name whose thesis is already a catalyst is logged, not woken (no double-flag)."""
+    async def _boom(*a, **k):
+        raise AssertionError("a bare-F1 catalyst name is already routed to WF-1 — do not wake")
+    monkeypatch.setattr(company_scan, "run_structured", _boom)
+    tr = {"thesis_type": "catalyst"}
+    _seed_baseline(db, "ABCD", days=20, thesis_row=tr)
+    out = await company_scan.run_scan(db, None, "2026-01-09", {"ABCD": {"days_to_catalyst": 10}}, {"ABCD": tr})
+    assert out == []
+    stored = store.scan_flags_asof(db, "ABCD", "2026-01-09")[-1]
+    assert stored["opportunity_type"] == "no_opportunity"
+
+
+# ============================================================================
+# Plan 03 Task 2 — to_weekly_flag projection + MD routing (zero md.py change)
+# ============================================================================
+
+
+def test_flag_carries_gap_not_answer():
+    """to_weekly_flag yields a qual WeeklyFlag carrying the gap (thesis_to_verify), no answer field,
+    and verification_needed does NOT leak onto the wire."""
+    op = _canned(opportunity_type="squeeze_setup",
+                 thesis_to_verify="a borrow-rate spike could force a squeeze unwind",
+                 tripped_flags=["F6", "F7"])
+    wf = company_scan.to_weekly_flag(op)
+    assert isinstance(wf, WeeklyFlag)
+    assert wf.flag_type == "qual"
+    assert wf.finding == op.thesis_to_verify
+    assert wf.evidence_ref == "tool:analog_query#abc123abc123"   # promoted from the cited finding
+    wire_fields = set(type(wf).model_fields)
+    assert wire_fields.isdisjoint({"direction", "size", "size_pct", "target", "verification_needed"})
+
+
+def test_no_opportunity_not_projected():
+    """to_weekly_flag on a no_opportunity flag returns None (stored-not-routed)."""
+    assert company_scan.to_weekly_flag(_canned(opportunity_type="no_opportunity")) is None
+
+
+def test_no_code_path_flag_to_candidate():
+    """No code path from an OpportunityFlag to a Candidate / run_portfolio (type-pinned)."""
+    src = inspect.getsource(company_scan)
+    assert "run_portfolio" not in src
+    assert "Candidate" not in src
+    # run_portfolio does not accept an OpportunityFlag anywhere in its signature
+    from catalyst_trader.desk.orchestrator import run_portfolio
+    for p in inspect.signature(run_portfolio).parameters.values():
+        assert p.annotation is inspect.Parameter.empty or "OpportunityFlag" not in str(p.annotation)
+
+
+async def test_routed_flag_lands_in_md_queue(db, monkeypatch):
+    """A projected WeeklyFlag(flag_type='qual') passed in item['incoming_flags'] reaches reconcile's
+    round-1 logged_flags with md.py UNCHANGED (the 6.7 seam is live)."""
+    from catalyst_trader.contracts import (
+        DebateVerdict, DiligenceDossier, DiligenceInput, EstimateVetting, Hedge,
+        MDDecision, PortfolioContext, StrategyDossier, TradeProposal,
+    )
+    from catalyst_trader.desk import md as md_mod
+    from catalyst_trader.desk.md import MDReview, reconcile
+
+    verdict = DebateVerdict(thesis="endpoint likely met", direction="positive", confidence=0.6,
+                            bull_strongest_point="strong phase-2", bear_strongest_point="thin precedent",
+                            kill_criteria=["fails if the primary endpoint is missed"])
+    hedge = Hedge(instrument="equity_peer", ticker="PEER", payoff_direction=-1, validated=True,
+                  covers="idiosyncratic", mechanism="peer rises when target's drug fails",
+                  conditional_worst=-0.02)
+    trade = TradeProposal(target_long="ACME", hedge=hedge, pair_rationale="inverse peer", entry=10.0,
+                          exit_by_date="2026-12-05", stop_loss=9.0, take_profit=12.0, size_pct=0.05,
+                          expected_return_pct=0.01, holds_through_catalyst=True, catalyst_id="cat-1",
+                          direction="positive",
+                          estimate_vetting=EstimateVetting(verdict="endorse", input_refs=["tool:x#1"], reasons=["ok"]),
+                          sl_advisory=True)
+    dossier = StrategyDossier(decision="promote", trade=trade,
+                              portfolio_context=PortfolioContext(concentration=0.2, corr_to_open_positions=[0.1],
+                                                                 weekly_budget_remaining=0.5),
+                              verdict_summary="promote", dissent_log=[], all_evidence_refs=[],
+                              residual_net_long=0.0, which_risk_covered="idiosyncratic",
+                              position_memo="memo", pre_mortem=["assume it lost"],
+                              kill_criteria=["fails if the primary endpoint is missed"])
+    dd = DiligenceDossier(verdict="go", per_dimension=[{"dimension": "clinical", "catalyst_id": "cat-1"}],
+                          strongest_disconfirming_evidence="thin precedent", all_evidence_refs=[])
+    wf = company_scan.to_weekly_flag(_canned(opportunity_type="squeeze_setup"))
+
+    async def _rs(prompt, schema, *, model="opus"):
+        if schema is MDReview:
+            return MDReview(satisfied=True, response_delta="clean", flags=[])
+        return MDDecision(decision="enter", rationale="ok", round_log=[])
+    async def _noop(*a, **k):
+        raise AssertionError("no cascade expected")
+    monkeypatch.setattr(md_mod, "run_structured", _rs)
+    monkeypatch.setattr(md_mod, "run_desk", _noop)
+    monkeypatch.setattr(md_mod, "run_portfolio", _noop)
+    monkeypatch.setattr(md_mod, "run_diligence", _noop)
+
+    item = {
+        "verdict": verdict, "dossier": dossier, "dd": dd,
+        "catalyst": {"catalyst_id": "cat-1", "catalyst_type": "pdufa"},
+        "entry": 10.0, "risk_inputs": {"p_loss": 0.4, "gap": 0.1},
+        "dd_input": DiligenceInput(ticker="ACME", catalyst={"catalyst_id": "cat-1"}, pair="PEER"),
+        "market_data": {}, "open_book": [], "incoming_flags": [wf],
+    }
+    out = await reconcile(db, None, item)
+    assert any(w.evidence_ref == wf.evidence_ref for r in out.round_log for w in r.logged_flags)
     assert company_scan._wakes(two_corr, company_scan.SCAN_PARAMS) is True
     assert company_scan._wakes([], company_scan.SCAN_PARAMS) is False
