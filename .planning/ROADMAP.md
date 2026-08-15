@@ -178,7 +178,10 @@ Decimal phases appear between their surrounding integers in numeric order.
   3. REFRESHABLE: a persisted per-company card (the proper volatility/opportunity metrics) is refreshed weekly; the signal is the real DELTA vs last week, comparable and reproducible, not a re-derivation.
   4. LIGHT: deterministic delta layer costs ~nothing; the Haiku pass fires only on flagged names; documented weekly cost estimate; composes with (does not duplicate) quant/weekly.py.
   5. Opportunity flags route UP to the MD (RECON-08) → routed to VERIFICATION (catalyst call / measured edge / mini-backtest — never trusted un-verified) → verified assumptions added to the weekly portfolio (run_weekly) → monitored intra-week (Phase 8.5). Opportunity-flag contract carries the opportunity + evidence + which verification is needed (gap-not-answer).
-**Plans**: TBD (planner) — scope refined when research lands
+**Plans**: 3 plans (3 waves)
+- [ ] 06.8-01-PLAN.md — Foundations: migration 006 company_card/scan_flag store + ScanInput/OpportunityFlag contracts (Wave 1)
+- [ ] 06.8-02-PLAN.md — Deterministic Stage-1: SCAN_PARAMS + build_card (no-recompute) + delta_card (F1-F13 transitions, latching/hysteresis/tier gate) (Wave 2)
+- [ ] 06.8-03-PLAN.md — Stage-2 Haiku once-over (one pass, cite-or-drop) + to_weekly_flag routing to the MD (zero md.py change) (Wave 3)
 
 ### Phase 7: Verifier/Guardrails + Backtest Harness
 **Goal**: Prove the strategy honestly against history and stand up the runtime safety gates before any capital — real or simulated — is at stake.
