@@ -482,3 +482,59 @@ def select_book(candidates, open_book, weekly_budget, heat_cap, target_weekly=0.
 **New Wave-0 files:** `tests/test_events.py` (+ new `src/catalyst_trader/quant/events.py`, re-export in `quant/__init__.py`); extend `tests/test_sizing.py` for `adaptive_sl_tp_levels`; extend `tests/test_desk_builder.py` / `test_desk_portfolio.py`.
 
 **Net new code proposed (kept minimal):** ONE new quant tool (`catalyst_move_estimate`), ONE extension (`adaptive_sl_tp_levels` delegating to `sl_tp_levels`), ONE thin selector (`select_book`). Everything else — down-move sizing (`risk_of_ruin(gap=)`), hold-through bool, gross/net/heat — is pure reuse.
+
+### 6. Model-fit & playbook-parameterized tools — NO magic numbers (LOCKED, PM 2026-08-15)
+
+The estimator + adaptive-SL/TP tools must be **fitted-parameter driven and grow over time**, not static heuristics with hardcoded constants. Mirror the options-ready-`Hedge` discipline: build the *seam* now so the Phase-9 refit loop slots in with **no rewrite**; do NOT build the refit loop this phase.
+
+#### Does Phase-2's KB already have a home for fitted params + realized outcomes? — YES. No new table/node type.
+
+Verified against `src/catalyst_trader/kb.py` + `tests/test_kb_playbook.py` / `test_kb_analog.py`:
+
+| Need | Existing home | Evidence |
+|------|---------------|----------|
+| **Realized outcomes** (the refit target) | `Outcome` node kind, signed `move` in attrs, linked `catalyst -[RESULTED_IN]-> outcome` | `_NODE_KINDS` includes `outcome`; `test_kb_analog.py` seeds `outcome_attrs={"move": ...}`; `analog_query` returns each analog's outcome. Grows every week via realized events. |
+| **Fitted parameter sets** (per catalyst type, versioned, cited) | `playbook` node kind via `insert_playbook(conn, scenario_type, scenario, strategy, confidence, evidence)` | `strategy` is stored in `attrs_json` through `json.dumps` → **round-trips an arbitrary dict** (existing tests use strings, but the column is JSON). `scenario_type` is exact-match filterable; `query_playbooks` returns confidence-desc. |
+| **Versioning of a param set** | first-class `confidence` column + `created_at`; multiple rows per `scenario_type` | `query_playbooks` orders confidence-desc; Phase-9 refit just `insert_playbook`s a newer, better-confidence row — the reader picks it up automatically. |
+| **Provenance of a param set** (which data/model produced it) | mandatory `CITES -> EvidenceSource` on every playbook (routed through `insert_claim`) | `insert_playbook` raises without `evidence`; `test_kb_playbook.py` asserts the citation requirement. A fitted param set is itself a cited claim — consistent with cite-or-drop. |
+
+**Conclusion:** store each catalyst type's fitted params as ONE `playbook` node, namespaced `scenario_type=f"fitted_params:{catalyst_type}"` (exact-match, so no collision with real scenario playbooks), whose `strategy` dict carries both param groups:
+```python
+strategy = {
+  "estimator": {"method": "median", "min_analogs": 5, "implied_blend": 0.5, "default_down_move": 0.70},
+  "sl_tp":     {"sl_vol_mult": 1.0, "tp_frac": 0.8, "drift_coef": 0.0},
+  "fit_source": "bootstrap: base_rates.csv + BIO/Wong Ph3 gap study",   # MODEL/method attribution
+}
+```
+The `CITES` edge attributes the **data**; `strategy.fit_source` attributes the **model/method**. `ponytail: reuse the playbook node — it is already a cited, versioned, per-type, confidence-ranked key/value store. A new "params" table would duplicate it exactly.`
+
+#### The param seam (pure tool + DB-reading loader — split for determinism)
+
+- **Tools take `params` IN, stay pure + offline** (frozen `ToolResult` out; tests pin params explicitly): `catalyst_move_estimate(..., params: dict)` and `adaptive_sl_tp_levels(..., params: dict)`. **No numeric literal in the tool body** — every threshold (per-type gap defaults, drift coef, vol multiplier, TP/SL bands) reads from `params`; a missing key raises (no silent hardcoded fallback inside the tool).
+- **The DB-reading seam lives in `kb.py`** (next to `query_playbooks`), so the pure quant tool never touches a connection:
+  ```python
+  def load_params(conn, catalyst_type: str) -> dict:
+      """Top (highest-confidence) fitted_params:<type> playbook's strategy dict, or the bootstrap
+      default if none. The ONE seam Phase-9's refit loop replaces the SOURCE of — signature frozen."""
+  ```
+- **Flow:** `desk/builder.py` calls `kb.load_params(conn, catalyst_type)` → passes the dict into the pure tools. Only the *source* of params changes over time; the tool math is fixed + reproducible.
+
+#### Bootstrap params (works from trade #1)
+
+Seed one `fitted_params:<type>` playbook per catalyst type at seed time (same convention as `data/base_rates.csv` / `data/pdufa_curated.csv`), derived from base rates + published historical per-type gaps, **cited** to those sources. So the tools are parameterized from the very first trade with an honest, traceable param set — the refit loop only *improves* it later. `ponytail: a seed script + a data/fitted_params_bootstrap.csv (or inline in a migration seed), cited — not a fitting pipeline. The fitter is Phase 9.`
+
+#### Explicitly deferred to Phase 9 (LEARN) — build the seam, not the loop
+- The refit/fitting pipeline (fit new params from accumulated `Outcome` nodes, score, gate, insert a higher-confidence playbook row). Phase 5 delivers: the two `params`-taking tools + `kb.load_params` seam + the bootstrap playbook rows + the (already-existing) playbook/outcome schema they refit against. `ponytail: exactly the Hedge-abstraction move — the put-option enum exists but isn't executed; here the param seam + playbook schema exist but aren't refit yet.`
+
+#### Validation Architecture additions (param seam + provenance)
+
+| Item | Behavior | Type | Automated Command | File |
+|------|----------|------|-------------------|------|
+| No magic numbers | estimator/SL-TP tools raise on a missing `params` key — no numeric literal fallback in the body | unit | `.venv/bin/python -m pytest tests/test_events.py tests/test_sizing.py -k "params_required or no_magic" -x` | ❌ Wave 0 |
+| Deterministic w/ pinned params | same `params` in → identical frozen `ToolResult` out (offline, no DB) | unit | `.venv/bin/python -m pytest tests/test_events.py tests/test_sizing.py -k "deterministic or pinned" -x` | ❌ Wave 0 |
+| `kb.load_params` seam | returns top-confidence `fitted_params:<type>` strategy dict; bootstrap default when none | unit | `.venv/bin/python -m pytest tests/test_kb_params.py -x` | ❌ Wave 0 |
+| Newer fit wins | higher-confidence playbook row shadows the older (versioning) | unit | `.venv/bin/python -m pytest tests/test_kb_params.py -k "version or newer" -x` | ❌ Wave 0 |
+| Param provenance (cite-or-drop) | a fitted param set has a `CITES->EvidenceSource` edge + `strategy.fit_source`; uncited insert raises | unit | `.venv/bin/python -m pytest tests/test_kb_params.py -k "provenance or cited" -x` | ❌ Wave 0 |
+| Bootstrap present | one cited `fitted_params:<type>` seed exists per catalyst type after seed | unit | `.venv/bin/python -m pytest tests/test_kb_params.py -k "bootstrap" -x` | ❌ Wave 0 |
+
+**New Wave-0 file:** `tests/test_kb_params.py` (loader + versioning + provenance + bootstrap). No new node/table type — reuses `playbook` + `Outcome`. No schema migration needed.
