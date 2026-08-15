@@ -1,0 +1,8 @@
+{
+  "role": "aggressive",
+  "p_loss_estimate": 0.35,
+  "gap_estimate": 0.65,
+  "hedge_opinion": "RIVAL reliably pops when ACME misses on this indication; hold the validated pair.",
+  "rationale": "Two historical analog CRLs each lifted the direct competitor by double digits.",
+  "evidence_refs": ["tool:analog_query#aaa111"]
+}

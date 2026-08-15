@@ -1,0 +1,8 @@
+{
+  "role": "conservative",
+  "p_loss_estimate": 0.55,
+  "gap_estimate": 0.78,
+  "hedge_opinion": "The inverse read-through is thin; a class-wide negative could sink both legs.",
+  "rationale": "Cointegration is necessary but not sufficient; the down-tail is fat.",
+  "evidence_refs": ["tool:conditional_payoff#bbb222"]
+}

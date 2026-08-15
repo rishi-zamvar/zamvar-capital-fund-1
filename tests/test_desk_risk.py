@@ -201,3 +201,140 @@ def test_fake_idiosyncratic_hedge_is_unrepresentable():
     with pytest.raises(ValueError):
         Hedge(instrument="equity_peer", ticker="RIVAL", payoff_direction=-1,
               validated=False, covers="idiosyncratic", mechanism="x", conditional_worst=-0.4)
+
+
+# ---------------------------------------------------------------------------
+# Task 3 — 3-way Risk Committee (assess) → RiskAssessment carrying the Hedge object
+# ---------------------------------------------------------------------------
+
+from types import SimpleNamespace
+
+from catalyst_trader.contracts import RiskAssessment
+from catalyst_trader.desk.risk import CommitteeView
+
+PROPOSAL = SimpleNamespace(target_long="ACME", exit_by_date=EXIT)
+
+
+def _seam(views, synthesis, calls):
+    """Fake run_structured: record every call, dispatch on schema + role in the prompt."""
+
+    async def _fake(prompt, schema, *, mcp_servers=None, allowed_tools=None, model="sonnet"):
+        calls.append({"prompt": prompt, "schema": schema, "model": model})
+        if schema is RiskAssessment:
+            return synthesis
+        for role, v in views.items():
+            if role.upper() in prompt:
+                return v
+        return next(iter(views.values()))
+
+    return _fake
+
+
+def _committee_fixtures(load_fixture):
+    views = {
+        "aggressive": CommitteeView.model_validate(load_fixture("agent_responses/risk_aggressive")),
+        "conservative": CommitteeView.model_validate(load_fixture("agent_responses/risk_conservative")),
+        "neutral": CommitteeView.model_validate(load_fixture("agent_responses/risk_neutral")),
+    }
+    synthesis = RiskAssessment.model_validate(load_fixture("agent_responses/risk_synthesis"))
+    return views, synthesis
+
+
+def _seed_hedge(db):
+    insert_hedge_peer(db, "ACME", "RIVAL", "same-indication competitor", -1, 0.82, _EV)
+
+
+async def test_size_is_the_quant_output_not_the_llm(db, embed, load_fixture, monkeypatch):
+    _seed_hedge(db)
+    views, synthesis = _committee_fixtures(load_fixture)
+    monkeypatch.setattr(risk, "run_structured", _seam(views, synthesis, []))
+
+    out = await risk.assess(db, embed, PROPOSAL, CAT, p_loss=0.45, gap=0.70,
+                            analog_gaps=_GAPS_PASS, prices=_prices(_PEER_COINT_PX))
+
+    expected = risk.size_for_survival(0.45, 0.70, 0.02, 0.03).value
+    assert out.recommended_size_pct == expected  # the size is ALWAYS the quant number
+    assert out.recommended_size_pct != synthesis.recommended_size_pct  # never the LLM's fixture value
+
+
+async def test_matrix_and_worst_are_the_conditional_payoff_wiring(db, embed, load_fixture, monkeypatch):
+    _seed_hedge(db)
+    views, synthesis = _committee_fixtures(load_fixture)
+    monkeypatch.setattr(risk, "run_structured", _seam(views, synthesis, []))
+
+    out = await risk.assess(db, embed, PROPOSAL, CAT, p_loss=0.45, gap=0.70,
+                            analog_gaps=_GAPS_PASS, prices=_prices(_PEER_COINT_PX))
+
+    from catalyst_trader.quant.pairs import conditional_payoff
+    cp = conditional_payoff(0.30, -0.70, 0.25, -0.10, 0.5, 0.5)
+    assert out.conditional_payoff_matrix == cp.detail["matrix"]
+    assert out.conditional_worst == cp.value
+    assert out.ruin_at_size == risk_of_ruin(0.45, out.recommended_size_pct, 0.70).value
+
+
+async def test_hedge_object_is_carried_and_hedge_valid_consistent(db, embed, load_fixture, monkeypatch):
+    _seed_hedge(db)
+    views, synthesis = _committee_fixtures(load_fixture)
+    monkeypatch.setattr(risk, "run_structured", _seam(views, synthesis, []))
+
+    out = await risk.assess(db, embed, PROPOSAL, CAT, p_loss=0.45, gap=0.70,
+                            analog_gaps=_GAPS_PASS, prices=_prices(_PEER_COINT_PX))
+
+    assert isinstance(out.hedge, Hedge)  # the actual OBJECT, not just a bool (BLOCKER-1)
+    assert out.hedge.ticker == "RIVAL"
+    assert out.hedge_valid is True
+    assert out.hedge_valid == (out.hedge is not None and out.hedge.validated)
+
+
+async def test_validate_hedge_called_exactly_once(db, embed, load_fixture, monkeypatch):
+    _seed_hedge(db)
+    views, synthesis = _committee_fixtures(load_fixture)
+    monkeypatch.setattr(risk, "run_structured", _seam(views, synthesis, []))
+
+    real = risk.validate_hedge
+    calls = {"n": 0}
+    sentinel = Hedge(instrument="equity_peer", ticker="RIVAL", payoff_direction=-1,
+                     validated=True, covers="idiosyncratic", mechanism="m", conditional_worst=-0.4)
+
+    def _spy(*a, **k):
+        calls["n"] += 1
+        return sentinel
+
+    monkeypatch.setattr(risk, "validate_hedge", _spy)
+    out = await risk.assess(db, embed, PROPOSAL, CAT, p_loss=0.45, gap=0.70,
+                            analog_gaps=_GAPS_PASS, prices=_prices(_PEER_COINT_PX))
+
+    assert calls["n"] == 1  # BLOCKER-1: validate_hedge runs ONCE, no double-validation
+    assert out.hedge is sentinel  # that single result is threaded onto RiskAssessment.hedge
+    assert real is not None
+
+
+async def test_fallback_no_hedge_carries_none(db, embed, load_fixture, monkeypatch):
+    # +1 co-move peer only → no validated inverse hedge → None + hedge_valid False (honest fallback)
+    insert_hedge_peer(db, "ACME", "COMOV", "correlated long", +1, 0.8, _EV)
+    views, synthesis = _committee_fixtures(load_fixture)
+    monkeypatch.setattr(risk, "run_structured", _seam(views, synthesis, []))
+
+    out = await risk.assess(db, embed, PROPOSAL, CAT, p_loss=0.45, gap=0.70,
+                            analog_gaps=_GAPS_PASS, prices=_prices(_PEER_COINT_PX))
+
+    assert out.hedge is None
+    assert out.hedge_valid is False
+
+
+async def test_committee_is_three_isolated_views_plus_opus_synthesis(db, embed, load_fixture, monkeypatch):
+    _seed_hedge(db)
+    views, synthesis = _committee_fixtures(load_fixture)
+    calls = []
+    monkeypatch.setattr(risk, "run_structured", _seam(views, synthesis, calls))
+
+    await risk.assess(db, embed, PROPOSAL, CAT, p_loss=0.45, gap=0.70,
+                      analog_gaps=_GAPS_PASS, prices=_prices(_PEER_COINT_PX))
+
+    view_calls = [c for c in calls if c["schema"] is CommitteeView]
+    synth_calls = [c for c in calls if c["schema"] is RiskAssessment]
+    assert len(view_calls) == 3  # aggressive / conservative / neutral, isolated
+    assert all(c["model"] == "sonnet" for c in view_calls)
+    assert len(synth_calls) == 1 and synth_calls[0]["model"] == "opus"
+    prompts = " ".join(c["prompt"].upper() for c in view_calls)
+    assert "AGGRESSIVE" in prompts and "CONSERVATIVE" in prompts and "NEUTRAL" in prompts

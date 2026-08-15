@@ -1,0 +1,17 @@
+{
+  "downside_stress_scenarios": ["ACME receives a CRL and RIVAL fails to pop on a class-wide re-rating"],
+  "hedge_correlation_estimate": 0.6,
+  "correlation_source": "cointegration engle_granger",
+  "liquidity_check": "both names trade >1M shares/day — fillable at our size",
+  "event_vol_estimate": 0.7,
+  "aggressive_view": "size up; the inverse hedge holds on this catalyst",
+  "conservative_view": "the hedge is fragile; keep the position tiny",
+  "neutral_view": "size for survival and carry the validated hedge",
+  "residual_risks": ["sector-wide negative read-through could sink both legs together"],
+  "conditional_payoff_matrix": {},
+  "conditional_worst": 0.0,
+  "hedge": null,
+  "hedge_valid": false,
+  "recommended_size_pct": 0.0,
+  "ruin_at_size": 0.0
+}
