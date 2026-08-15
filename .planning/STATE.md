@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Completed 07-01-PLAN.md
-last_updated: "2026-08-15T23:21:35.510Z"
+stopped_at: Completed 07-02-PLAN.md
+last_updated: "2026-08-15T23:33:31.622Z"
 last_activity: 2026-08-15
 progress:
   total_phases: 15
   completed_phases: 9
   total_plans: 52
-  completed_plans: 48
+  completed_plans: 49
   percent: 0
 ---
 
@@ -26,7 +26,7 @@ See: .planning/PROJECT.md (updated 2026-08-14)
 ## Current Position
 
 Phase: 07 (verifier-guardrails-backtest-harness) — EXECUTING
-Plan: 2 of 5
+Plan: 3 of 5
 Status: Ready to execute
 Last activity: 2026-08-15
 
@@ -99,6 +99,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 06.8 P02 | 9min | 2 tasks | 2 files |
 | Phase 06.8 P03 | 14min | 2 tasks | 2 files |
 | Phase 07 P01 | 6min | 2 tasks tasks | 4 files files |
+| Phase 07 P02 | 8min | 3 tasks tasks | 7 files files |
 
 ## Accumulated Context
 
@@ -186,6 +187,8 @@ Recent decisions affecting current work:
 - [Phase 06.8]: Stage-2 is ONE run_structured(model=haiku) pass per woken name reusing diligence.ALLOWED_TOOLS + build_quant_server, Python-built analog context, structural cite-or-drop; no_opportunity stored-not-routed; catalyst-precedence suppresses bare-F1 on catalyst names
 - [Phase 06.8]: to_weekly_flag projects a routed OpportunityFlag to WeeklyFlag(flag_type=qual) gap-not-answer (verification_needed off the wire); routes via the existing 6.7 reconcile incoming_flags seam with ZERO md.py change; no code path from a flag to a Candidate
 - [Phase 07]: Baseline metrics (max_drawdown/win_rate/avg_win_loss/hedge_effectiveness) are numpy-only ToolResult mirrors of sharpe/sortino: empty/NaN/length-mismatch raise, value=None on undefined ratio/no-down-days (never inf), leading -100% wipeout guarded from 0/0 NaN; wired into the QUANT-03 library-wide inputs-snapshot invariant
+- [Phase 07]: BACK-01 event set is point-in-time + survivorship-free: universe/bars read only through the shipped <= as_of guards, and catalysts through tradeable_catalysts THEN a mandatory last_verified_at <= effective_asof post-filter (the verification look-ahead the status-only store does not guard); build_event_set catalyst window is a tunable hold_days horizon (default 7 = one-week hold)
+- [Phase 07]: BACK-04 fill is pessimistic: a held-through binary fills at the gap-open far side worsened by slippage, provably NOT the SL (a stop is jumped by the gap); skip only halted/delisted/zero-vol/zero-quote, volume caps ignored; effective_asof shifts the as_of back per data class (days, missing class raises) making data-latency look-ahead impossible
 
 ### Pending Todos
 
@@ -199,6 +202,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-08-15T23:21:28.234Z
-Stopped at: Completed 07-01-PLAN.md
+Last session: 2026-08-15T23:33:23.544Z
+Stopped at: Completed 07-02-PLAN.md
 Resume file: None
