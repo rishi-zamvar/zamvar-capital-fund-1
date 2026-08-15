@@ -53,7 +53,7 @@ def valid_debate_verdict() -> dict:
 def valid_trade_proposal() -> dict:
     return {
         "target_long": "XYZ",
-        "hedge_long": "ABC",
+        "hedge": valid_hedge(),
         "pair_rationale": "direct competitor on the same indication",
         "entry": 12.50,
         "exit_by_date": "2026-09-01",
@@ -62,6 +62,11 @@ def valid_trade_proposal() -> dict:
         "size_pct": 1.0,
         "expected_return_pct": 1.2,
         "kb_analogs": ["playbook_pdufa_01"],
+        "holds_through_catalyst": True,
+        "catalyst_id": "cat_2026_001",
+        "direction": "positive",
+        "estimate_vetting": valid_estimate_vetting(),
+        "sl_advisory": True,
     }
 
 
@@ -76,6 +81,12 @@ def valid_risk_assessment() -> dict:
         "conservative_view": "size down",
         "neutral_view": "size as planned",
         "residual_risks": ["gap risk overnight"],
+        "conditional_payoff_matrix": {"target_down_peer_up": -0.35},
+        "conditional_worst": -0.35,
+        "hedge": valid_hedge(),
+        "hedge_valid": True,
+        "recommended_size_pct": 0.8,
+        "ruin_at_size": 0.01,
     }
 
 
@@ -91,6 +102,11 @@ def valid_strategy_dossier() -> dict:
         "verdict_summary": "hedged pair fits the book",
         "dissent_log": ["bear: crowding risk"],
         "all_evidence_refs": ["ev_ct_001"],
+        "residual_net_long": 0.6,
+        "which_risk_covered": "idiosyncratic",
+        "position_memo": "own the readout, hedged by the direct competitor",
+        "pre_mortem": ["assume it lost: the hedge co-moved on a class-wide selloff"],
+        "kill_criteria": ["drug misses primary endpoint p>0.05"],
     }
 
 
@@ -326,3 +342,56 @@ def test_estimate_vetting_extra_field_rejected():
     payload["fake"] = 1
     with pytest.raises(ValidationError):
         EstimateVetting.model_validate(payload)
+
+
+# --- Extended TradeProposal / RiskAssessment / StrategyDossier (Workflow-1b) --------
+
+
+def test_trade_proposal_carries_validated_hedge_object():
+    obj = TradeProposal.model_validate(valid_trade_proposal())
+    assert isinstance(obj.hedge, Hedge)
+    assert obj.estimate_vetting.verdict == "endorse"
+    assert obj.direction == "positive"
+
+
+def test_trade_proposal_none_hedge_is_the_fallback_path():
+    payload = valid_trade_proposal()
+    payload["hedge"] = None  # HEDGE-04 fallback: no valid inverse peer
+    obj = TradeProposal.model_validate(payload)
+    assert obj.hedge is None
+
+
+def test_trade_proposal_old_hedge_long_key_rejected():
+    payload = valid_trade_proposal()
+    payload["hedge_long"] = "ABC"  # the removed field
+    with pytest.raises(ValidationError):
+        TradeProposal.model_validate(payload)
+
+
+def test_risk_assessment_carries_hedge_object():
+    obj = RiskAssessment.model_validate(valid_risk_assessment())
+    assert isinstance(obj.hedge, Hedge)  # the OBJECT, not merely hedge_valid (BLOCKER-1)
+    assert obj.hedge_valid is True
+    assert obj.recommended_size_pct == 0.8
+
+
+def test_risk_assessment_none_hedge_round_trips():
+    payload = valid_risk_assessment()
+    payload["hedge"] = None
+    payload["hedge_valid"] = False
+    obj = RiskAssessment.model_validate(payload)
+    assert obj.hedge is None and obj.hedge_valid is False
+
+
+def test_strategy_dossier_carries_workflow_1b_fields():
+    obj = StrategyDossier.model_validate(valid_strategy_dossier())
+    assert obj.which_risk_covered == "idiosyncratic"
+    assert obj.residual_net_long == 0.6
+    assert obj.pre_mortem and obj.position_memo
+
+
+def test_strategy_dossier_empty_kill_criteria_rejected():
+    payload = valid_strategy_dossier()
+    payload["kill_criteria"] = []
+    with pytest.raises(ValidationError):
+        StrategyDossier.model_validate(payload)

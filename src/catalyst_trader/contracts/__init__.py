@@ -116,15 +116,20 @@ class EstimateVetting(BaseModel):
 class TradeProposal(BaseModel):
     model_config = ConfigDict(extra="forbid")
     target_long: str
-    hedge_long: str
+    hedge: Hedge | None  # None => fallback (size-tiny / exit-before-event), HEDGE-04
     pair_rationale: str
     entry: float
     exit_by_date: str
-    stop_loss: float
-    take_profit: float
+    stop_loss: float  # ADVISORY when sl_advisory is True (held-through gap risk, PITFALLS #2)
+    take_profit: float  # ADVISORY when sl_advisory is True
     size_pct: float
     expected_return_pct: float
     kb_analogs: list[str] = []
+    holds_through_catalyst: bool  # False = exit-before-event default (HEDGE-04)
+    catalyst_id: str
+    direction: Literal["positive", "negative"]  # carried from DebateVerdict
+    estimate_vetting: EstimateVetting  # §7 — endorse required before promote
+    sl_advisory: bool  # True whenever holds_through_catalyst (mirrors sl_tp_levels advisory)
 
 
 class RiskAssessment(BaseModel):
@@ -138,6 +143,12 @@ class RiskAssessment(BaseModel):
     conservative_view: str
     neutral_view: str
     residual_risks: list[str] = []
+    conditional_payoff_matrix: dict  # quant.conditional_payoff detail.matrix (HEDGE-02)
+    conditional_worst: float  # un-netted worst cell sized against
+    hedge: Hedge | None  # the ACTUAL validated Hedge object (or None) — 05-07 reconciles it onto the promoted TradeProposal (BLOCKER-1); the OBJECT, not just a bool
+    hedge_valid: bool  # mirror = (hedge is not None and hedge.validated) — inverse held THIS catalyst? (HEDGE-01/04)
+    recommended_size_pct: float  # from size_for_survival — the quant number, not the LLM's
+    ruin_at_size: float  # risk_of_ruin at the chosen size (audit)
 
 
 class PortfolioContext(BaseModel):
@@ -155,6 +166,20 @@ class StrategyDossier(BaseModel):
     verdict_summary: str
     dissent_log: list[str] = []
     all_evidence_refs: list[str] = []
+    residual_net_long: float  # exposure().detail.net over the promoted book (HEDGE-05)
+    which_risk_covered: Literal["idiosyncratic", "sector_beta", "none"]  # HEDGE-05
+    position_memo: str  # OPS-01 (authored separately, before the decision)
+    pre_mortem: list[str]  # OPS-02 ("assume it lost — why")
+    kill_criteria: list[str]  # carried from DebateVerdict, required non-empty
+
+    @field_validator("kill_criteria")
+    @classmethod
+    def _at_least_one_kill_criterion(cls, v: list[str]) -> list[str]:
+        if not v:
+            raise ValueError(
+                "a StrategyDossier must carry at least one kill/falsification criterion"
+            )
+        return v
 
 
 class DiligenceDossier(BaseModel):
