@@ -62,10 +62,19 @@ def test_larger_gap_never_increases_size():
     assert big_gap <= small_gap
 
 
-def test_no_size_clears_cap_returns_tiny_floor_not_error():
-    # brutal binary: high p_loss + big gap → no size clears the cap → tiny floor, never an exception
-    r = risk.size_for_survival(p_loss=0.95, gap=0.95, ruin_cap=0.001, per_event_cap=0.03)
+def test_no_size_clears_cap_returns_tiny_floor_not_error(monkeypatch):
+    # Defensive fallback: when NO size clears the ruin cap (every risk_of_ruin > cap),
+    # size_for_survival returns the tiny FLOOR, never raises. Stub risk_of_ruin so the
+    # branch is exercised without an expensive long-horizon DP.
+    from catalyst_trader.quant.result import ToolResult
+
+    def _ruinous(*a, **k):
+        return ToolResult(tool="risk_of_ruin", tool_version="1.0.0", inputs={}, value=0.99, detail={})
+
+    monkeypatch.setattr(risk, "risk_of_ruin", _ruinous)
+    r = risk.size_for_survival(p_loss=0.9, gap=0.9, ruin_cap=0.02)
     assert r.value == risk.FLOOR
+    assert r.detail["ruin_at_size"] == 0.99  # snapshot is the floor's (breaching) ruin
 
 
 def test_deterministic():
