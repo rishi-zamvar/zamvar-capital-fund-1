@@ -94,7 +94,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] 04-03-PLAN.md — Quant/KB tools as an in-process SDK MCP server (analysts interpret, never compute)
 - [x] 04-04-PLAN.md — Analyst layer: 4 dimension prompts + run_analyst → source-cited AnalystSignal (CALL-01)
 - [x] 04-05-PLAN.md — Bounded, isolated bull/bear debate + moderator → binary grounded verdict (CALL-02/03)
-- [ ] 04-06-PLAN.md — Fact-check verifier: deterministic source-quote-or-drop + gated semantic check (CALL-04)
+- [x] 04-06-PLAN.md — Fact-check verifier: deterministic source-quote-or-drop + gated semantic check (CALL-04)
 - [ ] 04-07-PLAN.md — run_desk orchestrator (concurrent analysts → debate → verifier) + .claude/agents role defs
 
 ### Phase 5: Trade Builder, Honest Hedge & Ruin-Avoidant Sizing (Workflow 1b/2)
