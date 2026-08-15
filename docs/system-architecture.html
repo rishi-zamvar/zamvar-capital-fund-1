@@ -1,0 +1,378 @@
+<title>Fund 1 Desk Architecture</title>
+<style>
+  :root{
+    --bg:#eceee8;--surface:#fff;--surface-2:#f4f6f0;--ink:#181b16;--muted:#5c625a;--faint:#949a8d;
+    --border:#d6dbcf;--border-strong:#c1c7b7;--accent:#8a6a12;--accent-bg:#f2ebd6;
+    --done:#1f7a4d;--done-bg:#e3f1e8;--warn:#b23b30;--warn-bg:#f6e4e2;--info:#2b6a93;--info-bg:#e1edf4;
+    --wf1:#2b6a93;--wf1-bg:#e1edf4;--wf2:#8a6a12;--wf2-bg:#f2ebd6;--wf3:#7a3ea0;--wf3-bg:#efe6f6;
+    --md:#b23b30;--md-bg:#f6e4e2;--scan:#1f7a4d;--scan-bg:#e3f1e8;--data:#5c625a;--data-bg:#eef0ea;
+    --mono:ui-monospace,"SF Mono","JetBrains Mono",Menlo,Consolas,monospace;
+    --sans:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+    --shadow:0 1px 2px rgba(20,25,18,.06),0 4px 16px rgba(20,25,18,.05);
+  }
+  @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+    --bg:#0f1210;--surface:#181c16;--surface-2:#20241d;--ink:#e9ece3;--muted:#9aa192;--faint:#6a7264;
+    --border:#2c322a;--border-strong:#3a4136;--accent:#d8b45a;--accent-bg:#2a2412;
+    --done:#4cc585;--done-bg:#14271c;--warn:#ef7365;--warn-bg:#2c1714;--info:#6bb3e6;--info-bg:#122430;
+    --wf1:#6bb3e6;--wf1-bg:#122430;--wf2:#d8b45a;--wf2-bg:#2a2412;--wf3:#b79cf0;--wf3-bg:#1e1830;
+    --md:#ef7365;--md-bg:#2c1714;--scan:#4cc585;--scan-bg:#14271c;--data:#9aa192;--data-bg:#1c201a;
+    --shadow:0 1px 2px rgba(0,0,0,.4),0 6px 18px rgba(0,0,0,.35);
+  }}
+  :root[data-theme="dark"]{
+    --bg:#0f1210;--surface:#181c16;--surface-2:#20241d;--ink:#e9ece3;--muted:#9aa192;--faint:#6a7264;
+    --border:#2c322a;--border-strong:#3a4136;--accent:#d8b45a;--accent-bg:#2a2412;
+    --done:#4cc585;--done-bg:#14271c;--warn:#ef7365;--warn-bg:#2c1714;--info:#6bb3e6;--info-bg:#122430;
+    --wf1:#6bb3e6;--wf1-bg:#122430;--wf2:#d8b45a;--wf2-bg:#2a2412;--wf3:#b79cf0;--wf3-bg:#1e1830;
+    --md:#ef7365;--md-bg:#2c1714;--scan:#4cc585;--scan-bg:#14271c;--data:#9aa192;--data-bg:#1c201a;
+    --shadow:0 1px 2px rgba(0,0,0,.4),0 6px 18px rgba(0,0,0,.35);
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);line-height:1.55}
+  .wrap{max-width:1040px;margin:0 auto;padding:38px 22px 80px}
+  .ey{font-family:var(--mono);font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:var(--accent);font-weight:600}
+  h1{font-family:var(--mono);font-size:clamp(26px,5vw,40px);margin:8px 0 6px;letter-spacing:-.015em}
+  .sub{color:var(--muted);font-size:15px;max-width:70ch}
+  .masthead{border-bottom:2px solid var(--ink);padding-bottom:20px;margin-bottom:26px}
+  h2{font-family:var(--mono);font-size:18px;margin:44px 0 6px;letter-spacing:-.01em;display:flex;align-items:center;gap:10px}
+  h2 .n{font-size:12px;color:var(--faint);font-weight:400}
+  .lede{color:var(--muted);font-size:14.5px;margin:0 0 16px;max-width:78ch}
+  h3{font-family:var(--mono);font-size:14px;margin:22px 0 8px;color:var(--ink)}
+  code{font-family:var(--mono);font-size:.86em;background:var(--surface-2);border:1px solid var(--border);border-radius:4px;padding:1px 5px}
+  /* state tiles */
+  .tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:12px;margin:18px 0 6px}
+  .tile{background:var(--surface);border:1px solid var(--border);border-radius:11px;padding:13px 15px;box-shadow:var(--shadow)}
+  .tile .k{font-family:var(--mono);font-size:10px;letter-spacing:.07em;text-transform:uppercase;color:var(--faint)}
+  .tile .v{font-family:var(--mono);font-size:26px;font-weight:700;margin-top:4px;letter-spacing:-.02em}
+  .tile .v small{font-size:14px;color:var(--muted);font-weight:400}
+  /* figure */
+  figure{margin:14px 0 6px;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:18px 16px 10px;box-shadow:var(--shadow);overflow-x:auto}
+  figure svg{display:block;max-width:100%;height:auto;color:var(--ink);margin:0 auto}
+  figcaption{font-family:var(--mono);font-size:11.5px;color:var(--faint);margin-top:10px;text-align:center}
+  /* svg element styles (theme-aware via tokens) */
+  .box{fill:var(--surface);stroke:var(--border-strong);stroke-width:1.5}
+  .lane{fill:var(--surface-2);stroke:var(--border);stroke-width:1}
+  .b-wf1{fill:var(--wf1-bg);stroke:var(--wf1);stroke-width:1.5}
+  .b-wf2{fill:var(--wf2-bg);stroke:var(--wf2);stroke-width:1.5}
+  .b-wf3{fill:var(--wf3-bg);stroke:var(--wf3);stroke-width:1.5}
+  .b-md{fill:var(--md-bg);stroke:var(--md);stroke-width:2}
+  .b-scan{fill:var(--scan-bg);stroke:var(--scan);stroke-width:1.5}
+  .b-data{fill:var(--data-bg);stroke:var(--border-strong);stroke-width:1.5}
+  .b-pending{fill:var(--surface);stroke:var(--faint);stroke-width:1.5;stroke-dasharray:5 3}
+  .t{fill:var(--ink);font-family:var(--mono);font-size:12px}
+  .t-sm{fill:var(--muted);font-family:var(--mono);font-size:10px}
+  .t-hd{fill:var(--ink);font-family:var(--mono);font-size:12.5px;font-weight:700}
+  .t-lane{fill:var(--faint);font-family:var(--mono);font-size:10px;letter-spacing:.12em;text-transform:uppercase}
+  .arw{stroke:var(--accent);stroke-width:1.6;fill:none}
+  .arw-g{stroke:var(--faint);stroke-width:1.3;fill:none;stroke-dasharray:4 3}
+  .albl{fill:var(--accent);font-family:var(--mono);font-size:10px}
+  .albl-g{fill:var(--faint);font-family:var(--mono);font-size:9.5px}
+  /* workflow cards */
+  .wfcard{background:var(--surface);border:1px solid var(--border);border-left-width:4px;border-radius:11px;padding:15px 17px;margin:12px 0;box-shadow:var(--shadow)}
+  .wfcard.w1{border-left-color:var(--wf1)} .wfcard.w2{border-left-color:var(--wf2)} .wfcard.w3{border-left-color:var(--wf3)}
+  .wfcard.wmd{border-left-color:var(--md)} .wfcard.wsc{border-left-color:var(--scan)} .wfcard.wrun{border-left-color:var(--accent)} .wfcard.wmon{border-left-color:var(--faint)}
+  .wfcard .top{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin-bottom:8px}
+  .wfcard h4{font-family:var(--mono);font-size:15px;margin:0}
+  .wfcard .file{font-family:var(--mono);font-size:11px;color:var(--muted)}
+  .pill{font-family:var(--mono);font-size:9.5px;letter-spacing:.05em;text-transform:uppercase;padding:2px 8px;border-radius:20px;border:1px solid;white-space:nowrap}
+  .p-done{color:var(--done);border-color:var(--done);background:var(--done-bg)}
+  .p-plan{color:var(--accent);border-color:var(--accent);background:var(--accent-bg)}
+  .p-res{color:var(--info);border-color:var(--info);background:var(--info-bg)}
+  .p-def{color:var(--faint);border-color:var(--border-strong)}
+  .wfcard p{margin:6px 0;font-size:14px}
+  .wfcard .agents{font-family:var(--mono);font-size:11.5px;color:var(--muted);margin-top:8px;display:flex;flex-wrap:wrap;gap:6px}
+  .ag{background:var(--surface-2);border:1px solid var(--border);border-radius:5px;padding:2px 7px}
+  .ag.det{color:var(--done);border-color:var(--done)}
+  .io{font-family:var(--mono);font-size:11.5px;color:var(--faint);margin-top:8px}
+  .io b{color:var(--ink);font-weight:600}
+  /* research grid */
+  .rgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:10px;margin:10px 0}
+  .rcard{background:var(--surface);border:1px solid var(--border);border-radius:9px;padding:11px 13px}
+  .rcard .rt{font-family:var(--mono);font-size:12px;color:var(--ink);font-weight:600}
+  .rcard .rd{font-size:12px;color:var(--muted);margin-top:3px}
+  .rgroup{font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--accent);margin:16px 0 4px}
+  /* phase table */
+  table{width:100%;border-collapse:collapse;margin:10px 0;font-size:13.5px}
+  th,td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--border)}
+  th{font-family:var(--mono);font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:var(--faint)}
+  td.ph{font-family:var(--mono);color:var(--muted);white-space:nowrap}
+  .st{font-family:var(--mono);font-size:10px;padding:2px 8px;border-radius:20px;border:1px solid;white-space:nowrap}
+  .st-done{color:var(--done);border-color:var(--done);background:var(--done-bg)}
+  .st-prog{color:var(--accent);border-color:var(--accent);background:var(--accent-bg)}
+  .st-todo{color:var(--faint);border-color:var(--border-strong)}
+  .callout{background:var(--accent-bg);border:1px solid var(--accent);border-radius:10px;padding:14px 16px;margin:16px 0;font-size:14px}
+  .callout b{color:var(--accent)}
+  .legend{display:flex;flex-wrap:wrap;gap:14px;font-family:var(--mono);font-size:11px;color:var(--muted);margin:10px 0 0}
+  .legend span{display:inline-flex;align-items:center;gap:6px}
+  .sw{width:12px;height:12px;border-radius:3px;border:1px solid}
+  footer{margin-top:44px;padding-top:18px;border-top:1px solid var(--border);font-family:var(--mono);font-size:11.5px;color:var(--faint)}
+</style>
+
+<div class="wrap">
+  <div class="masthead">
+    <div class="ey">zamvar capital · fund 1 · state of the system</div>
+    <h1>Fund 1 Desk Architecture</h1>
+    <p class="sub">Every agentic workflow, what calls what, how a trading week actually runs, the research corpus behind it, and where the build stands — as of 2026-08-15.</p>
+    <div class="tiles">
+      <div class="tile"><div class="k">Agentic workflows</div><div class="v">7</div></div>
+      <div class="tile"><div class="k">Live now</div><div class="v" style="color:var(--done)">4<small> shipped</small></div></div>
+      <div class="tile"><div class="k">Phases</div><div class="v">6.5<small>/14</small></div></div>
+      <div class="tile"><div class="k">Tests</div><div class="v">731</div></div>
+      <div class="tile"><div class="k">Deterministic tools</div><div class="v">30+</div></div>
+      <div class="tile"><div class="k">Research docs</div><div class="v">14</div></div>
+    </div>
+  </div>
+
+  <!-- ============ THE ORGANIZING IDEA ============ -->
+  <h2>The organizing idea <span class="n">how to read everything below</span></h2>
+  <p class="lede">The desk is a hedge fund modeled in software. <b>Analysts and desks propose; deterministic tools compute; the MD decides; you (the LP) are bothered only on a genuine blocker.</b> Agents never do money arithmetic — every number comes from a tested tool. Nothing is claimed without a cited source. And a second desk vets every trade blind to the first desk's thesis.</p>
+  <div class="callout"><b>Two speeds, one firm.</b> Heavy Opus/Sonnet reasoning runs once per catalyst and once per week (the deciding). Cheap Haiku reasoning runs constantly by exception — the weekly company scan and the intra-week monitor only "wake up" when deterministic rules flag a real change. That keeps it both smart and cheap.</p>
+
+  <!-- ============ SYSTEM LAYERS ============ -->
+  <h2>The system in layers <span class="n">foundation → workflows → decision → you</span></h2>
+  <p class="lede">Everything rests on a verified-data + provenance foundation. The agentic workflows sit on top and only ever call the deterministic tools below them. The MD sits above all workflows; you sit above the MD.</p>
+  <figure>
+    <svg viewBox="0 0 900 470" role="img" aria-label="Layered architecture: data and knowledge-base foundation, deterministic quant tools, three main agentic workflows, the MD decision hub, and the LP human gate on top.">
+      <!-- Layer 6: LP -->
+      <rect class="b-md" x="330" y="14" width="240" height="40" rx="9"/>
+      <text class="t-hd" x="450" y="33" text-anchor="middle">YOU — the LP (human gate)</text>
+      <text class="t-sm" x="450" y="47" text-anchor="middle">approves live trades · escalated only on a genuine blocker</text>
+      <line class="arw" x1="450" y1="54" x2="450" y2="72"/><polygon points="450,80 446,72 454,72" fill="var(--accent)"/>
+      <!-- Layer 5: MD -->
+      <rect class="b-md" x="250" y="80" width="400" height="46" rx="9"/>
+      <text class="t-hd" x="450" y="100" text-anchor="middle">MD / GP — decision hub &amp; flag router</text>
+      <text class="t-sm" x="450" y="116" text-anchor="middle">reconciles all workflows · bounded loop · routes every flag · Phase 6.7</text>
+      <line class="arw" x1="450" y1="126" x2="450" y2="150"/><polygon points="450,158 446,150 454,150" fill="var(--accent)"/>
+      <text class="albl" x="458" y="145">proposals up ↑ / re-triggers down ↓</text>
+      <!-- Layer 4: workflows -->
+      <text class="t-lane" x="30" y="182">Agentic workflows</text>
+      <rect class="b-wf1" x="30" y="190" width="200" height="70" rx="9"/>
+      <text class="t-hd" x="130" y="212" text-anchor="middle">Workflow 1</text>
+      <text class="t-sm" x="130" y="228" text-anchor="middle">Catalyst Call</text>
+      <text class="t-sm" x="130" y="243" text-anchor="middle">4 analysts + bull/bear</text>
+      <text class="t-sm" x="130" y="255" text-anchor="middle">→ directional verdict</text>
+      <rect class="b-wf2" x="245" y="190" width="200" height="70" rx="9"/>
+      <text class="t-hd" x="345" y="212" text-anchor="middle">Workflow 2</text>
+      <text class="t-sm" x="345" y="228" text-anchor="middle">Portfolio Construction</text>
+      <text class="t-sm" x="345" y="243" text-anchor="middle">build + risk cmte + PM</text>
+      <text class="t-sm" x="345" y="255" text-anchor="middle">→ StrategyDossier</text>
+      <rect class="b-wf3" x="460" y="190" width="200" height="70" rx="9"/>
+      <text class="t-hd" x="560" y="212" text-anchor="middle">Workflow 3</text>
+      <text class="t-sm" x="560" y="228" text-anchor="middle">Independent Diligence</text>
+      <text class="t-sm" x="560" y="243" text-anchor="middle">firewalled · 8 dims</text>
+      <text class="t-sm" x="560" y="255" text-anchor="middle">→ GO / NO-GO</text>
+      <rect class="b-scan" x="675" y="190" width="195" height="70" rx="9"/>
+      <text class="t-hd" x="772" y="209" text-anchor="middle">Weekly Scan +</text>
+      <text class="t-hd" x="772" y="224" text-anchor="middle">Intra-week Monitor</text>
+      <text class="t-sm" x="772" y="240" text-anchor="middle">Haiku, by exception</text>
+      <text class="t-sm" x="772" y="253" text-anchor="middle">6.8 · 8.5</text>
+      <!-- arrows workflows to tools -->
+      <line class="arw" x1="450" y1="264" x2="450" y2="286"/><polygon points="450,294 446,286 454,286" fill="var(--accent)"/>
+      <text class="albl" x="458" y="281">call tools ↓ (agents never do math)</text>
+      <!-- Layer 3: deterministic tools -->
+      <rect class="b-data" x="30" y="296" width="840" height="58" rx="9"/>
+      <text class="t-lane" x="46" y="314">Deterministic quant tools — tested, reproducible, agents interpret the output</text>
+      <text class="t-sm" x="46" y="333">rNPV · cash-runway · risk-of-ruin / Kelly · cap-safe sizing · cointegration · corr/β · conditional-payoff</text>
+      <text class="t-sm" x="46" y="347">implied-move · IV-crush · catalyst-move-estimate · log-growth hold/exit · adaptive SL/TP · select_book · Sharpe/attribution · weekly base-rates</text>
+      <line class="arw" x1="450" y1="354" x2="450" y2="376"/><polygon points="450,384 446,376 454,376" fill="var(--accent)"/>
+      <!-- Layer 2: KB -->
+      <rect class="b-data" x="30" y="386" width="410" height="58" rx="9"/>
+      <text class="t-lane" x="46" y="404">Knowledge base (graph + vectors)</text>
+      <text class="t-sm" x="46" y="422">playbooks · past outcomes · analogs · hedge pairs</text>
+      <text class="t-sm" x="46" y="436">every claim CITES a source · confidence-versioned</text>
+      <!-- Layer 1: data -->
+      <rect class="b-data" x="460" y="386" width="410" height="58" rx="9"/>
+      <text class="t-lane" x="476" y="404">Verified data feed</text>
+      <text class="t-sm" x="476" y="422">ClinicalTrials.gov · FMP · CBOE IV · FINRA · EDGAR</text>
+      <text class="t-sm" x="476" y="436">two-source-verified catalyst dates · point-in-time price bars</text>
+    </svg>
+    <figcaption>Money-critical foundations were hardened first (bottom-up); agent cleverness only runs on top of verified data + tested tools.</figcaption>
+  </figure>
+  <div class="legend">
+    <span><span class="sw" style="background:var(--wf1-bg);border-color:var(--wf1)"></span>Workflow 1</span>
+    <span><span class="sw" style="background:var(--wf2-bg);border-color:var(--wf2)"></span>Workflow 2</span>
+    <span><span class="sw" style="background:var(--wf3-bg);border-color:var(--wf3)"></span>Workflow 3</span>
+    <span><span class="sw" style="background:var(--md-bg);border-color:var(--md)"></span>MD / LP</span>
+    <span><span class="sw" style="background:var(--scan-bg);border-color:var(--scan)"></span>Haiku (by exception)</span>
+    <span><span class="sw" style="background:var(--data-bg);border-color:var(--border-strong)"></span>Deterministic / data</span>
+  </div>
+
+  <!-- ============ THE 7 WORKFLOWS ============ -->
+  <h2>The 7 agentic workflows <span class="n">4 shipped · 1 planned · 1 researching · 1 deferred</span></h2>
+  <p class="lede">A "workflow" is a group of LLM agents that reason together toward one output. Inside each, green chips are <b>deterministic</b> (a tested tool, no LLM); the rest are agent roles.</p>
+
+  <div class="wfcard w1">
+    <div class="top"><h4>1 · Catalyst Call</h4><span class="file">desk/orchestrator.py → run_desk</span><span class="pill p-done">shipped · phase 4</span></div>
+    <p>For a flagged catalyst, produce a binary yes/no directional verdict with calibrated confidence + explicit kill criteria. Pure prediction — no sizing.</p>
+    <div class="agents"><span class="ag">clinical analyst</span><span class="ag">regulatory analyst</span><span class="ag">financial analyst</span><span class="ag">market analyst</span><span class="ag">bull researcher</span><span class="ag">bear researcher</span><span class="ag">debate moderator</span><span class="ag">fact-check verifier</span></div>
+    <div class="io"><b>in:</b> {ticker, catalyst} &nbsp;·&nbsp; <b>out:</b> DebateVerdict (direction + confidence + kill criteria) &nbsp;·&nbsp; bull &amp; bear run in isolated context; every claim quote-or-drop</div>
+  </div>
+
+  <div class="wfcard w2">
+    <div class="top"><h4>2 · Portfolio Construction</h4><span class="file">desk/orchestrator.py → run_portfolio</span><span class="pill p-done">shipped · phase 5 + 6.5</span></div>
+    <p>Turn the week's calls into ONE recommended book: build each trade, honestly validate/select the hedge, size for survival toward the 1% target, run the risk committee, PM promotes or kills.</p>
+    <div class="agents"><span class="ag">trade builder</span><span class="ag">estimate-vetting gate</span><span class="ag">risk: aggressive</span><span class="ag">risk: conservative</span><span class="ag">risk: neutral</span><span class="ag">PM / promote-kill</span><span class="ag">memo author</span><span class="ag">pre-mortem author</span><span class="ag det">size_for_survival</span><span class="ag det">select_book</span></div>
+    <div class="io"><b>in:</b> DebateVerdicts + week budget &nbsp;·&nbsp; <b>out:</b> StrategyDossier &nbsp;·&nbsp; sizing = clamp(target, floor, <b>survival cap</b>) — cap never crossed; author ≠ approver</div>
+  </div>
+
+  <div class="wfcard w3">
+    <div class="top"><h4>3 · Independent Diligence (firewalled)</h4><span class="file">desk/diligence.py → run_diligence</span><span class="pill p-done">shipped · phase 6</span></div>
+    <p>A structurally isolated second desk that tries to KILL the trade from raw sources. It can only see <code>{ticker, catalyst, pair}</code> — passing it Workflow-1/2 reasoning is a type error. A single failing money dimension forces NO-GO.</p>
+    <div class="agents"><span class="ag">trial-stats</span><span class="ag">regulatory</span><span class="ag">financials/runway</span><span class="ag">ownership/flow</span><span class="ag">options-implied</span><span class="ag">hedge re-validate</span><span class="ag">liquidity</span><span class="ag">historical analog</span><span class="ag det">synthesize_verdict</span></div>
+    <div class="io"><b>in:</b> DiligenceInput (sealed) &nbsp;·&nbsp; <b>out:</b> DiligenceDossier {go/no-go, evidence, residual risks} &nbsp;·&nbsp; verdict is deterministic; LLM writes narrative only</div>
+  </div>
+
+  <div class="wfcard wrun">
+    <div class="top"><h4>4 · Weekly Runner</h4><span class="file">desk/weekly.py → run_weekly</span><span class="pill p-done">shipped · phase 6.5</span></div>
+    <p>The weekly cadence conductor. Scans every name, shortlists, runs the desk, assembles the book toward ~1% within survival caps, and guarantees a never-empty book (defensive/cash-like on a weak week).</p>
+    <div class="agents"><span class="ag det">thesis_scan (every name)</span><span class="ag det">classify_drop</span><span class="ag det">weekly_base_rate</span><span class="ag">shortlist desk pass</span><span class="ag det">defensive-book fallback</span></div>
+    <div class="io"><b>in:</b> universe + week anchor &nbsp;·&nbsp; <b>out:</b> the week's StrategyDossier + recorded per-leg outcomes (for learning) &nbsp;·&nbsp; NO zero-trade weeks</div>
+  </div>
+
+  <div class="wfcard wmd">
+    <div class="top"><h4>5 · MD / GP Reconciliation Loop &amp; Router</h4><span class="file">desk/md.py → reconcile</span><span class="pill p-plan">planned · phase 6.7 (in build)</span></div>
+    <p>The decision hub. Every workflow proposes UP to the MD with a full decision packet. The MD reviews, and if it spots a gap re-triggers Workflow 1 or 2 with the <i>missing info</i> (never the answer) — a bounded loop (cap 3, oscillation → pass). Also the router for every flag. Escalates to you only on a genuine blocker.</p>
+    <div class="agents"><span class="ag">MD judgment</span><span class="ag det">cross_check sheet</span><span class="ag det">RetriggerFlag (gap-not-answer type)</span><span class="ag det">blocker-file escalation</span></div>
+    <div class="io"><b>in:</b> DD dossier + any flag &nbsp;·&nbsp; <b>out:</b> MDDecision + reconciled dossier &nbsp;·&nbsp; firewall preserved (DD stays blind); caveats → LP</div>
+  </div>
+
+  <div class="wfcard wsc">
+    <div class="top"><h4>6 · Weekly Company-Vetting Scanner</h4><span class="file">Haiku DD-replica (new)</span><span class="pill p-res">researching · phase 6.8</span></div>
+    <p>A cheap Haiku replica of Workflow 3, but vetting each COMPANY <i>forward</i> for the week instead of a trade. Two stages: deterministic flaggers (from data we have) detect real week-over-week changes → only flagged names get a Haiku analyst once-over with full KB/playbook access to find what's worth exploring.</p>
+    <div class="agents"><span class="ag det">deterministic flaggers</span><span class="ag det">company card + Δ vs last week</span><span class="ag">Haiku analyst once-over</span><span class="ag det">KB/playbook lookup</span></div>
+    <div class="io"><b>in:</b> universe + last week's cards &nbsp;·&nbsp; <b>out:</b> opportunity flags → MD → verification → weekly portfolio &nbsp;·&nbsp; monitor-by-exception keeps it near-free</div>
+  </div>
+
+  <div class="wfcard wmon">
+    <div class="top"><h4>7 · Intra-Week Position Monitor</h4><span class="file">Haiku, event-triggered</span><span class="pill p-def">deferred · phase 8.5</span></div>
+    <p>Watches open positions through the week. Deterministic monitors (halts, stop-proximity, ATR moves, news, filings) fire → a light Haiku agent decides defend-only (trim/exit) → proposes UP to the MD. Never places orders. ~$0.70/week.</p>
+    <div class="agents"><span class="ag det">8 deterministic triggers</span><span class="ag">Haiku defend agent</span><span class="ag det">anti-whipsaw (cooldowns)</span></div>
+    <div class="io"><b>in:</b> open book + live signals &nbsp;·&nbsp; <b>out:</b> defend proposal → MD &nbsp;·&nbsp; build deferred until the paper ledger exists to monitor</div>
+  </div>
+
+  <!-- ============ THE WEEKLY CYCLE ============ -->
+  <h2>How a trading week runs <span class="n">what gets called, in order</span></h2>
+  <p class="lede">This is the money loop. It runs once a week end-to-end, with the intra-week monitor watching the held book in between. Read it top to bottom.</p>
+  <figure>
+    <svg viewBox="0 0 900 720" role="img" aria-label="The weekly cycle from Friday scan through building the book, diligence, MD reconciliation, the human gate, holding and monitoring the week, exit, and feeding outcomes to the learning loop.">
+      <defs><marker id="ah" markerWidth="9" markerHeight="9" refX="7" refY="4" orient="auto"><polygon points="0,0 8,4 0,8" fill="var(--accent)"/></marker></defs>
+      <!-- 0 trigger -->
+      <rect class="b-data" x="300" y="12" width="300" height="40" rx="9"/>
+      <text class="t-hd" x="450" y="30" text-anchor="middle">① Friday close — weekly cycle fires</text>
+      <text class="t-sm" x="450" y="45" text-anchor="middle">+ any catalyst landing 1–2 days out triggers Workflow 1 directly</text>
+      <line class="arw" x1="450" y1="52" x2="450" y2="74" marker-end="url(#ah)"/>
+      <!-- 1 scan + thesis -->
+      <rect class="b-scan" x="60" y="76" width="360" height="66" rx="9"/>
+      <text class="t-hd" x="240" y="98" text-anchor="middle">② Weekly Company Scan (Haiku, by exception)</text>
+      <text class="t-sm" x="240" y="115" text-anchor="middle">deterministic flaggers on every name → Δ vs last week</text>
+      <text class="t-sm" x="240" y="130" text-anchor="middle">flagged names → analyst once-over → opportunity flags</text>
+      <rect class="b-wf2" x="480" y="76" width="360" height="66" rx="9"/>
+      <text class="t-hd" x="660" y="98" text-anchor="middle">③ Thesis scan (deterministic)</text>
+      <text class="t-sm" x="660" y="115" text-anchor="middle">every name: catalyst / mean-reversion / continuation</text>
+      <text class="t-sm" x="660" y="130" text-anchor="middle">measured base-rate edge · −15% falling-knife veto</text>
+      <line class="arw" x1="240" y1="142" x2="240" y2="168" marker-end="url(#ah)"/>
+      <line class="arw" x1="660" y1="142" x2="660" y2="168" marker-end="url(#ah)"/>
+      <!-- 2 WF1 -->
+      <rect class="b-wf1" x="60" y="170" width="780" height="58" rx="9"/>
+      <text class="t-hd" x="450" y="192" text-anchor="middle">④ Workflow 1 — Catalyst Call &nbsp;·&nbsp; opportunities + catalyst names get a directional verdict</text>
+      <text class="t-sm" x="450" y="210" text-anchor="middle">4 analysts (cite tools + KB) → bull vs bear debate → binary verdict + confidence + kill criteria</text>
+      <line class="arw" x1="450" y1="228" x2="450" y2="252" marker-end="url(#ah)"/>
+      <text class="albl" x="458" y="245">verdicts →</text>
+      <!-- 3 WF2 -->
+      <rect class="b-wf2" x="60" y="254" width="780" height="70" rx="9"/>
+      <text class="t-hd" x="450" y="276" text-anchor="middle">⑤ Workflow 2 — Portfolio Construction</text>
+      <text class="t-sm" x="450" y="294" text-anchor="middle">trade builder → estimate vetting → 3-way risk committee sizes toward 1% within the survival cap</text>
+      <text class="t-sm" x="450" y="309" text-anchor="middle">select_book (sleeve cap protects catalyst legs) → PM promote/kill → StrategyDossier</text>
+      <line class="arw" x1="450" y1="324" x2="450" y2="348" marker-end="url(#ah)"/>
+      <text class="albl" x="458" y="341">proposed book →</text>
+      <!-- 4 WF3 -->
+      <rect class="b-wf3" x="60" y="350" width="780" height="58" rx="9"/>
+      <text class="t-hd" x="450" y="372" text-anchor="middle">⑥ Workflow 3 — Independent Diligence (firewalled)</text>
+      <text class="t-sm" x="450" y="390" text-anchor="middle">blind to the thesis · 8 raw-source dimensions → deterministic GO / NO-GO + residual risks</text>
+      <line class="arw" x1="450" y1="408" x2="450" y2="432" marker-end="url(#ah)"/>
+      <!-- 5 MD loop -->
+      <rect class="b-md" x="60" y="434" width="780" height="74" rx="9"/>
+      <text class="t-hd" x="450" y="456" text-anchor="middle">⑦ MD / GP Reconciliation Loop &nbsp;·&nbsp; the decision</text>
+      <text class="t-sm" x="450" y="474" text-anchor="middle">reviews call + book + DD. Gap? re-trigger WF1/WF2 with the MISSING INFO (not the answer) — bounded, cap 3.</text>
+      <text class="t-sm" x="450" y="490" text-anchor="middle">converge → decide. Also routes weekly-scan opportunity flags to verification. Residual caveats noted.</text>
+      <!-- loop-back arrow -->
+      <path class="arw-g" d="M 60 471 C 20 471 20 283 56 283" marker-end="url(#ah)"/>
+      <text class="albl-g" x="8" y="380" transform="rotate(-90 8 380)">re-trigger loop (≤3)</text>
+      <line class="arw" x1="450" y1="508" x2="450" y2="532" marker-end="url(#ah)"/>
+      <!-- 6 human gate -->
+      <rect class="b-md" x="250" y="534" width="400" height="56" rx="9"/>
+      <text class="t-hd" x="450" y="556" text-anchor="middle">⑧ You (LP) — review / approve</text>
+      <text class="t-sm" x="450" y="574" text-anchor="middle">MD escalates only a genuine blocker (→ monitor banner). Live trades need your confirm.</text>
+      <line class="arw" x1="450" y1="590" x2="450" y2="614" marker-end="url(#ah)"/>
+      <!-- 7 hold + monitor -->
+      <rect class="b-scan" x="60" y="616" width="780" height="56" rx="9"/>
+      <text class="t-hd" x="450" y="638" text-anchor="middle">⑨ Hold ~1 week — Intra-Week Monitor watches (Haiku, by exception)</text>
+      <text class="t-sm" x="450" y="656" text-anchor="middle">deterministic triggers → defend-only proposals → MD. Exit at week end.</text>
+      <line class="arw" x1="450" y1="672" x2="450" y2="694" marker-end="url(#ah)"/>
+      <!-- 8 learn -->
+      <rect class="b-data" x="230" y="696" width="440" height="22" rx="7"/>
+      <text class="t-sm" x="450" y="711" text-anchor="middle">⑩ Realized outcomes recorded → learning loop reweights assumptions (Phase 10) → next week smarter</text>
+    </svg>
+    <figcaption>One week, end to end. Steps ②–③ and the intra-week monitor are cheap Haiku-by-exception; ④–⑦ are the heavy deciding. The MD loop can send work back before anything reaches you.</figcaption>
+  </figure>
+
+  <!-- ============ WHAT CALLS WHAT / WHEN ============ -->
+  <h2>What gets called when <span class="n">the triggers</span></h2>
+  <table>
+    <tr><th>Trigger</th><th>Cadence</th><th>What fires</th></tr>
+    <tr><td class="ph">Weekly cycle</td><td>Once/week (Fri close)</td><td>Scan → thesis → Workflow 1 → 2 → 3 → MD loop → dossier → hold → exit</td></tr>
+    <tr><td class="ph">Catalyst T-2</td><td>Event-driven</td><td>A verified catalyst 1–2 days out triggers Workflow 1 directly, then feeds the book</td></tr>
+    <tr><td class="ph">Company scan</td><td>Weekly, by exception</td><td>Deterministic flaggers on all names; Haiku analyst only on a material Δ</td></tr>
+    <tr><td class="ph">Intra-week monitor</td><td>Continuous, by exception</td><td>Halts/stops/moves/news/filings → Haiku defend proposal → MD</td></tr>
+    <tr><td class="ph">MD escalation</td><td>Rare</td><td>Genuine blocker → writes the monitor blocker banner → you</td></tr>
+    <tr><td class="ph">Learning loop</td><td>After outcomes resolve</td><td>Score prediction vs reality → propose config/playbook diffs (gated) — Phase 10</td></tr>
+  </table>
+
+  <!-- ============ RESEARCH CORPUS ============ -->
+  <h2>The research corpus <span class="n">14 documents grounding the design</span></h2>
+  <p class="lede">Every non-obvious design choice traces to a research doc. Two kinds: project-scaffolding (settled early) and investigative (the market/edge/data studies that shaped the strategy). All in <code>.planning/research/</code>.</p>
+
+  <div class="rgroup">Investigative — market, edge &amp; data studies</div>
+  <div class="rgrid">
+    <div class="rcard"><div class="rt">pair-correlations</div><div class="rd">77-ticker inverse-hedge study — proved clean long-only stock hedges are rare (drove survival-first design).</div></div>
+    <div class="rcard"><div class="rt">disease-competitor-pairs</div><div class="rd">Disease-by-disease hedge pairs; found CYTK↔EWTX (the 2nd IONS/BBIO) + confirmed anti-hedges.</div></div>
+    <div class="rcard"><div class="rt">inverse-instruments</div><div class="rd">Long-only ways to get short exposure — LABD/RWM/TZA menu + UTHR↔LQDA; nothing replaces a put.</div></div>
+    <div class="rcard"><div class="rt">single-leg-microstructure</div><div class="rd">Model-derived 1-week construction: move estimator, log-growth hold/exit, adaptive SL/TP.</div></div>
+    <div class="rcard"><div class="rt">weekly-thesis-engine</div><div class="rd">Measured the bounce edge (~+1%, −15% falling-knife veto); defensive-book resolution for weak weeks.</div></div>
+    <div class="rcard"><div class="rt">free-data-sources</div><div class="rd">Closed the options-IV gap FREE via CBOE JSON; FINRA/EDGAR/RTTNews stack.</div></div>
+    <div class="rcard"><div class="rt">intra-week-monitoring</div><div class="rd">Monitor-by-exception, 8 triggers, anti-whipsaw, ~$0.70/week on Haiku.</div></div>
+    <div class="rcard"><div class="rt">md-reconciliation-loop</div><div class="rd">How real ICs run bounded review; cap=3, gap-not-answer, oscillation→pass.</div></div>
+    <div class="rcard"><div class="rt">weekly-company-scanner</div><div class="rd">In progress — the Haiku DD-replica structure + week-over-week deltas + low-token design.</div></div>
+    <div class="rcard"><div class="rt">universe-candidates</div><div class="rd">Criteria + candidate ~20-name biotech universe for curation.</div></div>
+  </div>
+  <div class="rgroup">Project scaffolding — settled early</div>
+  <div class="rgrid">
+    <div class="rcard"><div class="rt">STACK</div><div class="rd">Tech choices: Robinhood official MCP, Claude Agent SDK, SQLite+sqlite-vec, FMP/CT.gov.</div></div>
+    <div class="rcard"><div class="rt">ARCHITECTURE</div><div class="rd">The three-pipeline agent-desk architecture + provenance spine.</div></div>
+    <div class="rcard"><div class="rt">FEATURES</div><div class="rd">Feature landscape + the fork-vs-build decisions (TradingAgents debate).</div></div>
+    <div class="rcard"><div class="rt">PITFALLS + SUMMARY</div><div class="rd">Known failure modes (look-ahead, gap risk, memorization leak) + synthesis.</div></div>
+  </div>
+
+  <!-- ============ PHASE STATE ============ -->
+  <h2>Build state <span class="n">6.5 of 14 phases complete</span></h2>
+  <table>
+    <tr><th>Phase</th><th>What</th><th>Status</th></tr>
+    <tr><td class="ph">1</td><td>Data integrity &amp; catalyst feed</td><td><span class="st st-done">complete</span></td></tr>
+    <tr><td class="ph">2</td><td>Contracts + knowledge-base skeleton</td><td><span class="st st-done">complete</span></td></tr>
+    <tr><td class="ph">3</td><td>Quant tool library + rubric &amp; base-rates</td><td><span class="st st-done">complete</span></td></tr>
+    <tr><td class="ph">4</td><td>Analyst desk + bull/bear debate (WF1)</td><td><span class="st st-done">complete</span></td></tr>
+    <tr><td class="ph">5</td><td>Trade builder, honest hedge, ruin-avoidant sizing (WF2)</td><td><span class="st st-done">complete</span></td></tr>
+    <tr><td class="ph">6</td><td>Independent diligence firewall (WF3)</td><td><span class="st st-done">complete</span></td></tr>
+    <tr><td class="ph">6.5</td><td>Weekly strategy correction (sizing + no-zero-trade + thesis engine)</td><td><span class="st st-done">complete</span></td></tr>
+    <tr><td class="ph">6.7</td><td>MD / GP reconciliation loop &amp; router</td><td><span class="st st-prog">in build</span></td></tr>
+    <tr><td class="ph">6.8</td><td>Weekly company-vetting scanner (Haiku DD-replica)</td><td><span class="st st-prog">researching</span></td></tr>
+    <tr><td class="ph">7</td><td>Verifier/guardrails + backtest harness</td><td><span class="st st-todo">planned</span></td></tr>
+    <tr><td class="ph">8</td><td>Paper ledger, attribution &amp; post-mortem</td><td><span class="st st-todo">planned</span></td></tr>
+    <tr><td class="ph">8.5</td><td>Intra-week position monitor</td><td><span class="st st-todo">deferred</span></td></tr>
+    <tr><td class="ph">9</td><td>iOS dashboard + approval gate</td><td><span class="st st-todo">planned</span></td></tr>
+    <tr><td class="ph">10</td><td>Continuous-iteration (learning) loop</td><td><span class="st st-todo">planned</span></td></tr>
+    <tr><td class="ph">11</td><td>Robinhood MCP live execution (strictly last)</td><td><span class="st st-todo">planned</span></td></tr>
+  </table>
+  <div class="callout"><b>Where you are:</b> the three core desks (predict → build → vet) are built and tested. Being wired now: the MD brain that reconciles them and the cheap weekly scanner that feeds them. Still ahead: honest backtest → paper trading → your iOS dashboard → the learning loop → and only then, live money behind your gate.</div>
+
+  <footer>Fund 1 · system architecture · generated 2026-08-15 · 731 tests green · analysts propose · tools compute · the MD decides · you hold the gate</footer>
+</div>
