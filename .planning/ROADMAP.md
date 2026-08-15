@@ -89,7 +89,7 @@ Decimal phases appear between their surrounding integers in numeric order.
   3. The verdict is binary (positive vs. negative catalyst) with calibrated confidence and explicit falsification/kill criteria, and contains no sizing or positioning
   4. A fact-check verifier enforces source-quote-or-drop on every claim before the verdict is finalized
 **Plans**: 7 plans (3 waves)
-- [ ] 04-01-PLAN.md — Extend DebateVerdict: binary direction + required kill_criteria (CALL-03 contract)
+- [x] 04-01-PLAN.md — Extend DebateVerdict: binary direction + required kill_criteria (CALL-03 contract)
 - [ ] 04-02-PLAN.md — Async foundation: claude-agent-sdk + run_structured() SDK seam + evidence_ref mint/resolve + fixture harness
 - [ ] 04-03-PLAN.md — Quant/KB tools as an in-process SDK MCP server (analysts interpret, never compute)
 - [ ] 04-04-PLAN.md — Analyst layer: 4 dimension prompts + run_analyst → source-cited AnalystSignal (CALL-01)

@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Completed 03-08-PLAN.md
-last_updated: "2026-08-15T02:40:13.820Z"
+stopped_at: Completed 04-01-PLAN.md
+last_updated: "2026-08-15T03:13:47.705Z"
 last_activity: 2026-08-15
 progress:
   total_phases: 11
   completed_phases: 3
-  total_plans: 18
-  completed_plans: 18
+  total_plans: 25
+  completed_plans: 19
   percent: 0
 ---
 
@@ -21,12 +21,12 @@ progress:
 See: .planning/PROJECT.md (updated 2026-08-14)
 
 **Core value:** Given an imminent biotech catalyst, produce a data-backed, portfolio-aware, hedged one-week trade recommendation the user can trust enough to approve — and get measurably better at it every week.
-**Current focus:** Phase 3 — Quant Tool Library + Rubric & Base-Rates
+**Current focus:** Phase 4 — Analyst Desk + Bull/Bear Debate (Workflow 1a)
 
 ## Current Position
 
-Phase: 4
-Plan: Not started
+Phase: 4 (Analyst Desk + Bull/Bear Debate (Workflow 1a)) — EXECUTING
+Plan: 2 of 7
 Status: Ready to execute
 Last activity: 2026-08-15
 
@@ -69,6 +69,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 03 P06 | 4min | 2 tasks tasks | 2 files files |
 | Phase 03-quant-tool-library-rubric-base-rates P07 | 4min | 3 tasks | 6 files |
 | Phase 03-quant-tool-library-rubric-base-rates P08 | 12min | 2 tasks tasks | 3 files files |
+| Phase 04-analyst-desk-bull-bear-debate-workflow-1a P01 | 4min | 1 task tasks | 2 files files |
 
 ## Accumulated Context
 
@@ -107,6 +108,7 @@ Recent decisions affecting current work:
 - [Phase 03]: load_weights rejects any weight outside [0,1] (not just Σ≈1) — a learning-loop rewrite with a negative/>1 weight could score nonsensically even when the row sums to 1.0 (plan-checker addendum)
 - [Phase 03]: base_rate raises on both zero matches (unknown key) and multiple matches (ambiguous) — no silent None, no arbitrary first-row pick; caller narrows phase/indication (FRAME-03)
 - [Phase 03]: Quant library exposes one public import surface (catalyst_trader.quant); a single parametrized test enforces inputs==kwargs reproducibility across every tool (QUANT-03) — pipeline_value stays submodule-only since its snapshot is derived, not verbatim
+- [Phase 04-analyst-desk-bull-bear-debate-workflow-1a]: DebateVerdict.direction is a binary Literal[positive,negative] + required non-empty kill_criteria — CALL-03 binary-verdict + falsification criteria enforced at the pydantic boundary
 
 ### Pending Todos
 
@@ -120,6 +122,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-08-15T02:35:55.712Z
-Stopped at: Completed 03-08-PLAN.md
+Last session: 2026-08-15T03:13:41.974Z
+Stopped at: Completed 04-01-PLAN.md
 Resume file: None
