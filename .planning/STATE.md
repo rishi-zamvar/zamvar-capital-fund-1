@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: executing
-stopped_at: Completed 06.8-02-PLAN.md
-last_updated: "2026-08-15T22:14:56.324Z"
+status: verifying
+stopped_at: Completed 06.8-03-PLAN.md
+last_updated: "2026-08-15T22:27:51.174Z"
 last_activity: 2026-08-15
 progress:
   total_phases: 15
-  completed_phases: 8
+  completed_phases: 9
   total_plans: 47
-  completed_plans: 46
+  completed_plans: 47
   percent: 0
 ---
 
@@ -27,7 +27,7 @@ See: .planning/PROJECT.md (updated 2026-08-14)
 
 Phase: 06.8 (weekly-company-vetting-scanner-haiku-dd-replica) — EXECUTING
 Plan: 3 of 3
-Status: Ready to execute
+Status: Phase complete — ready for verification
 Last activity: 2026-08-15
 
 Progress: [░░░░░░░░░░] 0%
@@ -97,6 +97,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 06.7 P04 | 7min | 3 tasks tasks | 2 files files |
 | Phase 06.8 P01 | 6min | 2 tasks | 4 files |
 | Phase 06.8 P02 | 9min | 2 tasks | 2 files |
+| Phase 06.8 P03 | 14min | 2 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -180,6 +181,9 @@ Recent decisions affecting current work:
 - [Phase 06.7]: General flag router (RECON-08/WEEK-06): incoming_flags from any source act (→ RetriggerFlag through the same cascade machinery, gap-only) or log (logged_flags, never forced); oscillation (repeated evidence_ref) → forced PASS; escalate-only atomic .monitor/blocker.json write; lp_summary generated verbatim from the record. run_weekly + DD firewall untouched
 - [Phase 06.8]: company_card/scan_flag store one JSON TEXT column read point-in-time (week_end <= as_of, mirrors bars_asof); ScanInput/OpportunityFlag extra=forbid make a desk-artifact leak a ValidationError; OpportunityFlag reuses KeyFinding and has NO direction/size/target (gap-not-answer)
 - [Phase 06.8]: Stage-1 scanner: SCAN_PARAMS is the single missing-key-raising threshold source (no numeric literals in flag bodies); build_card recomputes no quant number (embeds thesis_scan row verbatim, proven by monkeypatch-to-raise); delta_card is pure F1-F13 transition-not-level with per-band latching, hysteresis re-arm at half threshold, F6/F8 cadence-gated to a fresh datum; _wakes wakes on any PRINCIPAL or >=2 CORROBORATOR
+- [Phase 06.8]: run_scan persists each card AFTER delta_card mutates fired (card_asof = sole cross-week latch memory) so a flag latched at T does not re-fire at T+1 — SCAN-02 replayability, regression-tested
+- [Phase 06.8]: Stage-2 is ONE run_structured(model=haiku) pass per woken name reusing diligence.ALLOWED_TOOLS + build_quant_server, Python-built analog context, structural cite-or-drop; no_opportunity stored-not-routed; catalyst-precedence suppresses bare-F1 on catalyst names
+- [Phase 06.8]: to_weekly_flag projects a routed OpportunityFlag to WeeklyFlag(flag_type=qual) gap-not-answer (verification_needed off the wire); routes via the existing 6.7 reconcile incoming_flags seam with ZERO md.py change; no code path from a flag to a Candidate
 
 ### Pending Todos
 
@@ -193,6 +197,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-08-15T22:14:49.628Z
-Stopped at: Completed 06.8-02-PLAN.md
+Last session: 2026-08-15T22:27:41.056Z
+Stopped at: Completed 06.8-03-PLAN.md
 Resume file: None

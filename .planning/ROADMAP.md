@@ -181,7 +181,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 **Plans**: 3 plans (3 waves)
 - [x] 06.8-01-PLAN.md — Foundations: migration 006 company_card/scan_flag store + ScanInput/OpportunityFlag contracts (Wave 1)
 - [x] 06.8-02-PLAN.md — Deterministic Stage-1: SCAN_PARAMS + build_card (no-recompute) + delta_card (F1-F13 transitions, latching/hysteresis/tier gate) (Wave 2)
-- [ ] 06.8-03-PLAN.md — Stage-2 Haiku once-over (one pass, cite-or-drop) + to_weekly_flag routing to the MD (zero md.py change) (Wave 3)
+- [x] 06.8-03-PLAN.md — Stage-2 Haiku once-over (one pass, cite-or-drop) + to_weekly_flag routing to the MD (zero md.py change) (Wave 3)
 
 ### Phase 7: Verifier/Guardrails + Backtest Harness
 **Goal**: Prove the strategy honestly against history and stand up the runtime safety gates before any capital — real or simulated — is at stake.
