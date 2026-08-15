@@ -1,0 +1,16 @@
+{
+  "dimension": "regulatory",
+  "ticker": "ACME",
+  "catalyst_id": "cat-001",
+  "score": 0.2,
+  "confidence": 0.5,
+  "key_findings": [
+    {
+      "claim": "Comparable PDUFA decisions in this therapeutic class cleared without an AdCom.",
+      "evidence_ref": "tool:query_playbooks#9f8e7d",
+      "source_url": null
+    }
+  ],
+  "kb_analogs_queried": ["tool:analog_query#c0ffee"],
+  "unknowns": ["no public CRL history for this sponsor", "label-scope negotiations opaque"]
+}

@@ -1,0 +1,21 @@
+{
+  "dimension": "clinical",
+  "ticker": "ACME",
+  "catalyst_id": "cat-001",
+  "score": 0.55,
+  "confidence": 0.62,
+  "key_findings": [
+    {
+      "claim": "Phase 3 LoA for this indication/phase pair is materially above the oncology mean.",
+      "evidence_ref": "tool:base_rate#a1b2c3",
+      "source_url": null
+    },
+    {
+      "claim": "Two structurally similar prior readouts hit their primary endpoint.",
+      "evidence_ref": "tool:analog_query#d4e5f6",
+      "source_url": null
+    }
+  ],
+  "kb_analogs_queried": ["tool:analog_query#d4e5f6"],
+  "unknowns": ["secondary-endpoint durability not yet reported", "blinding integrity unverified"]
+}

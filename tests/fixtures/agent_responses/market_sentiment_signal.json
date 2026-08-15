@@ -1,0 +1,16 @@
+{
+  "dimension": "market_sentiment",
+  "ticker": "ACME",
+  "catalyst_id": "cat-001",
+  "score": 0.35,
+  "confidence": 0.45,
+  "key_findings": [
+    {
+      "claim": "Options-implied event move exceeds the historical realized move for analog catalysts.",
+      "evidence_ref": "tool:implied_move#55cc66",
+      "source_url": null
+    }
+  ],
+  "kb_analogs_queried": ["tool:analog_query#77dd88"],
+  "unknowns": ["short-interest data lags two weeks", "retail-flow direction unquantified"]
+}

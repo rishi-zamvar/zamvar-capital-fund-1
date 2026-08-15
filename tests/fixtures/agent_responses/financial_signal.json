@@ -1,0 +1,21 @@
+{
+  "dimension": "financial",
+  "ticker": "ACME",
+  "catalyst_id": "cat-001",
+  "score": -0.15,
+  "confidence": 0.58,
+  "key_findings": [
+    {
+      "claim": "Cash runway extends past the catalyst but not through the following readout.",
+      "evidence_ref": "tool:cash_runway#11aa22",
+      "source_url": null
+    },
+    {
+      "claim": "rNPV of the lead asset is sensitive to the discount rate assumption.",
+      "evidence_ref": "tool:rnpv#33bb44",
+      "source_url": null
+    }
+  ],
+  "kb_analogs_queried": [],
+  "unknowns": ["dilution timing after the event is unknown", "burn rate guidance stale one quarter"]
+}
