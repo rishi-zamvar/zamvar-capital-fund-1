@@ -11,16 +11,29 @@ critical, OPS-04 exhaustive edges): flip exactly one thing, assert exactly that 
 and `clean is False`; the all-consistent baseline is `clean is True`.
 """
 
+import pytest
+
 from catalyst_trader.contracts import (
     DebateVerdict,
     DiligenceDossier,
     EstimateVetting,
     Hedge,
+    MDDecision,
     PortfolioContext,
+    ReconciliationRound,
+    RetriggerFlag,
     StrategyDossier,
     TradeProposal,
+    WeeklyFlag,
 )
-from catalyst_trader.desk.md import cross_check
+from catalyst_trader.desk import md as md_mod
+from catalyst_trader.desk.md import (
+    MDReview,
+    _gap_only,
+    _md_decide_prompt,
+    _md_review_prompt,
+    cross_check,
+)
 
 _UNSET = object()
 
@@ -227,3 +240,71 @@ def test_cross_check_all_clean_still_clean():
     assert out["dd_vs_risk_residuals"] == []
     assert out["sizing_vs_survival"] is False
     assert out["clean"] is True
+
+
+# ============================================================================
+# Plan 04 — reconcile loop + general flag router + escalation (RECON-01..08)
+# ============================================================================
+
+
+def _rf(target="catalyst_call", finding="endpoint powered at 80% not the assumed 90%",
+        evidence_ref="kb:ev-1", why_material="lowers P(positive) into a smaller sizing bucket"):
+    return RetriggerFlag(target=target, finding=finding, evidence_ref=evidence_ref,
+                         why_material=why_material)
+
+
+def _wf(ticker="ACME", flag_type="quant", finding="short interest doubled week-over-week",
+        evidence_ref="tool:si#1", why_material="a crowded exit raises gap risk into the binary"):
+    return WeeklyFlag(ticker=ticker, flag_type=flag_type, finding=finding,
+                      evidence_ref=evidence_ref, why_material=why_material)
+
+
+# --- Task 1: gap-not-answer plumbing + MD prompt surfaces + MDReview ---
+
+
+def test_gap_only_carries_no_answer():
+    # The string is a PURE function of RetriggerFlag fields (no answer field exists on the
+    # contract) — so a verdict/direction/size cannot leak (RECON-06 firewall in code).
+    f = _rf()
+    s = _gap_only([f])
+    assert s == (
+        f"DD/flag surfaced: {f.finding} (evidence_ref {f.evidence_ref}). "
+        f"Material because: {f.why_material}"
+    )
+    assert f.finding in s and f.why_material in s and f.evidence_ref in s
+
+
+def test_gap_only_filters_by_target():
+    flags = [_rf(target="catalyst_call", finding="AAA endpoint"),
+             _rf(target="portfolio_build", finding="BBB sizing", evidence_ref="kb:ev-2")]
+    s = _gap_only(flags, "catalyst_call")
+    assert "AAA endpoint" in s and "BBB sizing" not in s
+    s2 = _gap_only(flags, "portfolio_build")
+    assert "BBB sizing" in s2 and "AAA endpoint" not in s2
+
+
+def test_md_review_prompt_includes_packet_sheet_and_incoming_flags():
+    verdict, dossier, dd = _verdict(), _dossier(), _dd()
+    packet = {"verdict": verdict, "dossier": dossier, "dd": dd}
+    sheet = cross_check(verdict, dossier, dd, catalyst_id="cat-1", min_tradeable_size=0.01)
+    p = _md_review_prompt(packet, sheet, [_wf()])
+    assert verdict.thesis in p                       # packet artifacts referenced
+    assert dd.strongest_disconfirming_evidence in p
+    assert "short interest doubled" in p             # incoming WeeklyFlag surfaced (RECON-08)
+    assert "clean" in p.lower()                      # the cross_check sheet is embedded
+
+
+def test_md_decide_prompt_includes_rounds():
+    packet = {"verdict": _verdict(), "dossier": _dossier(), "dd": _dd()}
+    rnd = ReconciliationRound(round=1, response_delta="unmoved + rebuttal",
+                              convergence={"cross_check_clean": True}, cross_check={"clean": True},
+                              disposition="converged")
+    p = _md_decide_prompt(packet, [rnd])
+    assert "unmoved + rebuttal" in p
+
+
+def test_mdreview_model():
+    r = MDReview(satisfied=True, response_delta="no material change")
+    assert r.flags == [] and r.rerun_diligence is False
+    with pytest.raises(Exception):
+        MDReview(satisfied=True, response_delta="x", bogus=1)
