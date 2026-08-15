@@ -12,6 +12,7 @@ import json
 import types
 
 import pytest
+from pydantic import ValidationError
 
 from catalyst_trader.contracts import AnalystSignal
 from catalyst_trader.desk import analysts, runtime
@@ -33,7 +34,7 @@ CATALYST = {
 }
 
 
-def _fake_run_structured_returning(model, captured=None):
+def _fake_run_structured_returning(signal, captured=None):
     async def _fake(prompt, schema, *, mcp_servers=None, allowed_tools=None, model="sonnet"):
         if captured is not None:
             captured["prompt"] = prompt
@@ -41,7 +42,7 @@ def _fake_run_structured_returning(model, captured=None):
             captured["mcp_servers"] = mcp_servers
             captured["allowed_tools"] = allowed_tools
             captured["model"] = model
-        return model
+        return signal
 
     return _fake
 
@@ -94,5 +95,5 @@ async def test_uncited_finding_rejected(monkeypatch, load_fixture):
 
     monkeypatch.setattr(runtime, "query", _fake_query)
 
-    with pytest.raises(Exception):
+    with pytest.raises(ValidationError):  # the exact boundary error: >=1 sourced finding
         await analysts.run_analyst("clinical", CATALYST)
