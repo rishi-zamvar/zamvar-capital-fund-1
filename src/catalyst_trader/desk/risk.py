@@ -127,3 +127,121 @@ def validate_hedge(conn, embed, target, catalyst, entry, exit_by_date, analog_ga
         mechanism=cand["mechanism"],
         conditional_worst=cp.value,
     )
+
+
+class CommitteeView(BaseModel):
+    """One committee member's ARGUED inputs (not the size). Each member supplies its p_loss / gap
+    read and its hedge opinion with citations; the deterministic tools own every money number."""
+
+    model_config = ConfigDict(extra="forbid")
+    role: str
+    p_loss_estimate: float = Field(ge=0.0, le=1.0)
+    gap_estimate: float
+    hedge_opinion: str
+    rationale: str
+    evidence_refs: list[str] = []
+
+
+_ROLES = ("aggressive", "conservative", "neutral")
+
+
+def _committee_context(p_loss, gap, hedge_ticker, analog_gaps) -> str:
+    return (
+        f"Prior p_loss estimate: {p_loss:.2f}\n"
+        f"Prior gap (down-move) estimate: {gap:.2f}\n"
+        f"Candidate inverse-hedge peer: {hedge_ticker or 'NONE'}\n"
+        f"Analog gaps (target/peer, up/down): "
+        f"target_up={analog_gaps['target_up']:+.2f} target_down={analog_gaps['target_down']:+.2f} "
+        f"peer_up={analog_gaps['peer_up']:+.2f} peer_down={analog_gaps['peer_down']:+.2f}\n"
+    )
+
+
+def _committee_prompt(role: str, ctx: str) -> str:
+    return f"""You are the {role.upper()} member of a 3-way biotech Risk Committee (aggressive/conservative/neutral).
+Argue this catalyst's risk from the analogs below — reason in ISOLATION, not toward a consensus.
+
+SHARED EVIDENCE
+{ctx}
+Supply your ARGUED INPUTS in the CommitteeView:
+  - p_loss_estimate: your probability the target LOSES on this binary catalyst (cited to an analog/base rate).
+  - gap_estimate: your estimate of the down-move magnitude (the gap sizing sizes against).
+  - hedge_opinion: does the inverse peer reliably RISE when the target FALLS on THIS catalyst? Argue it.
+  - rationale + evidence_refs: cite every claim (tool:... / kb:...).
+Do NOT emit a position size, entry, stop, or take-profit — the size is computed deterministically downstream.
+"""
+
+
+def _synthesis_prompt(ctx: str, views: list[CommitteeView]) -> str:
+    argued = "\n".join(
+        f"[{v.role}] p_loss={v.p_loss_estimate:.2f} gap={v.gap_estimate:.2f} hedge: {v.hedge_opinion}"
+        for v in views
+    )
+    return f"""You are the RISK COMMITTEE CHAIR. Synthesize the three members' arguments into a RiskAssessment
+narrative: the downside stress scenarios, liquidity, event-vol, each member's view, and residual risks.
+
+SHARED EVIDENCE
+{ctx}
+COMMITTEE ARGUMENTS
+{argued}
+
+Emit the narrative fields ONLY. The recommended_size_pct, conditional_payoff_matrix, conditional_worst,
+hedge, hedge_valid, and ruin_at_size are computed by deterministic tools and will OVERWRITE whatever you
+put there — never let a number you write become the trade size or the hedge.
+"""
+
+
+async def assess(
+    conn,
+    embed,
+    proposal,
+    catalyst,
+    *,
+    p_loss: float,
+    gap: float,
+    analog_gaps: dict,
+    prices: dict,
+    entry: str | None = None,
+    exit_by_date: str | None = None,
+    ruin_cap: float = 0.02,
+    per_event_cap: float = 0.03,
+) -> RiskAssessment:
+    """The 3-way Risk Committee: three isolated `run_structured` views (sonnet) then an opus synthesis,
+    mirroring `debate.py`'s flat fan-out over the one seam. The committee INTERPRETS; the money numbers
+    are DETERMINISTIC and overwrite anything the LLM emits:
+      - recommended_size_pct = size_for_survival(...).value (never an LLM number),
+      - conditional_payoff_matrix / conditional_worst = conditional_payoff(...),
+      - hedge = validate_hedge(...) called EXACTLY ONCE, threaded onto BOTH hedge (the object) and
+        hedge_valid (BLOCKER-1),
+      - ruin_at_size = risk_of_ruin at the chosen size.
+    Fully offline under test — every LLM call routes through run_structured.
+    """
+    entry = entry or catalyst["event_date"]
+    exit_by_date = exit_by_date or proposal.exit_by_date
+
+    ctx = _committee_context(p_loss, gap, proposal.target_long, analog_gaps)
+    views = [
+        await run_structured(_committee_prompt(role, ctx), CommitteeView, model="sonnet")
+        for role in _ROLES
+    ]
+
+    # Deterministic money + hedge — the committee can never inject any of these.
+    size_res = size_for_survival(p_loss, gap, ruin_cap, per_event_cap)
+    cp = conditional_payoff(
+        analog_gaps["target_up"], analog_gaps["target_down"],
+        analog_gaps["peer_up"], analog_gaps["peer_down"],
+        analog_gaps["w_target"], analog_gaps["w_peer"],
+    )
+    hedge_obj = validate_hedge(
+        conn, embed, proposal.target_long, catalyst, entry, exit_by_date, analog_gaps, prices
+    )  # called ONCE (BLOCKER-1)
+    hedge_valid = hedge_obj is not None and hedge_obj.validated
+
+    synthesis = await run_structured(_synthesis_prompt(ctx, views), RiskAssessment, model="opus")
+    return synthesis.model_copy(update={
+        "recommended_size_pct": size_res.value,
+        "conditional_payoff_matrix": cp.detail["matrix"],
+        "conditional_worst": cp.value,
+        "hedge": hedge_obj,
+        "hedge_valid": hedge_valid,
+        "ruin_at_size": size_res.detail["ruin_at_size"],
+    })
