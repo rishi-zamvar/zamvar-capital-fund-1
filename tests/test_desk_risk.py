@@ -81,3 +81,123 @@ def test_deterministic():
     a = risk.size_for_survival(p_loss=0.37, gap=0.70)
     b = risk.size_for_survival(p_loss=0.37, gap=0.70)
     assert a.value == b.value and a.detail == b.detail
+
+
+# ---------------------------------------------------------------------------
+# Task 2 — validate_hedge (honest per-catalyst inverse re-validation + fallback)
+# ---------------------------------------------------------------------------
+
+import numpy as np
+import pytest
+
+from catalyst_trader.contracts import Hedge
+from catalyst_trader.kb import EvidenceSource, insert_hedge_peer
+from catalyst_trader.models import (
+    Catalyst,
+    CatalystSource,
+    CatalystType,
+    DatePrecision,
+    SourceOrigin,
+    SourceType,
+    Status,
+    Uncertainty,
+)
+from catalyst_trader import store
+
+_EV = [EvidenceSource(url="https://sec.gov/10k", retrieved_at="2026-08-14", snippet_hash="h")]
+
+# Deterministic price series (rng seed 7): a cointegrated inverse peer + an independent walk.
+_RNG = np.random.default_rng(7)
+_TARGET_PX = list(100 + np.cumsum(_RNG.normal(0, 1, 60)))
+_PEER_COINT_PX = list(np.array(_TARGET_PX) + _RNG.normal(0, 0.5, 60))
+_PEER_NONCOINT_PX = list(100 + np.cumsum(_RNG.normal(0, 1, 60)))
+
+# Analog gaps where the inverse peer materially improves the worst case (payoff test passes).
+_GAPS_PASS = {
+    "target_up": 0.30, "target_down": -0.70,
+    "peer_up": 0.25, "peer_down": -0.10,
+    "w_target": 0.5, "w_peer": 0.5,
+}
+
+
+def _prices(peer_px):
+    return {"target": _TARGET_PX, "peer": peer_px}
+
+
+def _peer_catalyst(ticker, event_date):
+    return Catalyst(
+        ticker=ticker,
+        company_name=f"{ticker} Inc",
+        catalyst_type=CatalystType.pdufa,
+        event_date=event_date,
+        date_precision=DatePrecision.day,
+        uncertainty_type=Uncertainty.window,
+        status=Status.verified,
+        source_origin=SourceOrigin.curated_pdufa,
+        sources=[CatalystSource(
+            source_name="ClinicalTrials.gov", source_type=SourceType.primary,
+            reported_date=event_date, retrieved_at="2026-08-14T00:00:00Z",
+        )],
+    )
+
+
+CAT = {"ticker": "ACME", "event_date": "2026-11-15", "catalyst_id": "cat-1"}
+ENTRY, EXIT = "2026-11-14", "2026-11-22"
+
+
+def test_only_inverse_minus1_peer_is_a_candidate(db, embed):
+    # a +1 co-move peer is never an idiosyncratic hedge (HEDGE-01)
+    insert_hedge_peer(db, "ACME", "COMOV", "correlated long", +1, 0.8, _EV)
+    out = risk.validate_hedge(db, embed, "ACME", CAT, ENTRY, EXIT, _GAPS_PASS, _prices(_PEER_COINT_PX))
+    assert out is None
+
+
+def test_no_peer_at_all_returns_none(db, embed):
+    out = risk.validate_hedge(db, embed, "ACME", CAT, ENTRY, EXIT, _GAPS_PASS, _prices(_PEER_COINT_PX))
+    assert out is None
+
+
+def test_validated_inverse_hedge(db, embed):
+    insert_hedge_peer(db, "ACME", "RIVAL", "same-indication competitor", -1, 0.82, _EV)
+    out = risk.validate_hedge(db, embed, "ACME", CAT, ENTRY, EXIT, _GAPS_PASS, _prices(_PEER_COINT_PX))
+    assert isinstance(out, Hedge)
+    assert out.validated is True
+    assert out.payoff_direction == -1
+    assert out.covers == "idiosyncratic"
+    assert out.instrument == "equity_peer"
+    assert out.ticker == "RIVAL"
+
+
+def test_not_cointegrated_returns_none(db, embed):
+    insert_hedge_peer(db, "ACME", "RIVAL", "same-indication competitor", -1, 0.82, _EV)
+    out = risk.validate_hedge(db, embed, "ACME", CAT, ENTRY, EXIT, _GAPS_PASS, _prices(_PEER_NONCOINT_PX))
+    assert out is None  # cointegration is a necessary gate (PITFALLS #3)
+
+
+def test_payoff_test_failure_returns_none(db, embed):
+    insert_hedge_peer(db, "ACME", "RIVAL", "same-indication competitor", -1, 0.82, _EV)
+    gaps = {**_GAPS_PASS, "peer_down": 0.0}  # peer has no downside → payoff gate fails
+    out = risk.validate_hedge(db, embed, "ACME", CAT, ENTRY, EXIT, gaps, _prices(_PEER_COINT_PX))
+    assert out is None
+
+
+def test_catalyst_clean_disqualification(db, embed):
+    insert_hedge_peer(db, "ACME", "RIVAL", "same-indication competitor", -1, 0.82, _EV)
+    # RIVAL has its OWN catalyst inside our hold window → not catalyst-clean (HEDGE-03)
+    store.insert_catalyst(db, _peer_catalyst("RIVAL", "2026-11-18"))
+    out = risk.validate_hedge(db, embed, "ACME", CAT, ENTRY, EXIT, _GAPS_PASS, _prices(_PEER_COINT_PX))
+    assert out is None
+
+
+def test_peer_catalyst_outside_window_is_still_clean(db, embed):
+    insert_hedge_peer(db, "ACME", "RIVAL", "same-indication competitor", -1, 0.82, _EV)
+    store.insert_catalyst(db, _peer_catalyst("RIVAL", "2027-03-01"))  # far outside the hold
+    out = risk.validate_hedge(db, embed, "ACME", CAT, ENTRY, EXIT, _GAPS_PASS, _prices(_PEER_COINT_PX))
+    assert isinstance(out, Hedge) and out.validated is True
+
+
+def test_fake_idiosyncratic_hedge_is_unrepresentable():
+    # even if validate_hedge logic were bypassed, the contract refuses a fabricated hedge (HEDGE-01/04)
+    with pytest.raises(ValueError):
+        Hedge(instrument="equity_peer", ticker="RIVAL", payoff_direction=-1,
+              validated=False, covers="idiosyncratic", mechanism="x", conditional_worst=-0.4)
