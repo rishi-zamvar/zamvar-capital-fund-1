@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Completed 03-03-PLAN.md
-last_updated: "2026-08-15T02:09:40.986Z"
+stopped_at: Completed 03-04-PLAN.md
+last_updated: "2026-08-15T02:14:00.030Z"
 last_activity: 2026-08-15
 progress:
   total_phases: 11
   completed_phases: 2
   total_plans: 18
-  completed_plans: 13
+  completed_plans: 14
   percent: 0
 ---
 
@@ -26,7 +26,7 @@ See: .planning/PROJECT.md (updated 2026-08-14)
 ## Current Position
 
 Phase: 3 (Quant Tool Library + Rubric & Base-Rates) — EXECUTING
-Plan: 3 of 8
+Plan: 4 of 8
 Status: Ready to execute
 Last activity: 2026-08-15
 
@@ -64,6 +64,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 02-contracts-knowledge-base-skeleton P04 | 4min | 3 tasks tasks | 4 files files |
 | Phase 03 P02 | 5min | 2 tasks tasks | 1 file files |
 | Phase 03 P03 | 4min | 2 tasks tasks | 1 file files |
+| Phase 03 P04 | 6min | 2 tasks tasks | 1 file files |
 
 ## Accumulated Context
 
@@ -95,6 +96,7 @@ Recent decisions affecting current work:
 - [Phase 02]: Hedge relationship stored as a CITED hedge_peer node via insert_claim (nodes cite; edges cannot carry :CITES) + a HEDGE_PEER traversal edge; payoff_direction stored as explicit sign (+1/-1), polarity not hard-coded (KB-04)
 - [Phase 03]: risk_of_ruin has NO return-target parameter — structural guarantee sizing is never coupled to the 1%/week target (survival-first)
 - [Phase 03]: risk_of_ruin = bankroll recurrence (loss_length) + exact streak-probability DP over n_trades, deterministic (no Monte Carlo), reproducible + testable
+- [Phase 03]: cointegration delegates to statsmodels coint (Engle-Granger) + coint_johansen (Johansen trace); hedge ratio = OLS slope np.polyfit(price_b, price_a); conditional_payoff value = un-netted worst cell (PITFALLS #1 honest hedge)
 
 ### Pending Todos
 
@@ -108,6 +110,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-08-15T02:09:34.123Z
-Stopped at: Completed 03-03-PLAN.md
+Last session: 2026-08-15T02:13:52.838Z
+Stopped at: Completed 03-04-PLAN.md
 Resume file: None
