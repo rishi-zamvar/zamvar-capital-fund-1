@@ -44,10 +44,10 @@
 
 ### Workflow 1 — Catalyst Call (CALL)
 
-- [ ] **CALL-01**: Four analysts (Clinical, Regulatory, Financial, Market) produce structured, source-cited signals
+- [x] **CALL-01**: Four analysts (Clinical, Regulatory, Financial, Market) produce structured, source-cited signals
 - [ ] **CALL-02**: Bull and Bear researchers build opposing cases in real context isolation
 - [x] **CALL-03**: Debate manager runs bounded rounds and emits a binary directional verdict + calibrated confidence + explicit falsification/kill criteria
-- [ ] **CALL-04**: A fact-check verifier enforces source-quote-or-drop on every claim
+- [x] **CALL-04**: A fact-check verifier enforces source-quote-or-drop on every claim
 
 ### Workflow 2 — Portfolio Construction (PORT)
 
@@ -141,10 +141,10 @@
 | FRAME-02 | Phase 3 | Complete |
 | FRAME-03 | Phase 3 | Complete |
 | OPS-04 | Phase 3 | Complete |
-| CALL-01 | Phase 4 | Pending |
+| CALL-01 | Phase 4 | Complete |
 | CALL-02 | Phase 4 | Pending |
 | CALL-03 | Phase 4 | Complete |
-| CALL-04 | Phase 4 | Pending |
+| CALL-04 | Phase 4 | Complete |
 | PORT-01 | Phase 5 | Pending |
 | PORT-02 | Phase 5 | Pending |
 | PORT-03 | Phase 5 | Pending |

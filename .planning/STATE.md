@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Completed 04-01-PLAN.md
-last_updated: "2026-08-15T03:13:47.705Z"
+stopped_at: Completed 04-02-PLAN.md
+last_updated: "2026-08-15T03:20:29.524Z"
 last_activity: 2026-08-15
 progress:
   total_phases: 11
   completed_phases: 3
   total_plans: 25
-  completed_plans: 19
+  completed_plans: 20
   percent: 0
 ---
 
@@ -26,7 +26,7 @@ See: .planning/PROJECT.md (updated 2026-08-14)
 ## Current Position
 
 Phase: 4 (Analyst Desk + Bull/Bear Debate (Workflow 1a)) — EXECUTING
-Plan: 2 of 7
+Plan: 3 of 7
 Status: Ready to execute
 Last activity: 2026-08-15
 
@@ -70,6 +70,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 03-quant-tool-library-rubric-base-rates P07 | 4min | 3 tasks | 6 files |
 | Phase 03-quant-tool-library-rubric-base-rates P08 | 12min | 2 tasks tasks | 3 files files |
 | Phase 04-analyst-desk-bull-bear-debate-workflow-1a P01 | 4min | 1 task tasks | 2 files files |
+| Phase 04 P02 | 4min | 3 tasks tasks | 8 files files |
 
 ## Accumulated Context
 
@@ -109,6 +110,8 @@ Recent decisions affecting current work:
 - [Phase 03]: base_rate raises on both zero matches (unknown key) and multiple matches (ambiguous) — no silent None, no arbitrary first-row pick; caller narrows phase/indication (FRAME-03)
 - [Phase 03]: Quant library exposes one public import surface (catalyst_trader.quant); a single parametrized test enforces inputs==kwargs reproducibility across every tool (QUANT-03) — pipeline_value stays submodule-only since its snapshot is derived, not verbatim
 - [Phase 04-analyst-desk-bull-bear-debate-workflow-1a]: DebateVerdict.direction is a binary Literal[positive,negative] + required non-empty kill_criteria — CALL-03 binary-verdict + falsification criteria enforced at the pydantic boundary
+- [Phase 04]: evidence_ref format standardized: kb:<evidence_source_node_id> (resolves via kb.get_node, evidence_source-only) and tool:<tool_name>#<inputs_hash> (resolved-by-construction); resolves RESEARCH Open Q2 (CALL-04)
+- [Phase 04]: One SDK seam: desk.runtime.run_structured is the ONLY claude_agent_sdk touchpoint (output_format json_schema -> model_validate boundary); every agent test monkeypatches it -> zero live API in pytest
 
 ### Pending Todos
 
@@ -122,6 +125,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-08-15T03:13:41.974Z
-Stopped at: Completed 04-01-PLAN.md
+Last session: 2026-08-15T03:20:21.868Z
+Stopped at: Completed 04-02-PLAN.md
 Resume file: None
