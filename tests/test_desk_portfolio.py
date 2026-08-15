@@ -70,7 +70,7 @@ def test_select_book_heat_cap_drops_a_leg():
     cands = [_cand(0.5, 0.30), _cand(0.5, 0.30)]
     promoted, _ = select_book(cands, open_book=[], weekly_budget=1.0, heat_cap=0.3)
     assert len(promoted) == 1                        # [0.5] Herfindahl 0.25 ok; [0.5,0.5] 0.5 > cap
-    assert concentration([c.weight for c in promoted]).value <= 0.3
+    assert concentration([c.book_weight() for c in promoted]).value <= 0.3
 
 
 def test_select_book_zero_trade_when_nothing_clears_budget():
