@@ -77,7 +77,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] 03-05-PLAN.md — Options (implied-move/IV-crush) + Portfolio (concentration/exposure), TDD (Wave 2)
 - [x] 03-06-PLAN.md — Performance: Sharpe/Sortino/returns/attribution (explicit periods_per_year), TDD (Wave 2)
 - [x] 03-07-PLAN.md — Rubric (tunable JSON) + clinical base-rate table (cited CSV), TDD (Wave 2)
-- [ ] 03-08-PLAN.md — Wire import surface + library-wide inputs-snapshot invariant + coverage gate + phase report/TOKEN-NOTES (Wave 3)
+- [x] 03-08-PLAN.md — Wire import surface + library-wide inputs-snapshot invariant + coverage gate + phase report/TOKEN-NOTES (Wave 3)
 
 ### Phase 4: Analyst Desk + Bull/Bear Debate (Workflow 1a)
 **Goal**: For a flagged catalyst, produce a binary directional verdict with calibrated confidence and explicit kill criteria — pure prediction, no positioning.
