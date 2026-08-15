@@ -147,3 +147,51 @@ async def test_reject_raises_and_blocks_finalize(db, monkeypatch, load_fixture):
         await _call(db, holds_through_catalyst=True, sl_advisory=False)
     assert ei.value.vetting.verdict == "reject"
     assert ei.value.vetting.reasons  # audit trail populated
+
+
+# --- semantic stage + endorse path (Task 2) --------------------------------
+
+async def test_endorse_path(db, monkeypatch, load_fixture):
+    """A fully-cited, consistent estimate whose analogs the LLM judges comparable →
+    verdict='endorse'; all surviving input_refs retained; the judgment uses opus."""
+    calls = []
+    monkeypatch.setattr(verifier, "run_structured", _seam(calls, load_fixture("agent_responses/estimate_comparability")))
+    out = await _call(db)
+    assert out.verdict == "endorse"
+    assert not out.dropped_inputs
+    assert len(out.input_refs) == 3           # p_positive + implied_move + analogs
+    assert len(calls) == 1                     # one semantic call, on the analog survivors
+    assert calls[0]["model"] == "opus"
+
+
+async def test_off_type_comparability_reject(db, monkeypatch):
+    """Off-type / cherry-picked analogs (LLM judges comparable=false) → reject + raise,
+    even when the structural stage passed cleanly."""
+    calls = []
+    monkeypatch.setattr(
+        verifier, "run_structured",
+        _seam(calls, {"comparable": False, "reasons": ["Analogs are earnings moves, not PDUFA decisions — off-type."]}),
+    )
+    with pytest.raises(verifier.EstimateRejectedError) as ei:
+        await _call(db)
+    assert ei.value.vetting.verdict == "reject"
+    assert any("off-type" in r.lower() for r in ei.value.vetting.reasons)
+
+
+async def test_semantic_skipped_without_analogs(db, monkeypatch, load_fixture):
+    """No surviving analog input → no LLM spent; a structurally-clean estimate still
+    endorses (comparability only judges analog survivors)."""
+    calls = []
+    monkeypatch.setattr(verifier, "run_structured", _seam(calls, load_fixture("agent_responses/estimate_comparability")))
+    out = await _call(db, estimate_inputs=_inputs(with_analog=False))
+    assert out.verdict == "endorse"
+    assert calls == []                         # no analogs → no semantic call
+
+
+async def test_cold_start_carried_onto_endorse(db, monkeypatch, load_fixture):
+    """Cold-start widening from the structural stage is carried through onto the endorsed
+    EstimateVetting (not lost when the semantic stage passes)."""
+    monkeypatch.setattr(verifier, "run_structured", _seam([], load_fixture("agent_responses/estimate_comparability")))
+    out = await _call(db, n_analogs=1)
+    assert out.verdict == "endorse"
+    assert out.uncertainty_widened is True
