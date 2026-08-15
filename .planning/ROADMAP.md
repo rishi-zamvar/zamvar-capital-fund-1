@@ -145,7 +145,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 **Plans**: 4 plans (3 waves)
 - [x] 06.5-01-PLAN.md — Price-bars store (GATING) + weekly params row (Wave 1)
 - [x] 06.5-02-PLAN.md — Sizing target-within-survival-cap + no-zero-trade defensive select_book (Wave 1)
-- [ ] 06.5-03-PLAN.md — quant/weekly.py thesis engine: classify_drop + weekly_base_rate + thesis_scan (Wave 2)
+- [x] 06.5-03-PLAN.md — quant/weekly.py thesis engine: classify_drop + weekly_base_rate + thesis_scan (Wave 2)
 - [ ] 06.5-04-PLAN.md — Weekly runner (run_weekly) + run_portfolio target/defensive threading + WEEK-05 record seam (Wave 3)
 
 ### Phase 6.7: MD/GP Reconciliation Loop
