@@ -164,7 +164,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 **Plans**: 4 plans (2 waves)
 - [x] 06.7-01-PLAN.md — Contracts: RetriggerFlag + WeeklyFlag (gap-not-answer firewalls) + MDDecision + ReconciliationRound (Wave 1)
 - [x] 06.7-02-PLAN.md — extra_context re-trigger plumbing on debate.run/builder.build (+ orchestrator pass-through) with byte-for-byte no-regression; DD firewall untouched (Wave 1)
-- [ ] 06.7-03-PLAN.md — Deterministic no-LLM cross_check consistency sheet across WF-1/2/3 (Wave 1)
+- [x] 06.7-03-PLAN.md — Deterministic no-LLM cross_check consistency sheet across WF-1/2/3 (Wave 1)
 - [ ] 06.7-04-PLAN.md — reconcile bounded loop + general flag router (act-or-log, mock-tested) + escalation blocker-file + LP summary (Wave 2)
 
 ### Phase 6.8: Weekly Company-Vetting Scanner (Haiku DD-Replica)

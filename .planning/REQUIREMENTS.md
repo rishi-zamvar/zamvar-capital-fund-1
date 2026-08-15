@@ -72,7 +72,7 @@
 
 ### MD/GP Reconciliation Loop (RECON) — added 2026-08-15
 
-- [ ] **RECON-01**: The MD/GP sits above Workflow 1 (catalyst call), Workflow 2 (portfolio) and Workflow 3 (diligence). The DiligenceDossier feeds UP to the GP, who reviews the whole picture (call + portfolio + DD) — the GP is the one integration point that sees all three (this is the SAME head-of-firm persona as the Workflow-2 PM sign-off).
+- [x] **RECON-01**: The MD/GP sits above Workflow 1 (catalyst call), Workflow 2 (portfolio) and Workflow 3 (diligence). The DiligenceDossier feeds UP to the GP, who reviews the whole picture (call + portfolio + DD) — the GP is the one integration point that sees all three (this is the SAME head-of-firm persona as the Workflow-2 PM sign-off).
 - [x] **RECON-02**: If the GP flags an issue with the CATALYST CALL, he re-triggers the bull/bear debate (Workflow 1) with the specific key info DD surfaced that the debate left out; the re-run RE-REASONS (it is not handed the answer) → new verdict feeds forward into the portfolio builder.
 - [x] **RECON-03**: If the GP flags an issue with the PORTFOLIO BUILD, he sends it back to the portfolio builder (Workflow 2) with the key info that was left out; the new build feeds back to DD (Workflow 3) for a fresh independent pass.
 - [x] **RECON-04**: The loop is BOUNDED — iterate to a solid/converged outcome (DD clears + GP satisfied + no new material issue) or a HARD iteration cap (no infinite ping-pong). Every round is logged.
