@@ -44,6 +44,7 @@ def valid_debate_verdict() -> dict:
         "bear_strongest_point": "underpowered trial",
         "unresolved_dissent": ["endpoint interpretation"],
         "evidence_refs": ["ev_ct_001", "ev_10q_002"],
+        "kill_criteria": ["drug misses primary endpoint p>0.05"],
     }
 
 
@@ -185,3 +186,33 @@ def test_diligence_dossier_bad_verdict_rejected():
     payload["verdict"] = "perhaps"
     with pytest.raises(ValidationError):
         DiligenceDossier.model_validate(payload)
+
+
+# --- DebateVerdict: binary direction + explicit kill criteria (CALL-03) ------------
+
+
+def test_debate_verdict_direction_binary():
+    for good in ("positive", "negative"):
+        payload = valid_debate_verdict()
+        payload["direction"] = good
+        assert DebateVerdict.model_validate(payload).direction == good
+    for bad in ("neutral", "up"):
+        payload = valid_debate_verdict()
+        payload["direction"] = bad
+        with pytest.raises(ValidationError):
+            DebateVerdict.model_validate(payload)
+
+
+def test_debate_verdict_requires_kill_criteria():
+    payload = valid_debate_verdict()
+    payload["kill_criteria"] = []
+    with pytest.raises(ValidationError):
+        DebateVerdict.model_validate(payload)
+    payload["kill_criteria"] = ["drug misses primary endpoint p>0.05"]
+    assert DebateVerdict.model_validate(payload).kill_criteria
+
+
+def test_debate_verdict_valid_binary_with_kill_criteria():
+    obj = DebateVerdict.model_validate(valid_debate_verdict())
+    assert obj.direction in ("positive", "negative")
+    assert obj.kill_criteria
