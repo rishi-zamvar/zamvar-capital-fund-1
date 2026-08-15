@@ -103,6 +103,68 @@ def cumulative_return(returns: list[float]) -> ToolResult:
     )
 
 
+def max_drawdown(returns: list[float]) -> ToolResult:
+    """Worst peak-to-trough on the COMPOUNDED equity curve: min(equity/running_peak − 1) ≤ 0.
+
+    A −1.0 (−100%) period zeroes equity → drawdown −1.0, computed not crashed. The
+    `running_peak > 0` guard keeps a leading wipeout (peak == 0) from emitting 0/0 = NaN into a
+    risk number. Monotonic-up curve → 0.0. Raises on an empty series or any NaN.
+    """
+    r = _to_array(returns, min_len=1)
+    equity = np.cumprod(1.0 + r)
+    running_peak = np.maximum.accumulate(equity)
+    with np.errstate(invalid="ignore", divide="ignore"):  # 0/0 on a leading wipeout → guarded below
+        drawdown = np.where(running_peak > 0, equity / running_peak - 1.0, -1.0)
+    return ToolResult(
+        tool="max_drawdown",
+        tool_version=_VERSION,
+        inputs={"returns": list(returns)},
+        value=float(drawdown.min()),
+    )
+
+
+def win_rate(trade_returns: list[float]) -> ToolResult:
+    """Fraction of trades that MADE money: count(r > 0) / n. A flat 0.0 is NOT a win (strict >).
+
+    all-wins → 1.0; all-losses/all-flat → 0.0. Raises on an empty series or any NaN.
+    """
+    r = _to_array(trade_returns, min_len=1)
+    n_win = int((r > 0).sum())
+    return ToolResult(
+        tool="win_rate",
+        tool_version=_VERSION,
+        inputs={"trade_returns": list(trade_returns)},
+        value=float(n_win / len(r)),
+        detail={"n_win": n_win, "n_total": len(r)},
+    )
+
+
+def avg_win_loss(trade_returns: list[float]) -> ToolResult:
+    """Average win / average loss (as a positive magnitude); ratio is `value`.
+
+    value == None when there are no losses (undefined ratio — never a divide-by-zero or inf).
+    avg_win / avg_loss default to 0.0 when a side is empty. Raises on an empty series or any NaN.
+    """
+    r = _to_array(trade_returns, min_len=1)
+    wins = r[r > 0]
+    losses = r[r < 0]
+    avg_win = float(wins.mean()) if wins.size else 0.0
+    avg_loss = float(-losses.mean()) if losses.size else 0.0  # positive magnitude
+    ratio = float(avg_win / avg_loss) if avg_loss > 0 else None
+    return ToolResult(
+        tool="avg_win_loss",
+        tool_version=_VERSION,
+        inputs={"trade_returns": list(trade_returns)},
+        value=ratio,
+        detail={
+            "avg_win": avg_win,
+            "avg_loss": avg_loss,
+            "n_win": int(wins.size),
+            "n_loss": int(losses.size),
+        },
+    )
+
+
 def attribution(components: dict[str, float], total: float) -> ToolResult:
     """Decompose realized P&L into named components that must reconcile to the total.
 

@@ -18,6 +18,9 @@ from catalyst_trader.quant.performance import (
     sortino,
     cumulative_return,
     attribution,
+    max_drawdown,
+    win_rate,
+    avg_win_loss,
 )
 
 
@@ -188,3 +191,134 @@ def test_attribution_inputs_snapshot():
     components = {"catalyst": 0.03, "beta": 0.01, "hedge": -0.01}
     r = attribution(components, total=0.03)
     assert r.inputs == {"components": components, "total": 0.03}
+
+
+# ------------------------------------------------------------------------ max_drawdown
+
+
+def test_max_drawdown_monotonic_is_zero():
+    # a strictly-rising equity curve never troughs below its running peak → 0.0
+    r = max_drawdown([0.1, 0.2, 0.05, 0.1])
+    assert r.value == pytest.approx(0.0)
+    assert isinstance(r, ToolResult)
+
+
+def test_max_drawdown_hand_computed():
+    # equity = [1.1, 1.32, 0.924, 1.0164]; peak = [1.1, 1.32, 1.32, 1.32]
+    # trough drawdown at idx 2: 0.924/1.32 - 1 = -0.30
+    r = max_drawdown([0.1, 0.2, -0.3, 0.1])
+    assert r.value == pytest.approx(-0.30)
+
+
+def test_max_drawdown_wipeout_computed_not_crashed():
+    # a -100% period zeroes equity → max drawdown == -1.0, computed not crashed
+    r = max_drawdown([0.5, -1.0, 0.3])
+    assert r.value == pytest.approx(-1.0)
+    assert isinstance(r, ToolResult)
+
+
+def test_max_drawdown_leading_wipeout_no_nan():
+    # a -100% on the FIRST period → running peak is 0; must be -1.0, never NaN
+    r = max_drawdown([-1.0, 0.2])
+    assert r.value == pytest.approx(-1.0)
+
+
+def test_max_drawdown_empty_raises():
+    with pytest.raises(ValueError):
+        max_drawdown([])
+
+
+def test_max_drawdown_nan_raises():
+    with pytest.raises(ValueError):
+        max_drawdown([0.1, math.nan, -0.2])
+
+
+def test_max_drawdown_inputs_snapshot():
+    r = max_drawdown([0.1, -0.2])
+    assert r.inputs == {"returns": [0.1, -0.2]}
+
+
+# ---------------------------------------------------------------------------- win_rate
+
+
+def test_win_rate_hand_computed():
+    # 2 of 4 strictly > 0 → 0.5
+    r = win_rate([0.1, -0.2, 0.05, -0.01])
+    assert r.value == pytest.approx(0.5)
+    assert r.detail == {"n_win": 2, "n_total": 4}
+    assert isinstance(r, ToolResult)
+
+
+def test_win_rate_zero_is_not_a_win():
+    # a flat 0.0 return is NOT a win (strict >) → [0.0, 0.1] is 1 of 2 = 0.5
+    r = win_rate([0.0, 0.1])
+    assert r.value == pytest.approx(0.5)
+
+
+def test_win_rate_all_wins():
+    r = win_rate([0.1, 0.2, 0.3])
+    assert r.value == pytest.approx(1.0)
+
+
+def test_win_rate_all_losses():
+    r = win_rate([-0.1, -0.2, 0.0])  # the 0.0 is flat, not a win
+    assert r.value == pytest.approx(0.0)
+
+
+def test_win_rate_empty_raises():
+    with pytest.raises(ValueError):
+        win_rate([])
+
+
+def test_win_rate_nan_raises():
+    with pytest.raises(ValueError):
+        win_rate([0.1, math.nan])
+
+
+def test_win_rate_inputs_snapshot():
+    r = win_rate([0.0, 0.1])
+    assert r.inputs == {"trade_returns": [0.0, 0.1]}
+
+
+# ------------------------------------------------------------------------- avg_win_loss
+
+
+def test_avg_win_loss_hand_computed():
+    # wins=[0.10,0.20] avg_win=0.15; losses=[-0.05,-0.15] avg_loss magnitude=0.10
+    # ratio = 0.15/0.10 = 1.5
+    r = avg_win_loss([0.10, 0.20, -0.05, -0.15])
+    assert r.value == pytest.approx(1.5)
+    assert r.detail["avg_win"] == pytest.approx(0.15)
+    assert r.detail["avg_loss"] == pytest.approx(0.10)
+    assert r.detail["n_win"] == 2
+    assert r.detail["n_loss"] == 2
+    assert isinstance(r, ToolResult)
+
+
+def test_avg_win_loss_no_losses_ratio_none():
+    # all wins → avg_loss == 0 → ratio undefined → value is None (no inf, no divide)
+    r = avg_win_loss([0.1, 0.2, 0.3])
+    assert r.value is None
+    assert r.detail["avg_loss"] == pytest.approx(0.0)
+
+
+def test_avg_win_loss_no_wins():
+    # all losses → avg_win == 0 → ratio 0.0
+    r = avg_win_loss([-0.1, -0.2])
+    assert r.value == pytest.approx(0.0)
+    assert r.detail["avg_win"] == pytest.approx(0.0)
+
+
+def test_avg_win_loss_empty_raises():
+    with pytest.raises(ValueError):
+        avg_win_loss([])
+
+
+def test_avg_win_loss_nan_raises():
+    with pytest.raises(ValueError):
+        avg_win_loss([0.1, math.nan])
+
+
+def test_avg_win_loss_inputs_snapshot():
+    r = avg_win_loss([0.1, -0.05])
+    assert r.inputs == {"trade_returns": [0.1, -0.05]}
