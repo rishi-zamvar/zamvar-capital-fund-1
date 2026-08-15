@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: executing
-stopped_at: Completed 06.5-03-PLAN.md
-last_updated: "2026-08-15T19:39:25.009Z"
+status: verifying
+stopped_at: Completed 06.5-04-PLAN.md
+last_updated: "2026-08-15T20:00:46.339Z"
 last_activity: 2026-08-15
 progress:
   total_phases: 14
-  completed_phases: 6
+  completed_phases: 7
   total_plans: 40
-  completed_plans: 39
+  completed_plans: 40
   percent: 0
 ---
 
@@ -27,7 +27,7 @@ See: .planning/PROJECT.md (updated 2026-08-14)
 
 Phase: 06.5 (weekly-strategy-correction) — EXECUTING
 Plan: 4 of 4
-Status: Ready to execute
+Status: Phase complete — ready for verification
 Last activity: 2026-08-15
 
 Progress: [░░░░░░░░░░] 0%
@@ -90,6 +90,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 06.5 P01 | 2min | 3 tasks tasks | 5 files files |
 | Phase 06.5 P02 | 3 | 2 tasks | 4 files |
 | Phase 06.5-weekly-strategy-correction P03 | 9min | 3 tasks tasks | 3 files files |
+| Phase 06.5 P04 | 22min | 3 tasks tasks | 4 files files |
 
 ## Accumulated Context
 
@@ -161,6 +162,9 @@ Recent decisions affecting current work:
 - [Phase 06.5]: No zero-trade weeks: select_book gains keyword-only defensive_book; empty greedy promote + defensive_book supplied returns it, defensive_book=None keeps the catalyst path byte-for-byte (WEEK-03)
 - [Phase 06.5-weekly-strategy-correction]: Weekly conditioning distributed: classify_drop does the info/no-info split, thesis_scan enforces class precedence (busted never bounces), weekly_base_rate provides move-conditioned reversal stats; full per-week drop_class re-classification deferred
 - [Phase 06.5-weekly-strategy-correction]: thesis_scan tradeability = ALL of edge>=edge_min_pts, n>=min_effective_n, mean_next>cost_mult*roundtrip_cost, ci_low>0, AND not -15% falling-knife (HARD VETO any class) AND not busted_catalyst; every name gets a row (no-edge row is valid)
+- [Phase 06.5]: run_weekly is a thin cadence composition (scan->shortlist->desk->book); statistical/defensive legs are deterministic no-LLM StrategyDossiers; one anchor for measurement + execution
+- [Phase 06.5]: run_portfolio threads target_return (net-EV expected_move) + statistical_sleeve_cap (catalyst-week only) + defensive_book; catalyst path byte-for-byte when target_return=None (WEEK-01)
+- [Phase 06.5]: WEEK-05 record seam: per-leg weekly outcomes persist as KB outcome claims cited by a resolved-by-construction tool:weekly_base_rate ref; refit deferred to Phase 10
 
 ### Pending Todos
 
@@ -174,6 +178,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-08-15T19:39:17.401Z
-Stopped at: Completed 06.5-03-PLAN.md
+Last session: 2026-08-15T20:00:36.357Z
+Stopped at: Completed 06.5-04-PLAN.md
 Resume file: None
