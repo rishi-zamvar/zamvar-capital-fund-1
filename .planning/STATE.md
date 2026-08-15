@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Completed 07-03-PLAN.md
-last_updated: "2026-08-15T23:39:56.967Z"
+stopped_at: Completed 07-04-PLAN.md
+last_updated: "2026-08-15T23:58:44.042Z"
 last_activity: 2026-08-15
 progress:
   total_phases: 15
   completed_phases: 9
   total_plans: 52
-  completed_plans: 50
+  completed_plans: 51
   percent: 0
 ---
 
@@ -26,7 +26,7 @@ See: .planning/PROJECT.md (updated 2026-08-14)
 ## Current Position
 
 Phase: 07 (verifier-guardrails-backtest-harness) — EXECUTING
-Plan: 4 of 5
+Plan: 5 of 5
 Status: Ready to execute
 Last activity: 2026-08-15
 
@@ -101,6 +101,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 07 P01 | 6min | 2 tasks tasks | 4 files files |
 | Phase 07 P02 | 8min | 3 tasks tasks | 7 files files |
 | Phase 07 P03 | 8min | 2 tasks | 2 files |
+| Phase 07-verifier-guardrails-backtest-harness P04 | 16min | 3 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -192,6 +193,7 @@ Recent decisions affecting current work:
 - [Phase 07]: BACK-04 fill is pessimistic: a held-through binary fills at the gap-open far side worsened by slippage, provably NOT the SL (a stop is jumped by the gap); skip only halted/delisted/zero-vol/zero-quote, volume caps ignored; effective_asof shifts the as_of back per data class (days, missing class raises) making data-latency look-ahead impossible
 - [Phase 07]: guardrails.py aggregates the 5 shipped OPS-03 pre-trade invariants into ONE fail-closed gate (check_guardrails/assert_guardrails + frozen GuardrailReport); re-implements none — reuse of is_tradeable/concentration/DiligenceInput firewall/enforce*/web-free ALLOWED_TOOLS
 - [Phase 07]: dd_firewall_sealed proves the TOP-LEVEL firewall only (DiligenceInput.catalyst is a raw dict, not deep-sealed); 07-05 outcome-blind projection is the Layer-B nested-key safeguard; live-position monitors (SL/TP/countdown/P&L) deferred to Phase 8/8.5
+- [Phase 07-verifier-guardrails-backtest-harness]: Layer A (run_layer_a) is the NO-LLM deterministic weekly backtest: re-expresses the corrected cadence over the 07-02 point-in-time event set (never imports/calls the LLM desk), catalyst-leg direction COMPUTED via classify_drop->_match_trigger->weekly_base_rate (BLOCKER-2, never off the null catalyst row) as a named swappable proxy (default base_rate), pessimistic gap-open fills, no-zero-trade defensive fallback -> BaselineDistribution (win/avg-win-loss/Sharpe/Sortino/max-DD/hedge-effectiveness) for the 07-05 gate
 
 ### Pending Todos
 
@@ -205,6 +207,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-08-15T23:39:49.198Z
-Stopped at: Completed 07-03-PLAN.md
+Last session: 2026-08-15T23:58:36.306Z
+Stopped at: Completed 07-04-PLAN.md
 Resume file: None
