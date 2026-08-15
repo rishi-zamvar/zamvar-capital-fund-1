@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: verifying
-stopped_at: Completed 06.8-03-PLAN.md
-last_updated: "2026-08-15T22:33:17.894Z"
+status: executing
+stopped_at: Completed 07-01-PLAN.md
+last_updated: "2026-08-15T23:21:35.510Z"
 last_activity: 2026-08-15
 progress:
   total_phases: 15
   completed_phases: 9
-  total_plans: 47
-  completed_plans: 47
+  total_plans: 52
+  completed_plans: 48
   percent: 0
 ---
 
@@ -21,13 +21,13 @@ progress:
 See: .planning/PROJECT.md (updated 2026-08-14)
 
 **Core value:** Given an imminent biotech catalyst, produce a data-backed, portfolio-aware, hedged one-week trade recommendation the user can trust enough to approve — and get measurably better at it every week.
-**Current focus:** Phase 06.8 — weekly-company-vetting-scanner-haiku-dd-replica
+**Current focus:** Phase 07 — verifier-guardrails-backtest-harness
 
 ## Current Position
 
-Phase: 7
-Plan: Not started
-Status: Phase complete — ready for verification
+Phase: 07 (verifier-guardrails-backtest-harness) — EXECUTING
+Plan: 2 of 5
+Status: Ready to execute
 Last activity: 2026-08-15
 
 Progress: [░░░░░░░░░░] 0%
@@ -98,6 +98,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 06.8 P01 | 6min | 2 tasks | 4 files |
 | Phase 06.8 P02 | 9min | 2 tasks | 2 files |
 | Phase 06.8 P03 | 14min | 2 tasks | 2 files |
+| Phase 07 P01 | 6min | 2 tasks tasks | 4 files files |
 
 ## Accumulated Context
 
@@ -184,6 +185,7 @@ Recent decisions affecting current work:
 - [Phase 06.8]: run_scan persists each card AFTER delta_card mutates fired (card_asof = sole cross-week latch memory) so a flag latched at T does not re-fire at T+1 — SCAN-02 replayability, regression-tested
 - [Phase 06.8]: Stage-2 is ONE run_structured(model=haiku) pass per woken name reusing diligence.ALLOWED_TOOLS + build_quant_server, Python-built analog context, structural cite-or-drop; no_opportunity stored-not-routed; catalyst-precedence suppresses bare-F1 on catalyst names
 - [Phase 06.8]: to_weekly_flag projects a routed OpportunityFlag to WeeklyFlag(flag_type=qual) gap-not-answer (verification_needed off the wire); routes via the existing 6.7 reconcile incoming_flags seam with ZERO md.py change; no code path from a flag to a Candidate
+- [Phase 07]: Baseline metrics (max_drawdown/win_rate/avg_win_loss/hedge_effectiveness) are numpy-only ToolResult mirrors of sharpe/sortino: empty/NaN/length-mismatch raise, value=None on undefined ratio/no-down-days (never inf), leading -100% wipeout guarded from 0/0 NaN; wired into the QUANT-03 library-wide inputs-snapshot invariant
 
 ### Pending Todos
 
@@ -197,6 +199,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-08-15T22:27:41.056Z
-Stopped at: Completed 06.8-03-PLAN.md
+Last session: 2026-08-15T23:21:28.234Z
+Stopped at: Completed 07-01-PLAN.md
 Resume file: None

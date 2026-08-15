@@ -105,7 +105,7 @@
 ### Backtest / Baseline Harness (BACK)
 
 - [ ] **BACK-01**: Historical event set from ~1yr of earnings calendars across the universe + dateable biotech catalysts
-- [ ] **BACK-02**: Layer A — mechanical strategy backtest (no LLM): deterministic pair selection + sizing + entry + SL/TP + 1-week exit → baseline distribution (win rate, avg win/loss, Sharpe, max DD) + hedge effectiveness
+- [x] **BACK-02**: Layer A — mechanical strategy backtest (no LLM): deterministic pair selection + sizing + entry + SL/TP + 1-week exit → baseline distribution (win rate, avg win/loss, Sharpe, max DD) + hedge effectiveness
 - [ ] **BACK-03**: Layer B — guarded agentic replay with look-ahead guardrails (web blocked/archived, point-in-time fundamentals, outcome-blind prompts); results labeled biased-optimistic
 - [ ] **BACK-04**: Fill model: historical price + tunable slippage haircut; skip only halted/delisted/zero-volume/zero-quote events
 - [ ] **BACK-05**: Baseline unlocks config tuning + a go/no-go gate before paper trading
@@ -200,7 +200,7 @@
 | DILIG-02 | Phase 6 | Complete |
 | DILIG-03 | Phase 6 | Complete |
 | BACK-01 | Phase 7 | Pending |
-| BACK-02 | Phase 7 | Pending |
+| BACK-02 | Phase 7 | Complete |
 | BACK-03 | Phase 7 | Pending |
 | BACK-04 | Phase 7 | Pending |
 | BACK-05 | Phase 7 | Pending |

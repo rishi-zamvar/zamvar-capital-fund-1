@@ -194,7 +194,7 @@ Decimal phases appear between their surrounding integers in numeric order.
   4. Layer B guarded agentic replay runs the real pipeline with look-ahead guardrails (web blocked/archived, point-in-time fundamentals, outcome-blind prompts) and its results are labeled biased-optimistic
   5. The baseline unlocks config tuning and produces an explicit go/no-go gate before paper trading
 **Plans**: 5 plans (3 waves)
-- [ ] 07-01-PLAN.md — 4 new baseline metrics (max_drawdown/win_rate/avg_win_loss/hedge_effectiveness) in performance.py, TDD (Wave 1)
+- [x] 07-01-PLAN.md — 4 new baseline metrics (max_drawdown/win_rate/avg_win_loss/hedge_effectiveness) in performance.py, TDD (Wave 1)
 - [ ] 07-02-PLAN.md — Backtest data foundation: synthetic-history fixture + events.py (point-in-time survivorship-free event set, BACK-01) + fill.py (pessimistic gap-open + slippage + data-latency effective_asof, BACK-04) (Wave 1)
 - [ ] 07-03-PLAN.md — desk/guardrails.py: fail-closed pre-trade runtime gate aggregating the shipped OPS-03 invariants (Wave 1)
 - [ ] 07-04-PLAN.md — backtest/engine.py: Layer A deterministic weekly loop (NO run_desk) + base-rate direction proxy + baseline distribution, BACK-02 (Wave 2)
