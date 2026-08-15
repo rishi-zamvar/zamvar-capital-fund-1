@@ -17,6 +17,7 @@ tool results into a dimension's context; the agent interprets and cites, tools c
 """
 
 import asyncio
+from typing import Literal
 
 from ..contracts import AnalystSignal, DiligenceInput
 from ..quant.options import implied_move
@@ -297,3 +298,57 @@ def hedge_context(conn, embed, input: DiligenceInput, *, entry, exit_by_date, an
         f"(mechanism: {hedge.mechanism}, conditional_worst={hedge.conditional_worst:+.2f}). "
         "Interpret whether this coverage holds on THIS specific catalyst."
     )
+
+
+# ---------------------------------------------------------------------------
+# The DETERMINISTIC adversarial synthesizer (DILIG-03) — the money crux.
+#
+# This is the size_for_survival / validate_hedge precedent: the deterministic
+# function OWNS the go/no-go, the LLM only writes narrative (see Task 2). The
+# asymmetry is baked into the DEFAULT branch — every ambiguous path returns
+# no_go. There is no branch that returns "go" without ALL money dims present AND
+# data-backed AND liquidity non-zero.
+# ---------------------------------------------------------------------------
+
+# The money-touching dimensions (dims 3-7). A single one failing forces NO-GO.
+# Equals the harness MONEY_DIMS (test_money_touching_matches_harness pins it).
+MONEY_TOUCHING = frozenset({
+    "financials", "ownership_flow", "options_move", "hedge_revalidation", "liquidity",
+})
+
+
+def dimension_passed(sig: AnalystSignal, *, params: dict) -> bool:
+    """A dimension is data-backed iff it has >=1 cited key_finding AND its score is not
+    below the floor AND its confidence clears the minimum. Thresholds come from `params`
+    via direct subscript (missing-key-raises) — NEVER a hardcoded literal in money code.
+    The >=1-cited-finding invariant is already guaranteed by the AnalystSignal validator;
+    the `bool(sig.key_findings)` check is defense against a bypassed/constructed signal."""
+    floor = params["diligence"]["dimension_score_floor"]
+    min_conf = params["diligence"]["dimension_min_conf"]
+    return bool(sig.key_findings) and sig.score >= floor and sig.confidence >= min_conf
+
+
+def synthesize_verdict(
+    findings: list[AnalystSignal], *, liquidity_zero: bool, params: dict,
+) -> Literal["go", "no_go"]:
+    """The ONLY place the diligence go/no-go is decided — a pure function the LLM cannot
+    touch. Asymmetric by design ("rewards no-go"):
+
+      1. zero-liquidity -> no_go (hard fail, regardless of everything else);
+      2. the full MONEY_TOUCHING set must be PRESENT -> else no_go (a missing money dim
+         is a 'tie'/gap, and ties default to no_go);
+      3. any present money dim not data-backed -> no_go (ONE money-dim failure is fatal);
+      4. only then GO.
+
+    # ponytail: the asymmetry is the design, not a bug — easy to kill (any single money
+    #           dim fails and the whole trade dies), hard to clear (all 5 money dims must
+    #           be present AND data-backed AND liquid). Do NOT "simplify" the default to go.
+    """
+    if liquidity_zero:
+        return "no_go"
+    money = [s for s in findings if s.dimension in MONEY_TOUCHING]
+    if {s.dimension for s in money} != MONEY_TOUCHING:  # full money set must be present
+        return "no_go"
+    if any(not dimension_passed(s, params=params) for s in money):
+        return "no_go"
+    return "go"

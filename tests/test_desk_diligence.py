@@ -18,7 +18,15 @@ Wave-2 module; only tests that CALL `_patch_dd_seam` depend on it.
 
 import asyncio
 
-from catalyst_trader.contracts import AnalystSignal, DiligenceInput
+import pytest
+
+from catalyst_trader.contracts import (
+    AnalystSignal,
+    DiligenceDossier,
+    DiligenceInput,
+    KeyFinding,
+)
+from catalyst_trader.desk import evidence
 
 # LOCKED dimension keys (verbatim across the whole phase).
 DD_DIMENSIONS = [
@@ -271,3 +279,107 @@ def test_diligence_params_survive_seeded_path(db):
     assert diligence.options_liquid(_LIQUID_OPTS, params=diligence.DILIGENCE_PARAMS) is True
     assert diligence.DILIGENCE_PARAMS["diligence"]["dimension_min_conf"] == 0.5
     assert "diligence" not in kb.load_params(db, "pdufa")
+
+
+# ---------------------------------------------------------------------------
+# Wave 3 — Task 1: deterministic synthesize_verdict + dimension_passed + MONEY_TOUCHING
+# ---------------------------------------------------------------------------
+
+# Test-local thresholds (mirrors DILIGENCE_PARAMS shape; money code reads from params,
+# never a literal). Kept independent so a threshold drift in the module can't silently
+# pass these edge tests.
+PARAMS = {"diligence": {"dimension_score_floor": -0.2, "dimension_min_conf": 0.5}}
+
+
+def _sig(dimension, *, score=0.3, confidence=0.7):
+    """A data-backed AnalystSignal for `dimension` (one cited finding, score above floor,
+    confidence above min_conf) — i.e. `dimension_passed` True under PARAMS by default."""
+    return AnalystSignal(
+        dimension=dimension, ticker="ACME", catalyst_id="cat-001",
+        score=score, confidence=confidence,
+        key_findings=[KeyFinding(claim="cited fact", evidence_ref="tool:x#abc123")],
+    )
+
+
+def _all_pass():
+    return [_sig(d) for d in DD_DIMENSIONS]
+
+
+def test_money_touching_matches_harness():
+    """The synthesizer's money set is EXACTLY the harness MONEY_DIMS (the locked money keys)."""
+    from catalyst_trader.desk import diligence
+
+    assert diligence.MONEY_TOUCHING == frozenset(MONEY_DIMS)
+
+
+@pytest.mark.parametrize("failing", sorted(MONEY_DIMS))
+def test_one_money_dimension_failure_forces_no_go(failing):
+    """Every other dimension passes but ONE money dim fails dimension_passed -> NO-GO.
+    Parametrized over each of the 5 money dims failing individually."""
+    from catalyst_trader.desk import diligence
+
+    findings = [
+        _sig(d, confidence=0.1) if d == failing else _sig(d)
+        for d in DD_DIMENSIONS
+    ]
+    assert diligence.synthesize_verdict(findings, liquidity_zero=False, params=PARAMS) == "no_go"
+
+
+def test_go_requires_all_money_dimensions_backed():
+    """All 5 money dims present + data-backed -> GO. Removing ANY single money dim
+    (a 'tie'/missing) -> NO-GO (GO needs the full money set present AND all backed)."""
+    from catalyst_trader.desk import diligence
+
+    findings = _all_pass()
+    assert diligence.synthesize_verdict(findings, liquidity_zero=False, params=PARAMS) == "go"
+
+    for money in MONEY_DIMS:
+        subset = [f for f in findings if f.dimension != money]
+        assert diligence.synthesize_verdict(subset, liquidity_zero=False, params=PARAMS) == "no_go"
+
+
+def test_non_money_dimension_failure_does_not_block():
+    """A non-money dim failing while all money dims pass -> still GO (asymmetry is money-scoped)."""
+    from catalyst_trader.desk import diligence
+
+    for nonmoney in ("trial_stats", "regulatory", "historical_analog"):
+        findings = [
+            _sig(d, confidence=0.05, score=-0.9) if d == nonmoney else _sig(d)
+            for d in DD_DIMENSIONS
+        ]
+        assert diligence.synthesize_verdict(findings, liquidity_zero=False, params=PARAMS) == "go"
+
+
+def test_zero_liquidity_hard_fails():
+    """Zero-liquidity is a hard NO-GO even when every dimension passes."""
+    from catalyst_trader.desk import diligence
+
+    assert diligence.synthesize_verdict(_all_pass(), liquidity_zero=True, params=PARAMS) == "no_go"
+
+
+def test_ties_default_no_go():
+    """An empty money set (no money dims present) -> NO-GO (never a silent GO)."""
+    from catalyst_trader.desk import diligence
+
+    findings = [_sig(d) for d in DD_DIMENSIONS if d not in MONEY_DIMS]
+    assert diligence.synthesize_verdict(findings, liquidity_zero=False, params=PARAMS) == "no_go"
+
+
+def test_dimension_passed_reads_params():
+    """Thresholds come from params (missing-key-raises, NO hardcoded literals). A cited signal
+    below min_conf / below score floor / with zero cited findings -> False; otherwise True."""
+    from catalyst_trader.desk import diligence
+
+    sig = _sig("financials")
+    with pytest.raises(KeyError):
+        diligence.dimension_passed(sig, params={})
+    with pytest.raises(KeyError):  # missing dimension_min_conf
+        diligence.dimension_passed(sig, params={"diligence": {"dimension_score_floor": -0.2}})
+
+    assert diligence.dimension_passed(_sig("financials", confidence=0.4), params=PARAMS) is False
+    assert diligence.dimension_passed(_sig("financials", score=-0.5), params=PARAMS) is False
+    assert diligence.dimension_passed(_sig("financials"), params=PARAMS) is True
+
+    # zero cited findings (constructed to bypass the AnalystSignal validator) -> False (defense).
+    empty = _sig("financials").model_copy(update={"key_findings": []})
+    assert diligence.dimension_passed(empty, params=PARAMS) is False
