@@ -128,6 +128,29 @@
 
 **Cumulative build (measured, so far): ~8,113,000 subagent tokens (+ P6 ~1,340,000).**
 
+### Phase 6.5 — Weekly Strategy Correction (CLOSED)
+| Agent | Tokens |
+|-------|--------|
+| Researcher | 132,830 |
+| Planner | 189,722 |
+| Plan-checker (1 blocker → revised) | 133,809 |
+| Revision planner | 97,486 |
+| Plan-checker (re-check, PASSED) | 80,822 |
+| Executor 06.5-01 (price store + weekly params) | 94,004 |
+| Executor 06.5-02 (cap-safe sizing + defensive select_book) | 97,701 |
+| Executor 06.5-03 (quant/weekly.py thesis engine) | 154,258 |
+| Executor 06.5-04 (weekly runner + sleeve cap + WEEK-05) | 220,712 |
+| Verifier | 126,222 |
+| **Phase 6.5 subtotal** | **~1,328,000** |
+
+**Cumulative build (measured, so far): ~9,441,000 subagent tokens (+ P6.5 ~1,328,000).**
+
+### Phase 6.5 Retrospective
+- **Spend:** ~1.33M — in line with P6. The 06.5-04 executor was the priciest (~221k): the weekly runner threads target + sleeve-cap + defensive + WEEK-05 across run_portfolio, the most integration-heavy single plan of the phase.
+- **Plan-check earned its cost again (4th money phase):** caught the missing statistical-sleeve budget cap — a real risk-control gap (efficient mean-reversion legs could crowd out the catalyst moat + uncapped cost drag). All 6 money invariants otherwise confirmed sound on first pass — the research's reuse-vs-new verdict + the gating price-store catch kept execution clean.
+- **The gating catch (no price store) was the phase MVP:** research verified the OHLCV store was absent BEFORE planning, so it became Wave-1 gating instead of an execution-time blocker. Reinforces: research reads actual code/data state, not assumptions.
+- Directives carried forward: reuse-vs-new + data-dependency audit in research; plan-check ON for money phases; graph-first nav (re-indexed 2215→2361 nodes).
+
 ### Phase 6 Retrospective
 - **Spend:** ~1.34M — cheaper than P5 (~1.68M) despite similar complexity: the reuse-vs-new verdict came in RESEARCH (not discovered during execution), so executors were lean (99k-155k). Firewall-as-a-type (vs a runtime check) kept the contract work tiny.
 - **Plan-check earned its cost a 3rd straight money phase:** caught 3 real blockers (2 ungroundable money dims → false-GO risk; diligence params on the wrong load path → KeyError on the seeded steady state; hedge re-validation validating the wrong peer). All would have passed tests green. TDD structurally can't catch data-grounding/wiring gaps — keep plan-check ON.

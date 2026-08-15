@@ -1,0 +1,113 @@
+<title>Fund 1 — Phase 6.5 Report</title>
+<style>
+  :root{
+    --bg:#ecefe9;--surface:#fff;--surface-2:#f5f7f2;--ink:#191c18;--muted:#5f655c;--faint:#99a094;
+    --border:#d6dbcf;--border-strong:#c2c8b8;--accent:#8a6a12;--accent-bg:#f3ecd8;
+    --done:#1f7a4d;--done-bg:#e4f2e9;--warn:#b23b30;--warn-bg:#f6e5e3;--info:#2b6a93;--info-bg:#e2edf4;
+    --mono:ui-monospace,"SF Mono","JetBrains Mono",Menlo,Consolas,monospace;
+    --sans:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+    --shadow:0 1px 2px rgba(20,25,18,.06),0 4px 14px rgba(20,25,18,.05);
+  }
+  @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+    --bg:#101310;--surface:#191d18;--surface-2:#20241e;--ink:#e8ece4;--muted:#9aa192;--faint:#6b7365;
+    --border:#2c322a;--border-strong:#3a4136;--accent:#d8b45a;--accent-bg:#2a2412;
+    --done:#4cc585;--done-bg:#14271c;--warn:#ef7365;--warn-bg:#2c1714;--info:#6bb3e6;--info-bg:#122430;
+    --shadow:0 1px 2px rgba(0,0,0,.4),0 6px 18px rgba(0,0,0,.35);
+  }}
+  :root[data-theme="dark"]{
+    --bg:#101310;--surface:#191d18;--surface-2:#20241e;--ink:#e8ece4;--muted:#9aa192;--faint:#6b7365;
+    --border:#2c322a;--border-strong:#3a4136;--accent:#d8b45a;--accent-bg:#2a2412;
+    --done:#4cc585;--done-bg:#14271c;--warn:#ef7365;--warn-bg:#2c1714;--info:#6bb3e6;--info-bg:#122430;
+    --shadow:0 1px 2px rgba(0,0,0,.4),0 6px 18px rgba(0,0,0,.35);
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);line-height:1.55}
+  .wrap{max-width:900px;margin:0 auto;padding:40px 22px 72px}
+  .ey{font-family:var(--mono);font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--accent);font-weight:600}
+  h1{font-family:var(--mono);font-size:clamp(24px,5vw,36px);margin:8px 0 4px;letter-spacing:-.01em}
+  .status{display:inline-flex;align-items:center;gap:8px;font-family:var(--mono);font-size:12.5px;color:var(--done);background:var(--done-bg);border:1px solid var(--done);border-radius:20px;padding:4px 13px;margin-top:6px}
+  .masthead{border-bottom:2px solid var(--ink);padding-bottom:18px;margin-bottom:26px}
+  .meta{font-family:var(--mono);font-size:12px;color:var(--muted);margin-top:10px}
+  h2{font-family:var(--mono);font-size:16px;margin:32px 0 12px;display:flex;align-items:center;gap:9px}
+  h2 .ic{width:22px;height:22px;border-radius:5px;display:inline-grid;place-items:center;font-size:13px;flex:none}
+  .ic.d{background:var(--done-bg);color:var(--done);border:1px solid var(--done)}
+  .ic.w{background:var(--warn-bg);color:var(--warn);border:1px solid var(--warn)}
+  .ic.g{background:var(--accent-bg);color:var(--accent);border:1px solid var(--accent)}
+  .ic.n{background:var(--info-bg);color:var(--info);border:1px solid var(--info)}
+  ul{margin:0;padding-left:2px;list-style:none}
+  li{position:relative;padding:5px 0 5px 22px;font-size:14.5px}
+  li::before{content:"";position:absolute;left:2px;top:12px;width:6px;height:6px;border-radius:50%;background:var(--accent)}
+  li.done::before{content:"✓";background:none;color:var(--done);font-family:var(--mono);font-size:13px;top:6px;left:0}
+  li b{font-weight:600}
+  code{font-family:var(--mono);font-size:12.5px;background:var(--surface-2);border:1px solid var(--border);border-radius:4px;padding:1px 6px}
+  .card{background:var(--surface);border:1px solid var(--border);border-left:4px solid var(--warn);border-radius:9px;padding:14px 16px;margin:10px 0;box-shadow:var(--shadow)}
+  .card.i{border-left-color:var(--info)} .card.decide{border-left-color:var(--accent);background:var(--accent-bg)}
+  .card h3{font-family:var(--mono);font-size:14px;margin:0 0 4px;color:var(--warn)}
+  .card.i h3{color:var(--info)} .card.decide h3{color:var(--accent)}
+  .card p{margin:4px 0 0;font-size:14px;color:var(--ink)}
+  .tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin:8px 0 4px}
+  .tile{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:13px 15px;box-shadow:var(--shadow)}
+  .tile .k{font-family:var(--mono);font-size:10px;letter-spacing:.07em;text-transform:uppercase;color:var(--faint)}
+  .tile .v{font-family:var(--mono);font-size:23px;font-weight:700;margin-top:3px}
+  .tile .v small{font-size:14px;color:var(--muted)}
+  .bar{height:9px;background:var(--surface-2);border:1px solid var(--border);border-radius:5px;overflow:hidden;margin:14px 0 4px}
+  .bar>i{display:block;height:100%;width:50%;background:var(--accent)}
+  .next{background:var(--accent-bg);border:1px solid var(--accent);border-radius:10px;padding:16px 18px;margin-top:10px}
+  .next h3{font-family:var(--mono);font-size:15px;margin:0 0 6px;color:var(--accent)}
+  .next p{margin:0;font-size:14px}
+  .win{background:var(--done-bg);border:1px solid var(--done);border-radius:8px;padding:10px 14px;margin:10px 0;font-size:14px}
+  .win b{color:var(--done)}
+  footer{margin-top:34px;padding-top:18px;border-top:1px solid var(--border);font-family:var(--mono);font-size:11.5px;color:var(--faint)}
+</style>
+
+<div class="wrap">
+  <div class="masthead">
+    <div class="ey">zamvar capital · fund 1 · phase report</div>
+    <h1>Phase 6.5 — Weekly Strategy Correction</h1>
+    <div class="status">● VERIFIED · 18/18 must-haves · 7/7 money invariants · 731 tests</div>
+    <div class="meta">2026-08-15 · PORT-03 (amended) + WEEK-01…05 closed · goal: <i>rework the desk to run the way you actually want — before any backtest measures it.</i></div>
+  </div>
+
+  <h2><span class="ic d">✓</span> What's done</h2>
+  <ul>
+    <li class="done"><b>Sizing now chases the 1% target — but can never cross the survival line</b> — the size is <code>clamp(target-driven, floor, survival_cap)</code>, and the risk-of-ruin cap is the ceiling that's <i>structurally impossible</i> to exceed (a money-gate test proves it, with the cap made to actually bind). This is your correction, made safe.</li>
+    <li class="done"><b>No more zero-trade weeks</b> — every week produces a book. When nothing clears the bar, the week goes <i>defensive</i> (cash-like anchors) with the dossier saying exactly that — never a forced bad trade.</li>
+    <li class="done"><b>A thesis on every name, every week</b> — the new engine reads the whole universe: catalyst, mean-reversion, and continuation, each scored against a <i>measured</i> historical base rate (not a hunch), with beta-binomial shrinkage when the sample is thin.</li>
+    <li class="done"><b>The honest guardrails are in the code</b> — a −15% drop is a hard "falling knife" veto (it doesn't bounce), and a pattern only trades if it clears a real bar (edge ≥2 points, ≥30 samples, mean beats 2× cost, confidence interval above zero).</li>
+    <li class="done"><b>The catalyst engine is protected from being crowded out</b> — statistical (mean-reversion/continuation) legs are capped as a fraction of the book when catalyst trades exist, so the moat isn't diluted by low-conviction filler.</li>
+    <li class="done"><b>A point-in-time price history was built</b> — the desk had no price store; now it has one that <i>cannot</i> leak future data into a backtest, plus the weekly runner that ties scan → desk → sizing → book → dossier together, recording every leg's outcome for the learning loop.</li>
+    <li class="done"><b>731 tests, fully offline</b> — +42 this phase; the shipped Phase-5 sizing was reworked with a no-regression test, not replaced.</li>
+  </ul>
+
+  <h2><span class="ic g">★</span> What's going well</h2>
+  <div class="win"><b>Research caught two things before they became problems.</b> It measured the "catch the bounce" edge on our <i>own</i> data (real but thin, ~+1%) and verified there was no price store — so building it became step one instead of an execution-time wall. And plan-check caught the missing sleeve cap. Honest measurement over optimism.</div>
+
+  <h2><span class="ic w">!</span> Needs your review / input</h2>
+  <div class="card i">
+    <h3>The weekly edge is thin — this phase makes it honest, not magic</h3>
+    <p>The mean-reversion edge is real but ~+1% at moderate drops, and only 2–4 patterns are expected to clear the bar. The 1% weekly target is reached by <i>stacking</i> catalyst + statistical + defensive legs and compounding a rising win-rate over time — not by any single big bet. The falling-knife veto and sleeve cap keep it disciplined.</p>
+  </div>
+  <div class="card i">
+    <h3>Data curation still pending (non-blocking)</h3>
+    <p>Real seed universe + PDUFA dates, and FMP historical-price coverage for the ~20 names' weekly bars (needed before live; the build + tests use synthetic bars). All in the monitor's "For your review" tab.</p>
+  </div>
+
+  <h2><span class="ic n">→</span> Next steps</h2>
+  <div class="next">
+    <h3>Phase 6.7 — MD/GP Reconciliation Loop</h3>
+    <p>Wire the MD as the firm's decision hub: diligence + catalyst call + portfolio all feed up; the MD runs a bounded loop (re-trigger with the missing info, cap at 3 rounds), decides, and escalates to you only on a genuine blocker. Research-backed and ready to plan. Then: 7 backtest → 8 paper ledger → 8.5 monitor → 9 iOS → 10 learning loop → 11 live.</p>
+  </div>
+
+  <h2><span class="ic g">▤</span> Project state</h2>
+  <div class="bar"><i></i></div>
+  <div class="tiles">
+    <div class="tile"><div class="k">Phases</div><div class="v">6.5<small>/14</small></div></div>
+    <div class="tile"><div class="k">Tests</div><div class="v">731</div></div>
+    <div class="tile"><div class="k">Invariants</div><div class="v" style="color:var(--done)">7/7</div></div>
+    <div class="tile"><div class="k">Build tokens</div><div class="v">~9.4M</div></div>
+    <div class="tile"><div class="k">Blockers</div><div class="v" style="color:var(--done)">0</div></div>
+  </div>
+  <p style="font-size:13.5px;color:var(--muted);margin-top:10px">No blockers. Your strategy correction is now the desk's operating model, verified. Live monitor at <code>http://127.0.0.1:8799</code>. Autonomous run continues to Phase 6.7.</p>
+
+  <footer>Fund 1 · Phase 6.5 of 14 · generated 2026-08-15 · the target drives the size; the survival cap is the line it never crosses</footer>
+</div>
