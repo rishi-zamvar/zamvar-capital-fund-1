@@ -106,7 +106,14 @@ Decimal phases appear between their surrounding integers in numeric order.
   2. The Risk agent re-analyzes each hedge conditional on THIS catalyst and emits a conditional payoff matrix; when no valid inverse peer exists it flags and falls back to size-tiny or exit-before-event — never a fake hedge
   3. A 3-way Risk Committee (aggressive/conservative/neutral) sizes for survival via risk-of-ruin/fractional-Kelly on a -70% downside gap, with the 1% target treated strictly as a measured outcome and zero-trade weeks allowed
   4. Each trade ships a position memo with explicit kill criteria and a documented pre-mortem, authored separately from approval, and the MD/PM promotes/kills against the live book → StrategyDossier stating residual net-long risk and which risk is actually covered
-**Plans**: TBD
+**Plans**: 7 plans (4 waves)
+- [ ] 05-01-PLAN.md — Contract extensions: Hedge + EstimateVetting + extended TradeProposal/RiskAssessment/StrategyDossier (Wave 1)
+- [ ] 05-02-PLAN.md — Quant tools: catalyst_move_estimate (events.py) + adaptive_sl_tp_levels, param-driven, TDD (Wave 1)
+- [ ] 05-03-PLAN.md — KB model-fit param seam: kb.load_params + cited bootstrap fitted_params per catalyst type (Wave 1)
+- [ ] 05-04-PLAN.md — desk/risk.py: size_for_survival + honest per-catalyst hedge validation + 3-way committee (Wave 2)
+- [ ] 05-05-PLAN.md — Estimate vetting gate: verifier.enforce_estimate (cite-or-drop + consistency + blocking) (Wave 2)
+- [ ] 05-06-PLAN.md — desk/builder.py: DebateVerdict → TradeProposal estimated-move construction + vetting (Wave 3)
+- [ ] 05-07-PLAN.md — desk/portfolio.py select_book + PM/memo/pre-mortem + run_portfolio orchestrator (Wave 4)
 
 ### Phase 6: Independent Diligence Firewall (Workflow 3)
 **Goal**: A structurally isolated second desk tries to kill the trade from raw sources — a real four-eyes check, not a rubber stamp.
@@ -183,7 +190,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 →
 | 2. Contracts + KB Skeleton | 0/TBD | Complete    | 2026-08-14 |
 | 3. Quant Tool Library + Rubric & Base-Rates | 0/8 | Complete    | 2026-08-15 |
 | 4. Analyst Desk + Bull/Bear Debate | 0/TBD | Complete    | 2026-08-15 |
-| 5. Trade Builder, Hedge & Sizing | 0/TBD | Not started | - |
+| 5. Trade Builder, Hedge & Sizing | 0/7 | Not started | - |
 | 6. Independent Diligence Firewall | 0/TBD | Not started | - |
 | 7. Verifier/Guardrails + Backtest Harness | 0/TBD | Not started | - |
 | 8. Paper Ledger, Attribution & Post-Mortem | 0/TBD | Not started | - |
