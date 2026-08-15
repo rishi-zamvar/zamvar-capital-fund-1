@@ -162,6 +162,28 @@
 
 **Cumulative build (measured, so far): ~10,760,000 subagent tokens (+ P6.7 ~1,319,000). Crossed 10M.**
 
+### Phase 6.8 — Weekly Company-Vetting Scanner (Haiku DD-Replica) (CLOSED)
+| Agent | Tokens |
+|-------|--------|
+| Researcher | 134,767 |
+| Planner | 166,182 |
+| Plan-checker (1 blocker → revised) | 105,908 |
+| Revision planner | 89,759 |
+| Plan-checker (re-check, PASSED) | 78,621 |
+| Executor 06.8-01 (card store + contracts) | 90,072 |
+| Executor 06.8-02 (deterministic flaggers + delta_card) | 138,528 |
+| Executor 06.8-03 (Haiku once-over + routing) | 185,760 |
+| Verifier | 103,408 |
+| **Phase 6.8 subtotal** | **~1,093,000** |
+
+**Cumulative build (measured, so far): ~11,853,000 subagent tokens (+ P6.8 ~1,093,000).**
+
+### Phase 6.8 Retrospective
+- **Spend:** ~1.09M — the cheapest agentic phase, thanks to the "routing is free" research finding (reconcile already ingested WeeklyFlags → zero md.py work) and heavy pattern-mirroring (card store cloned the 6.5 price store).
+- **Plan-check earned its cost a 6th straight money phase:** caught the write-before-delta latch-persistence bug — silent (no unit test on hand-built dicts would fail), broke SCAN-02 week-over-week replayability, contradicted a locked CONTEXT decision. Fix = reorder + a 2-week DB round-trip regression test. This class of bug (cross-plan sequencing that unit tests miss) is the single strongest argument for keeping plan-check on.
+- **Verifier caught a shadowed duplicate test name** — a real coverage hole (one intended test never ran). Fixed at close. Verifiers reading actual test collection, not just names, matters.
+- Directives carried forward: research must surface "free seam" reuse (biggest cost saver); plan-check ON for money phases (6/6 caught real blockers); graph re-index each code phase (now 2593 nodes).
+
 ### Phase 6.7 Retrospective
 - **Spend:** ~1.32M, in line with the other agentic phases. Reuse-heavy (the research verdict was "almost entirely reuse") kept executors lean; 06.7-04 (capstone loop) was the priciest at 172k.
 - **Plan-check earned its cost a 5th straight money phase:** caught 2 real blockers — `cross_check`'s 3-arg signature couldn't reach `catalyst_id` (DebateVerdict has no such field) or `min_tradeable_size` for two of its six checks. Fix = widen the signature, thread from `reconcile`. TDD would have hit a NameError only at execution; the check caught it at plan time.
