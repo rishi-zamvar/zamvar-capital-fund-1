@@ -67,9 +67,26 @@
 
 ### Workflow 3 — Independent Diligence (DILIG)
 
-- [ ] **DILIG-01**: Runs on the proposed portfolio, receiving only {ticker, catalyst, pair} — an enforced firewall from Workflow 1/2 reasoning
+- [x] **DILIG-01**: Runs on the proposed portfolio, receiving only {ticker, catalyst, pair} — an enforced firewall from Workflow 1/2 reasoning
 - [ ] **DILIG-02**: Multi-dimensional DD from raw sources (trial stats/endpoints, regulatory precedent, financials/runway, ownership/flow, options-implied move, hedge/correlation, liquidity, historical analog)
-- [ ] **DILIG-03**: Synthesizer adversarially combines dimensions, rewards "no-go", and requires data-backed confidence → DiligenceDossier {go/no-go, evidence, residual risks}
+- [x] **DILIG-03**: Synthesizer adversarially combines dimensions, rewards "no-go", and requires data-backed confidence → DiligenceDossier {go/no-go, evidence, residual risks}
+
+### MD/GP Reconciliation Loop (RECON) — added 2026-08-15
+
+- [ ] **RECON-01**: The MD/GP sits above Workflow 1 (catalyst call), Workflow 2 (portfolio) and Workflow 3 (diligence). The DiligenceDossier feeds UP to the GP, who reviews the whole picture (call + portfolio + DD) — the GP is the one integration point that sees all three (this is the SAME head-of-firm persona as the Workflow-2 PM sign-off).
+- [ ] **RECON-02**: If the GP flags an issue with the CATALYST CALL, he re-triggers the bull/bear debate (Workflow 1) with the specific key info DD surfaced that the debate left out; the re-run RE-REASONS (it is not handed the answer) → new verdict feeds forward into the portfolio builder.
+- [ ] **RECON-03**: If the GP flags an issue with the PORTFOLIO BUILD, he sends it back to the portfolio builder (Workflow 2) with the key info that was left out; the new build feeds back to DD (Workflow 3) for a fresh independent pass.
+- [ ] **RECON-04**: The loop is BOUNDED — iterate to a solid/converged outcome (DD clears + GP satisfied + no new material issue) or a HARD iteration cap (no infinite ping-pong). Every round is logged.
+- [ ] **RECON-05**: Any residual caveats after convergence/cap are relayed to the LP in the final dossier (honest "here's what we're still unsure about").
+- [ ] **RECON-06**: FIREWALL PRESERVED — DD's INPUTS stay sealed ({ticker,catalyst,pair} only, no Workflow-1/2 reasoning in). Only DD's FINDINGS flow up to the GP and back down as "missing info"; DD re-runs independently each round. The firewall is one-directional (bias-in blocked), not a total barrier.
+
+### Intra-Week Position Monitor (MON) — added 2026-08-15 (scoped now, BUILD DEFERRED per operator)
+
+- [ ] **MON-01**: A SEPARATE, lightweight, fast workflow monitors open-position performance throughout the week (distinct from the weekly build/exit cycle).
+- [ ] **MON-02**: EVENT-TRIGGERED, not continuous LLM polling — deterministic monitors (technical-indicator thresholds, a news hit on a held name) fire and hand the flagged position to the light agent group for examination.
+- [ ] **MON-03**: Light + cheap — runs on lighter models (Haiku-class), can operate many times / on the fly through the day at low cost.
+- [ ] **MON-04**: If the group flags that a position needs adjustment, it routes THAT position back to the portfolio builder (Workflow 2) for a re-build/adjust — it does not place orders itself (human gate + execution stay downstream).
+- [ ] **MON-05**: BUILD DEFERRED — capability is scoped and roadmapped (Phase 8.5); implemented after the paper ledger (Phase 8) exists to monitor against.
 
 ### Backtest / Baseline Harness (BACK)
 
@@ -165,9 +182,9 @@
 | HEDGE-05 | Phase 5 | Complete |
 | OPS-01 | Phase 5 | Complete |
 | OPS-02 | Phase 5 | Complete |
-| DILIG-01 | Phase 6 | Pending |
+| DILIG-01 | Phase 6 | Complete |
 | DILIG-02 | Phase 6 | Pending |
-| DILIG-03 | Phase 6 | Pending |
+| DILIG-03 | Phase 6 | Complete |
 | BACK-01 | Phase 7 | Pending |
 | BACK-02 | Phase 7 | Pending |
 | BACK-03 | Phase 7 | Pending |

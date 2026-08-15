@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: verifying
-stopped_at: Completed 05-07-PLAN.md
-last_updated: "2026-08-15T08:08:41.669Z"
+status: executing
+stopped_at: Completed 06-01-PLAN.md
+last_updated: "2026-08-15T17:59:07.820Z"
 last_activity: 2026-08-15
 progress:
-  total_phases: 11
+  total_phases: 12
   completed_phases: 5
-  total_plans: 32
-  completed_plans: 32
+  total_plans: 36
+  completed_plans: 33
   percent: 0
 ---
 
@@ -21,13 +21,13 @@ progress:
 See: .planning/PROJECT.md (updated 2026-08-14)
 
 **Core value:** Given an imminent biotech catalyst, produce a data-backed, portfolio-aware, hedged one-week trade recommendation the user can trust enough to approve — and get measurably better at it every week.
-**Current focus:** Phase 05 — trade-builder-honest-hedge-ruin-avoidant-sizing-workflow-1b-2
+**Current focus:** Phase 06 — independent-diligence-firewall-workflow-3
 
 ## Current Position
 
-Phase: 6
-Plan: Not started
-Status: Phase complete — ready for verification
+Phase: 06 (independent-diligence-firewall-workflow-3) — EXECUTING
+Plan: 2 of 4
+Status: Ready to execute
 Last activity: 2026-08-15
 
 Progress: [░░░░░░░░░░] 0%
@@ -83,6 +83,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 05 P05 | 9min | 2 tasks tasks | 3 files files |
 | Phase 05 P06 | 18min | 2 tasks tasks | 3 files files |
 | Phase 05 P07 | 22min | 3 tasks tasks | 6 files files |
+| Phase 06 P01 | 5min | 2 tasks tasks | 12 files files |
 
 ## Accumulated Context
 
@@ -146,6 +147,7 @@ Recent decisions affecting current work:
 - [Phase 05]: 05-07 run_portfolio RECONCILES risk.recommended_size_pct + risk.hedge onto each proposal (model_copy) right after risk.assess and BEFORE select_book — the builder's preliminary size/hedge are never promoted (BLOCKER-1 fix)
 - [Phase 05]: 05-07 select_book aggregates toward ~1% by SELECTION only (greedy by expected_move/size under weekly budget + concentration heat cap); it never resizes a leg above its survival size; zero-trade + all-kill weeks are valid successes
 - [Phase 05]: 05-07 memo + pre-mortem authored in run_structured calls SEPARATE from and BEFORE the opus PM decision (author != approver, OPS-01/02); which_risk_covered derived from validated+payoff+instrument so an unvalidated hedge can never report idiosyncratic (HEDGE-05)
+- [Phase 06]: DiligenceInput firewall = pydantic property (extra=forbid + field-disjoint from all Workflow-1/2 artifacts); pair is a bare ticker str|None so no Hedge object crosses (DILIG-01)
 
 ### Pending Todos
 
@@ -159,6 +161,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-08-15T08:04:07.559Z
-Stopped at: Completed 05-07-PLAN.md
+Last session: 2026-08-15T17:59:00.955Z
+Stopped at: Completed 06-01-PLAN.md
 Resume file: None

@@ -19,8 +19,10 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [ ] **Phase 5: Trade Builder, Honest Hedge & Ruin-Avoidant Sizing (Workflow 1b/2)** - Inverse-payoff peer selection, risk-of-ruin sizing, 3-way risk debate, PM promote/kill → StrategyDossier
 - [ ] **Phase 6: Independent Diligence Firewall (Workflow 3)** - Input-firewalled adversarial second opinion → GO/NO-GO DiligenceDossier
 - [ ] **Phase 6.5: Weekly Strategy Correction** *(added 2026-08-15)* - Sizing amendment (target-within-survival-cap), NO zero-trade weeks, universe-wide weekly thesis engine (catalyst + mean-reversion + continuation, each with a measured edge), weekly build/exit/monitor cadence — reworks Phase-5 sizing before any backtest
+- [ ] **Phase 6.7: MD/GP Reconciliation Loop** *(added 2026-08-15)* - GP integrates catalyst-call + portfolio + diligence; bounded iterative re-trigger of Workflow 1 or 2 with DD's missing info until convergence/cap; residual caveats → LP; firewall preserved
 - [ ] **Phase 7: Verifier/Guardrails + Backtest Harness** - Fact-check verifier + runtime monitors + mechanical (Layer A) and guarded-agentic (Layer B) backtests
 - [ ] **Phase 8: Paper Ledger, Attribution & Post-Mortem (Layer C)** - Simulated ledger vs live quotes + P&L attribution + post-mortem into the KB
+- [ ] **Phase 8.5: Intra-Week Position Monitor** *(added 2026-08-15, BUILD DEFERRED)* - Light/fast Haiku agent group, event-triggered by deterministic monitors (TA thresholds/news), flags positions → routes adjustment back to portfolio builder; no order placement
 - [ ] **Phase 9: iOS Dashboard + Approval Gate** - SwiftUI two-view dashboard, dossier review, approve/reject gate, chat-to-MD over Tailscale
 - [ ] **Phase 10: Continuous-Iteration Loop** - Predict→realize→score→propose-diff, gated behind golden-set regression + walk-forward evals
 - [ ] **Phase 11: Robinhood MCP Live Execution** - Live equities behind the human gate, after paper proof + a real tool-surface probe (strictly last)
@@ -125,7 +127,7 @@ Decimal phases appear between their surrounding integers in numeric order.
   2. Multi-dimensional DD is performed from raw sources (trial stats/endpoints, regulatory precedent, financials/runway, ownership/flow, options-implied move, hedge/correlation re-validation, liquidity, historical analog)
   3. A synthesizer adversarially combines dimensions, rewards "no-go", and emits a DiligenceDossier {go/no-go, evidence, residual risks} where a single failing money-touching dimension forces NO-GO
 **Plans**: 4 plans (4 waves)
-- [ ] 06-01-PLAN.md — DiligenceInput firewall contract + residual_risks + offline test harness/fixtures (Wave 1)
+- [x] 06-01-PLAN.md — DiligenceInput firewall contract + residual_risks + offline test harness/fixtures (Wave 1)
 - [ ] 06-02-PLAN.md — 8 adversarial DD dimensions + options degradation + independent hedge re-validation (Wave 2)
 - [ ] 06-03-PLAN.md — Deterministic NO-GO synthesizer + verdict-immutable narrative + enforce_dossier cite-or-drop (Wave 3)
 - [ ] 06-04-PLAN.md — run_diligence firewalled orchestrator + end-to-end (Wave 4)
