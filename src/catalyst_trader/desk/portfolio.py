@@ -20,7 +20,7 @@ from dataclasses import dataclass
 
 from pydantic import BaseModel, ConfigDict
 
-from ..contracts import PortfolioContext, StrategyDossier, TradeProposal
+from ..contracts import EstimateVetting, PortfolioContext, StrategyDossier, TradeProposal
 from ..quant.portfolio import concentration, exposure
 from .runtime import run_structured
 
@@ -84,6 +84,65 @@ def select_book(candidates, open_book, weekly_budget, heat_cap, target_weekly=0.
         # never an empty week. defensive_book is a prebuilt list[Candidate].
         return list(defensive_book), sum(c.size_pct * c.expected_move for c in defensive_book)
     return promoted, aggregate
+
+
+def build_weekly_leg_dossier(cand, *, concentration_val, weekly_budget, budget_used,
+                             promoted_weights) -> StrategyDossier:
+    """Deterministically wrap a promoted single-leg statistical / defensive-cash Candidate into a
+    StrategyDossier (WEEK-01). NO LLM: these legs carry no bull/bear debate — a statistical leg is a
+    measured base-rate edge, a defensive leg is a cash anchor. Both are ALWAYS single-leg (hedge None,
+    which_risk_covered="none" — the Phase-5 size-tiny/no-hedge fallback) and ALWAYS exit at the one-week
+    horizon (holds_through_catalyst=False). The Candidate.payload carries the leg's facts.
+
+    # ponytail: no run_structured here — spending an opus PM call on an SGOV cash anchor is waste;
+    #           the catalyst PM flow is untouched, these legs are just surfaced in the book.
+    """
+    pl = cand.payload or {}
+    ticker = pl.get("ticker", "?")
+    defensive = bool(pl.get("defensive"))
+    kind = "defensive" if defensive else pl.get("thesis_type", "statistical")
+    label = (
+        "defensive cash-like anchor (no-signal week)" if defensive
+        else f"single-leg {kind} weekly leg (measured base-rate edge)"
+    )
+    refs = [pl["base_rate_ref"]] if pl.get("base_rate_ref") else []
+    trade = TradeProposal(
+        target_long=ticker,
+        hedge=None,                                    # single-leg (Phase-5 no-hedge fallback)
+        pair_rationale=label + " — no inverse peer",
+        entry=float(pl.get("entry", 1.0)),
+        exit_by_date=pl["exit_by_date"],
+        stop_loss=0.0, take_profit=0.0,
+        size_pct=cand.size_pct,
+        expected_return_pct=cand.expected_move,
+        holds_through_catalyst=False,                   # ALWAYS exit at the one-week horizon
+        catalyst_id=f"weekly:{kind}:{ticker}",          # synthetic marker (no catalyst behind it)
+        direction="positive",
+        estimate_vetting=EstimateVetting(
+            verdict="endorse", input_refs=refs,
+            reasons=["weekly base-rate leg (single-leg, one-week exit)"],
+        ),
+        sl_advisory=True,
+    )
+    net = exposure(promoted_weights).detail["net"] if promoted_weights else 0.0
+    ctx = PortfolioContext(
+        concentration=concentration_val,
+        corr_to_open_positions=[],
+        weekly_budget_remaining=max(0.0, weekly_budget - budget_used),
+    )
+    return StrategyDossier(
+        decision="promote",
+        trade=trade,
+        portfolio_context=ctx,
+        verdict_summary=label,
+        dissent_log=[],
+        all_evidence_refs=refs,
+        residual_net_long=net,
+        which_risk_covered="none",
+        position_memo=label,
+        pre_mortem=["one-week horizon exit regardless of path"],
+        kill_criteria=pl.get("kill_criteria") or ["exit at the one-week horizon"],
+    )
 
 
 # ---------------------------------------------------------------------------

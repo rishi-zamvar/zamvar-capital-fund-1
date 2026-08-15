@@ -22,6 +22,7 @@ from .portfolio import (
     Candidate,
     author_memo,
     author_pre_mortem,
+    build_weekly_leg_dossier,
     pm_decide,
     select_book,
 )
@@ -62,9 +63,26 @@ async def run_desk(conn, catalyst) -> DebateVerdict:
     return await verifier.enforce(conn, verdict, signals=signals)
 
 
+def _cap_sleeve(stat, cap):
+    """Cap the combined statistical-sleeve book-weight at `cap`, keeping the HIGHEST-efficiency legs
+    (drop the lowest-efficiency until they fit) so statistical legs can never crowd out the catalyst
+    engine (the moat). Efficiency = expected_move/size_pct, the same rank select_book uses."""
+    ranked = sorted(stat, key=lambda c: (c.expected_move / c.size_pct) if c.size_pct else 0.0,
+                    reverse=True)
+    kept, used = [], 0.0
+    for c in ranked:
+        if used + c.book_weight() > cap:
+            continue  # this leg would breach the sleeve cap — drop it (lowest-efficiency drop first)
+        kept.append(c)
+        used += c.book_weight()
+    return kept
+
+
 async def run_portfolio(
     conn, embed, verdicts, open_book, *,
     weekly_budget: float = 0.10, heat_cap: float = 1.0, target_weekly: float = 0.01,
+    target_return: float | None = None, defensive_book=None, extra_candidates=None,
+    statistical_sleeve_cap: float | None = None,
 ) -> list[StrategyDossier]:
     """Workflow-1b entry point: turn the week's calls into ONE recommended portfolio (PORT-01).
 
@@ -92,10 +110,18 @@ async def run_portfolio(
             continue  # below-min size / rejected estimate -> no trade this leg (zero-trade allowed)
 
         ri = item["risk_inputs"]
+        # WEEK-04: with target_return set, size TOWARD the ~1% target within the survival cap and thread
+        # expected_move=proposal.expected_return_pct (the blended net EV) — DELIBERATE per plan (matches
+        # the Candidate.expected_move semantics select_book aggregates on; NOT research's raw up_move).
+        # target_return=None -> the kwargs are omitted entirely (byte-for-byte the Phase-5 catalyst path).
+        assess_kw = {} if target_return is None else {
+            "target_return": target_return,
+            "expected_move": proposal.expected_return_pct,
+        }
         assessment = await risk.assess(
             conn, embed, proposal, catalyst,
             p_loss=ri["p_loss"], gap=ri["gap"],
-            analog_gaps=ri["analog_gaps"], prices=ri["prices"],
+            analog_gaps=ri["analog_gaps"], prices=ri["prices"], **assess_kw,
         )
         # RECONCILE (BLOCKER-1): the Risk Committee's ruin-capped size + validated hedge win.
         proposal = proposal.model_copy(update={
@@ -105,12 +131,21 @@ async def run_portfolio(
         reconciled.append({"verdict": verdict, "proposal": proposal, "risk": assessment})
 
     # SELECT toward ~1% by selection only (never resizing a leg above its survival size).
-    candidates = [
+    catalyst_candidates = [
         Candidate(size_pct=c["proposal"].size_pct, expected_move=c["proposal"].expected_return_pct,
                   weight=c["proposal"].size_pct, payload=c)
         for c in reconciled
     ]
-    promoted, _agg = select_book(candidates, open_book, weekly_budget, heat_cap, target_weekly)
+    # WEEK-01: single-leg statistical Candidates ride the SAME select_book pass (shared budget + heat).
+    # Sleeve cap (research §4.5 knob #4): ONLY in a catalyst week, cap the combined statistical book-weight
+    # at statistical_sleeve_cap * weekly_budget so the statistical sleeve never crowds out the catalyst
+    # engine. A pure-statistical week (no catalyst candidates) is NOT capped — the cap must never starve it.
+    stat = list(extra_candidates or [])
+    if statistical_sleeve_cap is not None and catalyst_candidates and stat:
+        stat = _cap_sleeve(stat, statistical_sleeve_cap * weekly_budget)
+    candidates = catalyst_candidates + stat
+    promoted, _agg = select_book(candidates, open_book, weekly_budget, heat_cap, target_weekly,
+                                 defensive_book=defensive_book)
     promoted_ids = {id(c.payload) for c in promoted}
     promoted_weights = [ob["weight"] for ob in open_book] + [c.book_weight() for c in promoted]
     budget_used = sum(c.size_pct for c in promoted)
@@ -132,4 +167,14 @@ async def run_portfolio(
             conn, embed, proposal, assessment, memo, pre_mortem, ctx,
             decision=decision, kill_criteria=verdict.kill_criteria, promoted_weights=promoted_weights,
         ))
+
+    # WEEK-01: promoted single-leg statistical + defensive-cash legs (payload is a bare thesis/defensive
+    # dict, NOT a reconciled {verdict,proposal,risk} item) are surfaced deterministically — no LLM.
+    for cand in promoted:
+        pl = cand.payload
+        if isinstance(pl, dict) and "proposal" not in pl:
+            dossiers.append(build_weekly_leg_dossier(
+                cand, concentration_val=book_conc, weekly_budget=weekly_budget,
+                budget_used=budget_used, promoted_weights=promoted_weights,
+            ))
     return dossiers
