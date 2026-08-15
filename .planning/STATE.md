@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: executing
-stopped_at: Completed 05-06-PLAN.md
-last_updated: "2026-08-15T07:51:04.885Z"
+status: verifying
+stopped_at: Completed 05-07-PLAN.md
+last_updated: "2026-08-15T08:04:17.638Z"
 last_activity: 2026-08-15
 progress:
   total_phases: 11
-  completed_phases: 4
+  completed_phases: 5
   total_plans: 32
-  completed_plans: 31
+  completed_plans: 32
   percent: 0
 ---
 
@@ -27,7 +27,7 @@ See: .planning/PROJECT.md (updated 2026-08-14)
 
 Phase: 05 (trade-builder-honest-hedge-ruin-avoidant-sizing-workflow-1b-2) — EXECUTING
 Plan: 7 of 7
-Status: Ready to execute
+Status: Phase complete — ready for verification
 Last activity: 2026-08-15
 
 Progress: [░░░░░░░░░░] 0%
@@ -82,6 +82,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 05 P04 | 18min | 3 tasks | 6 files |
 | Phase 05 P05 | 9min | 2 tasks tasks | 3 files files |
 | Phase 05 P06 | 18min | 2 tasks tasks | 3 files files |
+| Phase 05 P07 | 22min | 3 tasks tasks | 6 files files |
 
 ## Accumulated Context
 
@@ -142,6 +143,9 @@ Recent decisions affecting current work:
 - [Phase 05]: enforce_estimate is the estimate-layer mirror of verifier.enforce: cite-or-drop on every estimator input (reusing evidence.resolve/quote_supported) + deterministic consistency (P(positive)↔verdict, down-move sanity band, hold-through/non-advisory SL) + one gated opus analog-comparability check; reject raises EstimateRejectedError blocking finalize (PORT-02/OPS-01)
 - [Phase 05]: Down-move sanity band centers on params['estimator']['default_down_move'] (the cited per-type fitted param), not quant.base_rate — base_rates.csv has no per-catalyst-type down-move row; band [0.5x,2x] is a named calibration knob
 - [Phase 05]: [Phase 05] builder: DebateVerdict -> TradeProposal, single-leg estimated-move construction; hold-vs-exit via quant hold_vs_exit (log-growth, never raw EV, BLOCKER-2); sized on estimated down-move; SL advisory on hold-through; every threshold from params[builder] (missing raises); estimate vetted before finalize
+- [Phase 05]: 05-07 run_portfolio RECONCILES risk.recommended_size_pct + risk.hedge onto each proposal (model_copy) right after risk.assess and BEFORE select_book — the builder's preliminary size/hedge are never promoted (BLOCKER-1 fix)
+- [Phase 05]: 05-07 select_book aggregates toward ~1% by SELECTION only (greedy by expected_move/size under weekly budget + concentration heat cap); it never resizes a leg above its survival size; zero-trade + all-kill weeks are valid successes
+- [Phase 05]: 05-07 memo + pre-mortem authored in run_structured calls SEPARATE from and BEFORE the opus PM decision (author != approver, OPS-01/02); which_risk_covered derived from validated+payoff+instrument so an unvalidated hedge can never report idiosyncratic (HEDGE-05)
 
 ### Pending Todos
 
@@ -155,6 +159,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-08-15T07:50:57.315Z
-Stopped at: Completed 05-06-PLAN.md
+Last session: 2026-08-15T08:04:07.559Z
+Stopped at: Completed 05-07-PLAN.md
 Resume file: None

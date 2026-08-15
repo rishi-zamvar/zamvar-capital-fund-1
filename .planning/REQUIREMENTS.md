@@ -40,7 +40,7 @@
 - [x] **HEDGE-02**: Risk agent re-analyzes the hedge relationship before every trade, conditional on THIS catalyst (historical analog gaps + current landscape), producing a conditional payoff matrix
 - [x] **HEDGE-03**: Peer must be catalyst-clean over the hold window (no own PDUFA/readout/earnings/M&A)
 - [x] **HEDGE-04**: No-valid-inverse-peer fallback: flag and fall back to size-tiny or exit-before-event — never a fake hedge
-- [ ] **HEDGE-05**: Dossier states residual net-long risk and which risk (idiosyncratic vs. sector) is actually covered
+- [x] **HEDGE-05**: Dossier states residual net-long risk and which risk (idiosyncratic vs. sector) is actually covered
 
 ### Workflow 1 — Catalyst Call (CALL)
 
@@ -51,11 +51,11 @@
 
 ### Workflow 2 — Portfolio Construction (PORT)
 
-- [ ] **PORT-01**: Takes the week's catalyst calls and builds one recommended portfolio for the week
+- [x] **PORT-01**: Takes the week's catalyst calls and builds one recommended portfolio for the week
 - [x] **PORT-02**: Trade Builder selects the inverse-hedge peer, entry, hold-vs-exit-before-event decision, SL/TP
 - [x] **PORT-03**: 3-way Risk Committee (aggressive/conservative/neutral) sizes for survival via risk-of-ruin; the 1% target is a measured outcome, never a sizing input
-- [ ] **PORT-04**: MD/PM evaluates portfolio fit (concentration, correlation to open book, weekly budget) and promotes/kills
-- [ ] **PORT-05**: Emits a StrategyDossier for review
+- [x] **PORT-04**: MD/PM evaluates portfolio fit (concentration, correlation to open book, weekly budget) and promotes/kills
+- [x] **PORT-05**: Emits a StrategyDossier for review
 
 ### Workflow 3 — Independent Diligence (DILIG)
 
@@ -96,7 +96,7 @@
 ### Firm Operating Model & QC (OPS)
 
 - [x] **OPS-01**: Position memo per trade with explicit falsification/kill criteria (authorship separated from approval)
-- [ ] **OPS-02**: Pre-mortem step ("assume this lost — why?") before promotion
+- [x] **OPS-02**: Pre-mortem step ("assume this lost — why?") before promotion
 - [ ] **OPS-03**: Monitors/guardrails: catalyst-date, fact-check, provenance, firewall, net-long/concentration, live-position (SL/TP, countdown, paper P&L)
 - [x] **OPS-04**: Full test coverage (TDD) on all new code; money-critical tools have exhaustive edge-case suites
 
@@ -145,18 +145,18 @@
 | CALL-02 | Phase 4 | Complete |
 | CALL-03 | Phase 4 | Complete |
 | CALL-04 | Phase 4 | Complete |
-| PORT-01 | Phase 5 | Pending |
+| PORT-01 | Phase 5 | Complete |
 | PORT-02 | Phase 5 | Complete |
 | PORT-03 | Phase 5 | Complete |
-| PORT-04 | Phase 5 | Pending |
-| PORT-05 | Phase 5 | Pending |
+| PORT-04 | Phase 5 | Complete |
+| PORT-05 | Phase 5 | Complete |
 | HEDGE-01 | Phase 5 | Complete |
 | HEDGE-02 | Phase 5 | Complete |
 | HEDGE-03 | Phase 5 | Complete |
 | HEDGE-04 | Phase 5 | Complete |
-| HEDGE-05 | Phase 5 | Pending |
+| HEDGE-05 | Phase 5 | Complete |
 | OPS-01 | Phase 5 | Complete |
-| OPS-02 | Phase 5 | Pending |
+| OPS-02 | Phase 5 | Complete |
 | DILIG-01 | Phase 6 | Pending |
 | DILIG-02 | Phase 6 | Pending |
 | DILIG-03 | Phase 6 | Pending |
