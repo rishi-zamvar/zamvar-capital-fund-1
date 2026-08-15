@@ -18,6 +18,7 @@ tool body). All data via the point-in-time bars store (bars_asof, no look-ahead)
 """
 
 import math
+from datetime import date, timedelta
 
 import numpy as np
 
@@ -269,3 +270,112 @@ def _win_loss(arr):
     if losses.size == 0:
         return float("inf")
     return float(wins.mean() / abs(losses.mean()))
+
+
+# --- Task 3: thesis_scan ---------------------------------------------------------------------
+
+
+def _match_trigger(ret):
+    """Map a weekly return to its FIXED trigger cell (most extreme first); None = no measured cell."""
+    if ret <= -0.15:
+        return "drop_le_-0.15"
+    if ret <= -0.10:
+        return "drop_le_-0.10"
+    if ret <= -0.05:
+        return "drop_le_-0.05"
+    if ret >= 0.10:
+        return "up_ge_0.10"
+    if ret >= 0.05:
+        return "up_ge_0.05"
+    return None
+
+
+def _thesis_type(drop_class):
+    """Class -> intended thesis (research §2.4). busted_catalyst is NEVER a bounce (no thesis)."""
+    if drop_class in ("sector_beta", "idio_no_news"):
+        return "mean_reversion"
+    if drop_class == "positive_catalyst":
+        return "continuation"
+    if drop_class == "dilution":
+        return "excluded"
+    return "none"  # busted_catalyst + anything unmapped: no statistical thesis
+
+
+def _catalyst_in_hold_window(store, kb_conn, ticker, week_end):
+    """A verified catalyst in the upcoming hold week (week_end, week_end + 7 days]."""
+    end = (date.fromisoformat(week_end) + timedelta(days=7)).isoformat()
+    return any(
+        c.ticker == ticker and week_end < c.event_date <= end
+        for c in store.tradeable_catalysts(kb_conn)
+    )
+
+
+def thesis_scan(universe, week_end, store, kb_conn, *, params):
+    """The weekly driver — a thesis row for EVERY universe name (WEEK-02).
+
+    Every name gets a data-backed read, including a "no measured edge" row (a valid answer). A row
+    is eligible ONLY if ALL four gates hold — edge >= edge_min_pts, n_effective >= min_effective_n,
+    mean_next > cost_mult*roundtrip_cost, ci_low > 0 — AND it is not a -15% falling-knife (HARD VETO,
+    any class) and not a busted catalyst. A name with a catalyst inside the hold window is handed to
+    Workflow-1 (catalyst precedence). Frozen ToolResult; NO LLM inside.
+    """
+    w = params["weekly"]
+    edge_min = w["edge_min_pts"]
+    min_n = w["min_effective_n"]
+    cost_floor = w["cost_mult"] * w["roundtrip_cost"]
+    hard_veto = w["hard_veto_drop"]
+
+    tickers = [getattr(item, "ticker", item) for item in universe]
+    rows = [
+        _thesis_row(tk, week_end, store, kb_conn, params, edge_min, min_n, cost_floor, hard_veto)
+        for tk in tickers
+    ]
+
+    return ToolResult(
+        tool="thesis_scan",
+        tool_version=_VERSION,
+        inputs={"universe": tickers, "week_end": week_end, "params": params},
+        value=None,
+        detail={"rows": rows},
+    )
+
+
+def _thesis_row(ticker, week_end, store, kb_conn, params, edge_min, min_n, cost_floor, hard_veto):
+    cd = classify_drop(ticker, week_end, store, kb_conn, params=params).detail
+    ret, drop_class, turnover = cd["ret"], cd["drop_class"], cd["turnover_flag"]
+
+    # catalyst precedence: Workflow-1 owns any name with a tradeable catalyst in the hold window.
+    if _catalyst_in_hold_window(store, kb_conn, ticker, week_end):
+        return {"ticker": ticker, "thesis_type": "catalyst", "trigger": None, "p": None,
+                "mean_next": None, "n_effective": 0, "eligible": False,
+                "veto_reasons": ["catalyst_precedence"]}
+
+    trigger = _match_trigger(ret)
+    if trigger is None:  # no measured cell — a valid "no edge" read (still a row)
+        return {"ticker": ticker, "thesis_type": _thesis_type(drop_class), "trigger": None,
+                "p": None, "mean_next": None, "n_effective": 0, "eligible": False,
+                "veto_reasons": ["no_trigger"]}
+
+    br = weekly_base_rate(ticker, trigger, drop_class, turnover, week_end, store, kb_conn,
+                          params=params).detail
+    p, mean_next, ci_low = br["p_shrunk"], br["mean_next"], br["ci_low"]
+    n_eff = br["n_effective"]
+    edge = p - br["p_cohort"]
+
+    veto = []
+    if ret <= hard_veto:
+        veto.append("hard_veto_drop")       # -15% falling knife: ANY class, overrides every edge
+    if drop_class == "busted_catalyst":
+        veto.append("busted_catalyst")      # a busted catalyst is NEVER a bounce candidate
+    if edge < edge_min:
+        veto.append("edge_below_min")
+    if n_eff < min_n:
+        veto.append("thin_n")
+    if mean_next <= cost_floor:
+        veto.append("below_cost")
+    if ci_low <= 0:
+        veto.append("ci_touches_zero")
+
+    return {"ticker": ticker, "thesis_type": _thesis_type(drop_class), "trigger": trigger,
+            "p": p, "mean_next": mean_next, "n_effective": n_eff,
+            "eligible": not veto, "veto_reasons": veto}

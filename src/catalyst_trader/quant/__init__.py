@@ -26,6 +26,7 @@ from .sizing import (
     sl_tp_levels,
 )
 from .valuation import cash_runway, rnpv
+from .weekly import classify_drop, thesis_scan, weekly_base_rate
 
 __all__ = [
     "ToolResult",
@@ -63,4 +64,8 @@ __all__ = [
     "catalyst_move_estimate",
     "expected_log_growth",
     "hold_vs_exit",
+    # weekly thesis engine (WEEK-02)
+    "classify_drop",
+    "weekly_base_rate",
+    "thesis_scan",
 ]
