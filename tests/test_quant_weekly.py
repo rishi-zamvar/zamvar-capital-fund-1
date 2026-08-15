@@ -21,7 +21,7 @@ from catalyst_trader.models import (
     Status,
     Uncertainty,
 )
-from catalyst_trader.quant.weekly import classify_drop
+from catalyst_trader.quant.weekly import classify_drop, weekly_base_rate
 
 
 # --- fixtures / builders ---------------------------------------------------------------------
@@ -152,3 +152,61 @@ def test_classify_drop_missing_weekly_param_raises(db):
     we = _bars(_osc(8))[-1]["week_end"]
     with pytest.raises(KeyError):
         classify_drop("NAME", we, store, db, params=_params(db, beta_window_weeks=None))
+
+
+# --- Task 2: weekly_base_rate ----------------------------------------------------------------
+
+
+def _rep(pattern, times):
+    return pattern * times
+
+
+def test_weekly_base_rate_shrinks_thin_n(db):
+    # THIN: only 5 drop events, every one bounces -> raw p = 1.0 (must NOT be quoted raw).
+    store.upsert_bars(db, "THIN", _bars(_rep([-0.06, 0.03], 5)))
+    # cohort filler: 2 drops/cycle, one bounces one doesn't -> parent rate ~0.5.
+    store.upsert_bars(db, "FILL", _bars(_rep([-0.06, 0.03, -0.06, -0.02], 12)))
+    as_of = _bars(_rep([-0.06, 0.03], 5))[-1]["week_end"]
+    r = weekly_base_rate("THIN", "drop_le_-0.05", "idio_no_news", None, as_of, store, db,
+                         params=_params(db))
+    d = r.detail
+    assert d["n_name"] == 5 and d["p_raw"] == pytest.approx(1.0)
+    assert d["cohort_level"] == "universe" and d["p_cohort"] == pytest.approx(0.5, abs=0.05)
+    # shrunk sits STRICTLY between the raw per-name rate and the parent cohort.
+    assert d["p_cohort"] < d["p_shrunk"] < d["p_raw"]
+    assert r.value == pytest.approx(d["p_shrunk"])
+    assert d["shrink_prior_weight"] == 30 and d["shrunk"] is True
+
+
+def test_weekly_base_rate_ample_n_prior_washes_out(db):
+    store.upsert_bars(db, "AMPLE", _bars(_rep([-0.06, 0.03], 600)))
+    store.upsert_bars(db, "FILL", _bars(_rep([-0.06, 0.03, -0.06, -0.02], 12)))
+    as_of = _bars(_rep([-0.06, 0.03], 600))[-1]["week_end"]
+    r = weekly_base_rate("AMPLE", "drop_le_-0.05", "idio_no_news", None, as_of, store, db,
+                         params=_params(db), window_years=100)
+    d = r.detail
+    assert d["n_name"] >= 500 and d["shrunk"] is False
+    assert abs(d["p_shrunk"] - d["p_raw"]) < 0.05  # prior negligible at ample n
+
+
+def test_weekly_base_rate_anchor_equals_execution_anchor(db):
+    store.upsert_bars(db, "AN", _bars(_rep([-0.06, 0.03], 5)))
+    as_of = _bars(_rep([-0.06, 0.03], 5))[-1]["week_end"]
+    r = weekly_base_rate("AN", "drop_le_-0.05", "idio_no_news", None, as_of, store, db,
+                         params=_params(db))
+    assert r.detail["anchor"] == "MON_OPEN"  # the default execution anchor
+    # the SAME single anchor param drives the measurement window (the trap): change it -> flows through.
+    r2 = weekly_base_rate("AN", "drop_le_-0.05", "idio_no_news", None, as_of, store, db,
+                          params=_params(db, anchor="FRI_CLOSE"))
+    assert r2.detail["anchor"] == "FRI_CLOSE"
+
+
+def test_weekly_base_rate_missing_param_and_unknown_trigger_raise(db):
+    store.upsert_bars(db, "NM", _bars(_rep([-0.06, 0.03], 5)))
+    as_of = _bars(_rep([-0.06, 0.03], 5))[-1]["week_end"]
+    with pytest.raises(KeyError):
+        weekly_base_rate("NM", "drop_le_-0.05", "idio_no_news", None, as_of, store, db,
+                         params=_params(db, shrink_prior_weight=None))
+    with pytest.raises(ValueError):
+        weekly_base_rate("NM", "drop_le_-0.99", "idio_no_news", None, as_of, store, db,
+                         params=_params(db))
