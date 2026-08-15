@@ -23,7 +23,7 @@ shortlisted but produce no leg this phase — the statistical + defensive sleeve
 #           (size_for_survival, select_book). This file only WIRES them into the weekly cadence.
 """
 
-from datetime import date, timedelta
+from datetime import date, datetime, timedelta, timezone
 
 from .. import kb, store
 from ..quant.weekly import classify_drop, thesis_scan
@@ -75,7 +75,7 @@ def _catalyst_dict(conn, ticker, as_of):
 
 
 async def run_weekly(conn, embed, as_of, open_book, *, params=None, target_weekly=0.01,
-                     catalyst_context=None):
+                     catalyst_context=None, closing_legs=None):
     """Run one weekly cadence and return the week's StrategyDossier book (WEEK-01) — never empty.
 
     `target_weekly` is the ~1% objective sizing serves within the survival cap (a caller value, not a
@@ -135,9 +135,55 @@ async def run_weekly(conn, embed, as_of, open_book, *, params=None, target_weekl
     for c in defensive:
         c.payload["exit_by_date"] = exit_by     # the one-week horizon (same anchor)
 
-    return await run_portfolio(
+    book = await run_portfolio(
         conn, embed, verdicts, open_book,
         target_return=target_weekly, target_weekly=target_weekly,
         extra_candidates=extra, defensive_book=defensive,
         statistical_sleeve_cap=sleeve_cap,
     )
+
+    # WEEK-05 seam: at the one-week exit, last week's legs have realized their return -> record them as
+    # cited KB outcome claims for the Phase-10 LEARN loop. The caller supplies `closing_legs` (each with
+    # its realized_ret + base_rate_inputs); nothing to close on the very first week.
+    for leg in (closing_legs or []):
+        record_weekly_outcome(conn, leg, embed=embed)
+
+    return book
+
+
+# --- WEEK-05: per-leg outcome record seam (cited KB claims for the Phase-10 LEARN loop) --------
+
+
+def record_weekly_outcome(conn, leg, *, embed=None):
+    """Persist ONE cited KB ``outcome`` claim for a realized weekly leg (WEEK-05 seam).
+
+    The claim carries {thesis_type, trigger, p_quoted, size, realized_ret, win} and CITES the
+    ``weekly_base_rate`` ToolResult that justified the leg via a ``tool:weekly_base_rate#<inputs_hash>``
+    ref (Phase-4 resolved-by-construction pattern) — the ref is stored as the claim's EvidenceSource, so
+    insert_claim's cite-or-drop invariant holds by construction (no uncited write). The inputs hash pins
+    the exact base-rate cell, so a re-run reproduces the number.
+
+    Build the SEAM only — the base-rate refit that CONSUMES these rows is Phase-10 (LEARN), out of scope.
+    # ponytail: the eligibility / auto-demotion ledger (research §3.3) is Phase-10 — record the raw
+    #           outcomes now, do NOT build the demotion machinery.
+    """
+    br_inputs = leg["base_rate_inputs"]
+    ref = tool_ref_for("weekly_base_rate", br_inputs)          # resolved-by-construction (cite-or-drop)
+    ev = kb.EvidenceSource(
+        url=ref,
+        retrieved_at=datetime.now(timezone.utc).isoformat(),
+        snippet_hash=ref.split("#", 1)[1],
+        quote=f"p_up={leg['p_quoted']} thesis={leg['thesis_type']} trigger={leg['trigger']}",
+    )
+    node = kb.KBNode(kind="outcome", attrs={
+        "kind": "weekly_leg",
+        "ticker": leg["ticker"],
+        "thesis_type": leg["thesis_type"],
+        "trigger": leg["trigger"],
+        "p_quoted": leg["p_quoted"],
+        "size": leg["size"],
+        "realized_ret": leg["realized_ret"],
+        "win": leg["realized_ret"] > 0,
+    })
+    return kb.insert_claim(conn, node, [ev], embed=embed,
+                           embed_text=f"weekly {leg['thesis_type']} {leg['ticker']}" if embed else None)
