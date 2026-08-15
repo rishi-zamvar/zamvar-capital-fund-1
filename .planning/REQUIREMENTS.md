@@ -95,7 +95,7 @@
 
 ### Firm Operating Model & QC (OPS)
 
-- [ ] **OPS-01**: Position memo per trade with explicit falsification/kill criteria (authorship separated from approval)
+- [x] **OPS-01**: Position memo per trade with explicit falsification/kill criteria (authorship separated from approval)
 - [ ] **OPS-02**: Pre-mortem step ("assume this lost — why?") before promotion
 - [ ] **OPS-03**: Monitors/guardrails: catalyst-date, fact-check, provenance, firewall, net-long/concentration, live-position (SL/TP, countdown, paper P&L)
 - [x] **OPS-04**: Full test coverage (TDD) on all new code; money-critical tools have exhaustive edge-case suites
@@ -155,7 +155,7 @@
 | HEDGE-03 | Phase 5 | Complete |
 | HEDGE-04 | Phase 5 | Complete |
 | HEDGE-05 | Phase 5 | Pending |
-| OPS-01 | Phase 5 | Pending |
+| OPS-01 | Phase 5 | Complete |
 | OPS-02 | Phase 5 | Pending |
 | DILIG-01 | Phase 6 | Pending |
 | DILIG-02 | Phase 6 | Pending |
