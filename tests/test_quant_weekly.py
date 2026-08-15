@@ -21,7 +21,7 @@ from catalyst_trader.models import (
     Status,
     Uncertainty,
 )
-from catalyst_trader.quant.weekly import classify_drop, weekly_base_rate
+from catalyst_trader.quant.weekly import classify_drop, thesis_scan, weekly_base_rate
 
 
 # --- fixtures / builders ---------------------------------------------------------------------
@@ -210,3 +210,54 @@ def test_weekly_base_rate_missing_param_and_unknown_trigger_raise(db):
     with pytest.raises(ValueError):
         weekly_base_rate("NM", "drop_le_-0.99", "idio_no_news", None, as_of, store, db,
                          params=_params(db))
+
+
+# --- Task 3: thesis_scan ---------------------------------------------------------------------
+
+
+def _rows_by_ticker(result):
+    return {x["ticker"]: x for x in result.detail["rows"]}
+
+
+def test_thesis_scan_eligibility_bar(db):
+    # ELIG: a -6% drop with a strong, deep, positive-mean bounce history -> passes ALL 4 gates.
+    store.upsert_bars(db, "XBI", _bars(_osc(120)))
+    store.upsert_bars(db, "ELIG", _bars(_rep([0.03, -0.06], 60)))
+    we = _bars(_rep([0.03, -0.06], 60))[-1]["week_end"]
+    row = _rows_by_ticker(thesis_scan(["ELIG"], we, store, db, params=_params(db)))["ELIG"]
+    assert row["eligible"] is True and row["veto_reasons"] == []
+    assert row["thesis_type"] == "mean_reversion"
+    assert row["n_effective"] >= 30 and row["trigger"] == "drop_le_-0.05"
+
+
+def test_thesis_scan_15pct_hard_veto(db):
+    # KNIFE: a -16% week with a PERFECT bounce history is STILL never eligible (falling-knife veto).
+    store.upsert_bars(db, "XBI", _bars(_osc(80)))
+    store.upsert_bars(db, "KNIFE", _bars(_rep([0.10, -0.16], 40)))
+    we = _bars(_rep([0.10, -0.16], 40))[-1]["week_end"]
+    row = _rows_by_ticker(thesis_scan(["KNIFE"], we, store, db, params=_params(db)))["KNIFE"]
+    assert row["eligible"] is False
+    assert "hard_veto_drop" in row["veto_reasons"]
+
+
+def test_thesis_scan_row_for_every_name_including_no_edge(db):
+    store.upsert_bars(db, "XBI", _bars(_osc(120)))
+    store.upsert_bars(db, "ELIG", _bars(_rep([0.03, -0.06], 60)))
+    store.upsert_bars(db, "FLAT", _bars(_osc(120, amp=0.01)))  # never triggers a cell
+    we = _bars(_rep([0.03, -0.06], 60))[-1]["week_end"]
+    rows = _rows_by_ticker(thesis_scan(["ELIG", "FLAT"], we, store, db, params=_params(db)))
+    assert set(rows) == {"ELIG", "FLAT"}  # WEEK-02: a row for EVERY name every week
+    assert rows["FLAT"]["trigger"] is None and rows["FLAT"]["eligible"] is False
+    assert "no_trigger" in rows["FLAT"]["veto_reasons"]  # a valid 'no measured edge' read
+
+
+def test_thesis_scan_catalyst_precedence(db):
+    # a name with a tradeable catalyst INSIDE the hold window is a catalyst row (Workflow-1 preempts).
+    store.upsert_bars(db, "XBI", _bars(_osc(40)))
+    store.upsert_bars(db, "CAT", _bars(_rep([0.03, -0.06], 20)))
+    we = _bars(_rep([0.03, -0.06], 20))[-1]["week_end"]
+    fut = (date.fromisoformat(we) + timedelta(days=3)).isoformat()  # inside the upcoming hold week
+    store.insert_catalyst(db, _verified_catalyst("CAT", fut))
+    row = _rows_by_ticker(thesis_scan(["CAT"], we, store, db, params=_params(db)))["CAT"]
+    assert row["thesis_type"] == "catalyst"
+    assert "catalyst_precedence" in row["veto_reasons"]
