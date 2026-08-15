@@ -16,8 +16,13 @@ Stage-2 Haiku pass — monitor-by-exception. No LLM, no network anywhere in this
 import statistics
 from datetime import date, timedelta
 
-from ..store import bars_asof, card_asof
+from ..contracts import OpportunityFlag, ScanInput, WeeklyFlag
+from ..store import bars_asof, card_asof, write_card, write_scan_flag
+from . import diligence
 from .diligence import DILIGENCE_PARAMS, options_liquid, zero_liquidity
+from .evidence import resolve
+from .runtime import run_structured
+from .tools import build_quant_server
 
 # The SINGLE source of scan thresholds (SCAN-03 no-silent-fallback). Module-level + always
 # present, read via direct subscript (missing-key-raises), NEVER `.get`. DELIBERATELY DECOUPLED
@@ -331,3 +336,187 @@ def _wakes(tripped, params=SCAN_PARAMS):
     principals = sum(1 for t in tripped if t["tier"] == "PRINCIPAL")
     corroborators = sum(1 for t in tripped if t["tier"] == "CORROBORATOR")
     return principals >= 1 or corroborators >= 2
+
+
+# --- Stage-2: the ONE adversarial Haiku pass per woken name (SCAN-01) -------------------------
+
+# Human-readable names for the frozen flag grammar — grammar, not thresholds (mirrors _TIER). Used
+# ONLY to serialize the Python-authored analog context; the LLM never sees the raw flag codes alone.
+_FLAG_NAME = {
+    "F1": "catalyst_entered_window", "F2": "ct_gov_changed", "F3": "competitor_catalyst_7d",
+    "F4": "iv_spike", "F5": "term_kink", "F6": "si_shift", "F7": "vol_regime",
+    "F8": "runway_band_drop", "F9": "offering_signal", "F10": "ma_cross",
+    "F11": "volume_anomaly", "F12": "quant_row_change", "F13": "big_move_unexplained",
+}
+
+# The adversarial Stage-2 prompt: the DD desk's HARD-RULES discipline (call-the-tool / cite-or-drop /
+# fill-unknowns / emit-the-schema) reshaped to ONE consolidated company-forward pass — NOT the 8-dim
+# fan-out. The three scanner questions + the "assume it's nothing" framing are the whole job.
+SCAN_PROMPT = """You are the WEEKLY COMPANY SCANNER (Stage-2). A deterministic Stage-1 gate flagged a
+week-over-week TRANSITION on this name; your job is to decide whether it is a real, explorable trading
+opportunity worth a desk's time — and if so, exactly what must be verified.
+
+ADVERSARIAL FRAMING: assume this delta is NOISE, is ALREADY PRICED IN, or is fundamentally UNTRADEABLE.
+Defeat that null hypothesis with cited evidence, or return no_opportunity. A confident story is worth
+nothing without a resolvable citation.
+
+ANSWER THREE QUESTIONS, in order:
+  1. INTEREST — what specifically about this transition is of interest (the concrete change, not a vibe)?
+  2. EXPLORABLE — is this a real, explorable opportunity, or noise / priced-in / untradeable?
+  3. VERIFY/BUILD — if real, what ONE falsifiable thesis must be verified next, and by which workflow
+     (catalyst_call / measured_edge / mini_backtest / diligence)?
+
+HARD RULES (a source-cited signal, never LLM arithmetic):
+  1. For ANY number, base rate, analog, or playbook, you MUST CALL the relevant `mcp__quant__*` tool
+     (analog_query + query_playbooks are mandatory) — NEVER compute, estimate, or recall a figure.
+  2. Every key_finding MUST carry the exact evidence_ref the tool returned (cite-or-drop) — a finding
+     you cannot cite does not go in the flag.
+  3. Fill `unknowns` with the explicit gaps a tool could not close.
+  4. Emit EXACTLY the OpportunityFlag schema. This is gap-not-answer: a thesis_to_verify + what must be
+     verified, NEVER a direction / size / target. no_opportunity is a valid, first-class outcome.
+"""
+
+
+def _analog_context(tripped, card_cur) -> str:
+    """DETERMINISTIC serialization of the tripped Stage-1 flags — the analog/KB query context, built
+    by Python so the LLM can never author (and thus bias) it. One line per flag: code, readable name,
+    the prev->cur transition, and the threshold it crossed."""
+    header = f"{card_cur.get('ticker')} {card_cur.get('week_end')}: Stage-1 tripped"
+    lines = [
+        f"  {t['flag']} {_FLAG_NAME.get(t['flag'], t['flag'])}: {t.get('prev')} -> {t.get('cur')} "
+        f"(threshold {t.get('threshold')}, {t.get('tier')})"
+        for t in tripped
+    ]
+    return header + "\n" + "\n".join(lines)
+
+
+def build_scan_prompt(scan_input: ScanInput, analog_context: str) -> str:
+    """Assemble the Stage-2 prompt from ONLY the firewall ScanInput fields + the Python-built analog
+    context. Mirrors diligence.build_dimension_prompt's shape (shared rules + a context block), but it
+    is ONE prompt, not 8 — no desk verdict/thesis is representable on a ScanInput to interpolate."""
+    return f"""{SCAN_PROMPT}
+NAME UNDER SCAN (point-in-time card fields — interpret + cite; this is a firewall, no desk view exists)
+  ticker:    {scan_input.ticker}
+  week_end:  {scan_input.week_end}
+
+STAGE-1 TRANSITIONS (Python-serialized — interpret, do not restate):
+{analog_context}
+"""
+
+
+def _cite_or_drop(conn, op: OpportunityFlag) -> OpportunityFlag:
+    """Structural cite-or-drop: drop any key_finding whose evidence_ref fails evidence.resolve before
+    persist/route. Structural stage ONLY — the DD desk's opus semantic support-check is deliberately
+    NOT replicated here (this is a cheap Haiku Stage-2, not the full diligence gate)."""
+    survivors = [kf for kf in op.key_findings if resolve(conn, kf.evidence_ref) is not None]
+    if len(survivors) == len(op.key_findings):
+        return op
+    return op.model_copy(update={"key_findings": survivors})
+
+
+def _no_material_change(ticker: str, week_end: str, tripped: list, *, reason: str = "no_material_change") -> dict:
+    """The stored (routed=False) audit row for a name that did NOT earn a Stage-2 pass. Carries the
+    tripped-flag echo so the ledger records WHY it didn't wake (nothing tripped / lone corroborator /
+    over the wake cap / catalyst-precedence)."""
+    return {
+        "ticker": ticker, "week_end": week_end,
+        "opportunity_type": "no_opportunity", "reason": reason,
+        "tripped_flags": [t["flag"] for t in tripped],
+    }
+
+
+def _catalyst_precedence(tripped: list, thesis_row: dict) -> bool:
+    """A BARE F1 fire (ONLY F1 tripped) on a name whose embedded thesis is already a catalyst is
+    suppressed — run_weekly already routed it to Workflow-1, so waking Stage-2 would double-flag the
+    same event (research open-Q2 default)."""
+    return {t["flag"] for t in tripped} == {"F1"} and (thesis_row or {}).get("thesis_type") == "catalyst"
+
+
+async def run_scan(conn, embed, week_end, raw_by_ticker, thesis_rows, *, params=SCAN_PARAMS) -> list:
+    """The Stage-2 orchestrator: for every name build its point-in-time card, run the deterministic
+    Stage-1 delta, and give ONLY the woken names a single adversarial Haiku pass — then cite-or-drop
+    and persist. Returns the routed OpportunityFlags (opportunity_type != no_opportunity).
+
+    ORDERING (SCAN-02 replayability money-gate): delta_card(prev, cur) runs BEFORE write_card — it
+    MUTATES cur["fired"] with this week's latches, and card_asof is the SOLE cross-week latch memory,
+    so persisting first would write a stale latch dict and let a flag latched this week spuriously
+    re-fire next week.
+    """
+    scan = params["scan"]
+    routed: list = []
+    wakes = 0
+    for ticker in raw_by_ticker:
+        thesis_row = thesis_rows.get(ticker, {})
+        prev = card_asof(conn, ticker, _prior_week(week_end))
+        cur = build_card(conn, ticker, week_end, raw_by_ticker[ticker], thesis_row, params=params)
+        tripped = delta_card(prev, cur, params=params)   # MUTATES cur["fired"] — must precede write_card
+        write_card(conn, ticker, week_end, cur)          # persist AFTER the delta (latch memory)
+
+        if not _wakes(tripped, params) or wakes >= scan["max_stage2_wakes"]:
+            write_scan_flag(conn, ticker, week_end, _no_material_change(ticker, week_end, tripped),
+                            routed=False)
+            continue
+        if _catalyst_precedence(tripped, thesis_row):
+            write_scan_flag(conn, ticker, week_end,
+                            _no_material_change(ticker, week_end, tripped, reason="catalyst_precedence"),
+                            routed=False)
+            continue
+
+        wakes += 1
+        ctx = _analog_context(tripped, cur)
+        scan_input = ScanInput(ticker=ticker, week_end=week_end, card_prev=prev, card_cur=cur,
+                               tripped=tripped)
+        srv = {"quant": build_quant_server(conn)}   # build_quant_server returns a BARE server — wrap it
+        op = await run_structured(build_scan_prompt(scan_input, ctx), OpportunityFlag,
+                                  mcp_servers=srv, allowed_tools=diligence.ALLOWED_TOOLS, model="haiku")
+        # Escalation: a low-confidence read earns ONE re-run on the pricier sonnet tier (cheap-first).
+        if op.confidence < scan["escalate_conf_floor"]:
+            hi = await run_structured(build_scan_prompt(scan_input, ctx), OpportunityFlag,
+                                      mcp_servers=srv, allowed_tools=diligence.ALLOWED_TOOLS, model="sonnet")
+            if hi.confidence < scan["escalate_conf_floor"]:
+                hi = hi.model_copy(update={"unknowns": [
+                    *hi.unknowns,
+                    f"still ambiguous after escalation (haiku {op.confidence:.2f} / sonnet {hi.confidence:.2f})",
+                ]})
+            op = hi
+
+        op = _cite_or_drop(conn, op)
+        is_opportunity = op.opportunity_type != "no_opportunity"
+        write_scan_flag(conn, ticker, week_end, op.model_dump(), routed=is_opportunity)
+        if is_opportunity:
+            routed.append(op)
+    return routed
+
+
+# --- Routing: project the rich OpportunityFlag onto the 6.7 WeeklyFlag wire (SCAN-04, zero md.py) ---
+
+
+def _promote_ref(op: OpportunityFlag) -> str | None:
+    """The WeeklyFlag's single evidence_ref: the strongest cited key_finding ref (cite-or-drop already
+    ran in run_scan, so the FIRST surviving finding is the strongest resolvable), else the first
+    kb_analog, deterministic tie-break by list order (research open-Q1). None if nothing citable."""
+    if op.key_findings:
+        return op.key_findings[0].evidence_ref
+    if op.kb_analogs:
+        return op.kb_analogs[0]
+    return None
+
+
+def to_weekly_flag(op: OpportunityFlag) -> WeeklyFlag | None:
+    """PURE projection of a routed OpportunityFlag onto the WeeklyFlag(flag_type="qual") the existing
+    MD router already ingests via item["incoming_flags"] (RECON-08/WEEK-06). Gap-not-answer: the
+    WeeklyFlag carries the GAP (thesis_to_verify) not the answer, and has NO direction/size/target —
+    verification_needed stays in the scan_flag audit payload, OFF the wire (the MD assigns the route).
+    Returns None for no_opportunity (stored-not-routed) or a flag with nothing citable."""
+    if op.opportunity_type == "no_opportunity":
+        return None
+    ref = _promote_ref(op)
+    if ref is None:
+        return None   # cite-or-drop: nothing to cite -> nothing to route
+    return WeeklyFlag(
+        ticker=op.ticker,
+        flag_type="qual",
+        finding=op.thesis_to_verify,
+        evidence_ref=ref,
+        why_material=f"{op.opportunity_type} setup on Stage-1 flags {op.tripped_flags}",
+    )

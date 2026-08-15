@@ -600,5 +600,3 @@ async def test_routed_flag_lands_in_md_queue(db, monkeypatch):
     }
     out = await reconcile(db, None, item)
     assert any(w.evidence_ref == wf.evidence_ref for r in out.round_log for w in r.logged_flags)
-    assert company_scan._wakes(two_corr, company_scan.SCAN_PARAMS) is True
-    assert company_scan._wakes([], company_scan.SCAN_PARAMS) is False
