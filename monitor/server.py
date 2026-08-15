@@ -350,6 +350,43 @@ def deliverables():
     return out or _cache["deliverables"]["v"]
 
 
+def roadmap_scope():
+    """Parse ROADMAP.md '### Phase N:' detail blocks → goal + success criteria (for the Roadmap tab)."""
+    now = time.time()
+    c = _cache.setdefault("scope", {"t": 0, "v": []})
+    if now - c["t"] < 30 and c["v"]:
+        return c["v"]
+    path = os.path.join(ROOT, ".planning/ROADMAP.md")
+    out = []
+    try:
+        txt = open(path, encoding="utf-8").read()
+    except Exception:
+        return c["v"]
+    blocks = re.split(r"^### Phase ", txt, flags=re.M)[1:]
+    for b in blocks:
+        head = b.splitlines()[0].strip()
+        m = re.match(r"([\d.]+):\s*(.+)", head)
+        if not m:
+            continue
+        num, name = m.group(1), re.sub(r"\s*\(added[^)]*\)", "", m.group(2)).strip()
+        goal = ""
+        gm = re.search(r"\*\*Goal\*\*:\s*(.+)", b)
+        if gm:
+            goal = gm.group(1).strip()
+        crits = re.findall(r"^\s*\d+\.\s+(.+)$", b, flags=re.M)
+        reqs = ""
+        rm = re.search(r"\*\*Requirements\*\*:\s*(.+)", b)
+        if rm:
+            reqs = rm.group(1).strip()
+        deferred = "BUILD DEFERRED" in b or "build deferred" in b
+        out.append({"n": num, "name": name, "goal": goal[:300],
+                    "crits": [c2[:220] for c2 in crits[:6]], "reqs": reqs[:120],
+                    "deferred": deferred})
+    if out:
+        c.update(t=now, v=out)
+    return out or c["v"]
+
+
 def blocker():
     b = read_json(os.path.join(MONDIR, "blocker.json"), {})
     return b if b.get("active") else None
@@ -381,7 +418,7 @@ def sample():
             "tokens": tokens_total(), "graphify": graphify_savings(), "feed": feed,
             "decisions": decisions(), "research": research_docs(),
             "deliverables": deliverables(), "blocker": blocker(),
-            "review": review_items()}
+            "review": review_items(), "scope": roadmap_scope()}
 
 
 def sampler():
@@ -595,6 +632,9 @@ h1{font-size:23px;margin:6px 0 0;letter-spacing:-.01em}
 .commit:last-child{border:none}
 .commit .h{color:var(--gold)}
 .commit .m{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.crits{margin-top:6px;padding-left:2px}
+.crit{font-family:var(--mono);font-size:11px;color:var(--mut);padding:2px 0 2px 14px;position:relative;line-height:1.45}
+.crit::before{content:"";position:absolute;left:2px;top:8px;width:4px;height:4px;border-radius:50%;background:var(--grn)}
 .empty{color:var(--faint);font-family:var(--mono);font-size:12px;padding:4px 0}
 /* tabs for the right-side reference column */
 .tabs{display:flex;gap:4px;margin-bottom:12px;flex-wrap:wrap}
@@ -663,15 +703,17 @@ h1{font-size:23px;margin:6px 0 0;letter-spacing:-.01em}
     <div class="panel">
       <h2>Reference — what the desk has decided &amp; found</h2>
       <div class="tabs">
-        <div class="tab on" data-tab="dec">Decisions</div>
+        <div class="tab on" data-tab="rev">For your review</div>
+        <div class="tab" data-tab="road">Roadmap</div>
+        <div class="tab" data-tab="dec">Decisions</div>
         <div class="tab" data-tab="res">Research</div>
         <div class="tab" data-tab="del">Deliverables</div>
-        <div class="tab" data-tab="rev">For your review</div>
       </div>
-      <div class="tabpane on" id="pane-dec"></div>
+      <div class="tabpane on" id="pane-rev"></div>
+      <div class="tabpane" id="pane-road"></div>
+      <div class="tabpane" id="pane-dec"></div>
       <div class="tabpane" id="pane-res"></div>
       <div class="tabpane" id="pane-del"></div>
-      <div class="tabpane" id="pane-rev"></div>
     </div>
     <div class="panel">
       <h2>Orchestrator — this session</h2>
@@ -775,6 +817,14 @@ function render(d){
   document.getElementById("pane-del").innerHTML=del||'<div class="empty">no deliverables yet</div>';
   var rev="";(d.review||[]).slice().reverse().forEach(function(x){rev+='<div class="item"><div class="t"><span class="tag rev">'+esc(x.kind||"note")+'</span>'+esc(x.title)+'</div>'+(x.note?'<div class="m">'+esc(x.note)+'</div>':'')+'</div>'});
   document.getElementById("pane-rev").innerHTML=rev||'<div class="empty">nothing flagged for review — the desk will log one-off decisions here as it goes</div>';
+  var road="";(d.scope||[]).forEach(function(x){
+    var st=(d.phases||[]).filter(function(p){return String(p.n)==String(x.n)})[0];
+    var badge=st?'<span class="badge b-'+st.status+'" style="margin-left:7px">'+st.status.replace("_"," ")+'</span>':'';
+    road+='<div class="item"><div class="t"><span class="tag p">P'+esc(x.n)+'</span>'+esc(x.name)+(x.deferred?' <span class="tag rev">deferred</span>':'')+badge+'</div>';
+    if(x.goal)road+='<div class="m">'+esc(x.goal)+'</div>';
+    if(x.crits&&x.crits.length){road+='<div class="crits">';x.crits.forEach(function(c){road+='<div class="crit">✓ '+esc(c)+'</div>'});road+='</div>'}
+    road+='</div>'});
+  document.getElementById("pane-road").innerHTML=road||'<div class="empty">no roadmap scope parsed</div>';
   // orchestrator feed
   renderFeed("feed",d.feed,"quiet");
   // commits

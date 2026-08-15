@@ -143,6 +143,19 @@ Decimal phases appear between their surrounding integers in numeric order.
   4. Weekly build/exit/monitor cadence: a weekly runner builds → (one-week hold) → exit → rebuild; weekly performance recorded vs the 1% goal, feeding the LEARN loop (Phase 10).
 **Plans**: TBD (planner)
 
+### Phase 6.7: MD/GP Reconciliation Loop (added 2026-08-15)
+**Goal**: Wire the MD/GP as the firm's decision hub — integrate the catalyst call, the portfolio build, and independent diligence, run a bounded iterative reconciliation to converge on a decision, and escalate to the LP only on a genuine blocker.
+**Depends on**: Phase 4 (catalyst call / bull-bear debate — re-triggerable), Phase 5 (portfolio builder — re-triggerable), Phase 6 (diligence dossier feeds up)
+**Requirements**: RECON-01, RECON-02, RECON-03, RECON-04, RECON-05, RECON-06, RECON-07
+**Research**: `.planning/research/md-reconciliation-loop.md` (IC/PM process, bounded-loop convergence, decision-packet contents, escalation criteria)
+**Success Criteria** (what must be TRUE):
+  1. MD authority model: every workflow's output is a PROPOSAL to the MD with a full decision packet attached (catalyst verdict + kill criteria, portfolio + survival/sizing math, DD go/no-go + residual risks, conditional payoff, pre-mortem) so the MD is purely deciding. The MD has final say (test-enforced routing: no trade decision bypasses the MD).
+  2. Reconciliation: MD flags a catalyst-call issue → re-triggers Workflow-1 debate carrying the SPECIFIC gap DD surfaced (not the answer; debate re-reasons) → new verdict → portfolio builder. MD flags a portfolio issue → back to Workflow-2 with the missing info → new build → back to DD for a fresh independent pass.
+  3. Bounded loop: iterate to convergence (DD clears + no new material issue + MD satisfied) OR a hard round cap; every round logged; no infinite ping-pong (test: cap enforced, convergence exits early).
+  4. Firewall preserved: DD's INPUTS stay sealed ({ticker,catalyst,pair}); only DD FINDINGS flow up to the MD and back down as "missing info"; DD re-runs independently each round (test: no Workflow-1/2 artifact reaches DD's input).
+  5. Residual caveats after convergence/cap are relayed to the LP in the final dossier; the MD escalates to the LP (→ monitor blocker banner) only on a genuine unresolvable blocker.
+**Plans**: TBD (planner)
+
 ### Phase 7: Verifier/Guardrails + Backtest Harness
 **Goal**: Prove the strategy honestly against history and stand up the runtime safety gates before any capital — real or simulated — is at stake.
 **Depends on**: Phase 6.5 (backtest must measure the corrected strategy: weekly cadence, target-within-cap sizing, no-zero-trade, universe-wide theses)
@@ -164,6 +177,20 @@ Decimal phases appear between their surrounding integers in numeric order.
   2. Each resolved trade produces a P&L attribution decomposing catalyst effect vs. beta drift vs. hedge leg vs. sizing, plus a good-decision/bad-luck post-mortem written into the KB and updating base-rate priors
   3. The go-live gate is sample-based (sufficient catalyst count / statistical significance), never calendar-based
 **Plans**: TBD
+
+### Phase 8.5: Intra-Week Position Monitor (added 2026-08-15 — BUILD DEFERRED)
+**Goal**: A light, fast, event-triggered watchdog on the open book through the week — monitor by exception, defend on genuine trouble, propose adjustments up to the MD. Cheap enough to run all day.
+**Depends on**: Phase 8 (paper ledger — live positions to monitor), Phase 6.7 (MD decision hub receives the proposals)
+**Requirements**: MON-01, MON-02, MON-03, MON-04, MON-05, MON-06, MON-07, MON-08, MON-09
+**Research**: `.planning/research/intra-week-monitoring.md` (monitor-by-exception, 8-trigger starter set, position-card, anti-whipsaw, ~$0.70/week on Haiku)
+**Operator-locked decisions**: DEFEND-ONLY (trim/exit, MON-06) · react to BOTH technicals+news+risk (MON-07) · triggers + periodic sweeps (MON-08) · every flag is a proposal to the MD (MON-09)
+**Success Criteria** (what must be TRUE):
+  1. A deterministic monitor layer (no LLM) runs the 8-trigger starter set — halts RSS (~60s), ATR-normalized move + stop-proximity + volume spike (5-min), EDGAR filings (10-min), tiered-keyword headlines (15-min), catalyst-date diff + book/heat checks (EOD) — plus a periodic light sweep; fires only on breach (monitor by exception).
+  2. On a trigger, a light Haiku-class agent examines the flagged position from a pre-written position-card (~1-2K tokens) and decides hold / trim / exit — DEFEND-ONLY (never add/flip intra-week). Deterministic tools compute; agent interprets; cite-or-drop.
+  3. Anti-whipsaw enforced: 2-bar confirmation, ~60-min cooldown, hysteresis re-arm, ≤4 wakes/day/ticker; verified cost profile ~$0.70/week (vs ~$35/week for naive continuous polling).
+  4. Any adjustment is a PROPOSAL to the MD with the position-card + evidence attached (MD authority model); on MD approval it routes to the portfolio builder; the monitor never places orders and never bypasses the MD.
+  5. BUILD DEFERRED — scoped + researched now; implemented after Phase 8 exists to monitor against.
+**Plans**: TBD (planner) — build deferred per operator
 
 ### Phase 9: iOS Dashboard + Approval Gate
 **Goal**: The user (LP) can see the week's strategy, interrogate the MD, and approve or reject trades from their phone — the human gate lives here.
