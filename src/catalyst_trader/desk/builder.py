@@ -24,7 +24,7 @@ threshold is a loaded param; a missing builder param RAISES (no literal in the b
 from pydantic import BaseModel, ConfigDict
 
 from .. import kb
-from ..contracts import EstimateVetting, TradeProposal
+from ..contracts import TradeProposal
 from ..quant.events import catalyst_move_estimate, hold_vs_exit
 from ..quant.sizing import adaptive_sl_tp_levels
 from . import evidence, risk
@@ -63,6 +63,15 @@ def _analog_context(verdict, target, ctype) -> str:
     return f"{ctype} catalyst for {target}: {verdict.thesis}"
 
 
+def _split_moves(analogs) -> tuple[list[float], list[float]]:
+    """Split realized analog outcome moves into up (>0) and down (|move| for <0) branches —
+    the two-state gap distribution catalyst_move_estimate consumes."""
+    moves = [a["outcome"]["move"] for a in analogs if a.get("outcome") and "move" in a["outcome"]]
+    up_moves = [m for m in moves if m > 0]
+    down_moves = [-m for m in moves if m < 0]
+    return up_moves, down_moves
+
+
 def _narrative_prompt(verdict, target, candidate, ctype, extra="") -> str:
     return f"""You are the TRADE BUILDER authoring the pair rationale for a single-leg biotech
 catalyst trade. Explain the leg and the (candidate) hedge in prose — emit NO numbers, sizes,
@@ -90,14 +99,63 @@ async def build(conn, embed, verdict, catalyst, *, entry: float) -> TradeProposa
     ctype = _ctype(catalyst)
     exit_by_date = _get(catalyst, "event_date_end") or _get(catalyst, "event_date")
 
-    analogs = kb.analog_query(conn, embed, _analog_context(verdict, target, ctype),
-                              filters={"type": ctype}, k=5)
+    params = kb.load_params(conn, ctype)  # the frozen model-fit seam (estimator/sl_tp/builder groups)
+    builder_p = params["builder"]         # a missing builder param RAISES here (no literal fallback)
+
+    context = _analog_context(verdict, target, ctype)
+    analogs = kb.analog_query(conn, embed, context, filters={"type": ctype}, k=5)
     candidate = _candidate_peer(conn, target)
 
-    # Estimate-driven fields (entry sizing, hold-through, SL/TP, estimate_vetting) are filled in
-    # Task 2 — placeholder-but-valid defaults keep the skeleton TradeProposal valid for now.
+    # 1. Estimate the catalyst payoff distribution (param-driven, cited). p_positive comes from the
+    #    verdict; the estimate + sizing + hold-vs-exit + SL/TP are ALL deterministic tool outputs.
+    up_moves, down_moves = _split_moves(analogs)
+    p_positive = verdict.confidence if verdict.direction == "positive" else 1.0 - verdict.confidence
+    est = catalyst_move_estimate(p_positive, up_moves, down_moves, params)  # implied_move None this phase
+    up_move, down_move = est.detail["up_move"], est.detail["down_move"]
+
+    # 2. Size the leg on the ESTIMATED down-move (not a blanket 0.70). Zero-trade allowed: a leg
+    #    below the tradeable floor is not worth taking -> pass (no proposal).
+    size = risk.size_for_survival(p_loss=1.0 - p_positive, gap=down_move)
+    if size.value < builder_p["min_tradeable_size"]:
+        return None
+
+    # 3. Hold-through-vs-exit by the quant hold_vs_exit tool — expected-LOG-growth at the survival-
+    #    constrained size f (Kelly-consistent), NEVER raw EV (BLOCKER-2). The exit branch captures a
+    #    run-up fraction pre-event and dodges the gap.
+    hold_outcomes = [(p_positive, up_move), (1.0 - p_positive, -down_move)]
+    exit_outcomes = [(1.0, builder_p["runup_capture_frac"] * up_move)]
+    hv = hold_vs_exit(size.value, hold_outcomes, exit_outcomes, margin=builder_p["log_growth_margin"])
+    holds_through = hv.value == 1.0
+
+    # 4. Adaptive SL/TP — advisory whenever the leg holds through the catalyst (a stop can't fill in
+    #    an overnight gap); the advisory flag comes for free from the delegated sl_tp_levels.
+    sl_tp = adaptive_sl_tp_levels(entry, up_move=up_move, vol_move=down_move,
+                                  params=params, holds_through_catalyst=holds_through)
+    sl_advisory = bool(sl_tp.detail.get("advisory"))
+
+    # 5. VET the estimate assumptions BEFORE finalize — a reject blocks the trade (pass / no proposal).
+    est_ref = evidence.tool_ref(est)
+    analog_ref = evidence.tool_ref_for("analog_query", {"context": context, "filters": {"type": ctype}, "k": 5})
+    estimate_inputs = [
+        {"input": "p_positive", "ref": est_ref, "value": p_positive},
+        {"input": "up_move", "ref": est_ref, "value": up_move},
+        {"input": "down_move", "ref": est_ref, "value": down_move},
+        {"input": "analogs", "ref": analog_ref, "value": [str(a["node_id"]) for a in analogs]},
+    ]
+    try:
+        vetting = await enforce_estimate(
+            conn, estimate_inputs, verdict=verdict, params=params,
+            holds_through_catalyst=holds_through, sl_advisory=sl_advisory,
+            down_move=down_move, catalyst_type=ctype, n_analogs=len(analogs),
+        )
+    except EstimateRejectedError:
+        return None  # a rejected estimate never finalizes a trade (re-derive is a Phase-9 concern)
+
+    # 6. Narrative (the ONLY LLM-authored field) — cite the hold-vs-exit decision for the memo.
     narrative = await run_structured(
-        _narrative_prompt(verdict, target, candidate, ctype), BuilderNarrative, model="sonnet"
+        _narrative_prompt(verdict, target, candidate, ctype,
+                          extra=f"HOLD-VS-EXIT   {hv.detail['decision']} (cite {evidence.tool_ref(hv)})"),
+        BuilderNarrative, model="sonnet",
     )
 
     return TradeProposal(
@@ -106,13 +164,14 @@ async def build(conn, embed, verdict, catalyst, *, entry: float) -> TradeProposa
         pair_rationale=narrative.pair_rationale,
         entry=entry,
         exit_by_date=exit_by_date,
-        stop_loss=entry, take_profit=entry,          # placeholder — Task 2: adaptive_sl_tp_levels
-        size_pct=0.0,                                 # placeholder — Task 2: size_for_survival
-        expected_return_pct=0.0,                      # placeholder — Task 2: est.value (display only)
+        stop_loss=sl_tp.detail["stop"],
+        take_profit=sl_tp.detail["target"],
+        size_pct=size.value,                       # the quant survival size — never an LLM number
+        expected_return_pct=est.value,             # DISPLAY ONLY — never feeds size_pct (1% not a sizing input)
         kb_analogs=[str(a["node_id"]) for a in analogs],
-        holds_through_catalyst=False,                 # placeholder — Task 2: hold_vs_exit
+        holds_through_catalyst=holds_through,
         catalyst_id=catalyst_id,
         direction=verdict.direction,
-        estimate_vetting=EstimateVetting(verdict="endorse", input_refs=[], reasons=[]),  # placeholder
-        sl_advisory=False,                            # placeholder — Task 2: mirrors sl_tp advisory
+        estimate_vetting=vetting,
+        sl_advisory=sl_advisory,
     )
