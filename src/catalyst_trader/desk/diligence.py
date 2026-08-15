@@ -480,3 +480,68 @@ async def enforce_dossier(conn, dossier: DiligenceDossier, *, signals=None) -> D
             "AUDIT: no_go rests on unsupported evidence — every disconfirming ref failed cite-or-drop"
         )
     return dossier.model_copy(update={"all_evidence_refs": survivors, "red_flags": red_flags})
+
+
+# ---------------------------------------------------------------------------
+# The firewalled orchestrator (DILIG-01/02/03) — the composed pipeline entry point.
+#
+# Mirrors orchestrator.run_desk: build the quant server, fan out the dimensions, run the
+# DETERMINISTIC verdict, add the LLM narrative, gate through cite-or-drop. The FIREWALL is the
+# signature: the ONLY trade-facts parameter is `input: DiligenceInput`, so no DebateVerdict /
+# TradeProposal / StrategyDossier / thesis can enter — a leak is a type error, not a policy check.
+# ---------------------------------------------------------------------------
+
+
+async def run_diligence(
+    conn, input: DiligenceInput, *, market_data: dict, embed=None,
+) -> DiligenceDossier:
+    """Run the full independent diligence desk offline and return an evidence-backed DiligenceDossier.
+
+    `market_data` carries the raw values this phase consumes behind the prep seams (the live fetchers
+    are deferred to Phase 7 — the caller/fetcher supplies these; tests mock them):
+        {"options": {"quote": {...}, "underlying_price": float, "days_to_event": int},
+         "financials": {"cash_usd", "monthly_burn_usd", "months_to_catalyst"},
+         "ownership": {"short_interest_pct", "days_to_cover", "insider_net"},
+         "trial": {...ClinicalTrials.gov record...},
+         "hedge": {"entry", "exit_by_date", "analog_gaps", "prices"},
+         "liquidity_quote": {"bid", "volume", "oi"}}
+    EVERY money-touching dim (financials, ownership_flow, options_move, hedge_revalidation, liquidity)
+    has a raw-data key here; a MISSING key is the ungrounded case that forces NO-GO below.
+
+    Pipeline (mirrors run_desk, thin — all pieces built in Waves 1-3):
+      quant server -> prep seams -> gather 8 dims -> DETERMINISTIC synthesize_verdict
+      -> ungrounded-money hard NO-GO -> opus narrative (verdict-free) -> assemble -> cite-or-drop gate.
+
+    # ponytail: a gather + a deterministic call + two awaits + a gate. No new logic — the firewall is
+    #           the signature (DiligenceInput only) and the money decision lives in synthesize_verdict.
+    """
+    params = DILIGENCE_PARAMS  # the single, seed-proof threshold source (BLOCKER-2), NOT the KB fitted-param seam.
+    md = market_data
+
+    # Build each dimension's context from the prep seams. A money-dim prep returns None on missing raw
+    # data (BLOCKER-1) — only non-None contexts are threaded in; an empty-string prompt never happens.
+    prep = {
+        "options_move": options_context(
+            md["options"]["quote"], md["options"]["underlying_price"],
+            md["options"]["days_to_event"], params=params,
+        ) if md.get("options") else None,
+        "financials": financials_context(md.get("financials")),
+        "ownership_flow": ownership_context(md.get("ownership")),
+        "trial_stats": trial_stats_context(md.get("trial")),
+        "hedge_revalidation": hedge_context(conn, embed, input, **md["hedge"]) if md.get("hedge") else None,
+    }
+    dimension_context = {k: v for k, v in prep.items() if v}
+    liquidity_zero = zero_liquidity(md["liquidity_quote"]) if md.get("liquidity_quote") else True
+    # A money-touching dim with no raw-data seam value CANNOT be grounded -> force NO-GO (no false GO
+    # from a hallucinated finding; mirrors the zero-liquidity hard-fail, keeps the LLM out of money).
+    ungrounded_money = (
+        MONEY_TOUCHING - set(dimension_context) - ({"liquidity"} if md.get("liquidity_quote") else set())
+    )
+
+    findings = await gather_dimensions(conn, input, dimension_context=dimension_context)
+    verdict = synthesize_verdict(findings, liquidity_zero=liquidity_zero, params=params)
+    if ungrounded_money:
+        verdict = "no_go"
+    narrative = await _narrative(findings, verdict)
+    dossier = assemble_dossier(findings, verdict, narrative, liquidity_zero=liquidity_zero, params=params)
+    return await enforce_dossier(conn, dossier, signals=findings)
