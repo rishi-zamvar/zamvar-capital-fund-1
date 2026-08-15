@@ -142,6 +142,14 @@ def test_risk_of_ruin_full_size_is_certain_ruin():
     assert res.detail["max_survivable_consecutive_losses"] == 0
 
 
+def test_risk_of_ruin_is_zero_when_ruinous_streak_cannot_fit_in_horizon():
+    # tiny size vs a short horizon: it takes more consecutive losses to hit the drawdown
+    # than there are trades, so ruin is structurally impossible over the horizon -> 0.0.
+    res = risk_of_ruin(p_loss=0.9, size_pct=0.01, gap=0.70, ruin_drawdown=0.5, n_trades=10)
+    assert res.value == 0.0
+    assert res.detail["max_survivable_consecutive_losses"] >= 10
+
+
 def test_risk_of_ruin_monotonic_in_size():
     # the core survival property: bigger position -> at-least-as-high ruin probability
     small = risk_of_ruin(p_loss=0.4, size_pct=0.10, n_trades=52).value
