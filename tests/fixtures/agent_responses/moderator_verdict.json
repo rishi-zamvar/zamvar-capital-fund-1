@@ -1,0 +1,10 @@
+{
+  "thesis": "Endpoint strength and an above-class approval base rate outweigh the financing and CMC risks; the catalyst is more likely positive than not, but the CRL analogs keep it short of a slam dunk.",
+  "direction": "positive",
+  "confidence": 0.62,
+  "bull_strongest_point": "Phase 3 primary endpoint met at p<0.001 with an approval base rate above the oncology class mean (tool:base_rate#a1b2c3).",
+  "bear_strongest_point": "Two analogs in this review division took a manufacturing CRL and cash runway ends one quarter post-PDUFA — the strongest surviving bear point.",
+  "unresolved_dissent": ["CMC inspection status not confirmable before the decision date"],
+  "evidence_refs": ["tool:base_rate#a1b2c3", "tool:analog_query#d4e5f6", "tool:cash_runway#99aa88"],
+  "kill_criteria": ["A complete response letter is issued", "An FDA advisory committee votes against approval before the PDUFA date"]
+}

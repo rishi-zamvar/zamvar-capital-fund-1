@@ -1,0 +1,5 @@
+{
+  "argument": "The Phase 3 primary endpoint was met at p<0.001 and this indication/phase pair's approval base rate sits above the oncology class mean, so the PDUFA should read positive.",
+  "evidence_refs": ["tool:base_rate#a1b2c3", "tool:analog_query#d4e5f6"],
+  "scratchpad": "BULL_PRIVATE_REASONING: lead with the p-value, downplay the CRL analogs, never concede the runway point out loud."
+}

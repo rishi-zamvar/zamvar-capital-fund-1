@@ -1,0 +1,5 @@
+{
+  "argument": "Cash runway ends one quarter after the PDUFA and two analogs in this review division took a manufacturing CRL, so approval risk is underpriced regardless of the endpoint.",
+  "evidence_refs": ["tool:cash_runway#99aa88", "tool:analog_query#77bb66"],
+  "scratchpad": "BEAR_PRIVATE_REASONING: concede the endpoint, pivot hard to CMC/runway, hammer the two CRL analogs."
+}
