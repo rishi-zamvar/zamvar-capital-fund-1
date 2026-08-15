@@ -110,6 +110,32 @@
 | **Phase 5 subtotal** | **~1,678,000** |
 
 **Cumulative build (measured, so far): ~6,773,000 subagent tokens (+ P5 ~1,678,000).**
+
+### Phase 6 — Independent Diligence Firewall (Workflow 3) (CLOSED)
+| Agent | Tokens |
+|-------|--------|
+| Researcher | 128,179 |
+| Planner | 157,289 |
+| Plan-checker (3 blockers → revised) | 152,272 |
+| Revision planner | 136,813 |
+| Plan-checker (re-check, PASSED) | 108,061 |
+| Executor 06-01 (firewall contract) | 99,742 |
+| Executor 06-02 (8 DD dimensions + candidate_peer) | 154,672 |
+| Executor 06-03 (deterministic synthesizer) | 130,574 |
+| Executor 06-04 (firewalled orchestrator) | 132,633 |
+| Verifier | 140,406 |
+| **Phase 6 subtotal** | **~1,340,000** |
+
+**Cumulative build (measured, so far): ~8,113,000 subagent tokens (+ P6 ~1,340,000).**
+
+### Phase 6 Retrospective
+- **Spend:** ~1.34M — cheaper than P5 (~1.68M) despite similar complexity: the reuse-vs-new verdict came in RESEARCH (not discovered during execution), so executors were lean (99k-155k). Firewall-as-a-type (vs a runtime check) kept the contract work tiny.
+- **Plan-check earned its cost a 3rd straight money phase:** caught 3 real blockers (2 ungroundable money dims → false-GO risk; diligence params on the wrong load path → KeyError on the seeded steady state; hedge re-validation validating the wrong peer). All would have passed tests green. TDD structurally can't catch data-grounding/wiring gaps — keep plan-check ON.
+- **Graphify re-index** done post-phase (incremental AST merge, 2081→2215 nodes). Executor CLI has no index subcommand — must run via the interpreter directly (documented).
+- Directives carried to 6.5+: reuse-vs-new verdict up front (biggest cost lever); plan-check stays on for money phases; `.venv/bin/python -m pytest`; graph-first nav.
+
+### Out-of-band research (user-requested, NOT in the build total)
+Fable/Opus researchers this session, tracked separately: inverse-instruments, disease-competitor-pairs, single-leg-microstructure, free-data-sources, intra-week-monitoring, weekly-thesis-engine, md-reconciliation-loop. Several hundred k each; they inform scope but aren't build tokens.
 > NOTE: research was done OUT-OF-BAND before planning (5 Fable/Opus researchers: inverse-instruments, disease-pairs, microstructure, free-data, + phase-5 research), tracked separately from the build total per the OOB convention.
 
 ### Phase 5 Retrospective
