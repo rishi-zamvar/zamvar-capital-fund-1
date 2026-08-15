@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Completed 06.8-01-PLAN.md
-last_updated: "2026-08-15T22:02:02.829Z"
+stopped_at: Completed 06.8-02-PLAN.md
+last_updated: "2026-08-15T22:14:56.324Z"
 last_activity: 2026-08-15
 progress:
   total_phases: 15
   completed_phases: 8
   total_plans: 47
-  completed_plans: 45
+  completed_plans: 46
   percent: 0
 ---
 
@@ -26,7 +26,7 @@ See: .planning/PROJECT.md (updated 2026-08-14)
 ## Current Position
 
 Phase: 06.8 (weekly-company-vetting-scanner-haiku-dd-replica) — EXECUTING
-Plan: 2 of 3
+Plan: 3 of 3
 Status: Ready to execute
 Last activity: 2026-08-15
 
@@ -96,6 +96,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 06.7 P03 | 3min | 2 tasks tasks | 2 files files |
 | Phase 06.7 P04 | 7min | 3 tasks tasks | 2 files files |
 | Phase 06.8 P01 | 6min | 2 tasks | 4 files |
+| Phase 06.8 P02 | 9min | 2 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -178,6 +179,7 @@ Recent decisions affecting current work:
 - [Phase 06.7]: reconcile is a THIN composition mirroring run_portfolio: composes run_desk/run_portfolio/run_diligence + cross_check into ONE MDDecision; the MD's only judgment is one run_structured(MDReview)/round + one terminal MDDecision — convergence/oscillation/cap/act-or-log all deterministic Python (agents-never-do-arithmetic)
 - [Phase 06.7]: General flag router (RECON-08/WEEK-06): incoming_flags from any source act (→ RetriggerFlag through the same cascade machinery, gap-only) or log (logged_flags, never forced); oscillation (repeated evidence_ref) → forced PASS; escalate-only atomic .monitor/blocker.json write; lp_summary generated verbatim from the record. run_weekly + DD firewall untouched
 - [Phase 06.8]: company_card/scan_flag store one JSON TEXT column read point-in-time (week_end <= as_of, mirrors bars_asof); ScanInput/OpportunityFlag extra=forbid make a desk-artifact leak a ValidationError; OpportunityFlag reuses KeyFinding and has NO direction/size/target (gap-not-answer)
+- [Phase 06.8]: Stage-1 scanner: SCAN_PARAMS is the single missing-key-raising threshold source (no numeric literals in flag bodies); build_card recomputes no quant number (embeds thesis_scan row verbatim, proven by monkeypatch-to-raise); delta_card is pure F1-F13 transition-not-level with per-band latching, hysteresis re-arm at half threshold, F6/F8 cadence-gated to a fresh datum; _wakes wakes on any PRINCIPAL or >=2 CORROBORATOR
 
 ### Pending Todos
 
@@ -191,6 +193,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-08-15T22:01:56.437Z
-Stopped at: Completed 06.8-01-PLAN.md
+Last session: 2026-08-15T22:14:49.628Z
+Stopped at: Completed 06.8-02-PLAN.md
 Resume file: None
