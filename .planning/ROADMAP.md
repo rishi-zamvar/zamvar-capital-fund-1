@@ -88,7 +88,14 @@ Decimal phases appear between their surrounding integers in numeric order.
   2. Bull and Bear researchers build opposing cases in real context isolation, and the debate manager runs bounded rounds emitting a DebateVerdict that names the losing side's strongest point
   3. The verdict is binary (positive vs. negative catalyst) with calibrated confidence and explicit falsification/kill criteria, and contains no sizing or positioning
   4. A fact-check verifier enforces source-quote-or-drop on every claim before the verdict is finalized
-**Plans**: TBD
+**Plans**: 7 plans (3 waves)
+- [ ] 04-01-PLAN.md — Extend DebateVerdict: binary direction + required kill_criteria (CALL-03 contract)
+- [ ] 04-02-PLAN.md — Async foundation: claude-agent-sdk + run_structured() SDK seam + evidence_ref mint/resolve + fixture harness
+- [ ] 04-03-PLAN.md — Quant/KB tools as an in-process SDK MCP server (analysts interpret, never compute)
+- [ ] 04-04-PLAN.md — Analyst layer: 4 dimension prompts + run_analyst → source-cited AnalystSignal (CALL-01)
+- [ ] 04-05-PLAN.md — Bounded, isolated bull/bear debate + moderator → binary grounded verdict (CALL-02/03)
+- [ ] 04-06-PLAN.md — Fact-check verifier: deterministic source-quote-or-drop + gated semantic check (CALL-04)
+- [ ] 04-07-PLAN.md — run_desk orchestrator (concurrent analysts → debate → verifier) + .claude/agents role defs
 
 ### Phase 5: Trade Builder, Honest Hedge & Ruin-Avoidant Sizing (Workflow 1b/2)
 **Goal**: Turn the week's calls into ONE portfolio whose hedges genuinely offset the binary and whose sizing is built for survival, not a return target.
