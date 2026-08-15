@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Completed 04-03-PLAN.md
-last_updated: "2026-08-15T03:27:11.185Z"
+stopped_at: Completed 04-04-PLAN.md
+last_updated: "2026-08-15T03:33:09.939Z"
 last_activity: 2026-08-15
 progress:
   total_phases: 11
   completed_phases: 3
   total_plans: 25
-  completed_plans: 21
+  completed_plans: 22
   percent: 0
 ---
 
@@ -26,7 +26,7 @@ See: .planning/PROJECT.md (updated 2026-08-14)
 ## Current Position
 
 Phase: 4 (Analyst Desk + Bull/Bear Debate (Workflow 1a)) — EXECUTING
-Plan: 4 of 7
+Plan: 5 of 7
 Status: Ready to execute
 Last activity: 2026-08-15
 
@@ -72,6 +72,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 04-analyst-desk-bull-bear-debate-workflow-1a P01 | 4min | 1 task tasks | 2 files files |
 | Phase 04 P02 | 4min | 3 tasks tasks | 8 files files |
 | Phase 04-analyst-desk-bull-bear-debate-workflow-1a P03 | 4min | 1 task tasks | 3 files files |
+| Phase 04-analyst-desk-bull-bear-debate-workflow-1a P04 | 4min | 1 tasks | 6 files |
 
 ## Accumulated Context
 
@@ -115,6 +116,7 @@ Recent decisions affecting current work:
 - [Phase 04]: One SDK seam: desk.runtime.run_structured is the ONLY claude_agent_sdk touchpoint (output_format json_schema -> model_validate boundary); every agent test monkeypatches it -> zero live API in pytest
 - [Phase 04-analyst-desk-bull-bear-debate-workflow-1a]: quant/ + kb.py exposed as ONE in-process SDK MCP server (build_quant_server, name 'quant'); analysts call+interpret, never compute (CALL-01)
 - [Phase 04-analyst-desk-bull-bear-debate-workflow-1a]: analog_query/query_playbooks cited as tool:<fn>#<hash> (resolved-by-construction), NEVER kb: (they return node ids, not evidence_source ids) — CALL-04 verifier guard
+- [Phase 04-analyst-desk-bull-bear-debate-workflow-1a]: run_analyst threads caller-injected mcp_servers/allowed_tools + defaults to the sonnet tier (configured once, not per call site); analysts CALL mcp__quant__* and cite the returned evidence_ref, never compute — uncited payloads rejected at the AnalystSignal boundary (CALL-01)
 
 ### Pending Todos
 
@@ -128,6 +130,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-08-15T03:27:03.734Z
-Stopped at: Completed 04-03-PLAN.md
+Last session: 2026-08-15T03:33:03.199Z
+Stopped at: Completed 04-04-PLAN.md
 Resume file: None
