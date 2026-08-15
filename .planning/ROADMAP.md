@@ -18,11 +18,11 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 4: Analyst Desk + Bull/Bear Debate (Workflow 1a)** - Four sourced analysts + bounded adversarial debate → binary directional verdict (completed 2026-08-15)
 - [ ] **Phase 5: Trade Builder, Honest Hedge & Ruin-Avoidant Sizing (Workflow 1b/2)** - Inverse-payoff peer selection, risk-of-ruin sizing, 3-way risk debate, PM promote/kill → StrategyDossier
 - [ ] **Phase 6: Independent Diligence Firewall (Workflow 3)** - Input-firewalled adversarial second opinion → GO/NO-GO DiligenceDossier
-- [ ] **Phase 6.5: Weekly Strategy Correction** *(added 2026-08-15)* - Sizing amendment (target-within-survival-cap), NO zero-trade weeks, universe-wide weekly thesis engine (catalyst + mean-reversion + continuation, each with a measured edge), weekly build/exit/monitor cadence — reworks Phase-5 sizing before any backtest
-- [ ] **Phase 6.7: MD/GP Reconciliation Loop** *(added 2026-08-15)* - GP integrates catalyst-call + portfolio + diligence; bounded iterative re-trigger of Workflow 1 or 2 with DD's missing info until convergence/cap; residual caveats → LP; firewall preserved
+- [ ] **Phase 6.5: Weekly Strategy Correction** - Sizing amendment (target-within-survival-cap), NO zero-trade weeks, universe-wide weekly thesis engine (catalyst + mean-reversion + continuation, each with a measured edge), weekly build/exit/monitor cadence — reworks Phase-5 sizing before any backtest
+- [ ] **Phase 6.7: MD/GP Reconciliation Loop** - GP integrates catalyst-call + portfolio + diligence; bounded iterative re-trigger of Workflow 1 or 2 with DD's missing info until convergence/cap; residual caveats → LP; firewall preserved
 - [ ] **Phase 7: Verifier/Guardrails + Backtest Harness** - Fact-check verifier + runtime monitors + mechanical (Layer A) and guarded-agentic (Layer B) backtests
 - [ ] **Phase 8: Paper Ledger, Attribution & Post-Mortem (Layer C)** - Simulated ledger vs live quotes + P&L attribution + post-mortem into the KB
-- [ ] **Phase 8.5: Intra-Week Position Monitor** *(added 2026-08-15, BUILD DEFERRED)* - Light/fast Haiku agent group, event-triggered by deterministic monitors (TA thresholds/news), flags positions → routes adjustment back to portfolio builder; no order placement
+- [ ] **Phase 8.5: Intra-Week Position Monitor** *(BUILD DEFERRED)* - Light/fast Haiku agent group, event-triggered by deterministic monitors (TA thresholds/news), flags positions → routes adjustment back to portfolio builder; no order placement
 - [ ] **Phase 9: iOS Dashboard + Approval Gate** - SwiftUI two-view dashboard, dossier review, approve/reject gate, chat-to-MD over Tailscale
 - [ ] **Phase 10: Continuous-Iteration Loop** - Predict→realize→score→propose-diff, gated behind golden-set regression + walk-forward evals
 - [ ] **Phase 11: Robinhood MCP Live Execution** - Live equities behind the human gate, after paper proof + a real tool-surface probe (strictly last)
@@ -132,7 +132,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] 06-03-PLAN.md — Deterministic NO-GO synthesizer + verdict-immutable narrative + enforce_dossier cite-or-drop (Wave 3)
 - [x] 06-04-PLAN.md — run_diligence firewalled orchestrator + end-to-end (Wave 4)
 
-### Phase 6.5: Weekly Strategy Correction (added 2026-08-15)
+### Phase 6.5: Weekly Strategy Correction
 **Goal**: Implement the operator's 2026-08-15 strategy correction so the whole desk runs the way it actually should — before any backtest measures it.
 **Depends on**: Phase 5 (sizing/portfolio), Phase 4 (analyst desk, reused by the thesis engine)
 **Requirements**: PORT-03 (amended), WEEK-01, WEEK-02, WEEK-03, WEEK-04, WEEK-05
@@ -144,7 +144,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 **Design (research-backed, `weekly-thesis-engine.md` + `weekly_reversal_check.py`)**: the edges are REAL ONLY WHEN CONDITIONED (Savor 2012, verified: info-moves drift, no-info moves reverse). Measured on our own data (18 biotechs, weekly 2016–2026): −5/−10% drops bounce ~54–55% vs 51.3% base (~+1% edge); −15% weeks = 48.8% negative-median FALLING KNIFE (a hard veto, not a bounce); up-week continuation ~50% (coin flip unconditionally — real only via PEAD/news-drift or high-turnover per Medhat–Schmeling 2022). New surface = ONE module `quant/weekly.py` (3 tools: reversal base-rate, continuation base-rate, deterministic drop-classifier reusing `correlation_beta`), beta-binomial shrinkage mirroring the estimator's `uncertainty_widened` seam, tradeability bar (edge ≥2pts, n≥30, mean >2× cost, CI>0 — honest expectation: only 2–4 cells survive). Statistical legs are SINGLE-LEG (hedge logic stays catalyst-only, reuse Phase-5 size-tiny fallback). **No-zero-trade-weeks reconciled honestly**: never force a failing cell — a weak week is a DEFENSIVE book (SGOV/BIL + tiny XBI anchors) with dossier language stating so. Measurement trap flagged: base-rate window must equal execution window; survivorship bias in the sanity table noted. 7 PM knobs deferred to plan-time (exit anchor, defensive instrument, thresholds, sleeve cap, −15% hard veto, shortlist k, backtest go/no-go) — all with research defaults.
 **Plans**: TBD (planner)
 
-### Phase 6.7: MD/GP Reconciliation Loop (added 2026-08-15)
+### Phase 6.7: MD/GP Reconciliation Loop
 **Goal**: Wire the MD/GP as the firm's decision hub — integrate the catalyst call, the portfolio build, and independent diligence, run a bounded iterative reconciliation to converge on a decision, and escalate to the LP only on a genuine blocker.
 **Depends on**: Phase 4 (catalyst call / bull-bear debate — re-triggerable), Phase 5 (portfolio builder — re-triggerable), Phase 6 (diligence dossier feeds up)
 **Requirements**: RECON-01, RECON-02, RECON-03, RECON-04, RECON-05, RECON-06, RECON-07
@@ -180,7 +180,7 @@ Decimal phases appear between their surrounding integers in numeric order.
   3. The go-live gate is sample-based (sufficient catalyst count / statistical significance), never calendar-based
 **Plans**: TBD
 
-### Phase 8.5: Intra-Week Position Monitor (added 2026-08-15 — BUILD DEFERRED)
+### Phase 8.5: Intra-Week Position Monitor (BUILD DEFERRED)
 **Goal**: A light, fast, event-triggered watchdog on the open book through the week — monitor by exception, defend on genuine trouble, propose adjustments up to the MD. Cheap enough to run all day.
 **Depends on**: Phase 8 (paper ledger — live positions to monitor), Phase 6.7 (MD decision hub receives the proposals)
 **Requirements**: MON-01, MON-02, MON-03, MON-04, MON-05, MON-06, MON-07, MON-08, MON-09
