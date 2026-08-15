@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Completed 06.7-01-PLAN.md
-last_updated: "2026-08-15T20:53:52.097Z"
+stopped_at: Completed 06.7-02-PLAN.md
+last_updated: "2026-08-15T21:01:03.098Z"
 last_activity: 2026-08-15
 progress:
   total_phases: 15
   completed_phases: 7
   total_plans: 44
-  completed_plans: 41
+  completed_plans: 42
   percent: 0
 ---
 
@@ -26,7 +26,7 @@ See: .planning/PROJECT.md (updated 2026-08-14)
 ## Current Position
 
 Phase: 06.7 (md-gp-reconciliation-loop) — EXECUTING
-Plan: 2 of 4
+Plan: 3 of 4
 Status: Ready to execute
 Last activity: 2026-08-15
 
@@ -92,6 +92,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 06.5-weekly-strategy-correction P03 | 9min | 3 tasks tasks | 3 files files |
 | Phase 06.5 P04 | 22min | 3 tasks tasks | 4 files files |
 | Phase 06.7 P01 | 8min | 2 tasks | 2 files |
+| Phase 06.7 P02 | 5min | 2 tasks tasks | 8 files files |
 
 ## Accumulated Context
 
@@ -168,6 +169,8 @@ Recent decisions affecting current work:
 - [Phase 06.5]: WEEK-05 record seam: per-leg weekly outcomes persist as KB outcome claims cited by a resolved-by-construction tool:weekly_base_rate ref; refit deferred to Phase 10
 - [Phase 06.7]: gap-not-answer firewall as a TYPE FACT: RetriggerFlag/WeeklyFlag use extra='forbid' + absence of any answer-shaped field ⇒ handing a conclusion down/up is a ValidationError, not a policy check (mirrors DiligenceInput); WeeklyFlag has NO target (the MD assigns the route)
 - [Phase 06.7]: MDDecision is standalone (NOT a StrategyDossier field, regression-guarded); escalation gated by completed-staff-work via model_validator (blocker_class + recommended_resolution required iff escalate, forbidden otherwise); ReconciliationRound.logged_flags is the unactioned-flag home (RECON-08/WEEK-06)
+- [Phase 06.7]: extra_context re-trigger: one guarded injection into debate.run's shared evidence string reaches bull+bear+moderator; builder.build appends to the narrative extra= slot; default None proven byte-for-byte by prompt-equality tests (RECON-02/03)
+- [Phase 06.7]: DD firewall untouched by the re-trigger plumbing: run_diligence gains no extra_context (zero git diff on diligence.py); enforced by an inspect.signature guard, not the plan's grep since build_dimension_prompt already carries the copied pattern (RECON-06)
 
 ### Pending Todos
 
@@ -181,6 +184,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-08-15T20:53:44.438Z
-Stopped at: Completed 06.7-01-PLAN.md
+Last session: 2026-08-15T21:00:55.022Z
+Stopped at: Completed 06.7-02-PLAN.md
 Resume file: None
