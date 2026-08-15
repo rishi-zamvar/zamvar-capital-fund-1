@@ -33,9 +33,18 @@ def _inputs_hash(inputs: dict) -> str:
     return hashlib.sha256(canonical.encode()).hexdigest()[:12]
 
 
+def tool_ref_for(name: str, inputs: dict) -> str:
+    """Mint a tool ref from a tool name + its call inputs, using the SAME stable hash
+    ``tool_ref`` uses. For tool-derived claims that aren't ``ToolResult``s — e.g. KB
+    ``analog_query`` / ``query_playbooks`` (they return catalyst/playbook NODE ids, not
+    evidence_source ids, so they are cited by construction like any other tool, NEVER as
+    ``kb:<id>``). Resolved-by-construction: the minted ref always resolves via ``resolve``."""
+    return f"tool:{name}#{_inputs_hash(inputs)}"
+
+
 def tool_ref(result) -> str:
     """Mint a ref for a quant-derived claim from its ToolResult (tool + inputs hash)."""
-    return f"tool:{result.tool}#{_inputs_hash(result.inputs)}"
+    return tool_ref_for(result.tool, result.inputs)
 
 
 def resolve(conn, ref: str) -> dict | None:
