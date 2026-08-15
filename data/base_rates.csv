@@ -1,0 +1,13 @@
+metric,phase,indication,value,source_name,source_url,quote
+loa,I,all,0.079,BIO/Biomedtracker 2011-2020,https://www.readkong.com/page/clinical-development-success-rates-and-contributing-factors-6942827,"7.9% overall LoA from Phase I, all indications (2011-2020)"
+transition,II,all,0.289,BIO 2011-2020,https://www.readkong.com/page/clinical-development-success-rates-and-contributing-factors-6942827,"28.9% Phase II to Phase III advancement (biggest hurdle)"
+loa,I,oncology,0.034,Oxford Biostatistics,https://academic.oup.com/biostatistics/article/20/2/273/4817524,"~3.4% oncology LoA from Phase I (lowest of all areas)"
+transition,I,oncology,0.768,Oxford Biostatistics,https://academic.oup.com/biostatistics/article/20/2/273/4817524,"large-pharma oncology Ph1->2 76.8%"
+transition,II,oncology,0.594,Oxford Biostatistics,https://academic.oup.com/biostatistics/article/20/2/273/4817524,"large-pharma oncology Ph2->3 59.4%"
+transition,III,oncology,0.571,Oxford Biostatistics,https://academic.oup.com/biostatistics/article/20/2/273/4817524,"large-pharma oncology Ph3->approval 57.1%"
+pos,I,all,0.125,Healthcare IB guide,https://ibinterviewquestions.com/guides/healthcare-investment-banking/risk-adjusted-npv-biotech-valuation,"Ph1 rule-of-thumb PoS ~10-15%"
+pos,II,all,0.30,Healthcare IB guide,https://ibinterviewquestions.com/guides/healthcare-investment-banking/risk-adjusted-npv-biotech-valuation,"Ph2 rule-of-thumb PoS ~25-35%"
+pos,III,all,0.575,Healthcare IB guide,https://ibinterviewquestions.com/guides/healthcare-investment-banking/risk-adjusted-npv-biotech-valuation,"Ph3 rule-of-thumb PoS ~50-65%"
+pos,filed,all,0.875,Healthcare IB guide,https://ibinterviewquestions.com/guides/healthcare-investment-banking/risk-adjusted-npv-biotech-valuation,"Filed rule-of-thumb PoS ~85-90%"
+crl_penalty,,all,-0.28,BiopharmaWatch,https://www.biopharmawatch.com/blog/biotech-catalyst-trading-hedge-funds-insiders-fda-decisions,"prior CRL reduces approval probability ~28%"
+adcom_followthrough,,all,0.90,RTTNews,https://www.rttnews.com/amp/3670522/fda-advisory-committee-meetings-how-they-work-and-why-biotech-stocks-move.aspx,"~90% of AdCom-supported applications approved"

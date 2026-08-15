@@ -1,0 +1,13 @@
+{
+  "version": 1,
+  "weights": {
+    "pos": 0.20,
+    "cash_runway": 0.15,
+    "trial_design": 0.15,
+    "endpoint_credibility": 0.12,
+    "regulatory_precedent": 0.12,
+    "pipeline_concentration": 0.10,
+    "management": 0.08,
+    "commercial": 0.08
+  }
+}
