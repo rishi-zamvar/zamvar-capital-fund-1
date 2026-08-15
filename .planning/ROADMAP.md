@@ -18,6 +18,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 4: Analyst Desk + Bull/Bear Debate (Workflow 1a)** - Four sourced analysts + bounded adversarial debate → binary directional verdict (completed 2026-08-15)
 - [ ] **Phase 5: Trade Builder, Honest Hedge & Ruin-Avoidant Sizing (Workflow 1b/2)** - Inverse-payoff peer selection, risk-of-ruin sizing, 3-way risk debate, PM promote/kill → StrategyDossier
 - [ ] **Phase 6: Independent Diligence Firewall (Workflow 3)** - Input-firewalled adversarial second opinion → GO/NO-GO DiligenceDossier
+- [ ] **Phase 6.5: Weekly Strategy Correction** *(added 2026-08-15)* - Sizing amendment (target-within-survival-cap), NO zero-trade weeks, universe-wide weekly thesis engine (catalyst + mean-reversion + continuation, each with a measured edge), weekly build/exit/monitor cadence — reworks Phase-5 sizing before any backtest
 - [ ] **Phase 7: Verifier/Guardrails + Backtest Harness** - Fact-check verifier + runtime monitors + mechanical (Layer A) and guarded-agentic (Layer B) backtests
 - [ ] **Phase 8: Paper Ledger, Attribution & Post-Mortem (Layer C)** - Simulated ledger vs live quotes + P&L attribution + post-mortem into the KB
 - [ ] **Phase 9: iOS Dashboard + Approval Gate** - SwiftUI two-view dashboard, dossier review, approve/reject gate, chat-to-MD over Tailscale
@@ -129,9 +130,20 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [ ] 06-03-PLAN.md — Deterministic NO-GO synthesizer + verdict-immutable narrative + enforce_dossier cite-or-drop (Wave 3)
 - [ ] 06-04-PLAN.md — run_diligence firewalled orchestrator + end-to-end (Wave 4)
 
+### Phase 6.5: Weekly Strategy Correction (added 2026-08-15)
+**Goal**: Implement the operator's 2026-08-15 strategy correction so the whole desk runs the way it actually should — before any backtest measures it.
+**Depends on**: Phase 5 (sizing/portfolio), Phase 4 (analyst desk, reused by the thesis engine)
+**Requirements**: PORT-03 (amended), WEEK-01, WEEK-02, WEEK-03, WEEK-04, WEEK-05
+**Success Criteria** (what must be TRUE):
+  1. Sizing is a function of BOTH the ~1%/week target AND survivability: `size = clamp(target_implied_size, floor, survival_cap)`, survival is a HARD ceiling never crossed (test-enforced). Reworks Phase-5 `size_for_survival`/`select_book`; keeps the risk-of-ruin cap intact; adds a no-regression test.
+  2. NO zero-trade weeks: every week produces a book; a weak-signal week deploys smaller (survival cap), never zero. The old "zero-trade allowed" path is removed/inverted with a test.
+  3. Universe-wide weekly thesis engine: a thesis on EVERY name every week — catalyst (reuse Workflow-1), mean-reversion (dropped-last-week → measured bounce edge for THIS name/cohort), continuation/momentum — each with a cited historical base rate, cite-or-drop enforced. Reuses the analyst-desk + KB base-rate machinery; agents interpret, deterministic tools compute the edge.
+  4. Weekly build/exit/monitor cadence: a weekly runner builds → (one-week hold) → exit → rebuild; weekly performance recorded vs the 1% goal, feeding the LEARN loop (Phase 10).
+**Plans**: TBD (planner)
+
 ### Phase 7: Verifier/Guardrails + Backtest Harness
 **Goal**: Prove the strategy honestly against history and stand up the runtime safety gates before any capital — real or simulated — is at stake.
-**Depends on**: Phase 6
+**Depends on**: Phase 6.5 (backtest must measure the corrected strategy: weekly cadence, target-within-cap sizing, no-zero-trade, universe-wide theses)
 **Requirements**: BACK-01, BACK-02, BACK-03, BACK-04, BACK-05, OPS-03
 **Success Criteria** (what must be TRUE):
   1. Runtime monitors/guardrails are active and enforced: catalyst-date freshness, fact-check, provenance, Workflow-3 firewall, net-long/concentration caps, and there is no path from scraped content to an order

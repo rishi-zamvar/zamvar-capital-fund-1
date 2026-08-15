@@ -53,9 +53,17 @@
 
 - [x] **PORT-01**: Takes the week's catalyst calls and builds one recommended portfolio for the week
 - [x] **PORT-02**: Trade Builder selects the inverse-hedge peer, entry, hold-vs-exit-before-event decision, SL/TP
-- [x] **PORT-03**: 3-way Risk Committee (aggressive/conservative/neutral) sizes for survival via risk-of-ruin; the 1% target is a measured outcome, never a sizing input
+- [~] **PORT-03** *(AMENDED 2026-08-15 — needs Phase-5 sizing rework, see WEEK-04)*: 3-way Risk Committee sizes as a function of BOTH the ~1%/week target AND survivability. The target DRIVES the size; the risk-of-ruin cap is a HARD CEILING the size can never cross (`size = clamp(target_implied_size, floor, survival_cap)`). Survival remains the binding constraint when the two conflict — the target never buys past the ruin cap. (Supersedes the original "1% is never a sizing input / survival-only" invariant.)
 - [x] **PORT-04**: MD/PM evaluates portfolio fit (concentration, correlation to open book, weekly budget) and promotes/kills
 - [x] **PORT-05**: Emits a StrategyDossier for review
+
+### Weekly Cadence & Universe-Wide Theses (WEEK) — added 2026-08-15
+
+- [ ] **WEEK-01**: The desk runs on a WEEKLY cycle — build a portfolio, hold ~1 week, exit, rebuild the next week. A fresh portfolio every week; positions are one-week holds by default.
+- [ ] **WEEK-02**: A thesis runs on EVERY universe name every week, not only names with a catalyst. Thesis TYPES: (a) catalyst (existing Workflow-1), (b) mean-reversion ("dropped last week — is catching the bounce a *proven*, data-backed edge for THIS name?"), (c) continuation/momentum. Each thesis is evidence-backed with a measured historical edge (base rate for that pattern on that name/cohort) — never a hunch; cite-or-drop still holds.
+- [ ] **WEEK-03**: NO zero-trade weeks. Every week produces a portfolio. The survival cap is the safety valve — a weak-signal week deploys SMALLER (tighter sizing / more cash), never zero. (Supersedes the original "zero-trade weeks are allowed".)
+- [ ] **WEEK-04**: Sizing serves the ~1%/week target within the survival ceiling (see amended PORT-03). Winrate is fine-tuned week-over-week via the learning loop (LEARN) — the compounding edge is the moat.
+- [ ] **WEEK-05**: Weekly portfolio performance is monitored adaptively vs. the 1% goal; realized outcomes feed the fine-tuning loop (which thesis types / names / assumptions actually hit, and get reweighted).
 
 ### Workflow 3 — Independent Diligence (DILIG)
 

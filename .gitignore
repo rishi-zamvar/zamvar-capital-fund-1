@@ -11,3 +11,4 @@ tests/fixtures/*.live.json
 graphify-out/
 
 .DS_Store
+.monitor/server.log

@@ -55,6 +55,12 @@ Given an imminent biotech catalyst, produce a data-backed, portfolio-aware, hedg
 - [ ] Rolling catalyst calendar (auto: PDUFA / trial readouts / conferences / earnings) + manual ad-hoc catalyst injection
 - [ ] Flags catalysts 1–2 days out for the covered universe
 
+**Weekly cadence & universe-wide theses (WEEK — added 2026-08-15, strategy correction)**
+- [ ] Weekly cycle: build a portfolio → hold ~1 week → exit → rebuild. Fresh book every week, monitored adaptively vs. the ~1% goal.
+- [ ] A thesis runs on EVERY universe name every week — not only catalyst names. Types: catalyst, mean-reversion ("dropped last week — is the bounce a proven, data-backed edge for THIS name?"), continuation/momentum. Each carries a measured historical edge (cite-or-drop; never a hunch).
+- [ ] NO zero-trade weeks. Every week produces a book; the survival cap makes a weak week SMALLER (more cash), not zero.
+- [ ] Sizing serves the ~1%/week target within the survival ceiling (amended sizing rule). Winrate fine-tuned week-over-week by the learning loop — the compounding edge is the moat.
+
 **Pipeline 1 — Catalyst Call (binary yes/no + confidence, runs once per catalyst)**
 - [ ] Analyst layer (flat fan-out): Clinical/Scientific, Regulatory, Financial, Market/Sentiment analysts produce structured, source-cited signal
 - [ ] Bull vs. Bear debate (borrowed TradingAgents pattern: bounded rounds + manager synthesis; real context isolation so it's not fake consensus)
@@ -63,7 +69,7 @@ Given an imminent biotech catalyst, produce a data-backed, portfolio-aware, hedg
 **Pipeline 2 — Portfolio Construction (positioning → the week's portfolio, runs on the set of calls)**
 - [ ] Takes all of the week's catalyst calls and builds ONE recommended portfolio for the week
 - [ ] Trade Builder: per tradeable call, select the inverse-hedge peer (from the hedge DB), set entry, the hold-through-vs-exit-before-event decision, SL/TP
-- [ ] Risk Management (3-way debate: aggressive/conservative/neutral): re-analyze the inverse-hedge relationship per trade + conditional payoff matrix, size for survival / risk-of-ruin (1% is a measured outcome, never a sizing input), liquidity + event-vol
+- [ ] Risk Management (3-way debate: aggressive/conservative/neutral): re-analyze the inverse-hedge relationship per trade + conditional payoff matrix, size as a function of BOTH the ~1%/week target AND survivability — target drives the size, risk-of-ruin is a HARD CEILING it never crosses (`clamp(target_size, floor, survival_cap)`); liquidity + event-vol *(AMENDED 2026-08-15 — supersedes "1% never a sizing input")*
 - [ ] Independent diligence firewall: validates from RAW sources (not Pipeline-1's thesis) — trial stats/endpoints, regulatory precedent, financials/runway, ownership/short interest, options-implied move, historical analog from KB — anti-confirmation-bias
 - [ ] MD / PM (the GP): portfolio-level fit (concentration, correlation to open book, weekly budget) → promote/kill → emits the week's strategy dossier for LP approval
 
