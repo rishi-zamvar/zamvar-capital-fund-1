@@ -14,9 +14,11 @@ from catalyst_trader.contracts import (
     DiligenceInput,
     EstimateVetting,
     Hedge,
+    RetriggerFlag,
     RiskAssessment,
     StrategyDossier,
     TradeProposal,
+    WeeklyFlag,
 )
 
 
@@ -468,3 +470,102 @@ def test_diligence_dossier_has_residual_risks():
     assert obj.residual_risks == ["net-long beta exposure"]
     # defaults to [] when omitted
     assert DiligenceDossier.model_validate(valid_diligence_dossier()).residual_risks == []
+
+
+# --- RetriggerFlag: the gap-not-answer firewall INTO WF-1/2 (RECON-02/06) ----------
+# The firewall is a TYPE FACT (mirrors DiligenceInput): extra="forbid" + the ABSENCE of
+# any answer-shaped field (direction/confidence/size/verdict) makes handing the debate a
+# conclusion UNREPRESENTABLE — a smuggled answer is a ValidationError at construction.
+
+
+def valid_retrigger_flag() -> dict:
+    return {
+        "target": "catalyst_call",
+        "finding": "primary endpoint powered on OS, not PFS — DD found the SAP",
+        "evidence_ref": "kb:ev_sap_001",
+        "why_material": "an OS miss flips the verdict direction the debate called positive",
+    }
+
+
+def test_retriggerflag_valid():
+    obj = RetriggerFlag.model_validate(valid_retrigger_flag())
+    assert obj.target == "catalyst_call"
+    assert obj.finding
+    assert obj.evidence_ref == "kb:ev_sap_001"
+
+
+@pytest.mark.parametrize(
+    "answer_field",
+    ["direction", "confidence", "size", "verdict", "recommended_direction"],
+)
+def test_retriggerflag_forbids_answer(answer_field):
+    """RECON-06 firewall: ANY answer-shaped field is a ValidationError (extra='forbid'
+    + no such field exists) — you cannot hand the debate a conclusion."""
+    payload = valid_retrigger_flag()
+    payload[answer_field] = "positive"
+    with pytest.raises(ValidationError):
+        RetriggerFlag.model_validate(payload)
+
+
+def test_retriggerflag_bad_target_rejected():
+    payload = valid_retrigger_flag()
+    payload["target"] = "diligence"  # only catalyst_call / portfolio_build are routable
+    with pytest.raises(ValidationError):
+        RetriggerFlag.model_validate(payload)
+
+
+@pytest.mark.parametrize("field", ["finding", "why_material", "evidence_ref"])
+@pytest.mark.parametrize("bad", ["", "   "])
+def test_retriggerflag_rejects_empty(field, bad):
+    payload = valid_retrigger_flag()
+    payload[field] = bad
+    with pytest.raises(ValidationError):
+        RetriggerFlag.model_validate(payload)
+
+
+# --- WeeklyFlag: the gap-not-answer flag UP to the MD (RECON-08 / WEEK-06) ----------
+# Same gap-not-answer shape as RetriggerFlag AND additionally NO target — the weekly
+# refresh surfaces a gap; the MD decides route-or-log and (if routing) picks the target.
+
+
+def valid_weekly_flag() -> dict:
+    return {
+        "ticker": "ACME",
+        "flag_type": "quant",
+        "finding": "cash runway dropped below 2 quarters vs baseline of 5",
+        "evidence_ref": "tool:cash_runway#abc123",
+        "why_material": "a financing overhang materially changes the sizing bucket",
+    }
+
+
+def test_weeklyflag_valid():
+    obj = WeeklyFlag.model_validate(valid_weekly_flag())
+    assert obj.ticker == "ACME"
+    assert obj.flag_type == "quant"
+    assert obj.finding
+
+
+@pytest.mark.parametrize("field", ["verdict", "direction", "action", "target"])
+def test_weeklyflag_forbids_answer_and_target(field):
+    """RECON-08/WEEK-06 firewall: an answer-shaped field OR a pre-assigned target is a
+    ValidationError — WeeklyFlag carries the GAP, the MD assigns the route."""
+    payload = valid_weekly_flag()
+    payload[field] = "catalyst_call" if field == "target" else "positive"
+    with pytest.raises(ValidationError):
+        WeeklyFlag.model_validate(payload)
+
+
+def test_weeklyflag_bad_flag_type_rejected():
+    payload = valid_weekly_flag()
+    payload["flag_type"] = "technical"  # only quant / qual
+    with pytest.raises(ValidationError):
+        WeeklyFlag.model_validate(payload)
+
+
+@pytest.mark.parametrize("field", ["ticker", "finding", "why_material", "evidence_ref"])
+@pytest.mark.parametrize("bad", ["", "   "])
+def test_weeklyflag_rejects_empty(field, bad):
+    payload = valid_weekly_flag()
+    payload[field] = bad
+    with pytest.raises(ValidationError):
+        WeeklyFlag.model_validate(payload)

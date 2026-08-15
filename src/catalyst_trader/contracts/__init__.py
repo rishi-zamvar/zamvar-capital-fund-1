@@ -204,3 +204,41 @@ class DiligenceDossier(BaseModel):
     strongest_disconfirming_evidence: str
     all_evidence_refs: list[str] = []
     residual_risks: list[str] = []  # mirrors RiskAssessment.residual_risks
+
+
+class RetriggerFlag(BaseModel):
+    """Re-trigger payload into WF-1/2. extra='forbid' + the ABSENCE of any answer-shaped
+    field makes handing the debate a conclusion UNREPRESENTABLE (mirrors DiligenceInput
+    inbound). Carries a FACT + why it's material, never a direction/confidence/size/verdict."""
+    model_config = ConfigDict(extra="forbid")
+    target: Literal["catalyst_call", "portfolio_build"]
+    finding: str        # the specific fact DD/weekly-refresh surfaced that the workflow left out
+    evidence_ref: str   # kb:<id> / tool:<fn>#<hash> — non-empty; ALSO the oscillation key
+    why_material: str   # why it changes verdict direction / sizing bucket / structure
+
+    @field_validator("finding", "why_material", "evidence_ref")
+    @classmethod
+    def _non_empty(cls, v: str) -> str:
+        if not v or not v.strip():
+            raise ValueError("RetriggerFlag needs a non-empty finding/why_material/evidence_ref")
+        return v
+
+
+class WeeklyFlag(BaseModel):
+    """A flag emitted by the weekly per-name REFRESH (WEEK-06) that routes UP to the MD
+    (RECON-08). quant = a metric tripped vs baseline; qual = an analyst noted a material change.
+    Carries the GAP, not the answer, and has NO target — the MD decides route-or-log and, if
+    routing, picks the target (→ RetriggerFlag). extra='forbid' + no action/answer field."""
+    model_config = ConfigDict(extra="forbid")
+    ticker: str
+    flag_type: Literal["quant", "qual"]
+    finding: str        # the metric move / analyst note — a fact, never an action or verdict
+    evidence_ref: str   # kb:<id> / tool:<fn>#<hash> — non-empty
+    why_material: str
+
+    @field_validator("ticker", "finding", "why_material", "evidence_ref")
+    @classmethod
+    def _non_empty(cls, v: str) -> str:
+        if not v or not v.strip():
+            raise ValueError("WeeklyFlag needs non-empty ticker/finding/why_material/evidence_ref")
+        return v
