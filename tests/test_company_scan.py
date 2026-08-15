@@ -157,3 +157,117 @@ def test_card_embeds_thesis_row_no_recompute(db, monkeypatch):
     card = company_scan.build_card(db, "ABCD", "2026-01-09", raw={}, thesis_row=_ROW)
     assert card["thesis_row"] == _ROW                            # verbatim, byte-for-byte
     assert card["thesis_ref"] == "tool:thesis_scan#abc123"
+
+
+# --- Plan 02 Task 2: delta_card (F1-F13 transitions, latching, hysteresis, cadence, tier gate) ---
+
+
+def _mk(week_end, *, fired=None, **groups):
+    """Minimal card factory for delta_card tests — empty groups; only the flag's fields set."""
+    base = {
+        "ticker": "ABCD", "week_end": week_end,
+        "catalyst": {}, "options": {}, "positioning": {}, "price_vol": {},
+        "balance_sheet": {}, "thesis_row": {}, "thesis_ref": None,
+        "fired": dict(fired or {}), "card_version": "1",
+    }
+    for k, v in groups.items():
+        base[k] = {**base[k], **v} if isinstance(base.get(k), dict) else v
+    return base
+
+
+def _tripped_flags(tripped):
+    return {t["flag"] for t in tripped}
+
+
+def test_delta_pure_and_reproducible():
+    """delta_card(prev, cur, *, params) is pure — signature has NO conn/network arg, and identical
+    input state yields identical tripped lists (built on fresh copies each call)."""
+    import copy
+    import inspect
+
+    sig = inspect.signature(company_scan.delta_card)
+    assert list(sig.parameters) == ["prev", "cur", "params"]
+    assert "conn" not in sig.parameters
+
+    def fresh():
+        prev = _mk("2026-01-02", positioning={"short_interest": 0.10, "days_to_cover": 1.0,
+                                               "si_settlement_date": "2025-12-31"})
+        cur = _mk("2026-01-09", positioning={"short_interest": 0.14, "days_to_cover": 1.2,
+                                             "si_settlement_date": "2026-01-15"})
+        return prev, cur
+
+    p1, c1 = fresh()
+    t1 = company_scan.delta_card(p1, c1)
+    p2, c2 = fresh()
+    t2 = company_scan.delta_card(p2, c2)
+    assert t1 == t2                                  # reproducible: same state -> same fires
+    assert _tripped_flags(t1) == {"F6"}             # only the SI shift on a new settlement date
+    assert copy.deepcopy(t1) == t2                  # values, not identities
+
+
+def test_band_transition_fires_level_does_not():
+    """A band/sign TRANSITION fires once; a standing (latched, same-settlement) level does not
+    re-fire (latching + cadence honesty on F6)."""
+    prev = _mk("2026-01-02", positioning={"short_interest": 0.10, "si_settlement_date": "2025-12-31"})
+    week_a = _mk("2026-01-09", positioning={"short_interest": 0.13, "si_settlement_date": "2026-01-15"})
+    trip_a = company_scan.delta_card(prev, week_a)
+    assert "F6" in _tripped_flags(trip_a)           # rel step 0.30 >= 0.20 on a NEW settlement
+
+    # week B: SI held, SAME settlement date -> no new datum -> F6 does not re-fire (cadence)
+    week_b = _mk("2026-01-16", fired=week_a["fired"],
+                 positioning={"short_interest": 0.13, "si_settlement_date": "2026-01-15"})
+    trip_b = company_scan.delta_card(week_a, week_b)
+    assert "F6" not in _tripped_flags(trip_b)
+
+
+def test_hysteresis_rearm_at_half_threshold():
+    """A latched flag (F7 vol_regime) re-arms ONLY after the metric retreats past
+    hysteresis_rearm_frac (0.5) of the threshold distance; a partial retreat does not re-arm."""
+    T = company_scan.SCAN_PARAMS["scan"]["vol_regime_ratio"]   # 2.0 -> re-arm line 1.0
+
+    # week A: ratio 1.5 -> 2.5 crosses up -> F7 fires + latches
+    prev = _mk("2026-01-02", price_vol={"sigma5": 1.5, "sigma20": 1.0})
+    wk_a = _mk("2026-01-09", price_vol={"sigma5": 2.5, "sigma20": 1.0})
+    trip_a = company_scan.delta_card(prev, wk_a)
+    assert "F7" in _tripped_flags(trip_a) and "F7" in wk_a["fired"]
+
+    # week B: partial retreat to ratio 1.5 (> re-arm line 1.0) -> stays latched, no fire, no re-arm
+    wk_b = _mk("2026-01-16", fired=wk_a["fired"], price_vol={"sigma5": 1.5, "sigma20": 1.0})
+    trip_b = company_scan.delta_card(wk_a, wk_b)
+    assert "F7" not in _tripped_flags(trip_b) and "F7" in wk_b["fired"]
+
+    # week C: full retreat to ratio 0.8 (< re-arm line 1.0) -> re-arms (drops the latch), no fire
+    wk_c = _mk("2026-01-23", fired=wk_b["fired"], price_vol={"sigma5": 0.8, "sigma20": 1.0})
+    trip_c = company_scan.delta_card(wk_b, wk_c)
+    assert "F7" not in _tripped_flags(trip_c) and "F7" not in wk_c["fired"]
+
+    # week D: re-armed -> a fresh cross-up fires again
+    wk_d = _mk("2026-01-30", fired=wk_c["fired"], price_vol={"sigma5": 2.5, "sigma20": 1.0})
+    trip_d = company_scan.delta_card(wk_c, wk_d)
+    assert "F7" in _tripped_flags(trip_d)
+    assert T == 2.0
+
+
+def test_si_delta_only_on_new_settlement_date():
+    """F6 fires ONLY on a NEW si_settlement_date — an identical SI jump with the SAME settlement
+    date does not fire (bi-monthly FINRA cadence honesty)."""
+    prev = _mk("2026-01-02", positioning={"short_interest": 0.10, "si_settlement_date": "2025-12-31"})
+
+    # same settlement date -> no fire even though SI jumped 40%
+    same = _mk("2026-01-09", positioning={"short_interest": 0.14, "si_settlement_date": "2025-12-31"})
+    assert "F6" not in _tripped_flags(company_scan.delta_card(prev, same))
+
+    # new settlement date -> the same jump fires
+    fresh = _mk("2026-01-09", positioning={"short_interest": 0.14, "si_settlement_date": "2026-01-15"})
+    assert "F6" in _tripped_flags(company_scan.delta_card(prev, fresh))
+
+
+def test_wakes_tier_gate():
+    """The wake gate wakes on ANY PRINCIPAL or >=2 CORROBORATORs; a lone CORROBORATOR never wakes."""
+    principal = [{"flag": "F1", "tier": "PRINCIPAL"}]
+    one_corr = [{"flag": "F11", "tier": "CORROBORATOR"}]
+    two_corr = [{"flag": "F7", "tier": "CORROBORATOR"}, {"flag": "F11", "tier": "CORROBORATOR"}]
+    assert company_scan._wakes(principal, company_scan.SCAN_PARAMS) is True
+    assert company_scan._wakes(one_corr, company_scan.SCAN_PARAMS) is False
+    assert company_scan._wakes(two_corr, company_scan.SCAN_PARAMS) is True
+    assert company_scan._wakes([], company_scan.SCAN_PARAMS) is False
