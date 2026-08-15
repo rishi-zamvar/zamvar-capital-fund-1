@@ -9,3 +9,5 @@ tests/fixtures/*.live.json
 
 # graphify code graph (regenerated via `graphify update .`)
 graphify-out/
+
+.DS_Store
