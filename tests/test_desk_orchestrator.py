@@ -128,3 +128,29 @@ async def test_verifier_gates_run_desk(db, monkeypatch, load_fixture):
         await orchestrator.run_desk(db, CATALYST)
 
     assert not any(c["schema"] is verifier.SupportCheck for c in calls)  # blocked structurally
+
+
+async def test_run_desk_passes_extra_context(db, monkeypatch, load_fixture):
+    """06.7-02 (RECON-02): run_desk threads extra_context THROUGH to debate.run so a GP re-trigger
+    re-reasons the debate. Default None keeps the Phase-4 path byte-for-byte."""
+    captured = {}
+
+    async def _fake_run(signals, catalyst, rounds=orchestrator.MAX_ROUNDS, *, extra_context=None):
+        captured["extra_context"] = extra_context
+        return DebateVerdict.model_validate(load_fixture("agent_responses/moderator_verdict"))
+
+    async def _fake_analyst(dim, catalyst, **kw):
+        return AnalystSignal.model_validate(load_fixture(f"agent_responses/{dim}_signal"))
+
+    async def _fake_enforce(conn, verdict, **kw):
+        return verdict
+
+    monkeypatch.setattr(orchestrator.debate, "run", _fake_run)
+    monkeypatch.setattr(orchestrator.verifier, "enforce", _fake_enforce)
+    monkeypatch.setattr(orchestrator.analysts, "run_analyst", _fake_analyst)
+
+    await orchestrator.run_desk(db, CATALYST, extra_context="GP: reconsider the AdCom gap")
+    assert captured["extra_context"] == "GP: reconsider the AdCom gap"
+
+    await orchestrator.run_desk(db, CATALYST)  # default omitted -> None (Phase-4 byte-for-byte)
+    assert captured["extra_context"] is None

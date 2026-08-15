@@ -41,7 +41,7 @@ ALLOWED_TOOLS = [
 ]
 
 
-async def run_desk(conn, catalyst) -> DebateVerdict:
+async def run_desk(conn, catalyst, *, extra_context: str | None = None) -> DebateVerdict:
     """Run the full Workflow-1a desk for one catalyst and return the gated verdict.
 
     1. build the one in-process quant/KB MCP server (``conn`` captured in its closure);
@@ -59,7 +59,7 @@ async def run_desk(conn, catalyst) -> DebateVerdict:
             for dim in DIMENSIONS
         ]
     )
-    verdict = await debate.run(signals, catalyst, rounds=MAX_ROUNDS)
+    verdict = await debate.run(signals, catalyst, rounds=MAX_ROUNDS, extra_context=extra_context)
     return await verifier.enforce(conn, verdict, signals=signals)
 
 

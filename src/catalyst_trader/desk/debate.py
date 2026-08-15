@@ -98,15 +98,25 @@ REQUIREMENTS for the DebateVerdict:
 """
 
 
-async def run(signals: list[AnalystSignal], catalyst, rounds: int = MAX_ROUNDS) -> DebateVerdict:
+async def run(signals: list[AnalystSignal], catalyst, rounds: int = MAX_ROUNDS,
+              *, extra_context: str | None = None) -> DebateVerdict:
     """Run a bounded, context-isolated bull/bear debate then a moderator synthesis.
 
     Bull and bear each run in their own `run_structured` session per round (real
     isolation); only the opponent's prior FINAL argument text is threaded across.
     After `rounds` exchanges the moderator emits the validated binary DebateVerdict.
     Fully offline under test — every call routes through the run_structured seam.
+
+    `extra_context` (RECON-02): a GP/DD re-trigger — a material fact the prior round left out.
+    It is injected ONCE into the shared `evidence` string that BOTH side prompts AND the
+    moderator prompt read, so the WHOLE debate re-reasons from the gap (it is a fact to weigh,
+    NOT a conclusion to adopt). Default None = the `if extra_context:` block never runs =
+    `evidence` is untouched = the prompts are byte-for-byte identical to the no-retrigger path.
     """
     evidence = _evidence_context(signals)
+    if extra_context:
+        evidence += ("\n\nMD RE-TRIGGER — new material fact the prior round did not address "
+                     "(re-reason; do NOT assume a conclusion):\n" + extra_context)
     bull_arg: Argument | None = None
     bear_arg: Argument | None = None
 

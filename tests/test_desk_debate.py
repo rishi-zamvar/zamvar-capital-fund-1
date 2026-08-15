@@ -112,6 +112,50 @@ async def test_confidence_is_grounded(monkeypatch, load_fixture):
     assert out.evidence_refs                           # grounded in cited refs, not vibes
 
 
+# ---------------------------------------------------------------------------
+# 06.7-02 Task 1 — extra_context re-trigger (RECON-02): default None is byte-for-byte;
+# a non-None gap reaches BOTH sides AND the moderator (one shared-evidence injection).
+# ---------------------------------------------------------------------------
+
+async def test_run_extra_context_none_unchanged(monkeypatch, load_fixture):
+    """Default path is byte-for-byte: run(...) and run(..., extra_context=None) produce the
+    IDENTICAL prompt strings, and neither carries the MD RE-TRIGGER marker (no-regression)."""
+    bull, bear, verdict = _fixtures(load_fixture)
+
+    calls_default = []
+    monkeypatch.setattr(debate, "run_structured", _seam(bull, bear, verdict, calls_default))
+    await debate.run(SIGNALS, CATALYST, rounds=2)
+
+    calls_explicit = []
+    monkeypatch.setattr(debate, "run_structured", _seam(bull, bear, verdict, calls_explicit))
+    await debate.run(SIGNALS, CATALYST, rounds=2, extra_context=None)
+
+    prompts_default = [c["prompt"] for c in calls_default]
+    prompts_explicit = [c["prompt"] for c in calls_explicit]
+    assert prompts_default == prompts_explicit           # byte-for-byte identical
+    assert all("MD RE-TRIGGER" not in p for p in prompts_default)  # no marker on the default path
+
+
+async def test_run_extra_context_injects_gap(monkeypatch, load_fixture):
+    """A non-None extra_context reaches the BULL prompt AND the BEAR prompt AND the MODERATOR
+    prompt — one injection on the shared evidence string re-reasons the WHOLE debate."""
+    bull, bear, verdict = _fixtures(load_fixture)
+    fact = "DD surfaced an FDA AdCom scheduled 3 days pre-PDUFA the prior round ignored"
+    calls = []
+    monkeypatch.setattr(debate, "run_structured", _seam(bull, bear, verdict, calls))
+
+    await debate.run(SIGNALS, CATALYST, rounds=2, extra_context=fact)
+
+    bull_prompts = [c["prompt"] for c in calls if c["schema"] is Argument and "You are the BULL" in c["prompt"]]
+    bear_prompts = [c["prompt"] for c in calls if c["schema"] is Argument and "You are the BEAR" in c["prompt"]]
+    mod_prompt = next(c["prompt"] for c in calls if c["schema"] is DebateVerdict)
+
+    assert all(fact in p for p in bull_prompts)   # the gap reaches every bull round
+    assert all(fact in p for p in bear_prompts)   # ...and every bear round
+    assert fact in mod_prompt                      # ...and the moderator synthesis
+    assert all("MD RE-TRIGGER" in p for p in bull_prompts)  # the re-reason instruction, not the answer
+
+
 async def test_no_positioning_in_verdict():
     positioning = {
         "size", "size_pct", "entry", "stop_loss", "take_profit",
