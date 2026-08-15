@@ -196,6 +196,34 @@ def test_peer_catalyst_outside_window_is_still_clean(db, embed):
     assert isinstance(out, Hedge) and out.validated is True
 
 
+def test_validate_hedge_candidate_peer_selects_that_peer(db, embed):
+    # two -1 inverse peers; candidate_peer scopes validation to the SPECIFIC requested peer,
+    # not peers[0]. (06-02 extension.)
+    insert_hedge_peer(db, "ACME", "PEERA", "same-indication competitor", -1, 0.90, _EV)
+    insert_hedge_peer(db, "ACME", "PEERB", "same-indication competitor", -1, 0.80, _EV)
+    out = risk.validate_hedge(db, embed, "ACME", CAT, ENTRY, EXIT, _GAPS_PASS,
+                              _prices(_PEER_COINT_PX), candidate_peer="PEERB")
+    assert isinstance(out, Hedge)
+    assert out.ticker == "PEERB"  # the requested peer, never peers[0] (PEERA)
+
+
+def test_validate_hedge_candidate_peer_absent_returns_none(db, embed):
+    insert_hedge_peer(db, "ACME", "PEERA", "same-indication competitor", -1, 0.90, _EV)
+    out = risk.validate_hedge(db, embed, "ACME", CAT, ENTRY, EXIT, _GAPS_PASS,
+                              _prices(_PEER_COINT_PX), candidate_peer="NOTAPEER")
+    assert out is None  # honest fallback — never a different peer
+
+
+def test_validate_hedge_no_regression(db, embed):
+    # Phase-5 positional call (no candidate_peer) is byte-for-byte the pre-06-02 behavior.
+    insert_hedge_peer(db, "ACME", "RIVAL", "same-indication competitor", -1, 0.82, _EV)
+    out = risk.validate_hedge(db, embed, "ACME", CAT, ENTRY, EXIT, _GAPS_PASS, _prices(_PEER_COINT_PX))
+    assert isinstance(out, Hedge)
+    assert out.ticker == "RIVAL"
+    assert out.validated is True
+    assert out.payoff_direction == -1
+
+
 def test_fake_idiosyncratic_hedge_is_unrepresentable():
     # even if validate_hedge logic were bypassed, the contract refuses a fabricated hedge (HEDGE-01/04)
     with pytest.raises(ValueError):

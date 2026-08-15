@@ -72,7 +72,10 @@ def size_for_survival(
     )
 
 
-def validate_hedge(conn, embed, target, catalyst, entry, exit_by_date, analog_gaps, prices) -> Hedge | None:
+def validate_hedge(
+    conn, embed, target, catalyst, entry, exit_by_date, analog_gaps, prices,
+    *, candidate_peer: str | None = None,
+) -> Hedge | None:
     """Re-validate an inverse-payoff peer for THIS catalyst, or return None (honest fallback).
 
     The stored KB payoff sign is a PRIOR, never proof — a peer only becomes a hedge if, for this
@@ -87,10 +90,16 @@ def validate_hedge(conn, embed, target, catalyst, entry, exit_by_date, analog_ga
     All pass → a validated idiosyncratic Hedge OBJECT; anything else → None (size-tiny / exit,
     HEDGE-04 — never a fabricated hedge). Pure/deterministic: no run_structured here.
 
+    `candidate_peer` (06-02, keyword-only, default None) scopes validation to a SPECIFIC promoted
+    peer: when set, only that peer is considered (empty → None, an honest fallback, never a
+    different peer). `candidate_peer=None` is byte-for-byte the Phase-5 behavior (top -1 peer).
+
     # ponytail: top -1 candidate only — the KB weight already ranks them; multi-candidate search is
     #           speculative until a real trade needs it.
     """
     peers = [p for p in kb.hedge_peers(conn, target) if p["payoff_direction"] == -1]
+    if candidate_peer is not None:
+        peers = [p for p in peers if p["peer"] == candidate_peer]
     if not peers:
         return None
     cand = peers[0]
