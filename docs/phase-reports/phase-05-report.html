@@ -1,0 +1,125 @@
+<title>Fund 1 — Phase 5 Report</title>
+<style>
+  :root{
+    --bg:#ecefe9;--surface:#fff;--surface-2:#f5f7f2;--ink:#191c18;--muted:#5f655c;--faint:#99a094;
+    --border:#d6dbcf;--border-strong:#c2c8b8;--accent:#8a6a12;--accent-bg:#f3ecd8;
+    --done:#1f7a4d;--done-bg:#e4f2e9;--warn:#b23b30;--warn-bg:#f6e5e3;--info:#2b6a93;--info-bg:#e2edf4;
+    --mono:ui-monospace,"SF Mono","JetBrains Mono",Menlo,Consolas,monospace;
+    --sans:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+    --shadow:0 1px 2px rgba(20,25,18,.06),0 4px 14px rgba(20,25,18,.05);
+  }
+  @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+    --bg:#101310;--surface:#191d18;--surface-2:#20241e;--ink:#e8ece4;--muted:#9aa192;--faint:#6b7365;
+    --border:#2c322a;--border-strong:#3a4136;--accent:#d8b45a;--accent-bg:#2a2412;
+    --done:#4cc585;--done-bg:#14271c;--warn:#ef7365;--warn-bg:#2c1714;--info:#6bb3e6;--info-bg:#122430;
+    --shadow:0 1px 2px rgba(0,0,0,.4),0 6px 18px rgba(0,0,0,.35);
+  }}
+  :root[data-theme="dark"]{
+    --bg:#101310;--surface:#191d18;--surface-2:#20241e;--ink:#e8ece4;--muted:#9aa192;--faint:#6b7365;
+    --border:#2c322a;--border-strong:#3a4136;--accent:#d8b45a;--accent-bg:#2a2412;
+    --done:#4cc585;--done-bg:#14271c;--warn:#ef7365;--warn-bg:#2c1714;--info:#6bb3e6;--info-bg:#122430;
+    --shadow:0 1px 2px rgba(0,0,0,.4),0 6px 18px rgba(0,0,0,.35);
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);line-height:1.55}
+  .wrap{max-width:900px;margin:0 auto;padding:40px 22px 72px}
+  .ey{font-family:var(--mono);font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--accent);font-weight:600}
+  h1{font-family:var(--mono);font-size:clamp(24px,5vw,36px);margin:8px 0 4px;letter-spacing:-.01em}
+  .status{display:inline-flex;align-items:center;gap:8px;font-family:var(--mono);font-size:12.5px;color:var(--done);background:var(--done-bg);border:1px solid var(--done);border-radius:20px;padding:4px 13px;margin-top:6px}
+  .masthead{border-bottom:2px solid var(--ink);padding-bottom:18px;margin-bottom:26px}
+  .meta{font-family:var(--mono);font-size:12px;color:var(--muted);margin-top:10px}
+  h2{font-family:var(--mono);font-size:16px;margin:32px 0 12px;display:flex;align-items:center;gap:9px}
+  h2 .ic{width:22px;height:22px;border-radius:5px;display:inline-grid;place-items:center;font-size:13px;flex:none}
+  .ic.d{background:var(--done-bg);color:var(--done);border:1px solid var(--done)}
+  .ic.w{background:var(--warn-bg);color:var(--warn);border:1px solid var(--warn)}
+  .ic.g{background:var(--accent-bg);color:var(--accent);border:1px solid var(--accent)}
+  .ic.n{background:var(--info-bg);color:var(--info);border:1px solid var(--info)}
+  ul{margin:0;padding-left:2px;list-style:none}
+  li{position:relative;padding:5px 0 5px 22px;font-size:14.5px}
+  li::before{content:"";position:absolute;left:2px;top:12px;width:6px;height:6px;border-radius:50%;background:var(--accent)}
+  li.done::before{content:"✓";background:none;color:var(--done);font-family:var(--mono);font-size:13px;top:6px;left:0}
+  li b{font-weight:600}
+  code{font-family:var(--mono);font-size:12.5px;background:var(--surface-2);border:1px solid var(--border);border-radius:4px;padding:1px 6px}
+  .card{background:var(--surface);border:1px solid var(--border);border-left:4px solid var(--warn);border-radius:9px;padding:14px 16px;margin:10px 0;box-shadow:var(--shadow)}
+  .card.i{border-left-color:var(--info)} .card.decide{border-left-color:var(--accent);background:var(--accent-bg)}
+  .card h3{font-family:var(--mono);font-size:14px;margin:0 0 4px;color:var(--warn)}
+  .card.i h3{color:var(--info)} .card.decide h3{color:var(--accent)}
+  .card p{margin:4px 0 0;font-size:14px;color:var(--ink)}
+  .tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin:8px 0 4px}
+  .tile{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:13px 15px;box-shadow:var(--shadow)}
+  .tile .k{font-family:var(--mono);font-size:10px;letter-spacing:.07em;text-transform:uppercase;color:var(--faint)}
+  .tile .v{font-family:var(--mono);font-size:23px;font-weight:700;margin-top:3px}
+  .tile .v small{font-size:14px;color:var(--muted)}
+  .bar{height:9px;background:var(--surface-2);border:1px solid var(--border);border-radius:5px;overflow:hidden;margin:14px 0 4px}
+  .bar>i{display:block;height:100%;width:45.5%;background:var(--accent)}
+  .next{background:var(--accent-bg);border:1px solid var(--accent);border-radius:10px;padding:16px 18px;margin-top:10px}
+  .next h3{font-family:var(--mono);font-size:15px;margin:0 0 6px;color:var(--accent)}
+  .next p{margin:0;font-size:14px}
+  .win{background:var(--done-bg);border:1px solid var(--done);border-radius:8px;padding:10px 14px;margin:10px 0;font-size:14px}
+  .win b{color:var(--done)}
+  table.pl{width:100%;border-collapse:collapse;margin:8px 0;font-size:13.5px}
+  table.pl th,table.pl td{text-align:left;padding:7px 10px;border-bottom:1px solid var(--border)}
+  table.pl th{font-family:var(--mono);font-size:11px;letter-spacing:.05em;text-transform:uppercase;color:var(--faint)}
+  table.pl td code{font-size:11.5px}
+  footer{margin-top:34px;padding-top:18px;border-top:1px solid var(--border);font-family:var(--mono);font-size:11.5px;color:var(--faint)}
+</style>
+
+<div class="wrap">
+  <div class="masthead">
+    <div class="ey">zamvar capital · fund 1 · phase report</div>
+    <h1>Phase 5 — Trade Builder, Honest Hedge &amp; Ruin-Avoidant Sizing</h1>
+    <div class="status">● VERIFIED · 12/12 reqs · 9/9 money-critical invariants · 649 tests</div>
+    <div class="meta">2026-08-15 · PORT-01…05 · HEDGE-01…05 · OPS-01/02 closed · goal: <i>turn the week's catalyst calls into ONE recommended portfolio — build, honestly hedge (or don't), size for survival, promote/kill into a dossier. No live execution.</i></div>
+  </div>
+
+  <h2><span class="ic d">✓</span> What's done</h2>
+  <ul>
+    <li class="done"><b>The whole positioning workflow is assembled</b> — <code>run_portfolio</code> takes the week's binary verdicts and runs each through: build → estimate → vet → risk committee → reconcile → select the book → PM promote/kill → a <b>StrategyDossier</b>. 7 plans across 4 waves.</li>
+    <li class="done"><b>The honest-hedge reality is built in, not papered over</b> — the research proved clean idiosyncratic hedges are rare, so the <b>default is a survival-sized single leg</b>. A pair is used <i>only</i> when the risk agent re-validates, per-catalyst, that the peer actually rises when the target falls (un-netted worst-case cell + cointegration + catalyst-clean). A fake hedge is <b>literally unrepresentable</b> at the data boundary.</li>
+    <li class="done"><b>Sizing is for survival, never for the 1% target</b> — the sizing function has <i>no return-target parameter at all</i> (enforced by a signature test), so it structurally cannot be talked into chasing a number. It sizes off the estimated <i>down</i>-move, not a generic guess.</li>
+    <li class="done"><b>Hold-vs-exit uses expected-log-growth, not raw expected value</b> — a trade with a tempting positive average but a fat losing tail is correctly told to <i>exit before the event</i>. There's a pinned test proving exactly that case fires.</li>
+    <li class="done"><b>Every number is model-derived, and the "moat" hook is in place</b> — no magic constants; the estimator/SL-TP thresholds are loaded parameters that will be re-fit from real outcomes later. Each estimate is <b>vetted for its assumptions</b> (are the analogs comparable? is the probability cited?) before it can become a position — and a rejected estimate blocks the trade.</li>
+    <li class="done"><b>Accountability like a real desk</b> — the position memo + pre-mortem are authored <i>separately</i> from the PM who approves (author ≠ approver, test-enforced). Zero-trade weeks are a valid outcome.</li>
+    <li class="done"><b>649 tests, entirely offline</b> — up from 498 at phase start (+151). No live API call anywhere in the suite; all agent reasoning tested through one recorded-response seam.</li>
+  </ul>
+
+  <h2><span class="ic g">★</span> What's going well</h2>
+  <div class="win"><b>The plan-check caught two money-critical bugs that tests could not.</b> Both would have passed the whole suite green while silently promoting the <i>wrong</i> trade — one used the builder's un-vetted size instead of the risk committee's ruin-capped size; the other used raw EV instead of log-growth (a ruin-risk regression). These are wiring/fidelity gaps, exactly the kind TDD misses. The round-trip earns its cost on every money phase.</div>
+  <ul>
+    <li>Reuse discipline held: net-new code was just 1 tool + 1 extension + 1 selector + 1 KB seam + 1 vetting-gate sibling + 3 desk modules — everything else reused the Phase 1-4 foundation.</li>
+    <li>Your data question got answered for free: <b>CBOE publishes a no-auth delayed options-chain feed with IV + greeks</b> — the options-implied gap is closed at $0, behind a pluggable seam.</li>
+  </ul>
+
+  <h2><span class="ic w">!</span> Needs your review / input</h2>
+  <div class="card decide">
+    <h3>★ The hedging reality — confirm you're comfortable</h3>
+    <p>Across three research passes, <b>most idiosyncratic biotech binaries have no clean long-only hedge</b> — a competitor usually moves <i>with</i> the target on a class win, not against it. So the system's honest default is a <b>naked, survival-sized single leg</b>, pairing only the rare validated case. This is by design (and why sizing is survival-first). Nothing long-only replaces a put; that slots in later via the options-ready abstraction.</p>
+  </div>
+  <div class="card i">
+    <h3>New hedge candidates + inverse-instrument menu found — ready to seed</h3>
+    <p>Research surfaced a genuine second IONS/BBIO — <b>CYTK↔EWTX</b> (HCM) — plus <b>BMRN↔ASND</b>, <b>UTHR↔LQDA</b>, and an inverse-ETF tape-damper menu (<b>LABD / RWM / TZA / SPDN</b>). These are <i>seed data</i> for the per-trade validator, loaded when you curate the universe.</p>
+  </div>
+  <div class="card i">
+    <h3>Still pending from you (non-blocking): data curation</h3>
+    <p>Real seed universe (~20 names) + PDUFA/AdCom dates. Templates shipped in <code>data/</code>. The system runs on stubs today; real catalysts need this before the paper phase.</p>
+  </div>
+
+  <h2><span class="ic n">→</span> Next steps</h2>
+  <div class="next">
+    <h3>Phase 6 — Independent Diligence Firewall (Workflow 3)</h3>
+    <p>A second, <i>firewalled</i> agent framework that re-validates a promoted trade from RAW sources — trial stats, regulatory precedent, financials/runway, ownership/short-interest, options-implied move — deliberately blind to Pipeline-1's thesis, to kill confirmation bias before capital is ever at risk. Depends on: a Graphify re-index (queued) and can run alongside the free-data fetcher / web-scraper data-layer build.</p>
+  </div>
+
+  <h2><span class="ic g">▤</span> Project state</h2>
+  <div class="bar"><i></i></div>
+  <div class="tiles">
+    <div class="tile"><div class="k">Phases</div><div class="v">5<small>/11</small></div></div>
+    <div class="tile"><div class="k">Requirements</div><div class="v">34<small>/56</small></div></div>
+    <div class="tile"><div class="k">Tests</div><div class="v">649</div></div>
+    <div class="tile"><div class="k">Invariants</div><div class="v" style="color:var(--done)">9/9</div></div>
+    <div class="tile"><div class="k">Blockers</div><div class="v" style="color:var(--done)">0</div></div>
+  </div>
+  <p style="font-size:13.5px;color:var(--muted);margin-top:10px">No blockers. ~6.77M build tokens. Plan-check caught + fixed 2 money-critical blockers this phase. Monitor live at <code>http://127.0.0.1:8799</code>. Autonomous run continues to Phase 6.</p>
+
+  <footer>Fund 1 · Phase 5 of 11 · generated 2026-08-15 · the desk sizes for survival — the 1% is a measured outcome, never an input</footer>
+</div>
