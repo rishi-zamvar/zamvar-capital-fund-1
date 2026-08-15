@@ -84,6 +84,8 @@ def _dd_router(load_fixture, calls, *, narrative=None, verdict_signals=None):
                 if f'"{d}"' in prompt:  # build_dimension_prompt mandates the token, like analysts
                     return signals[d]
             raise AssertionError("diligence analyst prompt matched no known dimension")
+        if schema.__name__ == "SupportCheck":  # the Wave-4 enforce_dossier cite-or-drop gate
+            return schema(supported=True, reason="ok")
         # Wave-3 narrative model: validate the recorded narrative against the passed schema
         # (no import of / name-coupling to desk.diligence, which may not exist yet).
         return schema.model_validate(narrative or load_fixture("agent_responses/dd_narrative"))
@@ -486,3 +488,130 @@ async def test_dossier_no_go_all_unsupported_flags_audit(db):
 
     assert out.all_evidence_refs == []
     assert any("AUDIT" in f for f in out.red_flags)
+
+
+# ---------------------------------------------------------------------------
+# Wave 4 — Task 1: run_diligence — firewalled entry point, end-to-end (offline)
+# ---------------------------------------------------------------------------
+
+_DD_OPTS = {
+    "call_bid": 2.0, "call_ask": 2.2, "put_bid": 2.0, "put_ask": 2.2,
+    "call_oi": 300, "put_oi": 300, "expiry": "2026-12-05", "catalyst_date": "2026-11-28",
+}
+
+
+def _full_market_data():
+    """A fully-grounded market_data — EVERY money-touching dim has its raw-data seam value
+    (options / financials / ownership / hedge / liquidity) plus the non-money trial record.
+    Deleting any money key models the ungrounded-money case."""
+    return {
+        "options": {"quote": dict(_DD_OPTS), "underlying_price": 100.0, "days_to_event": 14},
+        "financials": {"cash_usd": 500000000, "monthly_burn_usd": 20000000, "months_to_catalyst": 6},
+        "ownership": {"short_interest_pct": 18.5, "days_to_cover": 4.2, "insider_net": -1200000},
+        "trial": {"phase": "Phase 3", "status": "Completed", "primary_endpoint": "OS", "enrollment": 450},
+        "hedge": {"entry": "2026-11-27", "exit_by_date": "2026-12-05", "analog_gaps": {}, "prices": {}},
+        "liquidity_quote": {"bid": 1.0, "volume": 100, "oi": 50},
+    }
+
+
+def _mock_valid_hedge(monkeypatch):
+    """Stub the INDEPENDENT hedge re-validation with a validated inverse Hedge so the hedge dim
+    is grounded offline (the real validate_hedge is exercised in test_hedge_dimension_*)."""
+    from catalyst_trader.contracts import Hedge
+    from catalyst_trader.desk import diligence
+
+    monkeypatch.setattr(diligence.risk, "validate_hedge", lambda *a, **k: Hedge(
+        instrument="equity_peer", ticker="PEER", payoff_direction=-1, validated=True,
+        covers="idiosyncratic", mechanism="same-indication rival", conditional_worst=-0.4,
+    ))
+
+
+def test_run_diligence_signature_is_firewalled():
+    """The firewall at the type level: run_diligence's trade-facts parameter is annotated EXACTLY
+    DiligenceInput, and NO parameter is annotated with a Workflow-1/2 artifact — there is provably
+    no code path through which a DebateVerdict/TradeProposal/StrategyDossier/RiskAssessment enters."""
+    import typing
+
+    from catalyst_trader.contracts import (
+        DebateVerdict,
+        DiligenceInput,
+        RiskAssessment,
+        StrategyDossier,
+        TradeProposal,
+    )
+    from catalyst_trader.desk import diligence
+
+    hints = typing.get_type_hints(diligence.run_diligence)
+    assert DiligenceInput in hints.values()
+    forbidden = {DebateVerdict, TradeProposal, StrategyDossier, RiskAssessment}
+    assert not (forbidden & set(hints.values()))
+
+
+async def test_run_diligence_end_to_end(db, monkeypatch, load_fixture):
+    """Fully-grounded market_data + all-passing dimension fixtures -> a GO DiligenceDossier with
+    8 per-dimension entries, evidence surviving the gate, and residual_risks from the narrative.
+    All 8 dimensions ran (one fan-out) and the narrative ran once. Fully offline."""
+    from catalyst_trader.desk import diligence
+
+    _mock_valid_hedge(monkeypatch)
+    calls = []
+    _patch_dd_seam(monkeypatch, _dd_router(load_fixture, calls))
+
+    dossier = await diligence.run_diligence(
+        db, DiligenceInput(**DD_INPUT), market_data=_full_market_data()
+    )
+
+    assert isinstance(dossier, DiligenceDossier)
+    assert dossier.verdict == "go"  # fully grounded + all fixtures pass -> GO
+    assert len(dossier.per_dimension) == 8
+    assert dossier.all_evidence_refs  # tool: refs survived cite-or-drop
+    assert dossier.residual_risks  # populated from the narrative fixture
+    assert len([c for c in calls if c["schema"] is AnalystSignal]) == 8
+    assert len([c for c in calls if c["schema"] is diligence.DiligenceNarrative]) == 1
+
+
+async def test_run_diligence_verdict_is_deterministic(db, monkeypatch, load_fixture):
+    """Swap the (grounded) financials dim to a failing signal: the returned verdict is no_go
+    regardless of the narrative's tone — the Wave-3 model_copy overwrite through the real pipeline."""
+    from catalyst_trader.desk import diligence
+
+    _mock_valid_hedge(monkeypatch)
+    failing = _sig("financials", confidence=0.1)  # below min_conf -> dimension_passed False
+    calls = []
+    _patch_dd_seam(monkeypatch, _dd_router(load_fixture, calls, verdict_signals={"financials": failing}))
+
+    dossier = await diligence.run_diligence(
+        db, DiligenceInput(**DD_INPUT), market_data=_full_market_data()
+    )
+    assert dossier.verdict == "no_go"
+
+
+async def test_run_diligence_zero_liquidity_no_go(db, monkeypatch, load_fixture):
+    """A zero-liquidity leg is a hard NO-GO end-to-end even with all dimensions passing."""
+    from catalyst_trader.desk import diligence
+
+    _mock_valid_hedge(monkeypatch)
+    calls = []
+    _patch_dd_seam(monkeypatch, _dd_router(load_fixture, calls))
+    md = _full_market_data()
+    md["liquidity_quote"] = {"bid": 0.0, "volume": 0, "oi": 0}
+
+    dossier = await diligence.run_diligence(db, DiligenceInput(**DD_INPUT), market_data=md)
+    assert dossier.verdict == "no_go"
+
+
+@pytest.mark.parametrize("missing", ["financials", "ownership"])
+async def test_run_diligence_money_dim_without_raw_data_is_no_go(db, monkeypatch, load_fixture, missing):
+    """A money-touching dim with NO raw-data seam value cannot be grounded, so it CANNOT yield a
+    GO — even though its dimension fixture is a PASSING GO signal. The ungrounded money dim forces
+    NO-GO (no false GO from a hallucinated finding). Parametrized over financials + ownership_flow."""
+    from catalyst_trader.desk import diligence
+
+    _mock_valid_hedge(monkeypatch)
+    calls = []
+    _patch_dd_seam(monkeypatch, _dd_router(load_fixture, calls))
+    md = _full_market_data()
+    del md[missing]  # no raw data for this money dim -> ungrounded -> forced NO-GO
+
+    dossier = await diligence.run_diligence(db, DiligenceInput(**DD_INPUT), market_data=md)
+    assert dossier.verdict == "no_go"
