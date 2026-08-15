@@ -218,3 +218,32 @@ def upsert_bars(
     except Exception:
         conn.rollback()
         raise
+
+
+def bars_asof(
+    conn: sqlite3.Connection,
+    ticker: str,
+    as_of: str,
+    *,
+    lookback_weeks: int | None = None,
+) -> list[dict]:
+    """Point-in-time weekly OHLCV read: bars for `ticker` with week_end <= `as_of`, chronological.
+
+    The `week_end <= as_of` guard is the money-critical no-look-ahead invariant — mirrors
+    universe.build.universe_as_of's "never a future cohort". A base rate must never see a bar
+    that hadn't happened yet at decision time. `lookback_weeks` keeps only the most recent N
+    bars at/<= as_of. Delisted history is retained (survivorship-free).
+    """
+    rows = conn.execute(
+        "SELECT week_end, open, high, low, close, volume, delisted FROM price_bar "
+        "WHERE ticker=? AND week_end <= ? ORDER BY week_end",
+        (ticker, as_of),
+    ).fetchall()
+    out = [
+        {"week_end": r["week_end"], "open": r["open"], "high": r["high"], "low": r["low"],
+         "close": r["close"], "volume": r["volume"], "delisted": bool(r["delisted"])}
+        for r in rows
+    ]
+    if lookback_weeks is not None:
+        out = out[-lookback_weeks:]
+    return out

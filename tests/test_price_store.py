@@ -14,7 +14,7 @@ All offline against deterministic synthetic fixtures — no live FMP dependency.
 
 import numpy as np
 
-from catalyst_trader.store import upsert_bars
+from catalyst_trader.store import bars_asof, upsert_bars
 
 
 def _readback(conn, ticker: str) -> list[dict]:
@@ -95,3 +95,56 @@ def test_delisted_bar_is_stored_and_retrievable(db):
     got = _readback(db, "DEAD")
     assert len(got) == 3
     assert all(b["delisted"] is True for b in got)
+
+
+# --- Task 2: point-in-time bars_asof (no look-ahead) -----------------------------------------
+
+
+def test_bars_asof_never_returns_a_future_bar(db):
+    # THE look-ahead gate. Insert 8 weekly bars from 2024-01-01; the 5th week_end is 2024-01-29.
+    bars = _series("MREV", 10.0, 8, seed=5)
+    upsert_bars(db, "MREV", bars)
+    as_of = "2024-01-29"  # week_end of the 5th bar
+    got = bars_asof(db, "MREV", as_of)
+    assert [b["week_end"] for b in got] == [b["week_end"] for b in bars[:5]]
+    assert all(b["week_end"] <= as_of for b in got), "bars_asof must NEVER leak a bar after as_of"
+    # chronological
+    weeks = [b["week_end"] for b in got]
+    assert weeks == sorted(weeks)
+
+
+def test_bars_asof_between_weeks_excludes_the_future(db):
+    bars = _series("MREV", 10.0, 8, seed=6)
+    upsert_bars(db, "MREV", bars)
+    # an as_of that falls between bar 3 (2024-01-15) and bar 4 (2024-01-22)
+    got = bars_asof(db, "MREV", "2024-01-18")
+    assert len(got) == 3
+    assert got[-1]["week_end"] == "2024-01-15"
+
+
+def test_bars_asof_returns_delisted_history(db):
+    # survivorship-free at the point-in-time read too.
+    bars = _series("DEAD", 5.0, 5, seed=7)
+    upsert_bars(db, "DEAD", bars, delisted=True)
+    got = bars_asof(db, "DEAD", "2099-01-01")
+    assert len(got) == 5
+    assert all(b["delisted"] is True for b in got)
+
+
+def test_bars_asof_lookback_weeks_returns_most_recent_n(db):
+    bars = _series("MREV", 10.0, 10, seed=8)
+    upsert_bars(db, "MREV", bars)
+    got = bars_asof(db, "MREV", "2099-01-01", lookback_weeks=3)
+    assert len(got) == 3
+    # the most recent 3, still chronological, still <= as_of
+    assert [b["week_end"] for b in got] == [b["week_end"] for b in bars[-3:]]
+
+
+def test_synthetic_seeded_series_is_deterministic_and_round_trips(db):
+    # the deterministic fixture Wave-2 base-rate tests rely on: same seed -> same series.
+    a = _series("XBI", 90.0, 6, seed=9)
+    b = _series("XBI", 90.0, 6, seed=9)
+    assert a == b, "seeded synthetic series must be reproducible for Wave-2 base rates"
+    upsert_bars(db, "XBI", a)
+    got = bars_asof(db, "XBI", "2099-01-01")
+    assert [x["close"] for x in got] == [x["close"] for x in a]
