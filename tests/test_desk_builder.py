@@ -18,7 +18,8 @@ Quant + KB run FOR REAL (deterministic); run_structured is monkeypatched -> full
 """
 
 from catalyst_trader.contracts import DebateVerdict, TradeProposal
-from catalyst_trader.desk import builder, verifier
+from catalyst_trader.desk import builder, risk, verifier
+from catalyst_trader.desk.verifier import EstimateRejectedError
 from catalyst_trader.kb import EvidenceSource, KBNode, add_edge, insert_claim, insert_hedge_peer
 from catalyst_trader import kb
 
@@ -141,3 +142,162 @@ async def test_kb_analogs_carried(db, monkeypatch):
     _patch_seams(monkeypatch)
     out = await builder.build(db, kb.hash_embed, _verdict(), CAT, entry=100.0)
     assert out.kb_analogs  # the queried analogs are carried for the memo
+
+
+# ---------------------------------------------------------------------------
+# Task 2 — estimated-move construction: estimate -> vet -> hold-vs-exit -> advisory SL/TP
+# ---------------------------------------------------------------------------
+
+import pytest
+
+from catalyst_trader.contracts import EstimateVetting
+from catalyst_trader.quant.events import catalyst_move_estimate
+from catalyst_trader.quant.result import ToolResult
+
+
+def _est(db, p_positive=0.62, ups=(0.20, 0.30), downs=(0.50, 0.60)):
+    """The estimate the builder should compute from the seeded analogs + default params."""
+    params = kb.load_params(db, "pdufa")
+    return catalyst_move_estimate(p_positive, list(ups), list(downs), params)
+
+
+def _canned_size(value):
+    return ToolResult(tool="size_for_survival", tool_version="1.0.0", inputs={},
+                      value=value, detail={"ruin_at_size": 0.01, "risk_of_ruin": {}})
+
+
+async def test_size_for_survival_receives_estimated_down_move_as_gap(db, monkeypatch):
+    _seed_analogs(db)
+    _patch_seams(monkeypatch)
+    captured = {}
+    real = risk.size_for_survival
+
+    def _spy(p_loss, gap=0.70, **kw):
+        captured["p_loss"], captured["gap"] = p_loss, gap
+        return real(p_loss, gap, **kw)
+
+    monkeypatch.setattr(builder.risk, "size_for_survival", _spy)
+    await builder.build(db, kb.hash_embed, _verdict(confidence=0.62), CAT, entry=100.0)
+
+    assert captured["gap"] == pytest.approx(0.55)   # est down_move (median of 0.5,0.6), NOT 0.70
+    assert captured["gap"] != 0.70
+    assert captured["p_loss"] == pytest.approx(0.38)  # 1 - p_positive
+
+
+async def test_hold_decision_calls_hold_vs_exit_at_survival_size(db, monkeypatch):
+    _seed_analogs(db)
+    _patch_seams(monkeypatch)
+    captured = {}
+    real = builder.hold_vs_exit
+
+    def _spy(f, hold_outcomes, exit_outcomes, margin=0.0):
+        captured.update(f=f, hold=hold_outcomes, exit=exit_outcomes, margin=margin)
+        return real(f, hold_outcomes, exit_outcomes, margin)
+
+    monkeypatch.setattr(builder, "hold_vs_exit", _spy)
+    await builder.build(db, kb.hash_embed, _verdict(confidence=0.62), CAT, entry=100.0)
+
+    size = risk.size_for_survival(0.38, 0.55).value
+    assert captured["f"] == size                               # decided AT the survival-constrained size
+    assert captured["hold"][0][1] == pytest.approx(0.25)       # up branch = est up_move
+    assert captured["hold"][1][1] == pytest.approx(-0.55)      # down branch = -est down_move (the fat tail)
+    assert captured["exit"][0][1] == pytest.approx(0.3 * 0.25)  # runup_capture_frac * up_move
+    assert captured["margin"] == 0.0                           # params["builder"]["log_growth_margin"]
+
+
+async def test_hold_through_follows_hold_vs_exit_and_sl_is_advisory(db, monkeypatch):
+    _seed_analogs(db)
+    _patch_seams(monkeypatch)
+    monkeypatch.setattr(builder, "hold_vs_exit",
+                        lambda *a, **k: ToolResult(tool="hold_vs_exit", tool_version="1.0.0",
+                                                   inputs={}, value=1.0, detail={"decision": "hold"}))
+    out = await builder.build(db, kb.hash_embed, _verdict(), CAT, entry=100.0)
+    assert out.holds_through_catalyst is True
+    assert out.sl_advisory is True   # a held-through stop is gap-exposed — advisory only
+
+
+async def test_exit_before_when_hold_vs_exit_says_exit(db, monkeypatch):
+    _seed_analogs(db)
+    _patch_seams(monkeypatch)
+    monkeypatch.setattr(builder, "hold_vs_exit",
+                        lambda *a, **k: ToolResult(tool="hold_vs_exit", tool_version="1.0.0",
+                                                   inputs={}, value=0.0, detail={"decision": "exit"}))
+    out = await builder.build(db, kb.hash_embed, _verdict(), CAT, entry=100.0)
+    assert out.holds_through_catalyst is False
+    assert out.sl_advisory is False  # exit-before-event: a real (non-advisory) stop can fill
+
+
+async def test_positive_ev_hold_but_log_growth_favors_exit(db, monkeypatch):
+    # BLOCKER-2 crux (reuse the 05-02 tail shape): raw EV would HOLD, but the fat -70% tail makes
+    # expected-LOG-growth favor EXIT. size is fixed to f=1.0 so the tail penalty bites end-to-end;
+    # the REAL hold_vs_exit runs and the builder must FOLLOW it (never raw EV).
+    _seed_analogs(db, ups=(1.0, 1.0), downs=(0.7, 0.7))
+    _patch_seams(monkeypatch)
+    monkeypatch.setattr(builder.risk, "size_for_survival", lambda *a, **k: _canned_size(1.0))
+    out = await builder.build(db, kb.hash_embed, _verdict(confidence=0.6), CAT, entry=100.0)
+    assert out.holds_through_catalyst is False   # log-growth said EXIT despite +EV
+
+
+async def test_estimate_reject_blocks_finalize(db, monkeypatch):
+    _seed_analogs(db)
+    _patch_seams(monkeypatch)
+
+    async def _reject(*a, **k):
+        raise EstimateRejectedError(EstimateVetting(
+            verdict="reject", input_refs=[], reasons=["off-type analogs"]))
+
+    monkeypatch.setattr(builder, "enforce_estimate", _reject)
+    out = await builder.build(db, kb.hash_embed, _verdict(), CAT, entry=100.0)
+    assert out is None  # a rejected estimate never finalizes a trade (pass / no proposal)
+
+
+async def test_endorsed_estimate_is_attached_and_return_is_display_only(db, monkeypatch):
+    _seed_analogs(db)
+    _patch_seams(monkeypatch)
+    out = await builder.build(db, kb.hash_embed, _verdict(confidence=0.62), CAT, entry=100.0)
+
+    est = _est(db)
+    size = risk.size_for_survival(0.38, est.detail["down_move"]).value
+    assert out.estimate_vetting.verdict == "endorse"
+    assert out.expected_return_pct == pytest.approx(est.value)  # display only
+    assert out.size_pct == pytest.approx(size)                  # the quant survival size
+    # adaptive SL/TP delegated to the quant tool (entry 100, up 0.25, vol 0.55, default params)
+    assert out.stop_loss == pytest.approx(45.0)
+    assert out.take_profit == pytest.approx(120.0)
+
+
+async def test_one_pct_is_never_a_sizing_input(db, monkeypatch):
+    # expected_return_pct (display) must not equal size_pct — the return target never sizes the leg
+    _seed_analogs(db)
+    _patch_seams(monkeypatch)
+    out = await builder.build(db, kb.hash_embed, _verdict(confidence=0.62), CAT, entry=100.0)
+    assert out.size_pct != out.expected_return_pct
+
+
+async def test_below_min_tradeable_size_passes(db, monkeypatch):
+    _seed_analogs(db)
+    _patch_seams(monkeypatch)
+    monkeypatch.setattr(builder.risk, "size_for_survival", lambda *a, **k: _canned_size(0.001))
+    out = await builder.build(db, kb.hash_embed, _verdict(), CAT, entry=100.0)
+    assert out is None  # below params["builder"]["min_tradeable_size"] (0.002) -> zero-trade
+
+
+async def test_missing_builder_param_raises_no_magic_number(db, monkeypatch):
+    _seed_analogs(db)
+    _patch_seams(monkeypatch)
+    # params with estimator + sl_tp but NO builder group -> a threshold access must RAISE
+    monkeypatch.setattr(builder.kb, "load_params", lambda conn, ct: {
+        "estimator": {"method": "median", "min_analogs": 5, "implied_blend": 0.5, "default_down_move": 0.70},
+        "sl_tp": {"sl_vol_mult": 1.0, "tp_frac": 0.8, "drift_coef": 0.0},
+    })
+    with pytest.raises(KeyError):
+        await builder.build(db, kb.hash_embed, _verdict(), CAT, entry=100.0)
+
+
+def test_no_raw_ev_hold_branch_in_source():
+    # structural BLOCKER-2 guard: the builder must never branch on the raw estimate value
+    src = (builder.__file__)
+    with open(src) as f:
+        body = f.read()
+    import re
+    assert not re.search(r"est\.value\s*>", body)  # hold-vs-exit is log-growth, never raw EV
