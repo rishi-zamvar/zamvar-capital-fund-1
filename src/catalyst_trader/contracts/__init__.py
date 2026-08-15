@@ -63,6 +63,56 @@ class DebateVerdict(BaseModel):
         return v
 
 
+class Hedge(BaseModel):
+    """The honest-hedge abstraction. `validated` + `covers` make a fake idiosyncratic
+    hedge UNREPRESENTABLE — a peer may claim to cover the idiosyncratic binary only if it
+    validated as an inverse peer THIS catalyst. `instrument` is options-ready: put_option
+    is a legal enum member but is refused at promotion in v1 (architected, not executed).
+    """
+
+    model_config = ConfigDict(extra="forbid")
+    instrument: Literal["equity_peer", "inverse_etf", "put_option"]  # put_option reserved; NOT executed in v1
+    ticker: str
+    payoff_direction: int  # +1 co-move, -1 inverse (from kb.hedge_peers)
+    validated: bool  # passed conditional_payoff + cointegration + catalyst-clean THIS catalyst
+    covers: Literal["idiosyncratic", "sector_beta", "none"]
+    mechanism: str
+    conditional_worst: float  # quant.conditional_payoff value (un-netted worst cell)
+
+    @field_validator("covers")
+    @classmethod
+    def _honest_coverage(cls, v: str, info) -> str:
+        # instrument/payoff_direction/validated are declared above covers, so they are
+        # already in info.data when this runs (pydantic v2 field-declaration order).
+        if v == "idiosyncratic" and not (
+            info.data.get("validated") and info.data.get("payoff_direction") == -1
+        ):
+            raise ValueError(
+                "only a validated inverse peer may claim to cover idiosyncratic risk (HEDGE-01/04)"
+            )
+        if info.data.get("instrument") == "inverse_etf" and v == "idiosyncratic":
+            raise ValueError(
+                "an inverse_etf (LABD) covers sector_beta only, never the idiosyncratic binary (locked decision #4)"
+            )
+        if info.data.get("instrument") == "put_option":
+            raise ValueError(
+                "put_option hedges are architected but not executable in v1 (deferred)"
+            )
+        return v
+
+
+class EstimateVetting(BaseModel):
+    """The estimate-gate verdict (§7). A promoted trade always carries verdict="endorse"
+    — a reject blocks finalize upstream before promotion."""
+
+    model_config = ConfigDict(extra="forbid")
+    verdict: Literal["endorse", "reject"]
+    input_refs: list[str]  # vetted (surviving) estimator input refs
+    dropped_inputs: list[str] = []  # uncited/unresolvable inputs dropped structurally
+    reasons: list[str]  # per-check findings (comparability, consistency, cold-start)
+    uncertainty_widened: bool = False  # cold-start shrink-to-base-rate applied
+
+
 class TradeProposal(BaseModel):
     model_config = ConfigDict(extra="forbid")
     target_long: str

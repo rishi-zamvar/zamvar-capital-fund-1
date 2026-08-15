@@ -11,6 +11,8 @@ from catalyst_trader.contracts import (
     AnalystSignal,
     DebateVerdict,
     DiligenceDossier,
+    EstimateVetting,
+    Hedge,
     RiskAssessment,
     StrategyDossier,
     TradeProposal,
@@ -216,3 +218,111 @@ def test_debate_verdict_valid_binary_with_kill_criteria():
     obj = DebateVerdict.model_validate(valid_debate_verdict())
     assert obj.direction in ("positive", "negative")
     assert obj.kill_criteria
+
+
+# --- Hedge: honest-hedge structural invariants (HEDGE-01/04, locked decision #4) ---
+
+
+def valid_hedge() -> dict:
+    return {
+        "instrument": "equity_peer",
+        "ticker": "ABC",
+        "payoff_direction": -1,
+        "validated": True,
+        "covers": "idiosyncratic",
+        "mechanism": "direct competitor on the same indication",
+        "conditional_worst": -0.35,
+    }
+
+
+def test_hedge_validated_inverse_peer_covers_idiosyncratic():
+    obj = Hedge.model_validate(valid_hedge())
+    assert obj.covers == "idiosyncratic"
+    assert obj.payoff_direction == -1 and obj.validated
+
+
+def test_hedge_unvalidated_cannot_claim_idiosyncratic():
+    payload = valid_hedge()
+    payload["validated"] = False
+    with pytest.raises(ValidationError):
+        Hedge.model_validate(payload)
+
+
+def test_hedge_co_move_peer_cannot_claim_idiosyncratic():
+    payload = valid_hedge()
+    payload["payoff_direction"] = 1  # co-moves — not a hedge
+    with pytest.raises(ValidationError):
+        Hedge.model_validate(payload)
+
+
+def test_hedge_inverse_etf_is_sector_beta_only():
+    payload = valid_hedge()
+    payload["instrument"] = "inverse_etf"
+    payload["ticker"] = "LABD"
+    payload["covers"] = "idiosyncratic"  # illegal: LABD covers sector_beta only
+    with pytest.raises(ValidationError):
+        Hedge.model_validate(payload)
+
+
+def test_hedge_inverse_etf_sector_beta_valid():
+    payload = valid_hedge()
+    payload["instrument"] = "inverse_etf"
+    payload["ticker"] = "LABD"
+    payload["covers"] = "sector_beta"
+    obj = Hedge.model_validate(payload)
+    assert obj.covers == "sector_beta"
+
+
+def test_hedge_put_option_not_executable_v1():
+    payload = valid_hedge()
+    payload["instrument"] = "put_option"
+    with pytest.raises(ValidationError):
+        Hedge.model_validate(payload)
+
+
+def test_hedge_fallback_shape_valid():
+    # unvalidated equity_peer covering nothing — the fallback shape (HEDGE-04)
+    payload = valid_hedge()
+    payload["validated"] = False
+    payload["covers"] = "none"
+    obj = Hedge.model_validate(payload)
+    assert obj.covers == "none" and not obj.validated
+
+
+def test_hedge_extra_field_rejected():
+    payload = valid_hedge()
+    payload["fake"] = 1
+    with pytest.raises(ValidationError):
+        Hedge.model_validate(payload)
+
+
+# --- EstimateVetting: the estimate gate verdict (§7) -------------------------------
+
+
+def valid_estimate_vetting() -> dict:
+    return {
+        "verdict": "endorse",
+        "input_refs": ["tool:implied_move#abc", "kb:analog_001"],
+        "dropped_inputs": [],
+        "reasons": ["all inputs cited and comparable"],
+        "uncertainty_widened": False,
+    }
+
+
+def test_estimate_vetting_endorse_valid():
+    obj = EstimateVetting.model_validate(valid_estimate_vetting())
+    assert obj.verdict == "endorse"
+
+
+def test_estimate_vetting_bad_verdict_rejected():
+    payload = valid_estimate_vetting()
+    payload["verdict"] = "maybe"
+    with pytest.raises(ValidationError):
+        EstimateVetting.model_validate(payload)
+
+
+def test_estimate_vetting_extra_field_rejected():
+    payload = valid_estimate_vetting()
+    payload["fake"] = 1
+    with pytest.raises(ValidationError):
+        EstimateVetting.model_validate(payload)
