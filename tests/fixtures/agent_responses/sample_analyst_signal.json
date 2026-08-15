@@ -1,0 +1,16 @@
+{
+  "dimension": "clinical",
+  "ticker": "ACME",
+  "catalyst_id": "cat-001",
+  "score": 0.42,
+  "confidence": 0.6,
+  "key_findings": [
+    {
+      "claim": "Phase 3 primary endpoint met with p<0.001 in the pivotal readout.",
+      "evidence_ref": "kb:7",
+      "source_url": "https://clinicaltrials.gov/study/NCT00000000"
+    }
+  ],
+  "kb_analogs_queried": ["kb:12"],
+  "unknowns": ["secondary endpoint durability not yet reported"]
+}
