@@ -108,7 +108,13 @@ def _defensive_cand(ticker, size=0.02):
 
 
 def _is_weekly_leg(dossier):
-    return dossier.trade.catalyst_id.startswith("weekly:")
+    """A single-leg STATISTICAL weekly leg (not a defensive cash anchor)."""
+    cid = dossier.trade.catalyst_id
+    return cid.startswith("weekly:") and not cid.startswith("weekly:defensive:")
+
+
+def _is_defensive(dossier):
+    return dossier.trade.catalyst_id.startswith("weekly:defensive:")
 
 
 # --- Task 1: run_portfolio threading -----------------------------------------------------------
@@ -282,17 +288,29 @@ async def test_run_weekly_defensive_week_never_empty(db):
     assert all(not d.trade.holds_through_catalyst for d in dossiers)  # one-week exit
 
 
-async def test_run_weekly_shortlist_capped_at_k(db):
-    store.upsert_bars(db, "XBI", _syn_bars(_osc(160)))
+async def test_run_weekly_shortlist_capped_at_k(db, monkeypatch):
+    """The shortlist keeps only the top `shortlist_k` eligible rows (a stubbed scan isolates the cap
+    from the base-rate cohort math). 3 eligible rows, k=2 -> at most 2 statistical legs."""
     names = ["E1", "E2", "E3"]
+    store.upsert_bars(db, "XBI", _syn_bars(_osc(160)))
     for tk in names:
-        store.upsert_bars(db, tk, _syn_bars(_rep([0.03, -0.06], 60)))
-    as_of = _syn_bars(_rep([0.03, -0.06], 60))[-1]["week_end"]
+        store.upsert_bars(db, tk, _syn_bars(_osc(160)))
+    as_of = _syn_bars(_osc(160))[-1]["week_end"]
     _seed_universe(db, names, as_of)
 
+    from types import SimpleNamespace
+
+    def _stub_scan(universe, week_end, store_, kb_conn, *, params):
+        rows = [{"ticker": tk, "thesis_type": "mean_reversion", "trigger": "drop_le_-0.05",
+                 "p": 0.6 + i * 0.1, "mean_next": 0.03, "n_effective": 40, "eligible": True,
+                 "veto_reasons": []} for i, tk in enumerate(names)]
+        return SimpleNamespace(detail={"rows": rows})
+
+    monkeypatch.setattr(weekly, "thesis_scan", _stub_scan)
     dossiers = await run_weekly(db, None, as_of, open_book=[], params=_params(db, shortlist_k=2))
     weekly_legs = {d.trade.target_long for d in dossiers if _is_weekly_leg(d)}
     assert len(weekly_legs) <= 2                                      # shortlist_k caps the sleeve
+    assert weekly_legs <= {"E1", "E2", "E3"}
 
 
 async def test_run_weekly_statistical_legs_single_leg_and_one_week_exit(db):
@@ -336,3 +354,81 @@ def test_build_defensive_book_from_params(db):
     assert [c.payload["ticker"] for c in book] == ["SGOV", "BIL", "XBI"]
     assert all(c.payload.get("defensive") for c in book)
     assert all(c.size_pct > 0 for c in book)
+
+
+# --- Task 3: WEEK-05 per-leg outcome record seam ----------------------------------------------
+
+import json
+
+from catalyst_trader.desk import evidence
+from catalyst_trader.desk.evidence import tool_ref_for
+from catalyst_trader.desk.weekly import record_weekly_outcome
+
+
+def _leg(realized_ret=0.04):
+    return {
+        "ticker": "ELIG", "thesis_type": "mean_reversion", "trigger": "drop_le_-0.05",
+        "p_quoted": 0.62, "size": 0.03, "realized_ret": realized_ret,
+        "base_rate_inputs": {"ticker": "ELIG", "trigger": "drop_le_-0.05",
+                             "drop_class": "idio_no_news", "turnover": "low",
+                             "as_of": "2099-01-01", "params": {"weekly": {}}, "window_years": None},
+    }
+
+
+def _outcome_node(db):
+    row = db.execute(
+        "SELECT id, attrs_json FROM kb_node WHERE kind='outcome' "
+        "AND json_extract(attrs_json,'$.kind')='weekly_leg' ORDER BY id DESC LIMIT 1"
+    ).fetchone()
+    return dict(row) if row else None
+
+
+def test_records_leg_outcomes(db):
+    """WEEK-05: one KB outcome claim per leg carrying {thesis_type, trigger, p_quoted, size, realized_ret, win}."""
+    nid = record_weekly_outcome(db, _leg(realized_ret=0.04))
+    attrs = json.loads(db.execute("SELECT attrs_json FROM kb_node WHERE id=?", (nid,)).fetchone()[0])
+    assert attrs["thesis_type"] == "mean_reversion"
+    assert attrs["trigger"] == "drop_le_-0.05"
+    assert attrs["p_quoted"] == 0.62
+    assert attrs["size"] == 0.03
+    assert attrs["realized_ret"] == 0.04
+    assert attrs["win"] is True                                    # realized_ret > 0
+    loss = json.loads(db.execute(
+        "SELECT attrs_json FROM kb_node WHERE id=?",
+        (record_weekly_outcome(db, _leg(realized_ret=-0.02)),)).fetchone()[0])
+    assert loss["win"] is False
+
+
+def test_weekly_outcome_is_cited_by_construction(db):
+    """cite-or-drop: the claim CITES the weekly_base_rate ToolResult via a resolvable tool: ref."""
+    leg = _leg()
+    nid = record_weekly_outcome(db, leg)
+    ev_id = db.execute(
+        "SELECT dst_id FROM kb_edge WHERE src_id=? AND rel='CITES'", (nid,)
+    ).fetchone()[0]
+    ev_attrs = json.loads(db.execute("SELECT attrs_json FROM kb_node WHERE id=?", (ev_id,)).fetchone()[0])
+    expected_ref = tool_ref_for("weekly_base_rate", leg["base_rate_inputs"])
+    assert ev_attrs["url"] == expected_ref
+    assert expected_ref.startswith("tool:weekly_base_rate#")
+    resolved = evidence.resolve(db, ev_attrs["url"])               # resolved-by-construction
+    assert resolved == {"kind": "tool", "tool": "weekly_base_rate",
+                        "inputs_hash": expected_ref.split("#", 1)[1]}
+
+
+def test_recording_is_uncited_safe_and_idempotent(db):
+    """An uncited weekly outcome can never persist; recording never corrupts other outcome rows."""
+    # a pre-existing (catalyst) outcome row must be untouched by weekly recording.
+    catalyst_ev = kb.EvidenceSource(url="https://x", retrieved_at="t", snippet_hash="h")
+    cat_id = kb.insert_claim(db, kb.KBNode(kind="outcome", attrs={"kind": "catalyst", "r": "win"}),
+                             [catalyst_ev])
+    before = db.execute("SELECT attrs_json FROM kb_node WHERE id=?", (cat_id,)).fetchone()[0]
+
+    record_weekly_outcome(db, _leg())
+    record_weekly_outcome(db, _leg())                              # twice — no raise, no corruption
+
+    after = db.execute("SELECT attrs_json FROM kb_node WHERE id=?", (cat_id,)).fetchone()[0]
+    assert after == before                                         # catalyst outcome row untouched
+    n_weekly = db.execute(
+        "SELECT count(*) FROM kb_node WHERE kind='outcome' AND json_extract(attrs_json,'$.kind')='weekly_leg'"
+    ).fetchone()[0]
+    assert n_weekly == 2
