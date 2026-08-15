@@ -6,6 +6,7 @@ date without provenance — an empty-sources catalyst is rejected before any row
 is written, and a mid-insert source failure rolls the whole thing back.
 """
 
+import json
 import sqlite3
 from datetime import datetime, timezone
 from enum import Enum
@@ -247,3 +248,108 @@ def bars_asof(
     if lookback_weeks is not None:
         out = out[-lookback_weeks:]
     return out
+
+
+# --- company cards + scan-flag ledger (SCAN-01/02) ------------------------------------------
+# The per-company weekly vetting card substrate + the scan-flag audit ledger. Mirrors the
+# price-bar store verbatim: write-once per (ticker, week_end), read point-in-time via card_asof
+# / scan_flags_asof with the week_end <= as_of no-look-ahead guard. card/payload are single JSON
+# TEXT columns (ponytail: no per-metric columns until a query needs them).
+
+
+def write_card(
+    conn: sqlite3.Connection,
+    ticker: str,
+    week_end: str,
+    card: dict,
+    *,
+    source: str = "fixture",
+) -> int:
+    """UPSERT one company card; return its row id. Idempotent on (ticker, week_end): an
+    existing week is UPDATED in place, never duplicated (mirrors upsert_bars). The card dict is
+    json.dumps'd into the single `card` TEXT column and round-trips losslessly."""
+    now = _now()
+    payload = json.dumps(card)
+    try:
+        existing = conn.execute(
+            "SELECT id FROM company_card WHERE ticker=? AND week_end=?",
+            (ticker, week_end),
+        ).fetchone()
+        if existing is not None:
+            conn.execute(
+                "UPDATE company_card SET card=?, source=?, retrieved_at=? WHERE id=?",
+                (payload, source, now, existing["id"]),
+            )
+            row_id = existing["id"]
+        else:
+            cur = conn.execute(
+                "INSERT INTO company_card (ticker, week_end, card, source, retrieved_at) "
+                "VALUES (?,?,?,?,?)",
+                (ticker, week_end, payload, source, now),
+            )
+            row_id = cur.lastrowid
+        conn.commit()
+        return row_id
+    except Exception:
+        conn.rollback()
+        raise
+
+
+def card_asof(conn: sqlite3.Connection, ticker: str, as_of: str) -> dict | None:
+    """Point-in-time company-card read: the SINGLE latest card for `ticker` with
+    week_end <= `as_of`, or None. The `week_end <= as_of` guard is the money-critical
+    no-look-ahead invariant (mirrors bars_asof) — the scanner must never read a card that
+    hadn't been built yet at decision time."""
+    row = conn.execute(
+        "SELECT card FROM company_card WHERE ticker=? AND week_end <= ? "
+        "ORDER BY week_end DESC LIMIT 1",
+        (ticker, as_of),
+    ).fetchone()
+    return json.loads(row["card"]) if row is not None else None
+
+
+def write_scan_flag(
+    conn: sqlite3.Connection,
+    ticker: str,
+    week_end: str,
+    payload: dict,
+    *,
+    routed: bool = False,
+) -> int:
+    """UPSERT one scan-flag payload (an OpportunityFlag dump or a no-opportunity row); return
+    its row id. Idempotent on (ticker, week_end) (mirrors write_card). `routed` is stored 1/0."""
+    blob = json.dumps(payload)
+    r = 1 if routed else 0
+    try:
+        existing = conn.execute(
+            "SELECT id FROM scan_flag WHERE ticker=? AND week_end=?",
+            (ticker, week_end),
+        ).fetchone()
+        if existing is not None:
+            conn.execute(
+                "UPDATE scan_flag SET payload=?, routed=? WHERE id=?",
+                (blob, r, existing["id"]),
+            )
+            row_id = existing["id"]
+        else:
+            cur = conn.execute(
+                "INSERT INTO scan_flag (ticker, week_end, payload, routed) VALUES (?,?,?,?)",
+                (ticker, week_end, blob, r),
+            )
+            row_id = cur.lastrowid
+        conn.commit()
+        return row_id
+    except Exception:
+        conn.rollback()
+        raise
+
+
+def scan_flags_asof(conn: sqlite3.Connection, ticker: str, as_of: str) -> list[dict]:
+    """Point-in-time scan-flag ledger read: stored payloads for `ticker` with
+    week_end <= `as_of`, chronological. The `week_end <= as_of` guard is the same
+    no-look-ahead invariant as card_asof/bars_asof."""
+    rows = conn.execute(
+        "SELECT payload FROM scan_flag WHERE ticker=? AND week_end <= ? ORDER BY week_end",
+        (ticker, as_of),
+    ).fetchall()
+    return [json.loads(r["payload"]) for r in rows]
