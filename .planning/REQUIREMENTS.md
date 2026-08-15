@@ -52,8 +52,8 @@
 ### Workflow 2 — Portfolio Construction (PORT)
 
 - [ ] **PORT-01**: Takes the week's catalyst calls and builds one recommended portfolio for the week
-- [ ] **PORT-02**: Trade Builder selects the inverse-hedge peer, entry, hold-vs-exit-before-event decision, SL/TP
-- [ ] **PORT-03**: 3-way Risk Committee (aggressive/conservative/neutral) sizes for survival via risk-of-ruin; the 1% target is a measured outcome, never a sizing input
+- [x] **PORT-02**: Trade Builder selects the inverse-hedge peer, entry, hold-vs-exit-before-event decision, SL/TP
+- [x] **PORT-03**: 3-way Risk Committee (aggressive/conservative/neutral) sizes for survival via risk-of-ruin; the 1% target is a measured outcome, never a sizing input
 - [ ] **PORT-04**: MD/PM evaluates portfolio fit (concentration, correlation to open book, weekly budget) and promotes/kills
 - [ ] **PORT-05**: Emits a StrategyDossier for review
 
@@ -146,8 +146,8 @@
 | CALL-03 | Phase 4 | Complete |
 | CALL-04 | Phase 4 | Complete |
 | PORT-01 | Phase 5 | Pending |
-| PORT-02 | Phase 5 | Pending |
-| PORT-03 | Phase 5 | Pending |
+| PORT-02 | Phase 5 | Complete |
+| PORT-03 | Phase 5 | Complete |
 | PORT-04 | Phase 5 | Pending |
 | PORT-05 | Phase 5 | Pending |
 | HEDGE-01 | Phase 5 | Pending |

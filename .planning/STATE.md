@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Completed 05-01-PLAN.md
-last_updated: "2026-08-15T06:56:09.937Z"
+stopped_at: Completed 05-02-PLAN.md
+last_updated: "2026-08-15T07:04:41.822Z"
 last_activity: 2026-08-15
 progress:
   total_phases: 11
   completed_phases: 4
   total_plans: 32
-  completed_plans: 26
+  completed_plans: 27
   percent: 0
 ---
 
@@ -26,7 +26,7 @@ See: .planning/PROJECT.md (updated 2026-08-14)
 ## Current Position
 
 Phase: 05 (trade-builder-honest-hedge-ruin-avoidant-sizing-workflow-1b-2) — EXECUTING
-Plan: 2 of 7
+Plan: 3 of 7
 Status: Ready to execute
 Last activity: 2026-08-15
 
@@ -77,6 +77,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 04-analyst-desk-bull-bear-debate-workflow-1a P06 | 6min | 1 task tasks | 3 files files |
 | Phase 04-analyst-desk-bull-bear-debate-workflow-1a P07 | 9min | 2 tasks | 11 files |
 | Phase 05 P01 | 3min | 2 tasks | 2 files |
+| Phase 05 P02 | 20min | 3 tasks tasks | 5 files files |
 
 ## Accumulated Context
 
@@ -128,6 +129,9 @@ Recent decisions affecting current work:
 - [Phase 04-analyst-desk-bull-bear-debate-workflow-1a]: run_desk wires Workflow-1a end-to-end: asyncio.gather 4 analysts -> bounded debate -> verifier.enforce gated finalize; a thin composition over Plans 03-06, no new logic
 - [Phase 05]: Hedge.covers validator makes a fake idiosyncratic hedge raise at model_validate; inverse_etf is sector_beta-only; put_option legal-but-unpromotable (HEDGE-01/04, options-ready)
 - [Phase 05]: RiskAssessment carries the validated Hedge OBJECT (hedge: Hedge | None), distinct from hedge_valid, so 05-07 reconciles it onto the promoted proposal (BLOCKER-1)
+- [Phase 05]: catalyst_move_estimate: implied_move is a magnitude prior only (per-branch blend); sign comes solely from the p_positive mixture — a prior can never flip trade direction (PITFALLS #10)
+- [Phase 05]: hold_vs_exit decides by expected-LOG-growth at the survival-constrained f (Kelly-consistent), never raw EV — a positive-EV hold with a fat down-tail provably exits (BLOCKER-2); non-survivable (1+f·R)<=0 raises, never silent -inf
+- [Phase 05]: adaptive_sl_tp_levels delegates to sl_tp_levels so the gap-exposed advisory gate lives in one place; every quant threshold read from params (missing key raises, no numeric fallback)
 
 ### Pending Todos
 
@@ -141,6 +145,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-08-15T06:56:03.395Z
-Stopped at: Completed 05-01-PLAN.md
+Last session: 2026-08-15T07:04:33.474Z
+Stopped at: Completed 05-02-PLAN.md
 Resume file: None

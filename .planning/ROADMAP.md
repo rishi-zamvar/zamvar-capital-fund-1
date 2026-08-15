@@ -108,7 +108,7 @@ Decimal phases appear between their surrounding integers in numeric order.
   4. Each trade ships a position memo with explicit kill criteria and a documented pre-mortem, authored separately from approval, and the MD/PM promotes/kills against the live book → StrategyDossier stating residual net-long risk and which risk is actually covered
 **Plans**: 7 plans (4 waves)
 - [x] 05-01-PLAN.md — Contract extensions: Hedge + EstimateVetting + extended TradeProposal/RiskAssessment/StrategyDossier (Wave 1)
-- [ ] 05-02-PLAN.md — Quant tools: catalyst_move_estimate (events.py) + adaptive_sl_tp_levels, param-driven, TDD (Wave 1)
+- [x] 05-02-PLAN.md — Quant tools: catalyst_move_estimate (events.py) + adaptive_sl_tp_levels, param-driven, TDD (Wave 1)
 - [ ] 05-03-PLAN.md — KB model-fit param seam: kb.load_params + cited bootstrap fitted_params per catalyst type (Wave 1)
 - [ ] 05-04-PLAN.md — desk/risk.py: size_for_survival + honest per-catalyst hedge validation + 3-way committee (Wave 2)
 - [ ] 05-05-PLAN.md — Estimate vetting gate: verifier.enforce_estimate (cite-or-drop + consistency + blocking) (Wave 2)
