@@ -239,3 +239,109 @@ async def test_dossier_kill_criteria_carried_and_non_empty(monkeypatch, load_fix
     assert dossier.position_memo == "the memo body"                     # the authored memo is read in
     assert dossier.pre_mortem == ["scenario a"]                         # the pre-mortem is read in
     assert isinstance(dossier, StrategyDossier) and dossier.trade is not None
+
+
+# ---------------------------------------------------------------------------
+# Task 3 — run_portfolio (builder -> risk -> RECONCILE -> select_book -> PM) + zero-trade
+# ---------------------------------------------------------------------------
+
+from catalyst_trader.contracts import DebateVerdict
+from catalyst_trader.desk import builder, orchestrator, risk
+
+
+def _verdict():
+    return DebateVerdict(thesis="ACME PDUFA likely approves", direction="positive", confidence=0.6,
+                         bull_strongest_point="endpoint met", bear_strongest_point="cash tight",
+                         kill_criteria=_KILL)
+
+
+def _item(entry=100.0):
+    return {
+        "verdict": _verdict(),
+        "catalyst": {"ticker": "ACME", "event_date": "2026-11-15", "catalyst_id": "cat-1",
+                     "event_date_end": "2026-11-22", "catalyst_type": "pdufa"},
+        "entry": entry,
+        "risk_inputs": {"p_loss": 0.4, "gap": 0.55, "analog_gaps": {}, "prices": {}},
+    }
+
+
+def _patch_build_assess(monkeypatch, *, prelim_size, risk_obj):
+    """Canned builder.build (preliminary size, hedge None) + risk.assess (authoritative outputs).
+    Isolates run_portfolio's RECONCILE -> select -> PM composition (build/assess are tested in 05-06/04)."""
+    async def _b(conn, embed, verdict, catalyst, *, entry):
+        return _proposal(hedge=None, size_pct=prelim_size)   # builder: PRELIMINARY size, hedge None
+
+    async def _a(conn, embed, proposal, catalyst, *, p_loss, gap, analog_gaps, prices):
+        return risk_obj
+
+    monkeypatch.setattr(builder, "build", _b)
+    monkeypatch.setattr(risk, "assess", _a)
+
+
+async def test_run_portfolio_reconciles_risk_size_not_builder_preliminary(monkeypatch, load_fixture):
+    # BLOCKER-1: the builder's preliminary 0.005 is OVERWRITTEN by risk.recommended_size_pct (0.02).
+    risk_obj = _risk(load_fixture, _hedge())   # recommended_size_pct 0.02
+    _patch_build_assess(monkeypatch, prelim_size=0.005, risk_obj=risk_obj)
+    monkeypatch.setattr(portfolio, "run_structured", _pm_seam([]))
+
+    dossiers = await orchestrator.run_portfolio(None, None, [_item()], open_book=[])
+    promoted = [d for d in dossiers if d.decision == "promote"]
+    assert promoted, "the survivable leg should promote"
+    assert promoted[0].trade.size_pct == 0.02      # the Risk Committee's ruin-capped size
+    assert promoted[0].trade.size_pct != 0.005     # NOT the builder's preliminary estimate
+
+
+async def test_run_portfolio_reconciles_validated_hedge_surfaces_idiosyncratic(monkeypatch, load_fixture):
+    h = _hedge()
+    risk_obj = _risk(load_fixture, h)
+    _patch_build_assess(monkeypatch, prelim_size=0.02, risk_obj=risk_obj)  # builder hedge None
+    monkeypatch.setattr(portfolio, "run_structured", _pm_seam([]))
+
+    dossiers = await orchestrator.run_portfolio(None, None, [_item()], open_book=[])
+    promoted = [d for d in dossiers if d.decision == "promote"][0]
+    assert promoted.trade.hedge is h                       # the Risk-validated OBJECT reconciled on
+    assert promoted.which_risk_covered == "idiosyncratic"  # derived from the reconciled hedge
+
+
+async def test_run_portfolio_none_hedge_can_never_report_idiosyncratic(monkeypatch, load_fixture):
+    risk_obj = _risk(load_fixture, None)   # no validated hedge -> honest fallback
+    _patch_build_assess(monkeypatch, prelim_size=0.02, risk_obj=risk_obj)
+    monkeypatch.setattr(portfolio, "run_structured", _pm_seam([]))
+
+    dossiers = await orchestrator.run_portfolio(None, None, [_item()], open_book=[])
+    for d in dossiers:
+        assert d.trade.hedge is None
+        assert d.which_risk_covered != "idiosyncratic"
+
+
+async def test_run_portfolio_full_week_composition(monkeypatch, load_fixture):
+    risk_obj = _risk(load_fixture, _hedge())
+    _patch_build_assess(monkeypatch, prelim_size=0.02, risk_obj=risk_obj)
+    calls = []
+    monkeypatch.setattr(portfolio, "run_structured", _pm_seam(calls))
+
+    dossiers = await orchestrator.run_portfolio(None, None, [_item(), _item()], open_book=[])
+    assert len(dossiers) == 2 and all(isinstance(d, StrategyDossier) for d in dossiers)
+    # author != approver AT COMPOSITION: memo + pre-mortem calls precede the FIRST PM decision.
+    schemas = [c["schema"] for c in calls]
+    assert schemas.count(PMDecision) == 2
+    first_pm = schemas.index(PMDecision)
+    assert PositionMemo in schemas[:first_pm] and PreMortem in schemas[:first_pm]
+
+
+async def test_run_portfolio_zero_trade_week_all_pass_returns_empty(monkeypatch):
+    async def _none_build(conn, embed, verdict, catalyst, *, entry):
+        return None   # every candidate passes (below-min / rejected estimate)
+
+    monkeypatch.setattr(builder, "build", _none_build)
+    dossiers = await orchestrator.run_portfolio(None, None, [_item(), _item()], open_book=[])
+    assert dossiers == []   # a zero-trade week is a valid success, not an error
+
+
+async def test_run_portfolio_all_kill_when_budget_zero_is_valid(monkeypatch, load_fixture):
+    risk_obj = _risk(load_fixture, _hedge())
+    _patch_build_assess(monkeypatch, prelim_size=0.02, risk_obj=risk_obj)
+    monkeypatch.setattr(portfolio, "run_structured", _pm_seam([]))
+
+    dossiers = await orchestrator.run_portfolio(None, None, [_item()], open_book=[], weekly_budget=0.0)
+    assert dossiers and all(d.decision == "kill" for d in dossiers)  # promoted nothing -> all-kill, valid
