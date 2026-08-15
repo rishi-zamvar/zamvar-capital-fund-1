@@ -207,3 +207,132 @@ async def test_pure_statistical_week_not_starved_by_cap(monkeypatch, load_fixtur
     )
     weekly = [d for d in dossiers if _is_weekly_leg(d)]
     assert sum(d.trade.size_pct for d in weekly) > 0.05   # cap NOT applied -> the book fills past 0.05
+
+
+# --- Task 2: run_weekly composition + build_defensive_book -------------------------------------
+
+from types import SimpleNamespace
+
+from catalyst_trader.desk import weekly
+from catalyst_trader.desk.weekly import build_defensive_book, run_weekly
+
+
+def _syn_bars(returns, *, start=1000.0, vol=2_000_000.0, first="2020-01-06"):
+    d = date.fromisoformat(first)
+    out = [{"week_end": d.isoformat(), "close": start, "volume": vol}]
+    close = start
+    for r in returns:
+        close *= 1.0 + r
+        d += timedelta(days=7)
+        out.append({"week_end": d.isoformat(), "close": close, "volume": vol})
+    return out
+
+
+def _osc(n, amp=0.02):
+    return [amp if i % 2 == 0 else -amp for i in range(n)]
+
+
+def _rep(seq, times):
+    return seq * times
+
+
+def _seed_universe(db, tickers, as_of):
+    for tk in tickers:
+        db.execute(
+            "INSERT INTO universe_snapshot (as_of_date,ticker,included,delisted,criteria_json,reason) "
+            "VALUES (?,?,?,?,?,?)",
+            (as_of, tk, 1, 0, "{}", None),
+        )
+    db.commit()
+
+
+def _params(db, **overrides):
+    p = kb.load_params(db, "weekly")
+    for k, v in overrides.items():
+        p["weekly"][k] = v
+    return p
+
+
+async def test_run_weekly_end_to_end_offline_produces_book(db):
+    """scan -> shortlist -> (statistical) book, fully offline on synthetic bars. No catalyst, no LLM."""
+    elig = _rep([0.03, -0.06], 60)
+    store.upsert_bars(db, "XBI", _syn_bars(_osc(120)))
+    store.upsert_bars(db, "ELIG", _syn_bars(elig))
+    as_of = _syn_bars(elig)[-1]["week_end"]
+    _seed_universe(db, ["ELIG"], as_of)
+
+    dossiers = await run_weekly(db, None, as_of, open_book=[], params=_params(db))
+    assert dossiers, "every week produces a book"
+    weekly_legs = [d for d in dossiers if _is_weekly_leg(d)]
+    assert any(d.trade.target_long == "ELIG" for d in weekly_legs)
+    assert all(d.trade.hedge is None for d in weekly_legs)             # single-leg statistical
+
+
+async def test_run_weekly_defensive_week_never_empty(db):
+    """No eligible statistical row + no catalyst -> the DEFENSIVE book (SGOV/BIL/XBI), never empty."""
+    store.upsert_bars(db, "XBI", _syn_bars(_osc(120)))
+    store.upsert_bars(db, "FLAT", _syn_bars(_osc(120, amp=0.01)))   # never triggers a cell
+    as_of = _syn_bars(_osc(120, amp=0.01))[-1]["week_end"]
+    _seed_universe(db, ["FLAT"], as_of)
+
+    dossiers = await run_weekly(db, None, as_of, open_book=[], params=_params(db))
+    assert dossiers, "a no-signal week must never be empty"
+    tickers = {d.trade.target_long for d in dossiers}
+    assert tickers == {"SGOV", "BIL", "XBI"}                          # the defensive book deployed
+    assert all(not d.trade.holds_through_catalyst for d in dossiers)  # one-week exit
+
+
+async def test_run_weekly_shortlist_capped_at_k(db):
+    store.upsert_bars(db, "XBI", _syn_bars(_osc(160)))
+    names = ["E1", "E2", "E3"]
+    for tk in names:
+        store.upsert_bars(db, tk, _syn_bars(_rep([0.03, -0.06], 60)))
+    as_of = _syn_bars(_rep([0.03, -0.06], 60))[-1]["week_end"]
+    _seed_universe(db, names, as_of)
+
+    dossiers = await run_weekly(db, None, as_of, open_book=[], params=_params(db, shortlist_k=2))
+    weekly_legs = {d.trade.target_long for d in dossiers if _is_weekly_leg(d)}
+    assert len(weekly_legs) <= 2                                      # shortlist_k caps the sleeve
+
+
+async def test_run_weekly_statistical_legs_single_leg_and_one_week_exit(db):
+    elig = _rep([0.03, -0.06], 60)
+    store.upsert_bars(db, "XBI", _syn_bars(_osc(120)))
+    store.upsert_bars(db, "ELIG", _syn_bars(elig))
+    as_of = _syn_bars(elig)[-1]["week_end"]
+    _seed_universe(db, ["ELIG"], as_of)
+
+    dossiers = await run_weekly(db, None, as_of, open_book=[], params=_params(db))
+    leg = [d for d in dossiers if d.trade.target_long == "ELIG"][0]
+    assert leg.trade.hedge is None and leg.which_risk_covered == "none"   # single-leg fallback
+    assert leg.trade.holds_through_catalyst is False                      # ALWAYS exits at horizon
+    expected_exit = (date.fromisoformat(as_of) + timedelta(days=7)).isoformat()
+    assert leg.trade.exit_by_date == expected_exit                        # one-week horizon
+
+
+async def test_run_weekly_one_anchor_for_measurement_and_execution(db, monkeypatch):
+    """The MEASUREMENT anchor (thesis_scan) equals the EXECUTION anchor (enter/exit) — one param, no trap."""
+    seen = {}
+
+    def _spy_scan(universe, week_end, store_, kb_conn, *, params):
+        seen["scan_anchor"] = params["weekly"]["anchor"]
+        return SimpleNamespace(detail={"rows": []})
+
+    def _spy_exit(as_of, anchor):
+        seen["exit_anchor"] = anchor
+        return (date.fromisoformat(as_of) + timedelta(days=7)).isoformat()
+
+    monkeypatch.setattr(weekly, "thesis_scan", _spy_scan)
+    monkeypatch.setattr(weekly, "_weekly_exit", _spy_exit)
+
+    _seed_universe(db, ["ANY"], "2020-01-06")
+    await run_weekly(db, None, "2020-01-06", open_book=[], params=_params(db, anchor="FRI_CLOSE"))
+    assert seen["scan_anchor"] == "FRI_CLOSE"
+    assert seen["exit_anchor"] == "FRI_CLOSE"                          # the SAME single anchor drives both
+
+
+def test_build_defensive_book_from_params(db):
+    book = build_defensive_book(_params(db))
+    assert [c.payload["ticker"] for c in book] == ["SGOV", "BIL", "XBI"]
+    assert all(c.payload.get("defensive") for c in book)
+    assert all(c.size_pct > 0 for c in book)
