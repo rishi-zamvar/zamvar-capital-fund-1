@@ -166,7 +166,7 @@ def test_weekly_base_rate_shrinks_thin_n(db):
     store.upsert_bars(db, "THIN", _bars(_rep([-0.06, 0.03], 5)))
     # cohort filler: 2 drops/cycle, one bounces one doesn't -> parent rate ~0.5.
     store.upsert_bars(db, "FILL", _bars(_rep([-0.06, 0.03, -0.06, -0.02], 12)))
-    as_of = _bars(_rep([-0.06, 0.03], 5))[-1]["week_end"]
+    as_of = "2099-01-01"  # far-future: score full point-in-time history for both name + cohort
     r = weekly_base_rate("THIN", "drop_le_-0.05", "idio_no_news", None, as_of, store, db,
                          params=_params(db))
     d = r.detail
@@ -181,7 +181,7 @@ def test_weekly_base_rate_shrinks_thin_n(db):
 def test_weekly_base_rate_ample_n_prior_washes_out(db):
     store.upsert_bars(db, "AMPLE", _bars(_rep([-0.06, 0.03], 600)))
     store.upsert_bars(db, "FILL", _bars(_rep([-0.06, 0.03, -0.06, -0.02], 12)))
-    as_of = _bars(_rep([-0.06, 0.03], 600))[-1]["week_end"]
+    as_of = "2099-01-01"
     r = weekly_base_rate("AMPLE", "drop_le_-0.05", "idio_no_news", None, as_of, store, db,
                          params=_params(db), window_years=100)
     d = r.detail
@@ -191,7 +191,7 @@ def test_weekly_base_rate_ample_n_prior_washes_out(db):
 
 def test_weekly_base_rate_anchor_equals_execution_anchor(db):
     store.upsert_bars(db, "AN", _bars(_rep([-0.06, 0.03], 5)))
-    as_of = _bars(_rep([-0.06, 0.03], 5))[-1]["week_end"]
+    as_of = "2099-01-01"  # far-future: score full point-in-time history for both name + cohort
     r = weekly_base_rate("AN", "drop_le_-0.05", "idio_no_news", None, as_of, store, db,
                          params=_params(db))
     assert r.detail["anchor"] == "MON_OPEN"  # the default execution anchor
@@ -203,7 +203,7 @@ def test_weekly_base_rate_anchor_equals_execution_anchor(db):
 
 def test_weekly_base_rate_missing_param_and_unknown_trigger_raise(db):
     store.upsert_bars(db, "NM", _bars(_rep([-0.06, 0.03], 5)))
-    as_of = _bars(_rep([-0.06, 0.03], 5))[-1]["week_end"]
+    as_of = "2099-01-01"  # far-future: score full point-in-time history for both name + cohort
     with pytest.raises(KeyError):
         weekly_base_rate("NM", "drop_le_-0.05", "idio_no_news", None, as_of, store, db,
                          params=_params(db, shrink_prior_weight=None))

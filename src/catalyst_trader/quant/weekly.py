@@ -128,3 +128,144 @@ def _news_in_drop_week(store, kb_conn, ticker, bars, week_end):
         if c.ticker == ticker and prev < c.event_date <= week_end:
             hits.append({"catalyst_type": c.catalyst_type.value, "event_date": c.event_date})
     return hits
+
+
+# --- Task 2: weekly_base_rate ----------------------------------------------------------------
+
+
+def weekly_base_rate(ticker, trigger, drop_class, turnover, as_of, store, kb_conn, *,
+                     params, window_years=None):
+    """Beta-binomial-shrunk conditional P(next-week-up) for a (trigger, drop_class, turnover) cell.
+
+    The thin-per-name trap: a name with 4 historical bounces is NOT a 100% edge. We shrink the raw
+    per-name rate toward the parent cohort with a beta-binomial prior (mirrors the estimator
+    cold-start seam in events.py): p_shrunk = (n_name*p_name + k_prior*p_cohort)/(n_name+k_prior).
+    Thin n is pulled to the cohort; ample n washes the prior out (p_shrunk -> p_raw). The
+    measurement window is anchored on the SAME params["weekly"]["anchor"] the runner executes on
+    (measurement window == execution window). Frozen ToolResult; NO LLM inside.
+    """
+    w = params["weekly"]  # missing "weekly" group -> KeyError
+    if trigger not in _TRIGGERS:
+        raise ValueError(f"unknown trigger {trigger!r}; use one of {sorted(_TRIGGERS)}")
+    op, thr = _TRIGGERS[trigger]
+    anchor = w["anchor"]
+    min_n = w["min_effective_n"]
+    k_prior = w["shrink_prior_weight"]
+    turnover_lb = w["turnover_lookback"]
+    years = window_years if window_years is not None else w["window_years"]
+    lookback = years * 52
+
+    n_up, nexts, dates = _trigger_events(store, kb_conn, ticker, as_of, lookback, op, thr,
+                                         turnover, turnover_lb)
+    n_name = len(nexts)
+    p_raw = n_up / n_name if n_name else 0.0
+
+    # parent cohort: SAME-trigger events pooled over every OTHER ticker (universe level).
+    # ponytail: therapeutic-area sub-cohort is a future feed; the universe pool is the widest
+    # cohort available offline (ladder collapses to it), with a 0.5 uninformative prior when empty.
+    c_up, c_n = _cohort_events(store, kb_conn, ticker, as_of, lookback, op, thr)
+    if c_n:
+        p_cohort, cohort_level = c_up / c_n, "universe"
+    else:
+        p_cohort, cohort_level = 0.5, "prior"
+
+    p_shrunk = (n_name * p_raw + k_prior * p_cohort) / (n_name + k_prior)
+    shrunk = n_name < min_n  # cold-start flag (mirrors events.py) — thin n is being propped up
+
+    arr = np.asarray(nexts, dtype=float)
+    mean_next = float(arr.mean()) if n_name else 0.0
+    median_next = float(np.median(arr)) if n_name else 0.0
+    ci_low, ci_high = _mean_ci(arr)
+    win_loss_ratio = _win_loss(arr)
+
+    return ToolResult(
+        tool="weekly_base_rate",
+        tool_version=_VERSION,
+        inputs={
+            "ticker": ticker, "trigger": trigger, "drop_class": drop_class,
+            "turnover": turnover, "as_of": as_of, "params": params,
+            "window_years": window_years,
+        },
+        value=p_shrunk,
+        detail={
+            "n_name": n_name,
+            "n_effective": n_name,  # ponytail: cluster-discounted effective-n < n; naive for now
+            "n_cohort": c_n,
+            "cohort_level": cohort_level,
+            "p_cohort": p_cohort,
+            "p_raw": p_raw,
+            "p_shrunk": p_shrunk,
+            "shrunk": shrunk,
+            "shrink_prior_weight": k_prior,
+            "mean_next": mean_next,
+            "median_next": median_next,
+            "win_loss_ratio": win_loss_ratio,
+            "ci_low": ci_low,
+            "ci_high": ci_high,
+            "anchor": anchor,
+            "events": dates,
+        },
+    )
+
+
+def _trigger_events(store, kb_conn, ticker, as_of, lookback, op, thr, turnover, turnover_lb):
+    """Historical (trigger[, turnover])-matching weeks and their NEXT-week return. Never a look-ahead."""
+    bars = store.bars_asof(kb_conn, ticker, as_of, lookback_weeks=lookback)
+    rets = _weekly_returns(bars)  # rets[i] ends at bars[i+1]
+    n_up = 0
+    nexts, dates = [], []
+    for i in range(len(rets) - 1):  # need a next week to score the outcome
+        if not _trigger_hit(rets[i], op, thr):
+            continue
+        if turnover is not None and _turnover_flag(bars[: i + 2], turnover_lb) != turnover:
+            continue
+        nxt = rets[i + 1]
+        nexts.append(nxt)
+        dates.append(bars[i + 1]["week_end"])
+        if nxt > 0:
+            n_up += 1
+    return n_up, nexts, dates
+
+
+def _cohort_events(store, kb_conn, target, as_of, lookback, op, thr):
+    """Same-trigger next-week-up counts pooled over every ticker except `target` (parent cohort)."""
+    rows = kb_conn.execute(
+        "SELECT DISTINCT ticker FROM price_bar WHERE ticker != ?", (target,)
+    ).fetchall()
+    up = n = 0
+    for r in rows:
+        tk = r[0]
+        rets = _weekly_returns(store.bars_asof(kb_conn, tk, as_of, lookback_weeks=lookback))
+        for i in range(len(rets) - 1):
+            if _trigger_hit(rets[i], op, thr):
+                n += 1
+                if rets[i + 1] > 0:
+                    up += 1
+    return up, n
+
+
+def _mean_ci(arr):
+    """Naive iid 95% normal CI on the mean next-week return.
+
+    ponytail: biotech weekly moves are cross-correlated, so the effective sample size is below the
+    printed n and this CI is optimistically tight — widen with a cluster-robust SE if it matters.
+    """
+    n = len(arr)
+    if n == 0:
+        return 0.0, 0.0
+    m = float(arr.mean())
+    if n == 1:
+        return m, m
+    se = float(arr.std(ddof=1)) / math.sqrt(n)
+    return m - 1.96 * se, m + 1.96 * se
+
+
+def _win_loss(arr):
+    """Average win magnitude / average loss magnitude over the next-week returns."""
+    wins = arr[arr > 0]
+    losses = arr[arr < 0]
+    if wins.size == 0:
+        return 0.0
+    if losses.size == 0:
+        return float("inf")
+    return float(wins.mean() / abs(losses.mean()))
