@@ -78,6 +78,7 @@
 - [ ] **RECON-03**: If the GP flags an issue with the PORTFOLIO BUILD, he sends it back to the portfolio builder (Workflow 2) with the key info that was left out; the new build feeds back to DD (Workflow 3) for a fresh independent pass.
 - [ ] **RECON-04**: The loop is BOUNDED — iterate to a solid/converged outcome (DD clears + GP satisfied + no new material issue) or a HARD iteration cap (no infinite ping-pong). Every round is logged.
 - [ ] **RECON-05**: Any residual caveats after convergence/cap are relayed to the LP in the final dossier (honest "here's what we're still unsure about").
+- [ ] **RECON-07** *(MD authority model, 2026-08-15)*: The MD is the DECISION HUB — every workflow (incl. the intra-week monitor) proposes portfolio-impacting decisions UP to the MD, each with all supporting deliverables attached so the MD only decides. The MD escalates to the human/LP if-and-only-if a genuine blocker it can't resolve (rare); that escalation is the monitor's decision-blocker banner. Live real-money order placement retains a final human confirmation as the one safety gate (see PROJECT.md Human gate).
 - [ ] **RECON-06**: FIREWALL PRESERVED — DD's INPUTS stay sealed ({ticker,catalyst,pair} only, no Workflow-1/2 reasoning in). Only DD's FINDINGS flow up to the GP and back down as "missing info"; DD re-runs independently each round. The firewall is one-directional (bias-in blocked), not a total barrier.
 
 ### Intra-Week Position Monitor (MON) — added 2026-08-15 (scoped now, BUILD DEFERRED per operator)
@@ -85,8 +86,14 @@
 - [ ] **MON-01**: A SEPARATE, lightweight, fast workflow monitors open-position performance throughout the week (distinct from the weekly build/exit cycle).
 - [ ] **MON-02**: EVENT-TRIGGERED, not continuous LLM polling — deterministic monitors (technical-indicator thresholds, a news hit on a held name) fire and hand the flagged position to the light agent group for examination.
 - [ ] **MON-03**: Light + cheap — runs on lighter models (Haiku-class), can operate many times / on the fly through the day at low cost.
-- [ ] **MON-04**: If the group flags that a position needs adjustment, it routes THAT position back to the portfolio builder (Workflow 2) for a re-build/adjust — it does not place orders itself (human gate + execution stay downstream).
+- [ ] **MON-04**: If the group flags that a position needs adjustment, it PROPOSES that adjustment UP to the MD (with all supporting data attached, MD-authority model) → on MD approval routes to the portfolio builder (Workflow 2). It never places orders itself.
 - [ ] **MON-05**: BUILD DEFERRED — capability is scoped and roadmapped (Phase 8.5); implemented after the paper ledger (Phase 8) exists to monitor against.
+
+**MON locked decisions (operator, 2026-08-15) + research design (`.planning/research/intra-week-monitoring.md`):**
+- [ ] **MON-06 (adjustment power = DEFEND ONLY)**: intra-week the monitor may only REDUCE risk on a flagged position (trim or exit); adding/flipping waits for the next weekly build. (Research default: fixed-fraction trim, e.g. 50%, vs full exit — a build-time knob.)
+- [ ] **MON-07 (react to BOTH equally)**: full trigger set — technical/price AND news/fundamentals AND risk-limit breaches. Research starter set (8 monitors): halts RSS (60s), ATR-normalized move + stop-proximity + time-prorated volume spike (5-min), EDGAR filings (10-min), tiered-keyword headlines (15-min), catalyst-date diff + book/heat checks (EOD).
+- [ ] **MON-08 (cadence = triggers + periodic sweeps)**: deterministic layer fires on event triggers immediately PLUS a light periodic sweep (~30-60 min) on 5-min data; anti-whipsaw = 2-bar confirmation, 60-min cooldown, hysteresis re-arm, ≤4 wakes/day/ticker. Cost verified ~$0.70/week on Haiku.
+- [ ] **MON-09 (decision routing = MD)**: every flag is a PROPOSAL to the MD with the position-card + deliverables; MD decides; MD escalates to LP only on a genuine blocker (per the MD authority model). Live-execution human confirm still applies to real money.
 
 ### Backtest / Baseline Harness (BACK)
 
