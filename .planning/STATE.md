@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: verifying
-stopped_at: Completed 04-07-PLAN.md
-last_updated: "2026-08-15T03:54:31.097Z"
+status: executing
+stopped_at: Completed 05-01-PLAN.md
+last_updated: "2026-08-15T06:56:09.937Z"
 last_activity: 2026-08-15
 progress:
   total_phases: 11
   completed_phases: 4
-  total_plans: 25
-  completed_plans: 25
+  total_plans: 32
+  completed_plans: 26
   percent: 0
 ---
 
@@ -21,13 +21,13 @@ progress:
 See: .planning/PROJECT.md (updated 2026-08-14)
 
 **Core value:** Given an imminent biotech catalyst, produce a data-backed, portfolio-aware, hedged one-week trade recommendation the user can trust enough to approve — and get measurably better at it every week.
-**Current focus:** Phase 4 — Analyst Desk + Bull/Bear Debate (Workflow 1a)
+**Current focus:** Phase 05 — trade-builder-honest-hedge-ruin-avoidant-sizing-workflow-1b-2
 
 ## Current Position
 
-Phase: 5
-Plan: Not started
-Status: Phase complete — ready for verification
+Phase: 05 (trade-builder-honest-hedge-ruin-avoidant-sizing-workflow-1b-2) — EXECUTING
+Plan: 2 of 7
+Status: Ready to execute
 Last activity: 2026-08-15
 
 Progress: [░░░░░░░░░░] 0%
@@ -76,6 +76,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 04-analyst-desk-bull-bear-debate-workflow-1a P05 | 8min | 1 tasks | 5 files |
 | Phase 04-analyst-desk-bull-bear-debate-workflow-1a P06 | 6min | 1 task tasks | 3 files files |
 | Phase 04-analyst-desk-bull-bear-debate-workflow-1a P07 | 9min | 2 tasks | 11 files |
+| Phase 05 P01 | 3min | 2 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -125,6 +126,8 @@ Recent decisions affecting current work:
 - [Phase 04]: Verifier enforces source-quote-or-drop: deterministic structural gate (resolve + quote-substring) runs first with no LLM; opus semantic support-check spent only on load-bearing structural survivors; losing all support raises VerdictUnsupportedError and blocks finalize (CALL-04)
 - [Phase 04]: tool: refs (quant results AND KB analog_query/query_playbooks) survive structural resolution by construction; the same analog cited as kb:<node_id> is dropped as unresolvable — the CALL-04 regression guard for 04-03's tool:-ref minting
 - [Phase 04-analyst-desk-bull-bear-debate-workflow-1a]: run_desk wires Workflow-1a end-to-end: asyncio.gather 4 analysts -> bounded debate -> verifier.enforce gated finalize; a thin composition over Plans 03-06, no new logic
+- [Phase 05]: Hedge.covers validator makes a fake idiosyncratic hedge raise at model_validate; inverse_etf is sector_beta-only; put_option legal-but-unpromotable (HEDGE-01/04, options-ready)
+- [Phase 05]: RiskAssessment carries the validated Hedge OBJECT (hedge: Hedge | None), distinct from hedge_valid, so 05-07 reconciles it onto the promoted proposal (BLOCKER-1)
 
 ### Pending Todos
 
@@ -138,6 +141,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-08-15T03:51:33.719Z
-Stopped at: Completed 04-07-PLAN.md
+Last session: 2026-08-15T06:56:03.395Z
+Stopped at: Completed 05-01-PLAN.md
 Resume file: None
