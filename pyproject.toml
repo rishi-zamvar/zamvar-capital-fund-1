@@ -13,6 +13,7 @@ dependencies = [
     "pydantic-settings>=2,<3",
     "sqlite-vec>=0.1.9",
     "statsmodels==0.14.6",  # cointegration (Engle-Granger/Johansen); pulls numpy/scipy/pandas/patsy
+    "claude-agent-sdk==0.2.139",  # headless agent runtime (query/output_format/@tool)
 ]
 
 [project.optional-dependencies]
@@ -24,6 +25,7 @@ embeddings = [
 dev = [
     "pytest==9.1.1",
     "pytest-httpx==0.36.2",
+    "pytest-asyncio",  # async def test support for the run_structured() seam
     "freezegun==1.5.5",
     "pytest-cov",
     "ruff",
@@ -38,6 +40,7 @@ catalyst_trader = ["migrations/*.sql"]
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 addopts = "-ra"
+asyncio_mode = "auto"
 
 [tool.ruff]
 line-length = 100
