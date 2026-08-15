@@ -16,7 +16,9 @@ The smoke test below (`test_dd_fixtures_are_valid_signals`) runs now with no dep
 Wave-2 module; only tests that CALL `_patch_dd_seam` depend on it.
 """
 
-from catalyst_trader.contracts import AnalystSignal
+import asyncio
+
+from catalyst_trader.contracts import AnalystSignal, DiligenceInput
 
 # LOCKED dimension keys (verbatim across the whole phase).
 DD_DIMENSIONS = [
@@ -94,3 +96,178 @@ def test_dd_fixtures_are_valid_signals(load_fixture):
         sig = AnalystSignal.model_validate(load_fixture(f"agent_responses/dd_{d}_signal"))
         assert sig.dimension == d
         assert len(sig.key_findings) >= 1
+
+
+# ---------------------------------------------------------------------------
+# Wave 2 — Task 1: 8 adversarial dimensions (prompts + runner + fan-out)
+# ---------------------------------------------------------------------------
+
+
+async def test_eight_dimensions_run_concurrently(db, monkeypatch, load_fixture):
+    """gather_dimensions fans the 8 locked dimensions out through a SINGLE asyncio.gather of
+    exactly 8 awaitables (spy the same way test_desk_orchestrator does) and returns 8 cited
+    AnalystSignals, one per locked key."""
+    from catalyst_trader.desk import diligence
+
+    calls = []
+    _patch_dd_seam(monkeypatch, _dd_router(load_fixture, calls))
+
+    gathered = []
+    real_gather = asyncio.gather
+
+    async def _spy_gather(*aws, **kw):
+        gathered.append(len(aws))
+        return await real_gather(*aws, **kw)
+
+    monkeypatch.setattr(diligence.asyncio, "gather", _spy_gather)
+
+    signals = await diligence.gather_dimensions(db, DiligenceInput(**DD_INPUT))
+
+    assert gathered == [8]  # one fan-out of exactly the 8 dimensions, not sequential awaits
+    assert len(signals) == 8
+    assert {s.dimension for s in signals} == set(DD_DIMENSIONS)
+    for s in signals:
+        assert len(s.key_findings) >= 1  # each dimension is source-cited
+
+
+def test_dimension_prompt_reads_only_firewall_fields():
+    """build_dimension_prompt interpolates ONLY DiligenceInput fields — the firewall cannot
+    leak Workflow-1/2 reasoning into a prompt (there is no such data in scope)."""
+    from catalyst_trader.desk import diligence
+
+    prompt = diligence.build_dimension_prompt("financials", DiligenceInput(**DD_INPUT))
+    assert "ACME" in prompt  # ticker
+    assert "pdufa" in prompt  # catalyst fact
+    assert '"financials"' in prompt  # the mandated dimension token (router matches on this)
+    for leaked in ("thesis", "bull_strongest_point", "direction", "kill_criteria"):
+        assert leaked not in prompt
+
+
+def test_build_dimension_prompt_rejects_unknown_dimension():
+    from catalyst_trader.desk import diligence
+
+    import pytest
+
+    with pytest.raises(ValueError):
+        diligence.build_dimension_prompt("not_a_dimension", DiligenceInput(**DD_INPUT))
+
+
+# ---------------------------------------------------------------------------
+# Wave 2 — Task 2: money-dim prep seams + candidate-peer hedge + DILIGENCE_PARAMS
+# ---------------------------------------------------------------------------
+
+_LIQUID_OPTS = {
+    "call_bid": 2.0, "call_ask": 2.2, "put_bid": 2.0, "put_ask": 2.2,
+    "call_oi": 300, "put_oi": 300, "expiry": "2026-12-05", "catalyst_date": "2026-11-28",
+}
+_ILLIQUID_OPTS = {
+    "call_bid": 0.0, "call_ask": 2.0, "put_bid": 2.0, "put_ask": 2.2,
+    "call_oi": 10, "put_oi": 10, "expiry": "2026-12-05", "catalyst_date": "2026-11-28",
+}
+
+
+def test_options_dimension_degrades_on_illiquid():
+    from catalyst_trader.desk import diligence
+
+    P = diligence.DILIGENCE_PARAMS
+    illiquid = diligence.options_context(_ILLIQUID_OPTS, underlying_price=100.0, days_to_event=14, params=P)
+    assert "none/illiquid" in illiquid
+    assert "LOW" in illiquid  # emit low confidence, do not fabricate IV
+    assert "IV" in illiquid  # explicit "do NOT trust IV" instruction
+
+    liquid = diligence.options_context(_LIQUID_OPTS, underlying_price=100.0, days_to_event=14, params=P)
+    assert "options_data: ok" in liquid
+    assert "%" in liquid  # carries the straddle-preferred implied move
+
+
+def test_financials_context_carries_raw_figures():
+    from catalyst_trader.desk import diligence
+
+    ctx = diligence.financials_context(
+        {"cash_usd": 500000000, "monthly_burn_usd": 20000000, "months_to_catalyst": 6}
+    )
+    assert ctx is not None
+    assert "500000000" in ctx and "20000000" in ctx
+    assert "mcp__quant__cash_runway" in ctx  # agent calls the tool; no arithmetic here
+    assert diligence.financials_context(None) is None
+    assert diligence.financials_context({}) is None
+
+
+def test_ownership_context_carries_raw_figures():
+    from catalyst_trader.desk import diligence
+
+    ctx = diligence.ownership_context(
+        {"short_interest_pct": 18.5, "days_to_cover": 4.2, "insider_net": -1200000}
+    )
+    assert ctx is not None
+    assert "18.5" in ctx and "4.2" in ctx and "-1200000" in ctx
+    assert diligence.ownership_context(None) is None
+    assert diligence.ownership_context({}) is None
+
+
+def test_trial_stats_context_from_provider():
+    from catalyst_trader.desk import diligence
+
+    study = {"phase": "Phase 3", "status": "Completed", "primary_endpoint": "OS", "enrollment": 450}
+    ctx = diligence.trial_stats_context(study)
+    assert ctx is not None
+    assert "Phase 3" in ctx and "OS" in ctx
+    assert diligence.trial_stats_context(None) is None
+    assert diligence.trial_stats_context({}) is None
+
+
+def test_liquidity_zero_flag():
+    from catalyst_trader.desk import diligence
+
+    assert diligence.zero_liquidity({"bid": 0.0, "volume": 100, "oi": 50}) is True
+    assert diligence.zero_liquidity({"bid": 1.0, "volume": 0, "oi": 50}) is True
+    assert diligence.zero_liquidity({"bid": 1.0, "volume": 100, "oi": 0}) is True
+    assert diligence.zero_liquidity({"bid": 1.0, "volume": 100, "oi": 50}) is False
+
+
+def test_hedge_dimension_revalidates_independently(db, embed, monkeypatch):
+    """hedge_context re-runs validate_hedge INDEPENDENTLY, scoped to input.pair (candidate_peer)
+    with input.ticker as target — never a Workflow-2 Hedge artifact."""
+    from catalyst_trader.desk import diligence
+    from catalyst_trader.contracts import Hedge
+
+    captured = {}
+
+    def _spy(conn, embed_, target, catalyst, entry, exit_by_date, analog_gaps, prices, *, candidate_peer=None):
+        captured["candidate_peer"] = candidate_peer
+        captured["target"] = target
+        return Hedge(instrument="equity_peer", ticker=candidate_peer, payoff_direction=-1,
+                     validated=True, covers="idiosyncratic", mechanism="same-indication rival",
+                     conditional_worst=-0.4)
+
+    monkeypatch.setattr(diligence.risk, "validate_hedge", _spy)
+    inp = DiligenceInput(**DD_INPUT)
+    ctx = diligence.hedge_context(db, embed, inp, entry="2026-11-27", exit_by_date="2026-12-05",
+                                  analog_gaps={}, prices={})
+
+    assert captured["candidate_peer"] == inp.pair == "PEER"
+    assert captured["target"] == inp.ticker == "ACME"
+    assert "PEER" in ctx  # the independently-produced Hedge is reflected in the context
+
+
+def test_hedge_dimension_none_falls_back(db, embed, monkeypatch):
+    from catalyst_trader.desk import diligence
+
+    monkeypatch.setattr(diligence.risk, "validate_hedge", lambda *a, **k: None)
+    inp = DiligenceInput(**DD_INPUT)
+    ctx = diligence.hedge_context(db, embed, inp, entry="2026-11-27", exit_by_date="2026-12-05",
+                                  analog_gaps={}, prices={})
+    assert "no valid inverse hedge" in ctx.lower()  # HEDGE-04 fallback
+
+
+def test_diligence_params_survive_seeded_path(db):
+    """After the STEADY-state seeded path, diligence thresholds still resolve from the
+    module-level DILIGENCE_PARAMS — kb.load_params (a seeded strategy dict) has NO diligence key."""
+    from catalyst_trader import kb
+    from catalyst_trader.desk import diligence
+
+    kb.seed_fitted_params(db)
+
+    assert diligence.options_liquid(_LIQUID_OPTS, params=diligence.DILIGENCE_PARAMS) is True
+    assert diligence.DILIGENCE_PARAMS["diligence"]["dimension_min_conf"] == 0.5
+    assert "diligence" not in kb.load_params(db, "pdufa")
