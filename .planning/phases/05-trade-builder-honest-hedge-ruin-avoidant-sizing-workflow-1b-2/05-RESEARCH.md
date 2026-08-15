@@ -376,3 +376,109 @@ No moving-target external tech this phase — all internal, stack locked. The on
 
 **Research date:** 2026-08-15
 **Valid until:** stable — internal code, no fast-moving external deps (~30 days; re-check only if Phase-3/4 code changes).
+
+## Single-Leg Estimated-Move Construction (no-hedge default)
+
+> LOCKED SCOPE ADDITION (PM, 2026-08-15). Since validated hedges keep proving rare, the **no-hedge case is the DEFAULT**, and it is NOT "size tiny and pray" — it is estimated-move-driven single-leg construction. This section specifies the tooling. Discipline unchanged: agents interpret, tools compute + return `ToolResult`; reuse over rebuild.
+
+### Reuse-vs-new verdict (headline)
+
+| Capability | Verdict | Why (from the actual signatures I read) |
+|------------|---------|------------------------------------------|
+| **Catalyst move estimator** (prob-weighted expected move + separate up/down magnitudes) | **NEW tool needed** — `catalyst_move_estimate` in a new `quant/events.py` | No existing tool combines P(positive) + base rates + per-type analog gaps. `implied_move` gives ONE magnitude (unsigned, market-implied); `conditional_payoff` needs the up/down gaps **handed to it** (it doesn't derive them); `base_rate` returns a single cited scalar. The estimator is the missing piece that *produces* the up/down gaps the other tools consume. It **composes** `implied_move` (prior/cross-check) + `kb.analog_query` outcome `move`s (empirical per-type distribution) + a P(positive). |
+| **Adaptive SL/TP** | **EXTEND `sizing.sl_tp_levels`, do NOT duplicate** | `sl_tp_levels(entry, sl_pct, tp_pct, holds_through_catalyst=False)` takes **fixed pcts** — it does NOT take a vol/implied-move input and does NOT derive levels. It already owns the advisory-labeling logic. Add a thin `adaptive_sl_tp_levels(...)` that DERIVES `sl_pct`/`tp_pct` from the estimate then **delegates to `sl_tp_levels`** so the advisory gate stays in one place. |
+| **Down-move sizing** | **REUSE `risk_of_ruin`/`fractional_kelly` as-is** — zero new code | `risk_of_ruin(p_loss, size_pct, gap=0.70, ...)` **already takes `gap`**. Pass the estimator's `down_move` as `gap` instead of the generic 0.70. That is the entire change. |
+| **Hold-through vs exit-before** | **NO new tool** — a builder branch over estimator + `risk_of_ruin` outputs | It's a deterministic comparison of numbers the two tools already return; sets the existing `holds_through_catalyst` bool. |
+| **Book-level 1% aggregation** | **Mostly REUSE `exposure`/`concentration`; add a thin selector helper** | `exposure`/`concentration` give gross/net/heat but do NOT compute aggregate expected return or pick legs. A small deterministic `select_book(...)` aggregates Σ(size·expected_move) and greedily includes survivable legs toward ~1% under the heat cap. |
+
+### 1. Catalyst move estimator — NEW tool `quant/events.py::catalyst_move_estimate`
+
+**Data source for per-type gap distributions (defensible, in-house, citable):** the KB's own realized `Outcome` nodes. Verified: `kb.analog_query(conn, embed, context, filters={"type": "pdufa"}, k)` returns analogs each carrying `.outcome` attrs with a **signed `move`** (the realized % gap) — confirmed in `tests/test_kb_analog.py` (`outcome_attrs={"move": +0.2 / -0.1 ...}`) and `kb._with_outcome`. Filtering by catalyst `type` (`pdufa` / `ph3_readout` / `conference` / `earnings`) yields the empirical per-type gap distribution, and each analog carries its evidence for citation. This is the honest source; it **grows via the Phase-10 iteration loop**. No external gap-distribution feed exists cleanly (same landscape as PITFALLS.md PDUFA-data note) — do not scrape one.
+
+**Methodology (robust, fat-tail-aware):**
+- Split the analog `move`s into the **positive branch** (move > 0) and **negative branch** (move < 0).
+- `up_move` = a robust central estimate of the positive branch (median, not mean — biotech gaps are fat-tailed); `down_move` = robust central estimate of the |negative branch| (magnitude).
+- Cross-check/clamp against `implied_move` as a **magnitude prior** (PITFALLS #10: implied move is a sizing magnitude prior, never directional). If the KB branch is sparse (cold start, < N analogs), fall back to `implied_move` for the magnitude and widen uncertainty.
+- `p_positive` comes from the **Phase-4 `DebateVerdict`** (`direction=="positive"` calibrated `confidence`), optionally anchored to a `base_rate` — supplied by the caller (agent-interpreted, cited), NOT recomputed here.
+- `expected_move` = `p_positive * up_move − (1 − p_positive) * down_move` (signed EV of the leg).
+
+**Signature + ToolResult shape** (pure-python, `math` only; mirrors `conditional_payoff`'s "caller supplies the gaps" contract so it stays offline + reproducible):
+```python
+# quant/events.py
+def catalyst_move_estimate(
+    p_positive: float,                 # from DebateVerdict confidence (+ base_rate anchor), caller-supplied
+    up_moves: list[float],             # positive-branch analog gaps (from kb.analog_query outcomes)
+    down_moves: list[float],           # negative-branch analog gaps (magnitudes)
+    implied_move: float | None = None, # quant.implied_move value — prior/clamp, optional
+    method: str = "median",            # robust central estimator; raises on unknown
+) -> ToolResult:
+    """Probability-weighted expected move + separate up/down magnitudes for one catalyst leg.
+    value = expected_move (signed EV); detail = {up_move, down_move, p_positive, n_up, n_down,
+    implied_move, source: 'analogs'|'implied_fallback'}. RAISES on empty branches with no
+    implied_move fallback, non-finite inputs, or p_positive outside [0,1] (Pattern 2)."""
+```
+- `value` = `expected_move`; `detail.down_move` is the number that feeds sizing (`risk_of_ruin(gap=down_move)`); `detail.up_move` feeds the TP anchor.
+- Citation: the `inputs` snapshot (the analog gaps) IS the reproducibility record, minted as a `tool:` ref by `evidence.tool_ref` like every other quant result.
+- `ponytail: caller passes the branch lists (already pulled via analog_query in the risk layer), estimator does robust stats + EV. No DB handle inside the tool → stays pure + trivially testable, same pattern as conditional_payoff.`
+
+### 2. Adaptive SL/TP — EXTEND `quant/sizing.py`
+
+`sl_tp_levels` as-read: `(entry, sl_pct, tp_pct, holds_through_catalyst=False)` → `detail.stop/target`, `value`=R:R, and when `holds_through_catalyst=True` it sets `detail.advisory=True` + a reason string. It does **not** derive levels from volatility. Add a thin wrapper that derives the pcts from the estimate and **delegates** (advisory logic stays in one place):
+```python
+def adaptive_sl_tp_levels(
+    entry: float,
+    up_move: float,             # estimator detail.up_move → TP anchor
+    vol_move: float,            # estimator detail.down_move OR implied_move → SL scale (vol proxy)
+    holds_through_catalyst: bool = False,
+    sl_vol_mult: float = 1.0,   # SL at sl_vol_mult × vol_move (ATR-style, but implied/estimated vol — no OHLC needed)
+    tp_frac: float = 0.8,       # TP anchored near tp_frac × up_move (don't assume the full gap)
+) -> ToolResult:
+    """Derive sl_pct = sl_vol_mult·vol_move, tp_pct = tp_frac·up_move, then delegate to
+    sl_tp_levels(entry, sl_pct, tp_pct, holds_through_catalyst) so the advisory gate is shared."""
+```
+- **Vol source:** the estimator's `down_move` (or `implied_move`) IS the volatility proxy — avoids needing intraday OHLC/ATR data we don't have this phase. `ponytail: implied/estimated vol as the ATR stand-in; add true ATR only if OHLC history lands (Phase-8).`
+- **CRITICAL gap-exposed invariant + where the label lives:** on a **hold-through-binary** leg the stop is gap-exposed — it cannot fill inside the overnight gap, it executes at the gapped open. So SL/TP is a REAL control ONLY for **(a) exit-before-event** and **(b) continuous post-gap drift**. The label already lives in the `ToolResult.detail` (`advisory=True` + reason) set by `sl_tp_levels(holds_through_catalyst=True)` — `adaptive_sl_tp_levels` inherits it by delegation. It must ALSO surface on the contract: **`TradeProposal.stop_loss`/`take_profit` are advisory whenever `holds_through_catalyst=True`** (already an added field per §Contract Extensions), and the `StrategyDossier` must render max-loss as the `-down_move`-sized loss, NOT the stop distance (PITFALLS #2, Pitfall D above). Recommend a `sl_advisory: bool` field on `TradeProposal` mirroring the tool's flag so the dashboard can't accidentally show a fictitious bounded loss.
+
+### 3. Hold-through vs exit-before — ties estimator → existing `holds_through_catalyst`
+
+Deterministic branch in `desk/builder.py` (no new tool):
+```
+est = catalyst_move_estimate(...)                       # value = expected_move (signed EV)
+size = size_for_survival(p_loss=1-p_positive, gap=est.detail["down_move"], ...)   # survival size on the ESTIMATED down-move
+hold_through = (est.value > EV_MIN) and (size.value >= MIN_TRADEABLE_SIZE)
+# hold_through True  -> holds_through_catalyst=True,  SL advisory, size = survival size on down_move
+# hold_through False -> holds_through_catalyst=False -> exit-before-event (trade the run-up, SL is a real control),
+#                        or PASS entirely if even the run-up has no edge (zero-trade weeks OK)
+```
+- Positive EV **and** a survivable down-move at a tradeable size → may hold through. Else exit-before-event (converts binary-gap risk to drift risk, PITFALLS #2) or pass.
+- The down-move that sizes the leg is the **estimated** `down_move`, not a blanket −70% (the −70% remains the conservative default only when the estimator has no data).
+
+### 4. Book-level 1% aggregation — thin selector in `desk/portfolio.py`
+
+**1% is a book-level construction/selection target, NEVER a leg sizing input.** Each leg is sized survival-first by `size_for_survival` on its own estimated down-move (that function has no target param — the structural guarantee). The ~1% only enters at **selection/aggregation across the week's legs**:
+```python
+def select_book(candidates, open_book, weekly_budget, heat_cap, target_weekly=0.01):
+    """Greedily include survivable legs (best expected_move/risk first) toward ~target_weekly
+    aggregate expected return, subject to weekly_budget + concentration heat_cap. Never resizes
+    a leg to hit the target: if survivable legs can't reach 1%, the book stays below 1%
+    (zero-trade weeks allowed). Returns the promoted subset + aggregate expected return."""
+```
+- Aggregate expected return = `Σ over legs (size_pct · expected_move)` (leg `expected_move` = estimator `value`).
+- **`exposure`/`concentration` cover the *constraint* math** (gross/net/heat cap on the combined book) but do NOT compute aggregate expected return or pick legs — hence the thin `select_book` selector. It's the only genuinely new portfolio-level code; it composes the existing tools.
+- Structural invariant: `select_book` may reorder/drop legs but MUST NOT increase any leg's `size_pct` above its `size_for_survival` output. Test it.
+
+### 5. Validation Architecture additions (Nyquist)
+
+| Item | Behavior | Type | Automated Command | File |
+|------|----------|------|-------------------|------|
+| `catalyst_move_estimate` | prob-weighted EV + up/down magnitudes from analog branches; implied-move fallback; robust median; raises on empty+no-fallback / bad p | unit | `.venv/bin/python -m pytest tests/test_events.py -x` | ❌ Wave 0 |
+| estimator no-directional-signal | implied_move used as magnitude prior only, never as direction | unit | `.venv/bin/python -m pytest tests/test_events.py -k "prior or magnitude" -x` | ❌ Wave 0 |
+| `adaptive_sl_tp_levels` | derives sl/tp from vol_move/up_move, delegates to sl_tp_levels | unit | `.venv/bin/python -m pytest tests/test_sizing.py -k "adaptive" -x` | ⚠️ extend existing |
+| **gap-exposed SL invariant** | hold-through → `detail.advisory=True`; TradeProposal `sl_advisory` set; dossier max-loss = −down_move, not stop distance | unit | `.venv/bin/python -m pytest tests/test_sizing.py -k "advisory" tests/test_desk_builder.py -k "advisory" -x` | ❌ Wave 0 |
+| down-move sizing wiring | `size_for_survival` receives estimator `down_move` as `gap`, not 0.70 | unit | `.venv/bin/python -m pytest tests/test_desk_builder.py -k "down_move or gap" -x` | ❌ Wave 0 |
+| hold-through decision | positive EV + survivable size → holds_through_catalyst=True; else exit/pass | unit | `.venv/bin/python -m pytest tests/test_desk_builder.py -k "hold_through or exit_before" -x` | ❌ Wave 0 |
+| `select_book` 1% aggregation | aggregates toward ~1% via selection; never resizes a leg above its survival size; zero-trade allowed | unit | `.venv/bin/python -m pytest tests/test_desk_portfolio.py -k "select_book or aggregate or one_pct" -x` | ❌ Wave 0 |
+
+**New Wave-0 files:** `tests/test_events.py` (+ new `src/catalyst_trader/quant/events.py`, re-export in `quant/__init__.py`); extend `tests/test_sizing.py` for `adaptive_sl_tp_levels`; extend `tests/test_desk_builder.py` / `test_desk_portfolio.py`.
+
+**Net new code proposed (kept minimal):** ONE new quant tool (`catalyst_move_estimate`), ONE extension (`adaptive_sl_tp_levels` delegating to `sl_tp_levels`), ONE thin selector (`select_book`). Everything else — down-move sizing (`risk_of_ruin(gap=)`), hold-through bool, gross/net/heat — is pure reuse.
