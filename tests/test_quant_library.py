@@ -17,6 +17,7 @@ import catalyst_trader.quant as quant
 from catalyst_trader.quant import (
     ToolResult,
     attribution,
+    avg_win_loss,
     base_rate,
     cash_runway,
     cointegration,
@@ -26,17 +27,20 @@ from catalyst_trader.quant import (
     cumulative_return,
     exposure,
     fractional_kelly,
+    hedge_effectiveness,
     implied_move,
     iv_crush,
     kelly,
     load_base_rates,
     load_weights,
+    max_drawdown,
     rnpv,
     risk_of_ruin,
     score_rubric,
     sharpe,
     sl_tp_levels,
     sortino,
+    win_rate,
 )
 
 # Two deterministic, finite, varied price series for the statsmodels cointegration path.
@@ -65,6 +69,10 @@ HAPPY_PATH = [
     (sortino, {"returns": [0.01, 0.02, -0.01, 0.03], "periods_per_year": 52, "mar": 0.0, "risk_free": 0.0}),
     (cumulative_return, {"returns": [0.01, 0.02, -0.01, 0.03]}),
     (attribution, {"components": {"alpha": 0.6, "beta": 0.4}, "total": 1.0}),
+    (max_drawdown, {"returns": [0.01, 0.02, -0.05, 0.03]}),
+    (win_rate, {"trade_returns": [0.01, -0.02, 0.03, -0.01]}),
+    (avg_win_loss, {"trade_returns": [0.01, -0.02, 0.03, -0.01]}),
+    (hedge_effectiveness, {"target_legs": [-0.1, 0.2, -0.05], "hedge_legs": [0.08, -0.01, 0.04]}),
     (concentration, {"weights": [0.6, 0.4]}),
     (exposure, {"weights": [0.6, 0.4]}),
     (

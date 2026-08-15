@@ -14,7 +14,16 @@ from .base_rates import base_rate, load_base_rates
 from .events import catalyst_move_estimate, expected_log_growth, hold_vs_exit
 from .options import implied_move, iv_crush
 from .pairs import cointegration, conditional_payoff, correlation_beta
-from .performance import attribution, cumulative_return, sharpe, sortino
+from .performance import (
+    attribution,
+    avg_win_loss,
+    cumulative_return,
+    hedge_effectiveness,
+    max_drawdown,
+    sharpe,
+    sortino,
+    win_rate,
+)
 from .portfolio import concentration, exposure
 from .result import ToolResult
 from .rubric import load_weights, score_rubric
@@ -51,6 +60,10 @@ __all__ = [
     "sortino",
     "cumulative_return",
     "attribution",
+    "max_drawdown",
+    "win_rate",
+    "avg_win_loss",
+    "hedge_effectiveness",
     # portfolio
     "concentration",
     "exposure",

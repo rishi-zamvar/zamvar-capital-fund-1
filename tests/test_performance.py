@@ -21,6 +21,7 @@ from catalyst_trader.quant.performance import (
     max_drawdown,
     win_rate,
     avg_win_loss,
+    hedge_effectiveness,
 )
 
 
@@ -322,3 +323,51 @@ def test_avg_win_loss_nan_raises():
 def test_avg_win_loss_inputs_snapshot():
     r = avg_win_loss([0.1, -0.05])
     assert r.inputs == {"trade_returns": [0.1, -0.05]}
+
+
+# ------------------------------------------------------------------ hedge_effectiveness
+
+
+def test_hedge_effectiveness_hand_computed():
+    # target down on 3 periods (idx 0,2,3); hedge > 0 on 2 of those (idx 0, 3) → 2/3
+    target = [-0.1, 0.2, -0.05, -0.03]
+    hedge = [0.08, -0.01, -0.02, 0.04]
+    r = hedge_effectiveness(target, hedge)
+    assert r.value == pytest.approx(2 / 3)
+    assert r.detail["down_count"] == 3
+    assert r.detail["offset_count"] == 2
+    assert isinstance(r, ToolResult)
+
+
+def test_hedge_effectiveness_net_pnl_reported():
+    # detail carries both legs' net P&L so the baseline can report loss-reduction
+    r = hedge_effectiveness([-0.1, -0.05], [0.08, 0.04])
+    assert r.detail["net_pnl_target"] == pytest.approx(-0.15)
+    assert r.detail["net_pnl_combined"] == pytest.approx(-0.03)
+
+
+def test_hedge_effectiveness_no_down_days_value_none():
+    # no target-down period → undefined, value is None (no false 1.0)
+    r = hedge_effectiveness([0.1, 0.2], [-0.01, 0.03])
+    assert r.value is None
+    assert r.detail["down_count"] == 0
+
+
+def test_hedge_effectiveness_length_mismatch_raises():
+    with pytest.raises(ValueError):
+        hedge_effectiveness([-0.1, 0.2, -0.05], [0.08, -0.01])
+
+
+def test_hedge_effectiveness_empty_raises():
+    with pytest.raises(ValueError):
+        hedge_effectiveness([], [])
+
+
+def test_hedge_effectiveness_nan_raises():
+    with pytest.raises(ValueError):
+        hedge_effectiveness([-0.1, math.nan], [0.08, 0.02])
+
+
+def test_hedge_effectiveness_inputs_snapshot():
+    r = hedge_effectiveness([-0.1, 0.2], [0.08, -0.01])
+    assert r.inputs == {"target_legs": [-0.1, 0.2], "hedge_legs": [0.08, -0.01]}

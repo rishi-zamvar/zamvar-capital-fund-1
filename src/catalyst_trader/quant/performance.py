@@ -165,6 +165,38 @@ def avg_win_loss(trade_returns: list[float]) -> ToolResult:
     )
 
 
+def hedge_effectiveness(
+    target_legs: list[float], hedge_legs: list[float]
+) -> ToolResult:
+    """Over TARGET-DOWN periods, the fraction where the paired hedge leg actually offset (> 0).
+
+    The legs are paired per-period and MUST be equal length (mismatch raises — a misaligned pair
+    is a bug, not a number). value == None when there are NO target-down periods (undefined — never
+    a false 1.0). `detail` carries net_pnl_target vs net_pnl_combined so the baseline can also
+    report loss-reduction. Raises on an empty series or any NaN.
+    """
+    t = _to_array(target_legs, min_len=1)
+    h = _to_array(hedge_legs, min_len=1)
+    if t.size != h.size:
+        raise ValueError(f"paired legs must be equal length, got {t.size} vs {h.size}")
+    down = t < 0
+    down_count = int(down.sum())
+    offset_count = int((h[down] > 0).sum())
+    value = float(offset_count / down_count) if down_count else None
+    return ToolResult(
+        tool="hedge_effectiveness",
+        tool_version=_VERSION,
+        inputs={"target_legs": list(target_legs), "hedge_legs": list(hedge_legs)},
+        value=value,
+        detail={
+            "down_count": down_count,
+            "offset_count": offset_count,
+            "net_pnl_target": float(t.sum()),
+            "net_pnl_combined": float((t + h).sum()),
+        },
+    )
+
+
 def attribution(components: dict[str, float], total: float) -> ToolResult:
     """Decompose realized P&L into named components that must reconcile to the total.
 
