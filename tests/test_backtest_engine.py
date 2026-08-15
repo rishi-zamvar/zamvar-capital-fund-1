@@ -14,6 +14,7 @@ Money-honesty invariants under test:
 Fully offline: every test seeds through tests/synth_history.py::seed_history.
 """
 
+import numpy as np
 import pytest
 from pydantic import ValidationError
 
@@ -231,3 +232,61 @@ def test_layer_a_excludes_catalyst_verified_after_as_of():
     # NOT in the 07-02 filtered event set at weeks[5] -> no catalyst leg; and thesis_scan's
     # unguarded catalyst-precedence keeps CAT out of the statistical sleeve too -> no CAT leg at all.
     assert not any(l.ticker == "CAT" for l in results[0].legs)
+
+
+# ============================== Task 3: baseline distribution assembly ================
+
+
+def _wk(week, *legs):
+    return BacktestResult(week=week, legs=list(legs))
+
+
+def _hand_results():
+    return [
+        _wk("2024-01-08", _leg(realized_ret=0.10, size_pct=0.02),
+            _leg(realized_ret=-0.04, size_pct=0.02)),
+        _wk("2024-01-15", _leg(realized_ret=0.06, size_pct=0.02, hedge_ret=-0.01)),
+        _wk("2024-01-22", _leg(realized_ret=-0.02, size_pct=0.02, hedge_ret=0.03)),
+    ]
+
+
+def test_baseline_distribution_hand_computed():
+    d = baseline_distribution(_hand_results(), periods_per_year=52)
+    # trade-level: rets = [0.10, -0.04, 0.06, -0.02]
+    assert d.win_rate == pytest.approx(0.5)          # 2 of 4 made money (strict > 0)
+    assert d.avg_win == pytest.approx((0.10 + 0.06) / 2)
+    assert d.avg_loss == pytest.approx((0.04 + 0.02) / 2)
+    # hedge-effectiveness: over target-down periods (only week3, target -0.02) the hedge (+0.03) offset
+    assert d.hedge_effectiveness == pytest.approx(1.0)
+    # max-DD on the size-weighted compounded weekly equity (independent numpy check)
+    wr = [0.02 * 0.10 + 0.02 * -0.04, 0.02 * 0.06, 0.02 * -0.02]
+    eq = np.cumprod([1 + x for x in wr])
+    expected_dd = float((eq / np.maximum.accumulate(eq) - 1).min())
+    assert d.max_drawdown == pytest.approx(expected_dd)
+    assert d.max_drawdown < 0
+    assert d.n_trades == 4 and d.n_weeks == 3
+
+
+def test_baseline_distribution_periods_per_year_required():
+    results = _hand_results()
+    d52 = baseline_distribution(results, periods_per_year=52)
+    d13 = baseline_distribution(results, periods_per_year=13)
+    assert d52.sharpe == pytest.approx(d13.sharpe * (52 / 13) ** 0.5)   # scales with freq (footgun cured)
+    assert d52.sortino == pytest.approx(d13.sortino * (52 / 13) ** 0.5)
+
+
+def test_baseline_distribution_empty_raises():
+    with pytest.raises(ValueError):
+        baseline_distribution([])                                    # no weeks
+    with pytest.raises(ValueError):
+        baseline_distribution([BacktestResult(week="2024-01-01", legs=[])])  # no legs -> no baseline
+
+
+def test_run_layer_a_returns_results_and_distribution():
+    conn = _conn()
+    weeks = _seed_std(conn)
+    results, dist = run_layer_a(conn, None, start=weeks[2], end=weeks[10])
+    assert isinstance(dist, BaselineDistribution)
+    assert dist.n_weeks == len(results) == 9
+    assert dist.n_trades >= 9
+    assert 0.0 <= dist.win_rate <= 1.0

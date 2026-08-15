@@ -285,8 +285,45 @@ def run_layer_a(conn, embed, *, start, end, params=None, target_weekly=0.01,
             legs = [_cash_leg(c.payload["ticker"], exit_by, c.size_pct) for c in defensive]
         results.append(BacktestResult(week=as_of, legs=legs))
 
-    return results
+    return results, baseline_distribution(results, periods_per_year=periods_per_year)
+
+
+def _safe(fn, rets, periods_per_year):
+    """Sharpe/Sortino or None when undefined (too few weeks / no downside) — never a fake number."""
+    try:
+        return fn(rets, periods_per_year).value
+    except ValueError:
+        return None
 
 
 def baseline_distribution(results, *, periods_per_year=52):
-    raise NotImplementedError  # Task 3
+    """Roll the per-leg outcomes into the frozen BaselineDistribution the go/no-go gate consumes.
+
+    Trade-level stats (win_rate, avg win/loss) run over every leg's realized return; Sharpe / Sortino
+    / max-DD run over the SIZE-WEIGHTED compounded weekly equity at the given periods_per_year (52 for
+    weekly — passed explicitly, never defaulted: the freq footgun the project already cured);
+    hedge-effectiveness pairs the legs that carried a hedge. Empty results RAISE — no silent zero
+    baseline. Reproducible: same results -> identical distribution.
+    """
+    if not results:
+        raise ValueError("no results — refuse to emit a silent zero baseline")
+    trade_rets = [l.realized_ret for wk in results for l in wk.legs]
+    if not trade_rets:
+        raise ValueError("no legs across the results — refuse to emit a silent zero baseline")
+
+    weekly_rets = [sum(l.size_pct * l.realized_ret for l in wk.legs) for wk in results]
+    awl = avg_win_loss(trade_rets)
+    tgt = [l.realized_ret for wk in results for l in wk.legs if l.hedge_ret is not None]
+    hdg = [l.hedge_ret for wk in results for l in wk.legs if l.hedge_ret is not None]
+
+    return BaselineDistribution(
+        win_rate=win_rate(trade_rets).value,
+        avg_win=awl.detail["avg_win"],
+        avg_loss=awl.detail["avg_loss"],
+        sharpe=_safe(sharpe, weekly_rets, periods_per_year),
+        sortino=_safe(sortino, weekly_rets, periods_per_year),
+        max_drawdown=max_drawdown(weekly_rets).value,
+        hedge_effectiveness=hedge_effectiveness(tgt, hdg).value if tgt else None,
+        n_trades=len(trade_rets),
+        n_weeks=len(results),
+    )
