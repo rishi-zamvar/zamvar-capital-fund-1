@@ -136,7 +136,7 @@
 
 - [x] **OPS-01**: Position memo per trade with explicit falsification/kill criteria (authorship separated from approval)
 - [x] **OPS-02**: Pre-mortem step ("assume this lost — why?") before promotion
-- [ ] **OPS-03**: Monitors/guardrails: catalyst-date, fact-check, provenance, firewall, net-long/concentration, live-position (SL/TP, countdown, paper P&L)
+- [x] **OPS-03**: Monitors/guardrails: catalyst-date, fact-check, provenance, firewall, net-long/concentration, live-position (SL/TP, countdown, paper P&L)
 - [x] **OPS-04**: Full test coverage (TDD) on all new code; money-critical tools have exhaustive edge-case suites
 
 ## v2 Requirements
@@ -204,7 +204,7 @@
 | BACK-03 | Phase 7 | Pending |
 | BACK-04 | Phase 7 | Complete |
 | BACK-05 | Phase 7 | Pending |
-| OPS-03 | Phase 7 | Pending |
+| OPS-03 | Phase 7 | Complete |
 | EXEC-01 | Phase 8 | Pending |
 | EXEC-02 | Phase 8 | Pending |
 | LEARN-03 | Phase 8 | Pending |
