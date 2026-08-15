@@ -274,3 +274,39 @@ class MDDecision(BaseModel):
         elif self.blocker_class or self.recommended_resolution:
             raise ValueError("blocker_class/recommended_resolution are escalation-only fields")
         return self
+
+
+class ScanInput(BaseModel):
+    """The Phase-6.8 scanner firewall (SCAN-04). ONLY the card pair + tripped flags cross the
+    firewall into the Haiku pass — no desk verdict/thesis/position field is representable, so a
+    leak is a ValidationError at model_validate, not a policy check (mirror of DiligenceInput).
+    card_prev/card_cur stay raw dicts to keep the boundary minimal (the point-in-time cards from
+    store.card_asof); tripped is the echo of the Stage-1 flags threaded in by Python."""
+
+    model_config = ConfigDict(extra="forbid")
+    ticker: str
+    week_end: str
+    card_prev: dict | None = None
+    card_cur: dict
+    tripped: list[dict] = []
+
+
+class OpportunityFlag(BaseModel):
+    """The Stage-2 Haiku scanner output + the scan_flag audit payload (SCAN-01). Rich by design;
+    the WIRE format to the MD is the WeeklyFlag projection (Plan 03 to_weekly_flag). Gap-not-answer:
+    NO direction/size/target field exists — it carries a falsifiable thesis + what must be verified
+    + the unknowns, and the MD assigns the route (mirrors WeeklyFlag/RetriggerFlag discipline)."""
+
+    model_config = ConfigDict(extra="forbid")
+    ticker: str
+    week_end: str
+    opportunity_type: Literal["catalyst_vol", "squeeze_setup", "dilution_risk",
+                              "technical_reversal", "continuation", "competitor_event",
+                              "unknown_vol", "no_opportunity"]
+    thesis_to_verify: str            # ONE falsifiable hypothesis, never a call/direction
+    verification_needed: Literal["catalyst_call", "measured_edge", "mini_backtest", "diligence"]
+    key_findings: list[KeyFinding]   # cite-or-drop enforced downstream (Plan 03)
+    kb_analogs: list[str] = []       # analog_query evidence refs leaned on
+    tripped_flags: list[str] = []    # echo of the Stage-1 flags (threaded by Python)
+    unknowns: list[str] = []         # gap-not-answer payload
+    confidence: float = Field(ge=0.0, le=1.0)
