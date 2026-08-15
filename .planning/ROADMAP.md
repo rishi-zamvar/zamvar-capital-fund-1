@@ -123,7 +123,11 @@ Decimal phases appear between their surrounding integers in numeric order.
   1. The diligence pipeline runs in a separate session receiving only {ticker, catalyst, pair} with adversarial framing — Workflow 1/2 reasoning is provably never passed in
   2. Multi-dimensional DD is performed from raw sources (trial stats/endpoints, regulatory precedent, financials/runway, ownership/flow, options-implied move, hedge/correlation re-validation, liquidity, historical analog)
   3. A synthesizer adversarially combines dimensions, rewards "no-go", and emits a DiligenceDossier {go/no-go, evidence, residual risks} where a single failing money-touching dimension forces NO-GO
-**Plans**: TBD
+**Plans**: 4 plans (4 waves)
+- [ ] 06-01-PLAN.md — DiligenceInput firewall contract + residual_risks + offline test harness/fixtures (Wave 1)
+- [ ] 06-02-PLAN.md — 8 adversarial DD dimensions + options degradation + independent hedge re-validation (Wave 2)
+- [ ] 06-03-PLAN.md — Deterministic NO-GO synthesizer + verdict-immutable narrative + enforce_dossier cite-or-drop (Wave 3)
+- [ ] 06-04-PLAN.md — run_diligence firewalled orchestrator + end-to-end (Wave 4)
 
 ### Phase 7: Verifier/Guardrails + Backtest Harness
 **Goal**: Prove the strategy honestly against history and stand up the runtime safety gates before any capital — real or simulated — is at stake.
@@ -191,7 +195,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 →
 | 3. Quant Tool Library + Rubric & Base-Rates | 0/8 | Complete    | 2026-08-15 |
 | 4. Analyst Desk + Bull/Bear Debate | 0/TBD | Complete    | 2026-08-15 |
 | 5. Trade Builder, Hedge & Sizing | 0/7 | Not started | - |
-| 6. Independent Diligence Firewall | 0/TBD | Not started | - |
+| 6. Independent Diligence Firewall | 0/4 | Planned | - |
 | 7. Verifier/Guardrails + Backtest Harness | 0/TBD | Not started | - |
 | 8. Paper Ledger, Attribution & Post-Mortem | 0/TBD | Not started | - |
 | 9. iOS Dashboard + Approval Gate | 0/TBD | Not started | - |
