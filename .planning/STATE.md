@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: executing
-stopped_at: Completed 06-03-PLAN.md
-last_updated: "2026-08-15T18:26:24.167Z"
+status: verifying
+stopped_at: Completed 06-04-PLAN.md
+last_updated: "2026-08-15T18:33:58.728Z"
 last_activity: 2026-08-15
 progress:
   total_phases: 14
-  completed_phases: 5
+  completed_phases: 6
   total_plans: 36
-  completed_plans: 35
+  completed_plans: 36
   percent: 0
 ---
 
@@ -27,7 +27,7 @@ See: .planning/PROJECT.md (updated 2026-08-14)
 
 Phase: 06 (independent-diligence-firewall-workflow-3) — EXECUTING
 Plan: 4 of 4
-Status: Ready to execute
+Status: Phase complete — ready for verification
 Last activity: 2026-08-15
 
 Progress: [░░░░░░░░░░] 0%
@@ -86,6 +86,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 06 P01 | 5min | 2 tasks tasks | 12 files files |
 | Phase 06-independent-diligence-firewall-workflow-3 P02 | 12min | 2 tasks tasks | 4 files files |
 | Phase 06-independent-diligence-firewall-workflow-3 P03 | 10min | 2 tasks tasks | 2 files files |
+| Phase 06-independent-diligence-firewall-workflow-3 P04 | 5min | 2 tasks tasks | 2 files files |
 
 ## Accumulated Context
 
@@ -152,6 +153,7 @@ Recent decisions affecting current work:
 - [Phase 06]: DiligenceInput firewall = pydantic property (extra=forbid + field-disjoint from all Workflow-1/2 artifacts); pair is a bare ticker str|None so no Hedge object crosses (DILIG-01)
 - [Phase 06]: diligence.py MIRRORS analysts.py (own DILIGENCE_PROMPTS + sibling run_dimension) since run_analyst hard-refs the 4-dim PROMPTS; DILIGENCE_PARAMS is the module-level, seed-proof diligence threshold source (not kb.load_params); validate_hedge gains a backward-compatible keyword-only candidate_peer for the independent per-pair hedge re-run (DILIG-02)
 - [Phase 06-independent-diligence-firewall-workflow-3]: DILIG-03 synthesizer: synthesize_verdict is the deterministic money-owner (zero-liq/one-money-fail/tie -> no_go; GO needs FULL money set present AND data-backed); DiligenceNarrative is verdict-free so the LLM cannot flip it (assemble_dossier model_copy-stamps the verdict); enforce_dossier mirrors the verifier two-stage shape + reuses evidence.resolve/quote_supported, never the DebateVerdict gate
+- [Phase 06-independent-diligence-firewall-workflow-3]: DILIG-01/02/03 CLOSED: run_diligence is the firewalled Workflow-3 entry point (signature accepts ONLY DiligenceInput, proven via get_type_hints); an ungrounded money dim (no raw-data seam value) forces NO-GO so no hallucinated finding yields a false GO; full second desk composes end-to-end offline into an evidence-backed DiligenceDossier
 
 ### Pending Todos
 
@@ -165,6 +167,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-08-15T18:26:17.611Z
-Stopped at: Completed 06-03-PLAN.md
+Last session: 2026-08-15T18:33:52.123Z
+Stopped at: Completed 06-04-PLAN.md
 Resume file: None

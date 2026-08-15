@@ -130,7 +130,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] 06-01-PLAN.md — DiligenceInput firewall contract + residual_risks + offline test harness/fixtures (Wave 1)
 - [x] 06-02-PLAN.md — 8 adversarial DD dimensions + options degradation + independent hedge re-validation (Wave 2)
 - [x] 06-03-PLAN.md — Deterministic NO-GO synthesizer + verdict-immutable narrative + enforce_dossier cite-or-drop (Wave 3)
-- [ ] 06-04-PLAN.md — run_diligence firewalled orchestrator + end-to-end (Wave 4)
+- [x] 06-04-PLAN.md — run_diligence firewalled orchestrator + end-to-end (Wave 4)
 
 ### Phase 6.5: Weekly Strategy Correction (added 2026-08-15)
 **Goal**: Implement the operator's 2026-08-15 strategy correction so the whole desk runs the way it actually should — before any backtest measures it.
