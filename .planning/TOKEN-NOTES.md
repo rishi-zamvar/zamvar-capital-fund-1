@@ -53,7 +53,27 @@
 | Verifier | 76,347 |
 | **Phase 2 subtotal** | **~786,321** |
 
-**Cumulative (measured, so far): ~2,650,259 subagent tokens (project 419,577 + Phase 1 1,444,361 + Phase 2 786,321)**
+### Phase 3 — Quant Tool Library + Rubric & Base-Rates (CLOSED)
+| Agent | Tokens |
+|-------|--------|
+| Researcher (narrow + graph-first) | 118,981 |
+| Planner | 134,369 |
+| Plan-checker (passed, 2 warnings folded into exec) | 112,013 |
+| Executor 03-02 | 76,279 |
+| Executor 03-03 | 91,075 |
+| Executor 03-04 | 90,370 |
+| Executor 03-05 | 70,189 |
+| Executor 03-06 | 86,823 |
+| Executor 03-07 | 105,352 |
+| Executor 03-08 | 103,524 |
+| Verifier | 97,658 |
+| (+ 03-01 executor + 03-02 first run: stalled on battery-sleep, ~120k partial, re-run to completion) | ~120,000 |
+| **Phase 3 subtotal** | **~1,207,000** |
+
+**Cumulative build (measured, so far): ~3,857,000 subagent tokens (project 419,577 + P1 1,444,361 + P2 786,321 + P3 ~1,207,000)**
+
+### Out-of-band research (user-requested, NOT in the build total above)
+Fable universe + pairs-discovery agents (event studies, FMP/yfinance metrics). Tracked separately so they don't distort the build/Graphify metric. Several hundred k tokens; the first universe run's fan-out mass-stalled (battery sleep) and was re-run as a single sequential agent.
 
 ## Per-Phase Retrospective
 
