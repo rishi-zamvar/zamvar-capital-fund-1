@@ -68,8 +68,8 @@ def _rate_limit(host: str) -> None:
     _last_request[host] = time.monotonic()
 
 
-def _fetch(kind, source, url, params, ua, ttl_s, host_key):
-    key = (kind, source, url, tuple(sorted((params or {}).items())))
+def _fetch(kind, source, url, params, ua, ttl_s, host_key, json_body=None):
+    key = (kind, source, url, tuple(sorted((params or {}).items())), repr(json_body))
     hit = _cache.get(key)
     if hit is not None and hit[1] > time.monotonic():
         return hit[0]
@@ -78,7 +78,12 @@ def _fetch(kind, source, url, params, ua, ttl_s, host_key):
     _rate_limit(host_key or httpx.URL(url).host)
     try:
         with httpx.Client(transport=httpx.HTTPTransport(retries=2)) as client:
-            resp = client.get(url, params=params, headers=headers)
+            # A JSON body -> POST (the FINRA Query API needs compareFilters in the body);
+            # otherwise the plain GET. Same cache/rate-limit/retry/UA/degrade discipline either way.
+            if json_body is not None:
+                resp = client.post(url, params=params, json=json_body, headers=headers)
+            else:
+                resp = client.get(url, params=params, headers=headers)
             resp.raise_for_status()
             value = resp.json() if kind == "json" else resp.text
     except _DEGRADE as exc:
@@ -89,9 +94,15 @@ def _fetch(kind, source, url, params, ua, ttl_s, host_key):
     return value
 
 
-def get_json(source, url, *, params=None, ua="browser", ttl_s=300, host_key=None) -> dict | None:
-    """Cached, rate-limited, retrying JSON GET. None on degrade, never raises/fabricates."""
-    return _fetch("json", source, url, params, ua, ttl_s, host_key)
+def get_json(
+    source, url, *, params=None, json_body=None, ua="browser", ttl_s=300, host_key=None
+) -> dict | None:
+    """Cached, rate-limited, retrying JSON fetch. None on degrade, never raises/fabricates.
+
+    GET by default; pass ``json_body`` to POST it (FINRA's Query API takes its compareFilters
+    in the request body). The body is part of the cache key so distinct queries don't collide.
+    """
+    return _fetch("json", source, url, params, ua, ttl_s, host_key, json_body)
 
 
 def get_text(source, url, *, params=None, ua="browser", ttl_s=300, host_key=None) -> str | None:
