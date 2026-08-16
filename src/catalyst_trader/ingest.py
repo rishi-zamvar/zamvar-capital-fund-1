@@ -87,6 +87,7 @@ def assemble_raw(providers, ticker, week_end):
     fin = _safe(providers.get("finra"), ticker) or {}
     fil = _safe(providers.get("edgar"), ticker) or {}
     bal = _safe(providers.get("financials"), ticker) or {}
+    flt = _safe(providers.get("float"), ticker) or {}  # RH fundamentals: clean float + shares_outstanding
     catalysts = _safe(providers.get("catalysts"), ticker) or []
 
     next_catalyst, days_to_catalyst, catalysts_4w = _catalyst_window(catalysts, week_end)
@@ -110,6 +111,11 @@ def assemble_raw(providers, ticker, week_end):
         "days_to_cover": fin.get("days_to_cover"),
         "si_settlement_date": fin.get("si_settlement_date"),
         "cash_runway_months": bal.get("cash_runway_months"),
+        # ADDITIVE float source (RH primary, degrade to edgar financials shares) — a clean float
+        # where the card pipeline had none. Additive keys only: build_card's consumed contract is
+        # unchanged (it reads raw.get(...); these are simply now available).
+        "float": flt.get("float"),
+        "shares_outstanding": flt.get("shares_outstanding") or bal.get("shares_outstanding"),
         "seen_accessions": fil.get("seen_accessions", []),
         "live_shelf": fil.get("live_shelf"),
         "days_to_catalyst": days_to_catalyst,

@@ -30,6 +30,10 @@ CADENCE: dict[str, int] = {
     "clinicaltrials": _DAY,   # catalysts daily
     "earnings": _DAY,         # catalysts daily
     "pdufa": _DAY,            # curated catalysts daily
+    "quotes_rt": 300,         # RH real-time quotes — intraday monitor cadence (5 min)
+    "float": 7 * _DAY,        # RH fundamentals/float, weekly (like financials)
+    "portfolio": _DAY,        # RH ledger reconciliation, daily
+    "rh_historicals": _DAY,   # RH raw bars cross-check vote, daily
 }
 
 
@@ -69,6 +73,7 @@ def build_providers(settings, *, end: str | None = None) -> dict:
         options_cboe,
         pdufa,
         prices,
+        robinhood,
     )
 
     si_date = recent_si_settlement(end or date.today().isoformat())
@@ -92,6 +97,12 @@ def build_providers(settings, *, end: str | None = None) -> dict:
     # macro is context, not a gate: no FRED key -> degrade the whole slot to None (never crash).
     macro = (lambda: fred.fetch_macro()) if getattr(settings, "fred_api_key", None) else None
 
+    # Robinhood MCP read slots (RH-DATA-01): the callable is runtime-bound by the SDK
+    # (settings.rh_mcp_call, RH-DATA-03) — None until then, so each slot degrades to None EXACTLY
+    # like macro/FRED. NOT sole-source (the free stack is the spine); rh_historicals is a DISTINCT
+    # cross-check VOTE slot, deliberately NOT wired into the bulk `prices`/historical path.
+    rh_call = getattr(settings, "rh_mcp_call", None)
+
     return {
         "prices": lambda tk, s, e: prices.get_weekly_bars(tk, s, e),
         "options": _options,
@@ -103,4 +114,9 @@ def build_providers(settings, *, end: str | None = None) -> dict:
         "earnings": nasdaq_earnings.fetch_earnings_with_fallback(
             fmp.fetch_earnings, nasdaq_earnings.fetch),  # FMP-first, Nasdaq fallback
         "pdufa": lambda tks, s, e, company_map=None: pdufa.fetch(tks, s, e, company_map=company_map),
+        # RH read slots — None until settings.rh_mcp_call is bound (mirrors macro/FRED gate).
+        "quotes_rt": (lambda tks: robinhood.quotes_rt(tks, mcp_call=rh_call)) if rh_call else None,
+        "float": (lambda tk: robinhood.fundamentals(tk, mcp_call=rh_call)) if rh_call else None,
+        "portfolio": (lambda: robinhood.portfolio(mcp_call=rh_call)) if rh_call else None,
+        "rh_historicals": (lambda tk: robinhood.historicals(tk, mcp_call=rh_call)) if rh_call else None,
     }
