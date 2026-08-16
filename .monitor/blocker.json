@@ -1,1 +1,11 @@
-{"active": false, "title": "", "detail": "", "options": [], "since": 0}
+{
+  "active": true,
+  "since": 1786873244,
+  "title": "Catalyst verify-gate policy \u2014 the one decision that unblocks a real backtest",
+  "detail": "The data machine is built + proven, but tradeable_catalyst_count=0. Diagnosed: the catalyst SUPPLY is fine for trial readouts (CT.gov now flows \u2014 sponsor-map fixed, 16/19 names have in-window readouts) and earnings (19 via Nasdaq). They ingest but never become TRADEABLE because verify_catalyst requires >=2 agreeing sources + 1 primary (DATA-03), and CT.gov/earnings each carry ONE authoritative source. PDUFA is a separate, harder free-data gap (no free authoritative source; hand-curation only, and the curated path needs a fix to reach 2 sources). This is a money-path invariant you set, so it's your call \u2014 not mine to relax autonomously.",
+  "options": [
+    "RECOMMENDED: allow a single AUTHORITATIVE (GREEN) source to verify per catalyst type where the registry IS the authority (CT.gov trial readouts, FedRegister AdCom); keep the 2-source rule for YELLOW-sourced dates (PDUFA from trackers). Unblocks a real backtest on free trial-readout data immediately.",
+    "Keep strict 2-source for ALL catalysts: then every catalyst needs a 2nd corroborating source \u2014 trial readouts would need a press/8-K confirmation step, and the free backtest stays sparse.",
+    "Separately: (a) confirm hand-curation as the PDUFA path + let me implement the curated-path 2-source fix (group CSV rows by event) so a hand-typed PDUFA can become tradeable; (b) consider a catalyst-dense universe/window."
+  ]
+}
