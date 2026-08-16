@@ -27,7 +27,7 @@ Decimal phases appear between their surrounding integers in numeric order.
   - **Plans:** 4 plans in 3 waves
     - [x] 06.11-01-PLAN.md — providers/pdufa_edgar.py core: efts CIK-filtered discovery + deterministic regex extraction (no-LLM-dates/cite-or-drop) + single-source "SEC EDGAR" self-verifying Catalyst emit [PDUFA-EDGAR-01/02/03]
     - [ ] 06.11-02-PLAN.md — wire pdufa_edgar onto the daemon path (ingest._fetch_catalysts + registry + CADENCE) + verify-synergy integration test [PDUFA-EDGAR-04]
-    - [ ] 06.11-03-PLAN.md — Robinhood degrade-to-None MCP-tool data adapter (quotes_rt/portfolio) + registry slots + gated 7-step probe-plan doc [RH-DATA-01; RH-DATA-02/03 deferred]
+    - [x] 06.11-03-PLAN.md — Robinhood degrade-to-None MCP-tool data adapter (quotes_rt/portfolio) + registry slots + gated 7-step probe-plan doc [RH-DATA-01; RH-DATA-02/03 deferred]
     - [ ] 06.11-04-PLAN.md — operator-directed LIVE verification: real efts + IMNM/CAPR 8-K -> extract->verify->tradeable proof + human-verify gate [PDUFA-EDGAR-04 live-close]
 - [ ] **Phase 7: Verifier/Guardrails + Backtest Harness** - Fact-check verifier + runtime monitors + mechanical (Layer A) and guarded-agentic (Layer B) backtests
 - [ ] **Phase 8: Paper Ledger, Attribution & Post-Mortem (Layer C)** - Simulated ledger vs live quotes + P&L attribution + post-mortem into the KB
