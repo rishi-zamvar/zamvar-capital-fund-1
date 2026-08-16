@@ -24,13 +24,13 @@ toggle is WHO populates it (fixtures in tests, real providers here), resolved at
    by construction (every write UPSERTs on its natural key) — a double run yields identical counts.
 """
 
-import csv
 import logging
 from collections import defaultdict
 from datetime import date
 
 from catalyst_trader import store
 from catalyst_trader.calendar import verify
+from catalyst_trader.csvrows import read_csv_rows
 from catalyst_trader.desk.company_scan import build_card
 from catalyst_trader.models import SourceType, Status
 
@@ -133,13 +133,11 @@ def assemble_raw(providers, ticker, week_end):
 
 def _load_seed(csv_path):
     """The seed universe rows (# comment lines skipped) -> [{ticker, company_name, delisted}]."""
-    lines = [ln for ln in open(csv_path, encoding="utf-8").read().splitlines()
-             if ln.strip() and not ln.lstrip().startswith("#")]
     return [{
         "ticker": r["ticker"].strip(),
         "company_name": (r.get("company_name") or "").strip(),
         "delisted": (r.get("delisted") or "").strip().lower() == "true",
-    } for r in csv.DictReader(lines)]
+    } for r in read_csv_rows(csv_path)]
 
 
 def _upsert_price_bars(conn, ticker, bars, *, delisted):

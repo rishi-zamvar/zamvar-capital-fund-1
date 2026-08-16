@@ -11,12 +11,12 @@ FMP-live enrichment of market_cap/adv_usd is a documented follow-up (RESEARCH
 ## Environment Availability): criteria degrade gracefully to the curated seed CSV.
 """
 
-import csv
 import json
 import sqlite3
 from calendar import monthrange
 from pathlib import Path
 
+from catalyst_trader.csvrows import read_csv_rows
 from catalyst_trader.models import UniverseSnapshot
 
 SEED_CSV = Path(__file__).resolve().parents[3] / "data" / "seed_universe.csv"
@@ -50,9 +50,7 @@ def _truthy(v) -> bool:
 
 def _load_seed(path: str | Path = SEED_CSV) -> list[dict]:
     """Read the seed CSV, skipping blank lines and `#` comments (template header)."""
-    text = Path(path).read_text()
-    lines = [ln for ln in text.splitlines() if ln.strip() and not ln.lstrip().startswith("#")]
-    return [dict(r) for r in csv.DictReader(lines)]
+    return read_csv_rows(path)
 
 
 def _catalyst_density(conn: sqlite3.Connection, ticker: str, as_of: str, window_end: str) -> int:

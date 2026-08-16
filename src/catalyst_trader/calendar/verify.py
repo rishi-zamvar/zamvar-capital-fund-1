@@ -13,10 +13,10 @@ Freshness / near-event exclusion (the 48h re-verify) is layered on in Plan 05;
 this module leaves a documented ``now`` hook but does not implement that logic.
 """
 
-import csv
 import sqlite3
 
 from catalyst_trader import store
+from catalyst_trader.csvrows import read_csv_rows
 from catalyst_trader.dates import classify, now_iso, parse_precision
 from catalyst_trader.models import (
     Catalyst,
@@ -27,7 +27,6 @@ from catalyst_trader.models import (
     SourceType,
     Status,
 )
-
 
 # DATA-03 amendment (operator decision, 2026-08-16): a SINGLE government/registry primary that
 # IS the authority for its own date verifies on its own — unblocking CT.gov trial readouts +
@@ -108,13 +107,8 @@ def load_curated_pdufa(conn: sqlite3.Connection, csv_path: str) -> list[int]:
     Blank lines and '#'-comment lines are ignored (template placeholders).
     """
     now = now_iso()
-    lines = [
-        ln
-        for ln in open(csv_path, encoding="utf-8").read().splitlines()
-        if ln.strip() and not ln.lstrip().startswith("#")
-    ]
     ids: list[int] = []
-    for row in csv.DictReader(lines):
+    for row in read_csv_rows(csv_path):
         event_date = row["event_date"].strip()
         source_type = SourceType(row["source_type"].strip())
         # DATA-04 documented default: a PDUFA/AdCom date is an announced target, not a
