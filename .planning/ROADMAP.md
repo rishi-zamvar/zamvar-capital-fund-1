@@ -250,9 +250,9 @@ Decimal phases appear between their surrounding integers in numeric order.
 ### Phase 8.5: Intra-Week Position Monitor (BUILD DEFERRED)
 **Goal**: A light, fast, event-triggered watchdog on the open book through the week — monitor by exception, defend on genuine trouble, propose adjustments up to the MD. Cheap enough to run all day.
 **Depends on**: Phase 8 (paper ledger — live positions to monitor), Phase 6.7 (MD decision hub receives the proposals)
-**Requirements**: MON-01, MON-02, MON-03, MON-04, MON-05, MON-06, MON-07, MON-08, MON-09
-**Research**: `.planning/research/intra-week-monitoring.md` (monitor-by-exception, 8-trigger starter set, position-card, anti-whipsaw, ~$0.70/week on Haiku)
-**Operator-locked decisions**: DEFEND-ONLY (trim/exit, MON-06) · react to BOTH technicals+news+risk (MON-07) · triggers + periodic sweeps (MON-08) · every flag is a proposal to the MD (MON-09)
+**Requirements**: MON-01, MON-02, MON-03, MON-04, MON-05, MON-06, MON-07, MON-08, MON-09, MON-10
+**Research**: `.planning/research/intra-week-monitoring.md` (monitor-by-exception, 8-trigger starter set, position-card, anti-whipsaw, ~$0.70/week on Haiku) + `.planning/research/free-intraday-prices.md` (free 15-min intraday feed — CBOE-already-fetched + yfinance 15m batch, MON-10)
+**Operator-locked decisions**: DEFEND-ONLY (trim/exit, MON-06) · react to BOTH technicals+news+risk (MON-07) · triggers + periodic sweeps (MON-08) · every flag is a proposal to the MD (MON-09) · intraday feed = free 15-min, monitor-only, isolated from the weekly store/backtest (MON-10)
 **Success Criteria** (what must be TRUE):
   1. A deterministic monitor layer (no LLM) runs the 8-trigger starter set — halts RSS (~60s), ATR-normalized move + stop-proximity + volume spike (5-min), EDGAR filings (10-min), tiered-keyword headlines (15-min), catalyst-date diff + book/heat checks (EOD) — plus a periodic light sweep; fires only on breach (monitor by exception).
   2. On a trigger, a light Haiku-class agent examines the flagged position from a pre-written position-card (~1-2K tokens) and decides hold / trim / exit — DEFEND-ONLY (never add/flip intra-week). Deterministic tools compute; agent interprets; cite-or-drop.

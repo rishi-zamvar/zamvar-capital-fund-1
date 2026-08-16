@@ -260,9 +260,18 @@
           <td class="mono tick">&gt; 2 days</td>
           <td>risk-regime context (biotech binaries behave differently risk-off)</td>
         </tr>
+        <tr>
+          <td><b>Intraday</b> (15-min, held names)<br><span style="color:var(--faint);font-size:11px">monitor-only · Phase 8.5</span></td>
+          <td class="mono">CBOE underlying<br>(already fetched) +<br>yfinance 15m batch</td>
+          <td><span class="y">YELLOW</span></td>
+          <td class="mono tick">15-min sweep (RTH)</td>
+          <td class="mono tick">&gt; 30 min</td>
+          <td>intra-week defend triggers (ATR/stop-proximity/volume/gap) — never decisions or backtest</td>
+        </tr>
       </tbody>
     </table>
   </div>
+  <p class="sub" style="margin-top:10px"><b>On the decision/monitor split:</b> the top rows feed <i>decisions</i> — thesis, sizing, the backtest — and are deliberately EOD/weekly, because this is a one-week-hold strategy and intraday noise would hurt a week-hold decision, not help it. The last row is different: 15-min intraday exists <i>only</i> to let the defend-only monitor react mid-week on already-held positions. It's <b>15-min, not 5-min</b> — every free intraday feed is 15-min delayed, so polling faster just reads the same stale bar. And it's nearly free: the CBOE options call we already make carries the delayed underlying price, so surfacing it adds no new request.</p>
 
   <h2><span class="ic">⚑</span> How the models flag a data problem</h2>
   <p class="sub">Accuracy-first means the pipeline is loud when something's wrong rather than quietly serving bad numbers. Four independent alarms, all surfaced in the monitor's data-health tab (and optionally a phone ping):</p>
@@ -308,7 +317,7 @@
   <div class="flag honest">
     <div class="rule"><span class="k">PAID</span><div><b>Vendor-cleaned event analytics</b> (ORATS / Market Chameleon precomputed expected-move + historical <i>intraday</i> IV surfaces). We compute the expected move ourselves from the raw chain — same math — but vendor event-studies and intraday IV history are paid. <i>Not needed: the enriching-input design uses the raw chain we already get.</i></div></div>
     <div class="rule"><span class="k">EST</span><div><b>Authoritative float.</b> Free float is an estimate everywhere — it's a vendor calculation. We take SEC shares-outstanding (exact) + yfinance float (estimate) and <b>label it estimate-grade</b> rather than pretend precision.</div></div>
-    <div class="rule"><span class="k">DELAY</span><div><b>Real-time quotes.</b> Everything free is EOD or 15-min delayed. Deliberately fine — this is a one-week-hold catalyst strategy, not intraday; accuracy &gt; latency by design.</div></div>
+    <div class="rule"><span class="k">DELAY</span><div><b>Real-time quotes + tick data.</b> Everything free is EOD or 15-min delayed; true real-time and tick-level data are paid. Deliberately fine — decisions are weekly-hold (latency irrelevant), and even the intra-week monitor only needs the 15-min-delayed feed to defend a position. Accuracy &gt; latency by design.</div></div>
     <div class="rule"><span class="k">THIN</span><div><b>Options on the thinnest names.</b> No vendor fixes a zero-open-interest chain. The liquidity gate + in-house gap estimator is the answer (drop junk IV), not spend.</div></div>
     <div class="rule"><span class="k">SCOPE</span><div><b>Broad-universe catalyst discovery + conference abstract→company mapping.</b> Our 3-source PDUFA stack covers a curated ~20-name universe well; a market-wide screener or "who presents which abstract when" is a paid tracker / company-PR job. <i>Out of scope now.</i></div></div>
   </div>
