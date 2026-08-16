@@ -14,6 +14,7 @@ had >=2 free in-window sources) is SURFACED honestly, never hidden.
 
 from __future__ import annotations
 
+import functools
 import json
 import logging
 from collections import Counter
@@ -124,14 +125,24 @@ def _edge_report(conn, capture: _EdgeCapture, seed: list[dict], start: str, end:
             except (ValueError, TypeError):
                 pass
 
+    # cross-check redundancy: how many bars were confirmed by >=2 agreeing sources vs single-source
+    # (the honest measure of whether the "redundant cross-checked feed" actually cross-checked).
+    prov = conn.execute("SELECT source, agreeing_sources FROM price_bar").fetchall()
+    confirmed = sum(1 for r in prov if r["agreeing_sources"] and "," in r["agreeing_sources"])
+    bars_by_source = Counter(r["source"] for r in prov)
+
     divergences = capture.matching("cross-check divergence")
     rate_limit = capture.matching("429", "Too Many", "rate limit", "RateLimit")
-    degraded = capture.matching("degraded", "failed")
+    degraded = Counter(capture.matching("degraded", "failed"))
 
     return {
         "coverage": {"expected_name_weeks": expected, "present_name_weeks": present_listed,
                      "pct": coverage_pct, "fridays_in_window": len(fridays),
                      "listed_names": len(listed)},
+        "cross_check": {"total_bars": len(prov), "confirmed_2plus": confirmed,
+                        "unconfirmed_single": len(prov) - confirmed,
+                        "confirmed_pct": round(100 * confirmed / len(prov), 1) if prov else 0.0,
+                        "bars_by_source": dict(bars_by_source)},
         "tradeable_catalyst_count": len(tradeable),
         "tradeable_catalysts": [{"ticker": c.ticker, "type": c.catalyst_type.value,
                                  "event_date": c.event_date, "last_verified_at": c.last_verified_at}
@@ -145,7 +156,8 @@ def _edge_report(conn, capture: _EdgeCapture, seed: list[dict], start: str, end:
         "ticker_mismatch": ticker_mismatch,
         "gaps": {"count": len(gap_pairs), "sample": [f"{tk}@{wk}" for tk, wk in gap_pairs[:30]]},
         "rate_limit": len(rate_limit),
-        "degraded": sorted(set(degraded))[:80],
+        "degraded": {"unique": len(degraded), "total": sum(degraded.values()),
+                     "by_message": dict(degraded.most_common(20))},
     }
 
 
@@ -233,7 +245,13 @@ def _recent_si_settlement(end: str) -> str:
 
 def _live_providers(end: str) -> dict:
     """Wire the REAL free providers into the ingest seam. Each degrades to None/[] independently
-    (ingest._safe / the cascade), so a missing key or a source outage is a LOGGED edge case."""
+    (ingest._safe / the cascade), so a missing key or a source outage is a LOGGED edge case.
+
+    The per-ticker datum providers (options/finra/edgar) are week-INVARIANT but ingest_history calls
+    them once per (ticker, week_end); memoize per ticker so a degrading endpoint isn't re-hit 52x
+    (a shakedown-run optimization — the data is genuinely per-ticker; _http already caches successes,
+    this also caches the degrade so a dead source is queried once, not weekly)."""
+
     from catalyst_trader.providers import (
         clinicaltrials,
         edgar,
@@ -244,11 +262,24 @@ def _live_providers(end: str) -> dict:
         prices,
     )
     si_date = _recent_si_settlement(end)
+
+    @functools.cache
+    def _options(tk):
+        return options_cboe.fetch(tk)
+
+    @functools.cache
+    def _finra(tk):
+        return finra.fetch(tk, si_date)
+
+    @functools.cache
+    def _edgar(tk):
+        return edgar.fetch(tk)
+
     return {
         "prices": lambda tk, s, e: prices.get_weekly_bars(tk, s, e),
-        "options": lambda tk: options_cboe.fetch(tk),
-        "finra": lambda tk: finra.fetch(tk, si_date),
-        "edgar": lambda tk: edgar.fetch(tk),
+        "options": _options,
+        "finra": _finra,
+        "edgar": _edgar,
         "financials": None,  # FMP fundamentals slot — optional (Plan 07 documented degrade)
         "clinicaltrials": lambda tks, s, e: clinicaltrials.fetch_trial_readouts(tks, s, e),
         "earnings": lambda tks, s, e: fmp.fetch_earnings(tks, s, e),  # RuntimeError if no key -> _safe
@@ -287,6 +318,9 @@ def _print_report(report: dict, availability: dict) -> None:
     print("\nIngest:", report["ingest_stats"])
     print(f"\nCoverage: {cov['present_name_weeks']}/{cov['expected_name_weeks']} name-weeks "
           f"= {cov['pct']}%  ({cov['listed_names']} listed x {cov['fridays_in_window']} Fridays)")
+    xc = report["cross_check"]
+    print(f"Cross-check: {xc['confirmed_2plus']}/{xc['total_bars']} bars confirmed by >=2 sources "
+          f"({xc['confirmed_pct']}%); bars_by_source={xc['bars_by_source']}")
     print(f"\nTRADEABLE-CATALYST-COUNT: {report['tradeable_catalyst_count']}  "
           "(verified + point-in-time-valid inside the window — the honesty line)")
     for c in report["tradeable_catalysts"]:
@@ -314,9 +348,10 @@ def _print_report(report: dict, availability: dict) -> None:
     print(f"    stale FINRA SI (>{_STALE_SI_DAYS}d):    {report['stale']}")
     print(f"    delisted (retained):          {report['delisting']}")
     print(f"    rate-limit hits:              {report['rate_limit']}")
-    print(f"    degraded-source warnings:     {len(report['degraded'])}")
-    for d in report["degraded"][:12]:
-        print(f"        · {d}")
+    deg = report["degraded"]
+    print(f"    degraded-source warnings:     {deg['total']} ({deg['unique']} distinct)")
+    for msg, n in deg["by_message"].items():
+        print(f"        · x{n}  {msg}")
     print("=" * 78 + "\n")
 
 
