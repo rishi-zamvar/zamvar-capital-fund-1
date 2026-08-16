@@ -1,40 +1,277 @@
 {
   "items": [
-    {"ts": "2026-08-16", "phase": "BLOCKER", "kind": "DECIDE", "title": "★ THE decision: 2-source verify-gate policy — unblocks a real backtest (recommendation inside)", "note": "Full catalyst-data diagnosis complete — and it's GOOD news: the supply is NOT empty. CT.gov trial readouts (the primary biotech catalyst) are plentiful — the zero was a config bug (ticker_sponsor_map.csv never populated) now FIXED (commit 6f5891a, real live-verified sponsor names for all 19 names + regression test); 16/19 names have in-window readouts, fetch now returns them. Earnings (19) flow too. The ONLY thing stopping a real backtest: verify_catalyst requires >=2 agreeing sources + primary (DATA-03), but CT.gov readouts + earnings each carry ONE authoritative source → ingested-but-untradeable. MY RECOMMENDATION: allow a single AUTHORITATIVE/GREEN source to verify for catalyst types where the registry IS the authority (CT.gov readouts, FedRegister AdCom), keep 2-source for YELLOW tracker-sourced PDUFA. That unblocks a real backtest on free trial-readout data NOW. This is a money-path invariant YOU set, so I'm escalating not deciding. Secondary: PDUFA = hand-curation only (confirmed no free source) + a curated-path 2-source fix I can implement on your go. Blocker banner is live on the monitor."},
-    {"ts": "2026-08-16", "phase": "catalyst", "kind": "FIXED", "title": "CT.gov trial-readout supply RESTORED — sponsor map populated (was the real 'empty catalyst' cause)", "note": "The daemon's clinicaltrials=0 was a silent config zero: ticker_sponsor_map.csv held only the VRTX/REGN starter template (0 of 21 universe names), so fetch_trial_readouts made zero API calls. Fixed (6f5891a): populated real leadSponsor.name for all 19 operating names (BBIO under its QED/Calcilytix subsidiaries; ETFs excluded), each verified from a live CT.gov probe (no fabrication), + a regression test that fails if any non-ETF universe ticker lacks a mapping. CT.gov readouts now flow into the daemon. Detail in debug/ctgov-zero-catalysts.md."},
-    {"ts": "2026-08-16", "phase": "BLOCKER", "kind": "note", "title": "PDUFA free-data gap (structural) — superseded as THE blocker by the CT.gov path above", "note": "Root-caused (debug/pdufa-zero-catalysts.md): FedRegister = AdCom-only (never PDUFA target dates) + zero of our 21 names had any AdCom in 2.6yr; RTTNews scraper dead (site went JS); curated CSV empty + not on daemon path; + 3 latent design bugs (merge-key AdCom-date≠PDUFA-date, weak attribution, curated path can't attach a 2nd source). PDUFA on free data needs hand-curation + a curated-path fix. BUT this is no longer the gating issue — trial readouts (CT.gov, free, flowing) are a viable catalyst supply; the 2-source-gate decision above is what actually unblocks a backtest."}, "note": "Root-caused the 0-tradeable-catalyst blocker (debug/pdufa-zero-catalysts.md). NOT a wiring bug — it's structural on free data: (1) FedRegister carries AdCom notices ONLY, never PDUFA target dates (private FDA/company comms) — and ZERO of our 21 names had any AdCom in 2.6 years; (2) the RTTNews FDA-calendar scraper is DEAD (site went JS/AJAX — the 2026-08-15 verification no longer holds); (3) pdufa_curated.csv is empty + not wired into the daemon path; (4) clinicaltrials also returned 0 tradeable this run (investigating separately). So the ENTIRE verified-catalyst supply is ~empty on free data for this universe+window. PLUS 3 latent design bugs that block 2-source PDUFA even WITH data (merge-key = AdCom-date≠PDUFA-date; weak title attribution; curated path DELETE-replaces sources so a hand-typed PDUFA can never reach 2 sources → permanently untradeable). IMPLICATION: 'free-forever biotech-catalyst trading' hits a data wall for PDUFA specifically. DECISIONS NEEDED (your eval): (a) how to express a 2-source CURATED catalyst so curation actually yields a tradeable event (I'll propose a default: group CSV rows by event into one multi-source catalyst + wire load_curated_pdufa into the daemon); (b) accept hand-curation as the PDUFA path (no free authoritative source exists — confirmed); (c) whether to broaden the universe to catalyst-dense names / different window; (d) whether AdCom-only (FedRegister, free+working) is a viable catalyst subset. The machinery is sound — this is a data-reality + assumption check, exactly what the build was meant to surface."},
-    {"ts": "2026-08-16", "phase": "6.9", "kind": "FIXED", "title": "Multi-source cross-check RESTORED — yfinance MultiIndex bug fixed, redundancy is real", "note": "Follow-up to the shakedown find: fixed _yf_weekly (yfinance 1.6.0 returns MultiIndex columns → flatten before parsing). Live-confirmed: get_weekly_bars('IONS') now returns 11/11 weeks with ≥2 agreeing sources {nasdaq, yfinance}, close delta 0.000% on 10/11 weeks (0.007% on one). The RED test reproduces the exact live bug offline so it can't regress. Your 'plethora of sources' mandate is now genuinely met — not single-source. Still needs GREEN keys (AV/Tiingo) for a 3rd/4th source, but the cross-check machinery is proven working on real data."},
-    {"ts": "2026-08-16", "phase": "6.9", "kind": "HONEST", "title": "LIVE SHAKEDOWN ran on real data — plumbing PASSED, but NO tradeable signal yet (honest result)", "note": "The real-data test you asked for. WHAT WORKED: full pipeline end-to-end, 100% price coverage (1092/1092 name-weeks), money-path integrity intact (no look-ahead, no wrong close, no gaps, degrade-never-crash), 1002 tests green, and it CAUGHT + fixed 2 money-critical bugs (null-close crash, Nasdaq ETF asset-class miss that had silently zeroed XBI/the stat sleeve). WHAT IT EXPOSED (the point of a live test): (1) the price cascade collapsed to SINGLE-SOURCE (nasdaq carried all 1092 bars; 0/1092 cross-checked) because yfinance returned all-None OHLCV — a real MultiIndex-columns parsing bug I've root-caused and am fixing NOW to restore your 'plethora of sources' mandate. (2) tradeable_catalyst_count = 0 → the backtest is VACUOUS (156 defensive/cash legs, all 0.0, Sharpe/Sortino correctly None — never faked). Zero catalysts cleared the 2-source verify gate in-window because the curated PDUFA table is empty + FMP earnings 402'd + no in-window 2-source PDUFA found live. HONEST HEADLINE: the machine is built and money-safe, but on a cold KB + partial free feed there is no edge to measure yet. This is exactly what the shakedown was for."},
-    {"ts": "2026-08-16", "phase": "6.9", "kind": "DECIDE", "title": "You own one data-curation task before a real backtest means anything: catalysts", "note": "The backtest can't produce a real number until there are verified catalysts in the window. Two paths, both need your nod: (a) curate the PDUFA/AdCom table (the carry-forward task flagged since Phase 1 — hand-entered dates, each needs 2 sources), and/or (b) let the live FedRegister+RTTNews providers populate it (built in 6.9, but found 0 in-window 2-source events for these 21 names this run — worth debugging in 6.10). Until then every backtest is honestly vacuous. This is the single biggest blocker to a meaningful go/no-go number."},
-    {"ts": "2026-08-16", "phase": "6.10", "kind": "SCOPE", "title": "Shakedown findings folded into 6.10 (coverage expansion) — FINRA/EDGAR/earnings/keys", "note": "Real gaps the live run found, now 6.10 scope (they feed cards/flags, not the Layer-A backtest returns, so they don't block 6.9 close): FINRA degraded x21 (returns NDJSON, get_json does one json.loads → 'Extra data' — small parse fix); EDGAR dark x21 (no ticker→CIK map — SEC company_tickers.json fixes it; edgartools also solves this); FMP earnings 402 (key tier doesn't cover earnings-calendar → add the Nasdaq earnings fallback, which the plan deferred 'only if FMP fails' — it failed); no GREEN price keys (AV/Tiingo absent → set them for real cross-check, or rely on yfinance+nasdaq once the yfinance fix lands)."},
-    {"ts": "2026-08-16", "phase": "8.5", "kind": "DECIDE", "title": "Intraday: 15-min is right, 5-min buys NOTHING (free feeds are 15-min delayed) — monitor-scoped", "note": "Your question 2026-08-16 (5/15-min prices), now live-verified. VERDICT: (1) decisions/sizing/backtest STAY EOD/weekly (correct for a week-hold; intraday noise hurts). (2) Intraday belongs to the defend-only monitor (Phase 8.5). (3) 15-MIN cadence, NOT 5-min: every free intraday feed is 15-min DELAYED, so 5-min polling reads the same stale bar at 3x ban-risk (Nyquist — sweep at the delay). (4) CONFIRMED FREE WIN: the CBOE options call we ALREADY make per name carries underlying last + day OHLC + prev-close + cum volume + exchange timestamp — currently discarded; surfacing them = ~5 lines, ZERO new HTTP calls, covers ATR/stop-proximity/volume/gap for every optionable name. yfinance 15m (20 names in ONE batched call, 60-day rolling) covers 2-bar confirmation + non-optionable names. Isolated providers/intraday.py feeding the MONITOR only — never the weekly price_bar store or backtest. Owned by Phase 8.5; cheap CBOE-OHLC surfacing can pull forward into 6.10. Triggers evaluate against data_ts (delayed), never now(); stale at >30min (2x). Full design in free-intraday-prices.md."},
-    {"ts": "2026-08-16", "phase": "6.10", "kind": "DECIDE", "title": "edgartools ADOPTED (your approval 2026-08-16) — SEC XBRL fundamentals/float", "note": "You approved: adopt edgartools (MIT, keyless, 'runs at hedge funds') as the one new dep — fills the #1 free-data gap (float/shares-outstanding/cash-runway from SEC XBRL, no other free authoritative source) and replaces the hand-rolled edgar.py. FRED (macro/VIX) needs no dep. Both land in Phase 6.10 (PIPE-03/04). Free-data-system artifact built + delivered."},
-    {"ts": "2026-08-16", "phase": "6.10", "kind": "ARCH", "title": "Free-data pipeline research done → Phase 6.10 (always-on daemon) added to roadmap", "note": "Verdicts: OpenBB = MIRROR not adopt (AGPL-3.0 + 50 deps landmine; we already have its ranked-registry pattern; steal its provider menu which validated SEC+FRED as the standard adds). Proxies = NO (free=honeypots, Tor=blacklisted, paid=not-free); Stooq stays disabled + route around (it's redundant — 4 other sources agree). New Phase 6.10 PIPE-01..08: launchd daemon + stateless run_cycle + gap-detector/self-heal + raw-snapshot lake + edgartools(float) + FRED(macro/VIX) + N-source-median cross-check + data-health monitor tab. Thin — reuses all of 6.9 unchanged; $0. Plans after 6.9 executes."},
-    {"ts": "2026-08-16", "phase": "GOVERNING", "kind": "STRATEGY", "title": "FREE forever + accuracy-over-speed + our own pipeline running CONSTANTLY", "note": "Your directive 2026-08-16: keep it free (no paid services ever), don't care about speed/timing — care about ACCURACY, and build our own web-scraping data-gathering pipeline that runs constantly (a warm, always-fresh, self-healing store, not on-demand fetches). Sequencing: Phase 6.9 (in plan-check) stays as the provider FOUNDATION (cascade/cross-check/degrade/store) — all already free. Layering on top: (a) MORE free sources folded into the registry, (b) a new phase for the always-on scheduled daemon. Launched ecosystem research: how people pull free data without paying (OpenBB, undocumented public JSON APIs, SEC XBRL for free fundamentals/float — our weak spot, Wayback backfill), anti-block+accuracy triangulation (Stooq IP-block is a live test case), and the constantly-running self-healing pipeline architecture. Accuracy lever = aggressive multi-source triangulation + slow polite polling, NOT spend."},
-    {"ts": "2026-08-15", "phase": "6.9", "kind": "SCOPE", "title": "The free-data layer was RESEARCHED but never BUILT — Phase 6.9 closes it before any real backtest", "note": "Discrepancy I found on your 'take a step back, examine the discrepancy' order: free-data-sources.md specced CBOE/yfinance/FINRA/EDGAR/FedRegister/RTTNews (all verified-live) but only 2 providers were ever built; everything downstream ran on mocks. Phase 6.9 builds the real providers + scrapers with discipline (rate-limit, ≥5-min cache, provenance-on-every-datum, never-fabricate), wires them to the seams with ZERO downstream contract change, and its verification IS the live shakedown: ingest the real 21-name universe → run Layer-A backtest + thesis_scan on REAL data → log every edge case. This is the real-data stress test of every system + the first real backtest number. FMP is 401 on historicals (confirmed) → yfinance is primary for prices."},
-    {"ts": "2026-08-15", "phase": "6.9", "kind": "CORRECTION", "title": "Prices are a MULTI-SOURCE cascade, NOT yfinance-only (your correction)", "note": "Your correction 2026-08-15: 'we shouldn't be defaulting to yfinance, there should be a plethora of sources and systems.' Right call — the research gave every OTHER need ≥2 sources (short interest is triple-verified FINRA/Nasdaq/yfinance) but collapsed the most load-bearing datum, price history, to yfinance-only. Fix: providers/prices.py runs a RANKED cascade (Stooq CSV → yfinance → Nasdaq historical → keyed Alpha Vantage/Tiingo — order pending live verification), falls through on failure/missing name, cross-checks closes where ≥2 sources agree (flags divergence), tags each bar with its source. Generalizes to a source-registry so adding sources later is trivial (modular/future-facing per your standing mandate). Stopped the planner + launched a focused price-cascade research pass to verify endpoints live before re-planning (no ad-hoc guessing)."},
-    {"ts": "2026-08-15", "phase": "6.9", "kind": "DECIDE", "title": "All price sources deliver RAW (auto_adjust=False), not back-adjusted", "note": "Money-critical call I made autonomously: adjusted prices back-adjust the whole series to TODAY's split/dividend state — a silent look-ahead in a point-in-time backtest (the exact thing the pessimistic gap-fill + latency knob + as_of guards fight). Raw OHLC is what actually printed each week. Splits in this 21-name universe over 1-2yr are rare + detectable → flagged as shakedown edge cases, not silently smoothed over. Confirm you're OK with raw + split-week flagging vs adjusted."},
-    {"ts": "2026-08-15", "phase": "6.9", "kind": "ARCH", "title": "Key finding: the STORE is the seam — 'zero downstream contract change' is nearly free", "note": "Research verified nothing downstream (thesis_scan/run_layer_a/build_event_set/run_scan) fetches anything — all read the store or an injected raw dict. So live ingestion just writes the SAME rows via the SAME upsert_bars/insert_catalyst/write_card. No live=True/False boolean threads through the desk; the toggle is only WHO populates the store. Shrinks the phase to thin plumbing over already-built machinery."},
-    {"ts": "2026-08-15", "phase": "MCP", "kind": "todo", "title": "Graphify wired as MCP (.mcp.json) — activates on your next Claude Code restart", "note": "Per your 'wire up graphify as mcp wiring': .mcp.json points graphify-mcp at graph.json over stdio. Binary + graph load confirmed; the stdio server reaches subagents only after a CC restart (was instruction-only before). Restart CC when convenient to make it real."},
-    {"ts": "2026-08-15", "phase": "CORRECTION", "kind": "STRATEGY", "title": "Sizing now = f(target, survival) — target drives, survival is a hard cap", "note": "Your correction 2026-08-15: sizing serves the 1%/week target, clamped by the risk-of-ruin ceiling (never crossed). REVERSES Phase-5's 'no target param' invariant → needs a Phase-5 sizing amendment. Requirements PORT-03 + WEEK-04 updated."},
-    {"ts": "2026-08-15", "phase": "CORRECTION", "kind": "STRATEGY", "title": "NO zero-trade weeks — build & exit a fresh portfolio every week", "note": "Your correction: always a book; weak weeks deploy smaller (survival cap), never zero. REVERSES Phase-5's 'zero-trade weeks allowed'. Requirement WEEK-01/03 added."},
-    {"ts": "2026-08-15", "phase": "CORRECTION", "kind": "STRATEGY", "title": "Theses on EVERY name every week (not just catalysts)", "note": "Your correction: mean-reversion ('dropped last week, is the bounce a proven edge?') + continuation + catalyst, each with a measured historical edge. New capability upstream of the trade builder — WEEK-02. Will need a new phase/expansion before the backtest."},
-    {"ts": "2026-08-15", "phase": "6.5", "kind": "SCOPE", "title": "No historical price store existed — Phase 6.5 now builds one first (gating)", "note": "The weekly thesis engine needs point-in-time OHLCV price history; the DB only had catalyst+KB data. 6.5 leads with a price-bars store + ingestion (~20 names + XBI). Built/tested offline with synthetic fixtures. OPEN DATA QUESTION for you: FMP historical-price tier coverage for ~20 names x ~8-10y weekly bars — verify before live ingestion (like the seed-universe curation, non-blocking for the build)."},
-    {"ts": "2026-08-15", "phase": "6.5", "kind": "HONEST", "title": "The 'catch the bounce' edge is REAL but thin (~+1%) and only at moderate drops", "note": "Measured on our own 18-biotech data: -5/-10% drops bounce ~54-55% vs 51.3% base (~+1% edge). BUT -15% weeks = falling knife (48.8%, negative median) — a hard veto, not a bounce. Up-week continuation is a coin flip unconditionally. Savor 2012: info-moves drift, no-info moves reverse — so the drop-classifier is what makes it honest. Expect only 2-4 tradeable trigger cells to survive. This is the honest ceiling on the mean-reversion thesis."},
-    {"ts": "2026-08-15", "phase": "6.5", "kind": "HONEST", "title": "No-zero-trade-weeks reconciled: weak weeks get a DEFENSIVE book, not a forced bad trade", "note": "When no trigger cell clears the bar, the week is SGOV/BIL + tiny XBI anchors with dossier language saying exactly that — never a forced failing trade. This is how 'always a portfolio' stays honest with survival-first. Confirm you're OK with defensive/cash-like weeks counting as a valid book."},
-    {"ts": "2026-08-15", "phase": "GOVERNING", "kind": "DECIDE", "title": "MD authority model — MD decides everything, you're escalated only on genuine blockers", "note": "Your call: all workflows PROPOSE portfolio decisions with full deliverables attached; MD has final say; MD escalates to you (LP) only on a genuine blocker (rare) = the red banner + terminal button. RECONCILE: for LIVE real money, I kept a final human execution-confirm as the one inviolable safety gate. Open question for you: should even that become MD-owned (human-only-on-blocker)? Kept inviolable until you say otherwise."},
-    {"ts": "2026-08-15", "phase": "8.5", "kind": "research", "title": "Intra-week monitor research done — ~$0.70/week on Haiku", "note": "Monitor-by-exception: 8 deterministic triggers (halts/ATR-move/stop-proximity/volume/EDGAR/headlines/catalyst-diff/book-checks) wake a light Haiku agent; position-card pattern; anti-whipsaw (2-bar confirm, cooldowns, 4 wakes/day cap). Locked: defend-only, both-triggers, triggers+sweeps, MD-decides. Full design in intra-week-monitoring.md."},
-    {"ts": "2026-08-15", "phase": "7", "kind": "FOLLOWUP", "title": "Layer B backtest replays run_desk only (not the full pipeline yet)", "note": "The guarded-agentic backtest (BACK-03) currently replays the catalyst-call layer (run_desk) — the highest-value memorization-leak comparison vs the mechanical baseline. Extending it to the full run_portfolio/diligence/reconcile chain is a reasonable follow-on (more expensive). Disclosed + verifier-passed; flagged for your eval, not a gap."},
-    {"ts": "2026-08-15", "phase": "6.8", "kind": "ARCH", "title": "Weekly company scanner = Haiku DD-replica: deterministic flaggers → analyst KB/playbook once-over", "note": "Your architecture: STAGE 1 = cheap deterministic flaggers from data we ACTUALLY have (price/vol deltas, days-to-catalyst, runway, IV, short interest, filings) — week-over-week on a persisted company card, monitor-by-exception. STAGE 2 = on a flag, a Haiku analyst does a once-over WITH full KB+playbook access to find what's of interest THIS week to explore + build into the portfolio. Opportunities → MD → verification → weekly portfolio → intra-week monitor. New Phase 6.8, researching now (structure + week-over-week deltas + low-token). SCAN-01..04."},
-    {"ts": "2026-08-15", "phase": "6.7", "kind": "ARCH", "title": "Weekly thesis = standing refresh; flags (quant/qual) route to MD who routes to the team", "note": "Your refinement: the weekly per-name thesis re-runs the SAME analysis each week (signal = the CHANGE vs baseline); a quant or qual flag goes UP to the MD, who routes to the appropriate team IF it chooses to act (unactioned flags logged, not forced). Generalizes the MD from a DD-reconciler into the router for ALL flags (weekly refresh + DD + later intra-week). WEEK-06 + RECON-08; folded into the 6.7 plan."},
-    {"ts": "2026-08-15", "phase": "6.7", "kind": "ARCH", "title": "MD/GP reconciliation loop — GP integrates all 3 workflows", "note": "Your addition: DD feeds up to the GP; GP re-triggers catalyst-call OR portfolio-builder with the missing info, bounded loop to convergence/cap, caveats to LP. Firewall preserved (DD inputs sealed, only findings flow up). New Phase 6.7 before the backtest."},
-    {"ts": "2026-08-15", "phase": "8.5", "kind": "ARCH", "title": "Intra-week position monitor (light/Haiku, event-triggered) — BUILD DEFERRED", "note": "Your addition: separate light/fast workflow, deterministic triggers (TA thresholds/news) → flag position → back to portfolio builder; no orders. Researching desk practice now + will ask you the trigger/adjustment/gate decisions. New Phase 8.5."},
-    {"ts": "2026-08-15", "phase": "5", "kind": "hedging", "title": "Hedging default is a naked, survival-sized single leg", "note": "3 research passes proved clean long-only idiosyncratic hedges are rare; pairs used only when re-validated per-catalyst. Confirm you're comfortable with this being the default."},
-    {"ts": "2026-08-15", "phase": "5", "kind": "design", "title": "Book-level 1% aggregation (being amended by the sizing correction above)", "note": "Original: legs sized survival-first, select_book aggregates toward ~1% by selection only. The correction makes sizing target-driven-within-cap; this gets reworked in the Phase-5 sizing amendment."},
-    {"ts": "2026-08-15", "phase": "data", "kind": "data", "title": "Options-implied move sourced FREE from CBOE delayed-quotes JSON", "note": "No paid feed needed. Behind a pluggable seam; degrades to in-house gap estimator on illiquid names. Web-scraper is a build-our-own (shared repo was do-not-fork: no license, stale)."},
-    {"ts": "2026-08-15", "phase": "data", "kind": "todo", "title": "Pending from you: curate seed universe + PDUFA dates", "note": "Templates shipped in data/. System runs on stubs until real catalysts are curated — needed before the paper phase."},
-    {"ts": "2026-08-15", "phase": "hedge", "kind": "research", "title": "New validated hedge pairs found", "note": "CYTK/EWTX (HCM, the second IONS/BBIO), BMRN/ASND, UTHR/LQDA + inverse-ETF dampers LABD/RWM/TZA/SPDN. Seed data for the per-trade validator, loaded at universe curation."},
-    {"ts": "2026-08-15", "phase": "backlog", "kind": "todo", "title": "Backtest must simulate data-gathering timing (Phase 7)", "note": "Data-latency knob beside the slippage knob; point-in-time only, no look-ahead on delayed free data. Logged."},
-    {"ts": "2026-08-15", "phase": "backlog", "kind": "todo", "title": "Faster/more-deterministic fetch = deferred optimization", "note": "Current ~5-min/EOD cadence is fine for a week-hold; revisit after the backtest baseline."}
+    {
+      "ts": "2026-08-16",
+      "phase": "catalyst",
+      "kind": "FIXED",
+      "title": "BLOCKER RESOLVED \u2014 authoritative source now sets the calendar (your decision, shipped)",
+      "note": "DATA-03 amended + shipped (ef94eb9/ef2bb2c): verify_catalyst = (>=2 sources +primary) OR (>=1 AUTHORITATIVE source: CT.gov / Federal Register / SEC EDGAR). Trackers (RTTNews) + Nasdaq earnings still need 2 sources. Live-verified: a single real CT.gov readout now becomes TRADEABLE with a point-in-time last_verified_at (lastUpdatePostDate, not now/event). 1062 tests. Trial-readout watch-list is now a tradeable calendar; monitor blocker cleared."
+    },
+    {
+      "ts": "2026-08-16",
+      "phase": "DATA",
+      "kind": "DIRECTIVE",
+      "title": "Build our OWN PDUFA system (not a paid tracker) \u2014 authoritative, free, adaptable",
+      "note": "Your call: don't pay for PDUFA convenience \u2014 build our own, adaptable to our case. Buildable + BETTER: PDUFA dates originate in company 8-K/PR at FDA filing-acceptance ('PDUFA target action date of X'). Our tracker = mine SEC EDGAR 8-K/PR full-text per name -> extract PDUFA/AdCom/action dates -> 8-K URL = authoritative provenance -> feed calendar -> human confirms (cite-or-drop). Beats BPIQ: authoritative (from the filing, not an aggregator), free, provenance-native, tunable. Also fixes dead-RTTNews + AdCom-only-FedRegister. Researching + roadmapping now."
+    },
+    {
+      "ts": "2026-08-16",
+      "phase": "DATA",
+      "kind": "DIRECTIVE",
+      "title": "Maximize Robinhood as a DATA source (not just execution)",
+      "note": "Your call: pull as much from Robinhood as we can. MCP exposes quotes/portfolio/watchlists (exact surface UNVERIFIED - needs a probe). Value: real-time quotes (monitor + execution pricing) + portfolio (paper/live ledger) as another redundant source, NOT sole-source (broker/account safety). DEPENDENCY: needs YOU to connect the Robinhood MCP (OAuth, funded acct) before we can probe/use it - can't do autonomously. Designing as a pluggable source; probe+wire when connected."
+    },
+    {
+      "ts": "2026-08-16",
+      "phase": "BLOCKER",
+      "kind": "DECIDE",
+      "title": "\u2605 THE decision: 2-source verify-gate policy \u2014 unblocks a real backtest (recommendation inside)",
+      "note": "Full catalyst-data diagnosis complete \u2014 and it's GOOD news: the supply is NOT empty. CT.gov trial readouts (the primary biotech catalyst) are plentiful \u2014 the zero was a config bug (ticker_sponsor_map.csv never populated) now FIXED (commit 6f5891a, real live-verified sponsor names for all 19 names + regression test); 16/19 names have in-window readouts, fetch now returns them. Earnings (19) flow too. The ONLY thing stopping a real backtest: verify_catalyst requires >=2 agreeing sources + primary (DATA-03), but CT.gov readouts + earnings each carry ONE authoritative source \u2192 ingested-but-untradeable. MY RECOMMENDATION: allow a single AUTHORITATIVE/GREEN source to verify for catalyst types where the registry IS the authority (CT.gov readouts, FedRegister AdCom), keep 2-source for YELLOW tracker-sourced PDUFA. That unblocks a real backtest on free trial-readout data NOW. This is a money-path invariant YOU set, so I'm escalating not deciding. Secondary: PDUFA = hand-curation only (confirmed no free source) + a curated-path 2-source fix I can implement on your go. Blocker banner is live on the monitor."
+    },
+    {
+      "ts": "2026-08-16",
+      "phase": "catalyst",
+      "kind": "FIXED",
+      "title": "CT.gov trial-readout supply RESTORED \u2014 sponsor map populated (was the real 'empty catalyst' cause)",
+      "note": "The daemon's clinicaltrials=0 was a silent config zero: ticker_sponsor_map.csv held only the VRTX/REGN starter template (0 of 21 universe names), so fetch_trial_readouts made zero API calls. Fixed (6f5891a): populated real leadSponsor.name for all 19 operating names (BBIO under its QED/Calcilytix subsidiaries; ETFs excluded), each verified from a live CT.gov probe (no fabrication), + a regression test that fails if any non-ETF universe ticker lacks a mapping. CT.gov readouts now flow into the daemon. Detail in debug/ctgov-zero-catalysts.md."
+    },
+    {
+      "ts": "2026-08-16",
+      "phase": "BLOCKER",
+      "kind": "note",
+      "title": "PDUFA free-data gap (structural) \u2014 superseded as THE blocker by the CT.gov path above",
+      "note": "Root-caused (debug/pdufa-zero-catalysts.md): FedRegister = AdCom-only (never PDUFA target dates) + zero of our 21 names had any AdCom in 2.6yr; RTTNews scraper dead (site went JS); curated CSV empty + not on daemon path; + 3 latent design bugs (merge-key AdCom-date\u2260PDUFA-date, weak attribution, curated path can't attach a 2nd source). PDUFA on free data needs hand-curation + a curated-path fix. BUT this is no longer the gating issue \u2014 trial readouts (CT.gov, free, flowing) are a viable catalyst supply; the 2-source-gate decision above is what actually unblocks a backtest."
+    },
+    {
+      "ts": "2026-08-16",
+      "phase": "6.9",
+      "kind": "FIXED",
+      "title": "Multi-source cross-check RESTORED \u2014 yfinance MultiIndex bug fixed, redundancy is real",
+      "note": "Follow-up to the shakedown find: fixed _yf_weekly (yfinance 1.6.0 returns MultiIndex columns \u2192 flatten before parsing). Live-confirmed: get_weekly_bars('IONS') now returns 11/11 weeks with \u22652 agreeing sources {nasdaq, yfinance}, close delta 0.000% on 10/11 weeks (0.007% on one). The RED test reproduces the exact live bug offline so it can't regress. Your 'plethora of sources' mandate is now genuinely met \u2014 not single-source. Still needs GREEN keys (AV/Tiingo) for a 3rd/4th source, but the cross-check machinery is proven working on real data."
+    },
+    {
+      "ts": "2026-08-16",
+      "phase": "6.9",
+      "kind": "HONEST",
+      "title": "LIVE SHAKEDOWN ran on real data \u2014 plumbing PASSED, but NO tradeable signal yet (honest result)",
+      "note": "The real-data test you asked for. WHAT WORKED: full pipeline end-to-end, 100% price coverage (1092/1092 name-weeks), money-path integrity intact (no look-ahead, no wrong close, no gaps, degrade-never-crash), 1002 tests green, and it CAUGHT + fixed 2 money-critical bugs (null-close crash, Nasdaq ETF asset-class miss that had silently zeroed XBI/the stat sleeve). WHAT IT EXPOSED (the point of a live test): (1) the price cascade collapsed to SINGLE-SOURCE (nasdaq carried all 1092 bars; 0/1092 cross-checked) because yfinance returned all-None OHLCV \u2014 a real MultiIndex-columns parsing bug I've root-caused and am fixing NOW to restore your 'plethora of sources' mandate. (2) tradeable_catalyst_count = 0 \u2192 the backtest is VACUOUS (156 defensive/cash legs, all 0.0, Sharpe/Sortino correctly None \u2014 never faked). Zero catalysts cleared the 2-source verify gate in-window because the curated PDUFA table is empty + FMP earnings 402'd + no in-window 2-source PDUFA found live. HONEST HEADLINE: the machine is built and money-safe, but on a cold KB + partial free feed there is no edge to measure yet. This is exactly what the shakedown was for."
+    },
+    {
+      "ts": "2026-08-16",
+      "phase": "6.9",
+      "kind": "DECIDE",
+      "title": "You own one data-curation task before a real backtest means anything: catalysts",
+      "note": "The backtest can't produce a real number until there are verified catalysts in the window. Two paths, both need your nod: (a) curate the PDUFA/AdCom table (the carry-forward task flagged since Phase 1 \u2014 hand-entered dates, each needs 2 sources), and/or (b) let the live FedRegister+RTTNews providers populate it (built in 6.9, but found 0 in-window 2-source events for these 21 names this run \u2014 worth debugging in 6.10). Until then every backtest is honestly vacuous. This is the single biggest blocker to a meaningful go/no-go number."
+    },
+    {
+      "ts": "2026-08-16",
+      "phase": "6.10",
+      "kind": "SCOPE",
+      "title": "Shakedown findings folded into 6.10 (coverage expansion) \u2014 FINRA/EDGAR/earnings/keys",
+      "note": "Real gaps the live run found, now 6.10 scope (they feed cards/flags, not the Layer-A backtest returns, so they don't block 6.9 close): FINRA degraded x21 (returns NDJSON, get_json does one json.loads \u2192 'Extra data' \u2014 small parse fix); EDGAR dark x21 (no ticker\u2192CIK map \u2014 SEC company_tickers.json fixes it; edgartools also solves this); FMP earnings 402 (key tier doesn't cover earnings-calendar \u2192 add the Nasdaq earnings fallback, which the plan deferred 'only if FMP fails' \u2014 it failed); no GREEN price keys (AV/Tiingo absent \u2192 set them for real cross-check, or rely on yfinance+nasdaq once the yfinance fix lands)."
+    },
+    {
+      "ts": "2026-08-16",
+      "phase": "8.5",
+      "kind": "DECIDE",
+      "title": "Intraday: 15-min is right, 5-min buys NOTHING (free feeds are 15-min delayed) \u2014 monitor-scoped",
+      "note": "Your question 2026-08-16 (5/15-min prices), now live-verified. VERDICT: (1) decisions/sizing/backtest STAY EOD/weekly (correct for a week-hold; intraday noise hurts). (2) Intraday belongs to the defend-only monitor (Phase 8.5). (3) 15-MIN cadence, NOT 5-min: every free intraday feed is 15-min DELAYED, so 5-min polling reads the same stale bar at 3x ban-risk (Nyquist \u2014 sweep at the delay). (4) CONFIRMED FREE WIN: the CBOE options call we ALREADY make per name carries underlying last + day OHLC + prev-close + cum volume + exchange timestamp \u2014 currently discarded; surfacing them = ~5 lines, ZERO new HTTP calls, covers ATR/stop-proximity/volume/gap for every optionable name. yfinance 15m (20 names in ONE batched call, 60-day rolling) covers 2-bar confirmation + non-optionable names. Isolated providers/intraday.py feeding the MONITOR only \u2014 never the weekly price_bar store or backtest. Owned by Phase 8.5; cheap CBOE-OHLC surfacing can pull forward into 6.10. Triggers evaluate against data_ts (delayed), never now(); stale at >30min (2x). Full design in free-intraday-prices.md."
+    },
+    {
+      "ts": "2026-08-16",
+      "phase": "6.10",
+      "kind": "DECIDE",
+      "title": "edgartools ADOPTED (your approval 2026-08-16) \u2014 SEC XBRL fundamentals/float",
+      "note": "You approved: adopt edgartools (MIT, keyless, 'runs at hedge funds') as the one new dep \u2014 fills the #1 free-data gap (float/shares-outstanding/cash-runway from SEC XBRL, no other free authoritative source) and replaces the hand-rolled edgar.py. FRED (macro/VIX) needs no dep. Both land in Phase 6.10 (PIPE-03/04). Free-data-system artifact built + delivered."
+    },
+    {
+      "ts": "2026-08-16",
+      "phase": "6.10",
+      "kind": "ARCH",
+      "title": "Free-data pipeline research done \u2192 Phase 6.10 (always-on daemon) added to roadmap",
+      "note": "Verdicts: OpenBB = MIRROR not adopt (AGPL-3.0 + 50 deps landmine; we already have its ranked-registry pattern; steal its provider menu which validated SEC+FRED as the standard adds). Proxies = NO (free=honeypots, Tor=blacklisted, paid=not-free); Stooq stays disabled + route around (it's redundant \u2014 4 other sources agree). New Phase 6.10 PIPE-01..08: launchd daemon + stateless run_cycle + gap-detector/self-heal + raw-snapshot lake + edgartools(float) + FRED(macro/VIX) + N-source-median cross-check + data-health monitor tab. Thin \u2014 reuses all of 6.9 unchanged; $0. Plans after 6.9 executes."
+    },
+    {
+      "ts": "2026-08-16",
+      "phase": "GOVERNING",
+      "kind": "STRATEGY",
+      "title": "FREE forever + accuracy-over-speed + our own pipeline running CONSTANTLY",
+      "note": "Your directive 2026-08-16: keep it free (no paid services ever), don't care about speed/timing \u2014 care about ACCURACY, and build our own web-scraping data-gathering pipeline that runs constantly (a warm, always-fresh, self-healing store, not on-demand fetches). Sequencing: Phase 6.9 (in plan-check) stays as the provider FOUNDATION (cascade/cross-check/degrade/store) \u2014 all already free. Layering on top: (a) MORE free sources folded into the registry, (b) a new phase for the always-on scheduled daemon. Launched ecosystem research: how people pull free data without paying (OpenBB, undocumented public JSON APIs, SEC XBRL for free fundamentals/float \u2014 our weak spot, Wayback backfill), anti-block+accuracy triangulation (Stooq IP-block is a live test case), and the constantly-running self-healing pipeline architecture. Accuracy lever = aggressive multi-source triangulation + slow polite polling, NOT spend."
+    },
+    {
+      "ts": "2026-08-15",
+      "phase": "6.9",
+      "kind": "SCOPE",
+      "title": "The free-data layer was RESEARCHED but never BUILT \u2014 Phase 6.9 closes it before any real backtest",
+      "note": "Discrepancy I found on your 'take a step back, examine the discrepancy' order: free-data-sources.md specced CBOE/yfinance/FINRA/EDGAR/FedRegister/RTTNews (all verified-live) but only 2 providers were ever built; everything downstream ran on mocks. Phase 6.9 builds the real providers + scrapers with discipline (rate-limit, \u22655-min cache, provenance-on-every-datum, never-fabricate), wires them to the seams with ZERO downstream contract change, and its verification IS the live shakedown: ingest the real 21-name universe \u2192 run Layer-A backtest + thesis_scan on REAL data \u2192 log every edge case. This is the real-data stress test of every system + the first real backtest number. FMP is 401 on historicals (confirmed) \u2192 yfinance is primary for prices."
+    },
+    {
+      "ts": "2026-08-15",
+      "phase": "6.9",
+      "kind": "CORRECTION",
+      "title": "Prices are a MULTI-SOURCE cascade, NOT yfinance-only (your correction)",
+      "note": "Your correction 2026-08-15: 'we shouldn't be defaulting to yfinance, there should be a plethora of sources and systems.' Right call \u2014 the research gave every OTHER need \u22652 sources (short interest is triple-verified FINRA/Nasdaq/yfinance) but collapsed the most load-bearing datum, price history, to yfinance-only. Fix: providers/prices.py runs a RANKED cascade (Stooq CSV \u2192 yfinance \u2192 Nasdaq historical \u2192 keyed Alpha Vantage/Tiingo \u2014 order pending live verification), falls through on failure/missing name, cross-checks closes where \u22652 sources agree (flags divergence), tags each bar with its source. Generalizes to a source-registry so adding sources later is trivial (modular/future-facing per your standing mandate). Stopped the planner + launched a focused price-cascade research pass to verify endpoints live before re-planning (no ad-hoc guessing)."
+    },
+    {
+      "ts": "2026-08-15",
+      "phase": "6.9",
+      "kind": "DECIDE",
+      "title": "All price sources deliver RAW (auto_adjust=False), not back-adjusted",
+      "note": "Money-critical call I made autonomously: adjusted prices back-adjust the whole series to TODAY's split/dividend state \u2014 a silent look-ahead in a point-in-time backtest (the exact thing the pessimistic gap-fill + latency knob + as_of guards fight). Raw OHLC is what actually printed each week. Splits in this 21-name universe over 1-2yr are rare + detectable \u2192 flagged as shakedown edge cases, not silently smoothed over. Confirm you're OK with raw + split-week flagging vs adjusted."
+    },
+    {
+      "ts": "2026-08-15",
+      "phase": "6.9",
+      "kind": "ARCH",
+      "title": "Key finding: the STORE is the seam \u2014 'zero downstream contract change' is nearly free",
+      "note": "Research verified nothing downstream (thesis_scan/run_layer_a/build_event_set/run_scan) fetches anything \u2014 all read the store or an injected raw dict. So live ingestion just writes the SAME rows via the SAME upsert_bars/insert_catalyst/write_card. No live=True/False boolean threads through the desk; the toggle is only WHO populates the store. Shrinks the phase to thin plumbing over already-built machinery."
+    },
+    {
+      "ts": "2026-08-15",
+      "phase": "MCP",
+      "kind": "todo",
+      "title": "Graphify wired as MCP (.mcp.json) \u2014 activates on your next Claude Code restart",
+      "note": "Per your 'wire up graphify as mcp wiring': .mcp.json points graphify-mcp at graph.json over stdio. Binary + graph load confirmed; the stdio server reaches subagents only after a CC restart (was instruction-only before). Restart CC when convenient to make it real."
+    },
+    {
+      "ts": "2026-08-15",
+      "phase": "CORRECTION",
+      "kind": "STRATEGY",
+      "title": "Sizing now = f(target, survival) \u2014 target drives, survival is a hard cap",
+      "note": "Your correction 2026-08-15: sizing serves the 1%/week target, clamped by the risk-of-ruin ceiling (never crossed). REVERSES Phase-5's 'no target param' invariant \u2192 needs a Phase-5 sizing amendment. Requirements PORT-03 + WEEK-04 updated."
+    },
+    {
+      "ts": "2026-08-15",
+      "phase": "CORRECTION",
+      "kind": "STRATEGY",
+      "title": "NO zero-trade weeks \u2014 build & exit a fresh portfolio every week",
+      "note": "Your correction: always a book; weak weeks deploy smaller (survival cap), never zero. REVERSES Phase-5's 'zero-trade weeks allowed'. Requirement WEEK-01/03 added."
+    },
+    {
+      "ts": "2026-08-15",
+      "phase": "CORRECTION",
+      "kind": "STRATEGY",
+      "title": "Theses on EVERY name every week (not just catalysts)",
+      "note": "Your correction: mean-reversion ('dropped last week, is the bounce a proven edge?') + continuation + catalyst, each with a measured historical edge. New capability upstream of the trade builder \u2014 WEEK-02. Will need a new phase/expansion before the backtest."
+    },
+    {
+      "ts": "2026-08-15",
+      "phase": "6.5",
+      "kind": "SCOPE",
+      "title": "No historical price store existed \u2014 Phase 6.5 now builds one first (gating)",
+      "note": "The weekly thesis engine needs point-in-time OHLCV price history; the DB only had catalyst+KB data. 6.5 leads with a price-bars store + ingestion (~20 names + XBI). Built/tested offline with synthetic fixtures. OPEN DATA QUESTION for you: FMP historical-price tier coverage for ~20 names x ~8-10y weekly bars \u2014 verify before live ingestion (like the seed-universe curation, non-blocking for the build)."
+    },
+    {
+      "ts": "2026-08-15",
+      "phase": "6.5",
+      "kind": "HONEST",
+      "title": "The 'catch the bounce' edge is REAL but thin (~+1%) and only at moderate drops",
+      "note": "Measured on our own 18-biotech data: -5/-10% drops bounce ~54-55% vs 51.3% base (~+1% edge). BUT -15% weeks = falling knife (48.8%, negative median) \u2014 a hard veto, not a bounce. Up-week continuation is a coin flip unconditionally. Savor 2012: info-moves drift, no-info moves reverse \u2014 so the drop-classifier is what makes it honest. Expect only 2-4 tradeable trigger cells to survive. This is the honest ceiling on the mean-reversion thesis."
+    },
+    {
+      "ts": "2026-08-15",
+      "phase": "6.5",
+      "kind": "HONEST",
+      "title": "No-zero-trade-weeks reconciled: weak weeks get a DEFENSIVE book, not a forced bad trade",
+      "note": "When no trigger cell clears the bar, the week is SGOV/BIL + tiny XBI anchors with dossier language saying exactly that \u2014 never a forced failing trade. This is how 'always a portfolio' stays honest with survival-first. Confirm you're OK with defensive/cash-like weeks counting as a valid book."
+    },
+    {
+      "ts": "2026-08-15",
+      "phase": "GOVERNING",
+      "kind": "DECIDE",
+      "title": "MD authority model \u2014 MD decides everything, you're escalated only on genuine blockers",
+      "note": "Your call: all workflows PROPOSE portfolio decisions with full deliverables attached; MD has final say; MD escalates to you (LP) only on a genuine blocker (rare) = the red banner + terminal button. RECONCILE: for LIVE real money, I kept a final human execution-confirm as the one inviolable safety gate. Open question for you: should even that become MD-owned (human-only-on-blocker)? Kept inviolable until you say otherwise."
+    },
+    {
+      "ts": "2026-08-15",
+      "phase": "8.5",
+      "kind": "research",
+      "title": "Intra-week monitor research done \u2014 ~$0.70/week on Haiku",
+      "note": "Monitor-by-exception: 8 deterministic triggers (halts/ATR-move/stop-proximity/volume/EDGAR/headlines/catalyst-diff/book-checks) wake a light Haiku agent; position-card pattern; anti-whipsaw (2-bar confirm, cooldowns, 4 wakes/day cap). Locked: defend-only, both-triggers, triggers+sweeps, MD-decides. Full design in intra-week-monitoring.md."
+    },
+    {
+      "ts": "2026-08-15",
+      "phase": "7",
+      "kind": "FOLLOWUP",
+      "title": "Layer B backtest replays run_desk only (not the full pipeline yet)",
+      "note": "The guarded-agentic backtest (BACK-03) currently replays the catalyst-call layer (run_desk) \u2014 the highest-value memorization-leak comparison vs the mechanical baseline. Extending it to the full run_portfolio/diligence/reconcile chain is a reasonable follow-on (more expensive). Disclosed + verifier-passed; flagged for your eval, not a gap."
+    },
+    {
+      "ts": "2026-08-15",
+      "phase": "6.8",
+      "kind": "ARCH",
+      "title": "Weekly company scanner = Haiku DD-replica: deterministic flaggers \u2192 analyst KB/playbook once-over",
+      "note": "Your architecture: STAGE 1 = cheap deterministic flaggers from data we ACTUALLY have (price/vol deltas, days-to-catalyst, runway, IV, short interest, filings) \u2014 week-over-week on a persisted company card, monitor-by-exception. STAGE 2 = on a flag, a Haiku analyst does a once-over WITH full KB+playbook access to find what's of interest THIS week to explore + build into the portfolio. Opportunities \u2192 MD \u2192 verification \u2192 weekly portfolio \u2192 intra-week monitor. New Phase 6.8, researching now (structure + week-over-week deltas + low-token). SCAN-01..04."
+    },
+    {
+      "ts": "2026-08-15",
+      "phase": "6.7",
+      "kind": "ARCH",
+      "title": "Weekly thesis = standing refresh; flags (quant/qual) route to MD who routes to the team",
+      "note": "Your refinement: the weekly per-name thesis re-runs the SAME analysis each week (signal = the CHANGE vs baseline); a quant or qual flag goes UP to the MD, who routes to the appropriate team IF it chooses to act (unactioned flags logged, not forced). Generalizes the MD from a DD-reconciler into the router for ALL flags (weekly refresh + DD + later intra-week). WEEK-06 + RECON-08; folded into the 6.7 plan."
+    },
+    {
+      "ts": "2026-08-15",
+      "phase": "6.7",
+      "kind": "ARCH",
+      "title": "MD/GP reconciliation loop \u2014 GP integrates all 3 workflows",
+      "note": "Your addition: DD feeds up to the GP; GP re-triggers catalyst-call OR portfolio-builder with the missing info, bounded loop to convergence/cap, caveats to LP. Firewall preserved (DD inputs sealed, only findings flow up). New Phase 6.7 before the backtest."
+    },
+    {
+      "ts": "2026-08-15",
+      "phase": "8.5",
+      "kind": "ARCH",
+      "title": "Intra-week position monitor (light/Haiku, event-triggered) \u2014 BUILD DEFERRED",
+      "note": "Your addition: separate light/fast workflow, deterministic triggers (TA thresholds/news) \u2192 flag position \u2192 back to portfolio builder; no orders. Researching desk practice now + will ask you the trigger/adjustment/gate decisions. New Phase 8.5."
+    },
+    {
+      "ts": "2026-08-15",
+      "phase": "5",
+      "kind": "hedging",
+      "title": "Hedging default is a naked, survival-sized single leg",
+      "note": "3 research passes proved clean long-only idiosyncratic hedges are rare; pairs used only when re-validated per-catalyst. Confirm you're comfortable with this being the default."
+    },
+    {
+      "ts": "2026-08-15",
+      "phase": "5",
+      "kind": "design",
+      "title": "Book-level 1% aggregation (being amended by the sizing correction above)",
+      "note": "Original: legs sized survival-first, select_book aggregates toward ~1% by selection only. The correction makes sizing target-driven-within-cap; this gets reworked in the Phase-5 sizing amendment."
+    },
+    {
+      "ts": "2026-08-15",
+      "phase": "data",
+      "kind": "data",
+      "title": "Options-implied move sourced FREE from CBOE delayed-quotes JSON",
+      "note": "No paid feed needed. Behind a pluggable seam; degrades to in-house gap estimator on illiquid names. Web-scraper is a build-our-own (shared repo was do-not-fork: no license, stale)."
+    },
+    {
+      "ts": "2026-08-15",
+      "phase": "data",
+      "kind": "todo",
+      "title": "Pending from you: curate seed universe + PDUFA dates",
+      "note": "Templates shipped in data/. System runs on stubs until real catalysts are curated \u2014 needed before the paper phase."
+    },
+    {
+      "ts": "2026-08-15",
+      "phase": "hedge",
+      "kind": "research",
+      "title": "New validated hedge pairs found",
+      "note": "CYTK/EWTX (HCM, the second IONS/BBIO), BMRN/ASND, UTHR/LQDA + inverse-ETF dampers LABD/RWM/TZA/SPDN. Seed data for the per-trade validator, loaded at universe curation."
+    },
+    {
+      "ts": "2026-08-15",
+      "phase": "backlog",
+      "kind": "todo",
+      "title": "Backtest must simulate data-gathering timing (Phase 7)",
+      "note": "Data-latency knob beside the slippage knob; point-in-time only, no look-ahead on delayed free data. Logged."
+    },
+    {
+      "ts": "2026-08-15",
+      "phase": "backlog",
+      "kind": "todo",
+      "title": "Faster/more-deterministic fetch = deferred optimization",
+      "note": "Current ~5-min/EOD cadence is fine for a week-hold; revisit after the backtest baseline."
+    }
   ]
 }

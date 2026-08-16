@@ -9,7 +9,7 @@
 
 - [x] **DATA-01**: System maintains a rolling catalyst calendar (PDUFA/AdCom curated, clinical-trial readouts via ClinicalTrials.gov v2, conferences, earnings) for the covered universe
 - [x] **DATA-02**: User can inject an ad-hoc catalyst (ticker + type + date/window)
-- [x] **DATA-03**: Every catalyst date is verified by a two-source rule and re-verified 48h before the event; unverifiable dates are flagged, never traded
+- [~] **DATA-03** *(AMENDED 2026-08-16 — operator decision: authoritative source sets the calendar)*: Every catalyst date is verified before trading, by EITHER (a) the two-source rule (≥2 agreeing sources, ≥1 primary — kept for tracker/YELLOW-sourced dates like PDUFA), OR (b) a single AUTHORITATIVE source where the registry IS the authority (`AUTHORITATIVE_SUFFICIENT` = ClinicalTrials.gov, Federal Register, SEC EDGAR). Re-verified 48h before the event; unverifiable dates flagged, never traded. `last_verified_at` stamped point-in-time from the source's own publication date (anti-look-ahead), never now()/event_date. (Supersedes the strict "two-source-always" rule; implemented in verify.verify_catalyst commits ef94eb9/ef2bb2c.)
 - [x] **DATA-04**: Catalyst dates are typed as point-estimate vs. window, with uncertainty carried downstream
 - [x] **DATA-05**: System flags catalysts 1–2 days out and triggers Workflow 1
 - [x] **DATA-06**: System assembles + maintains the ~20-name universe from criteria (catalyst density, market cap, liquidity, therapeutic area)
