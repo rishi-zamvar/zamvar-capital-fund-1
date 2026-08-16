@@ -25,16 +25,19 @@ def _isolate():
 
 
 def _fake_yf_df():
-    """Monday-indexed weekly frame with Adj Close DIFFERENT from raw Close (the trap)."""
+    """Monday-indexed weekly frame shaped like real yfinance 1.6.0: MultiIndex (field, ticker)
+    columns + Adj Close DIFFERENT from raw Close (the trap). yfinance 1.6.0 returns columns
+    [('Adj Close','TEST'), ('Close','TEST'), ...] even for a single ticker, so row["Close"] is a
+    Series (the ticker sub-level), not a scalar — that is the all-None-bars bug this proves."""
     idx = pd.DatetimeIndex(["2026-08-03", "2026-08-10"])  # yfinance 1wk indexes by Monday
     return pd.DataFrame(
         {
-            "Open": [10.00, 10.60],
-            "High": [10.75, 11.60],
-            "Low": [9.95, 11.00],
-            "Close": [10.50, 11.40],   # RAW — what we must store
-            "Adj Close": [8.20, 9.00],  # split/div-adjusted — the look-ahead trap
-            "Volume": [3000.0, 6500.0],
+            ("Open", "TEST"): [10.00, 10.60],
+            ("High", "TEST"): [10.75, 11.60],
+            ("Low", "TEST"): [9.95, 11.00],
+            ("Close", "TEST"): [10.50, 11.40],    # RAW — what we must store
+            ("Adj Close", "TEST"): [8.20, 9.00],  # split/div-adjusted — the look-ahead trap
+            ("Volume", "TEST"): [3000.0, 6500.0],
         },
         index=idx,
     )
