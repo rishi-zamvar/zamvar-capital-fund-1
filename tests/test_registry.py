@@ -11,7 +11,7 @@ from catalyst_trader.providers import edgar, finra, registry
 from scripts import shakedown as sd
 
 _SLOTS = ("prices", "options", "finra", "edgar", "financials", "macro",
-          "clinicaltrials", "earnings", "pdufa")
+          "clinicaltrials", "earnings", "pdufa", "pdufa_edgar")
 
 
 def _settings(**over):
@@ -47,6 +47,21 @@ def test_earnings_slot_uses_fallback(monkeypatch):
     monkeypatch.setattr(nasdaq_earnings, "fetch", lambda tks, s, e: ["NASDAQ_EVENT"])
     p = registry.build_providers(_settings(), end="2026-01-30")
     assert p["earnings"](["ABCD"], "2026-01-01", "2026-02-01") == ["NASDAQ_EVENT"]
+
+
+def test_pdufa_edgar_slot_registered_daily(monkeypatch):
+    """PDUFA-EDGAR-04: pdufa_edgar is a callable slot (sibling of pdufa, same signature) on the
+    daemon path with a daily cadence — the wiring gap the pdufa debug found (curated loader was
+    off run_cycle)."""
+    from catalyst_trader.providers import pdufa_edgar
+    seen = {}
+    monkeypatch.setattr(pdufa_edgar, "fetch",
+                        lambda tks, s, e, company_map=None: seen.update(tks=tks, cm=company_map) or ["EDGAR_CAT"])
+    p = registry.build_providers(_settings(), end="2026-01-30")
+    assert callable(p["pdufa_edgar"])
+    assert p["pdufa_edgar"](["ABCD"], "2026-01-01", "2026-02-01", company_map={"ABCD": ["Alpha"]}) == ["EDGAR_CAT"]
+    assert seen == {"tks": ["ABCD"], "cm": {"ABCD": ["Alpha"]}}  # passes tickers + company_map through
+    assert registry.CADENCE["pdufa_edgar"] == registry._DAY  # catalysts refresh daily
 
 
 def test_macro_slot_degrades_without_fred_key():
