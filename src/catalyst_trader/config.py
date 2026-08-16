@@ -12,6 +12,7 @@ class Settings(BaseSettings):
     tiingo_api_key: str | None = None  # env: TIINGO_API_KEY — GREEN EOD source when set
     fred_api_key: str | None = None  # env: FRED_API_KEY — GREEN macro/rates/VIX source when set
     db_path: str = "catalyst.db"
+    raw_snapshot_dir: str = "data/raw"  # env: RAW_SNAPSHOT_DIR — raw-response lake ($0 local disk)
     freshness_near_event_hours: int = 48
     freshness_default_days: int = 7
     ctgov_request_spacing_s: float = 1.5
