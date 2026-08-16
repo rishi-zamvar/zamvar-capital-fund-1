@@ -222,7 +222,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] 06.10-01-PLAN.md — edgartools fundamentals/float provider: replace edgar.py (CIK-internal), keep seen_accessions/live_shelf, add cash_runway_months/shares_outstanding (Wave 1)
 - [x] 06.10-02-PLAN.md — FRED macro/rates/VIX provider (env-first key, degrade-to-skip) (Wave 1)
 - [x] 06.10-03-PLAN.md — raw-snapshot lake in _http (data/raw + re-parse + prune) + get_text json_body transport (Wave 1)
-- [ ] 06.10-04-PLAN.md — N-source median cross-check + split/bad-tick/stale detectors in prices.py (Wave 1)
+- [x] 06.10-04-PLAN.md — N-source median cross-check + split/bad-tick/stale detectors in prices.py (Wave 1)
 - [ ] 06.10-05-PLAN.md — coverage fixes: FINRA NDJSON parse + Nasdaq earnings FMP-fallback (Wave 2)
 - [ ] 06.10-06-PLAN.md — daemon: registry + run_cycle/cadence + detect_gaps/backfill/failover + data_health.json + monitor tab + launchd (Wave 3)
 - [ ] 06.10-07-PLAN.md — live --once operator shakedown: >=2-source median live + GREEN-key doc + catalyst debug ($0) (Wave 4)
