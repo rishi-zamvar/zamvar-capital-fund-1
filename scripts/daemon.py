@@ -66,15 +66,26 @@ def _prev_source_states(health_path: str | None) -> dict:
 def _source_states(conn, cadence, now, prev) -> dict:
     """Per-source health from the PERSISTED price_bar fetch timestamps: last_success (freshest
     retrieved_at), degraded (fetch older than 2x cadence — a dead/degrading source), and consec_fail
-    carried forward from the previous cycle (reset to 0 on a fresh success)."""
+    carried forward from the previous cycle (reset to 0 on a fresh success).
+
+    Health is keyed off EVERY source that participated in the cross-check (the agreeing_sources set),
+    not just the emitted REFERENCE source. yfinance is always the highest-grade of the always-on pair
+    so it is always the ref — grouping by the `source` column alone made nasdaq (a cross-check partner
+    on ~all bars) invisible, so a silently-dying partner would never show as degraded. Reading
+    agreeing_sources surfaces every real participant."""
+    last: dict[str, str] = {}
+    for r in conn.execute("SELECT source, agreeing_sources, retrieved_at FROM price_bar").fetchall():
+        srcs = {s for s in (r["agreeing_sources"] or "").split(",") if s} | {r["source"]}
+        for s in srcs:
+            if r["retrieved_at"] and r["retrieved_at"] > last.get(s, ""):
+                last[s] = r["retrieved_at"]
     states = {}
-    for r in conn.execute(
-            "SELECT source, MAX(retrieved_at) mx FROM price_bar GROUP BY source").fetchall():
-        stale = prices.is_stale(r["mx"], cadence.get("prices", 86_400), now=now)
-        prev_fail = (prev.get(r["source"]) or {}).get("consec_fail", 0)
-        states[r["source"]] = {"last_success": r["mx"],
-                               "consec_fail": (prev_fail + 1) if stale else 0,
-                               "degraded": stale}
+    for source, mx in last.items():
+        stale = prices.is_stale(mx, cadence.get("prices", 86_400), now=now)
+        prev_fail = (prev.get(source) or {}).get("consec_fail", 0)
+        states[source] = {"last_success": mx,
+                          "consec_fail": (prev_fail + 1) if stale else 0,
+                          "degraded": stale}
     return states
 
 

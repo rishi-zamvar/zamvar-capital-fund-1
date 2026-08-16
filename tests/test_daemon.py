@@ -145,6 +145,19 @@ def test_degraded_source_no_raise(db, tmp_path):
     assert health["sources"]["deadsrc"]["degraded"] is True
 
 
+def test_data_health_lists_cross_check_partner_not_just_ref(db, tmp_path):
+    """Reporting-gap guard (06.10-07): the health `sources` block must list EVERY source that
+    participated in the cross-check (agreeing_sources), not only the emitted reference. The fixture
+    bars are ref=alpha_vantage with agreeing={alpha_vantage,yfinance}; yfinance is never the ref, so
+    the old GROUP BY source hid it — a silently-dying partner would never show as degraded."""
+    csv_path = _seed(tmp_path, ["ABCD"])
+    hp = str(tmp_path / "data_health.json")
+    daemon.run_cycle(db, _providers(), universe_csv=csv_path, health_path=hp, **_CYCLE_KW)
+    sources = json.loads(open(hp).read())["sources"]
+    assert "yfinance" in sources and "alpha_vantage" in sources, sources
+    assert sources["yfinance"]["degraded"] is False
+
+
 def test_data_health_divergences_this_cycle(db, tmp_path):
     """A cycle that logs K cross-check divergences -> data_health.divergences_this_cycle == K
     (a PER-CYCLE count via the log-tap, NOT a fabricated rolling window)."""
