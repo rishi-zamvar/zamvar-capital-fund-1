@@ -65,7 +65,24 @@ def _catalyst(ticker, event_date, *, two_source, fr_published):
     )
 
 
-def _providers(*, prices=None, pdufa=None):
+def _ctgov_catalyst(ticker, event_date, *, posted):
+    """A single-source CT.gov trial readout mirroring the clinicaltrials provider: ONE primary
+    ClinicalTrials.gov source carrying published_date=lastUpdatePostDate. Under the DATA-03
+    amendment this single authoritative source VERIFIES on its own."""
+    source = CatalystSource(
+        source_name="ClinicalTrials.gov", source_url="https://clinicaltrials.gov/study/NCT9",
+        source_type=SourceType.primary, reported_date=event_date, date_type=DateType.estimated,
+        published_date=posted, retrieved_at="2026-01-01T00:00:00Z",
+    )
+    return Catalyst(
+        ticker=ticker, catalyst_type=CatalystType.trial_readout, event_date=event_date,
+        date_precision=DatePrecision.day, uncertainty_type=Uncertainty.window,
+        source_origin=SourceOrigin.clinicaltrials_gov, external_ref=f"NCT:{ticker}:{event_date}",
+        status=Status.unverified, sources=[source],
+    )
+
+
+def _providers(*, prices=None, pdufa=None, clinicaltrials=None):
     """A provider struct the loop drives; unset providers default absent (degrade)."""
     return {
         "prices": prices if prices is not None else (lambda tk, s, e: _bars(tk)),
@@ -73,6 +90,7 @@ def _providers(*, prices=None, pdufa=None):
         "finra": lambda tk: None,
         "edgar": lambda tk: None,
         "pdufa": pdufa,
+        "clinicaltrials": clinicaltrials,
     }
 
 
@@ -110,11 +128,25 @@ def test_ingest_two_source_catalyst_verified_and_pit_stamped(db, tmp_path):
     assert cat[0].last_verified_at == "2026-01-15"  # the FR publication_date — NOT now, NOT event_date
 
 
-def test_ingest_single_source_stays_untradeable(db, tmp_path):
+def _tracker_only_catalyst(ticker, event_date):
+    """A single NON-authoritative tracker (RTTNews secondary) — must stay untradeable (2-source
+    rule preserved for scraped feeds; DATA-03 amendment does NOT touch trackers)."""
+    return Catalyst(
+        ticker=ticker, catalyst_type=CatalystType.pdufa, event_date=event_date,
+        date_precision=DatePrecision.day, uncertainty_type=Uncertainty.soft,
+        source_origin=SourceOrigin.curated_pdufa, external_ref=f"rtt:{ticker}:{event_date}",
+        status=Status.unverified, sources=[CatalystSource(
+            source_name="RTTNews", source_url="https://rtt", source_type=SourceType.secondary,
+            reported_date=event_date, date_type=DateType.estimated,
+            retrieved_at="2026-01-01T00:00:00Z")],
+    )
+
+
+def test_ingest_single_tracker_source_stays_untradeable(db, tmp_path):
     csv_path = _seed(tmp_path, [("ABCD", "Alpha Bio", False)])
     providers = _providers(
         pdufa=lambda tks, s, e, company_map=None: [
-            _catalyst("ABCD", "2026-02-06", two_source=False, fr_published="2026-01-15")],
+            _tracker_only_catalyst("ABCD", "2026-02-06")],
     )
     ingest.ingest_history(db, start="2026-01-02", end="2026-01-09", providers=providers,
                           universe_csv=csv_path)
@@ -156,6 +188,24 @@ def test_ingest_last_verified_at_no_lookahead(db, tmp_path):
     assert by_as_of["2026-01-09"] == []                 # as_of < D=2026-01-15 -> excluded
     assert len(by_as_of["2026-01-16"]) == 1             # as_of >= D -> included
     assert by_as_of["2026-01-16"][0]["ticker"] == "ABCD"
+
+
+def test_ingest_single_ctgov_readout_verifies_and_pit_stamped(db, tmp_path):
+    """DATA-03 amendment end-to-end: a SINGLE CT.gov readout now flows insert->verify->tradeable
+    with a POINT-IN-TIME last_verified_at (the record's lastUpdatePostDate, NOT now/event_date).
+    Anti-look-ahead: excluded before D, included at as_of >= D."""
+    csv_path = _seed(tmp_path, [("ABCD", "Alpha Bio", False)])
+    providers = _providers(clinicaltrials=lambda tks, s, e: [
+        _ctgov_catalyst("ABCD", "2026-02-06", posted="2026-01-15")])
+    ingest.ingest_history(db, start="2026-01-02", end="2026-01-09", providers=providers,
+                          universe_csv=csv_path)
+    cat = store.tradeable_catalysts(db)
+    assert len(cat) == 1 and cat[0].status == Status.verified          # single source now tradeable
+    assert cat[0].last_verified_at == "2026-01-15"                     # CT.gov post date, not now/event
+    events = build_event_set(db, start="2026-01-09", end="2026-01-23", hold_days=30)
+    by = {r["as_of"]: r["catalysts"] for r in events}
+    assert by["2026-01-09"] == []                                     # as_of < D -> excluded
+    assert len(by["2026-01-16"]) == 1 and by["2026-01-16"][0]["ticker"] == "ABCD"  # as_of >= D
 
 
 def test_ingest_idempotent_double_run(db, tmp_path):

@@ -46,9 +46,53 @@ def _catalyst(sources, **over):
 
 # --- two-source rule ---------------------------------------------------------
 
-def test_single_source_stays_unverified(db):
-    cid = store.insert_catalyst(db, _catalyst([_source()]))
+def test_single_tracker_source_stays_unverified(db):
+    """A lone NON-authoritative tracker (RTTNews-style) never single-verifies — the 2-source
+    rule is preserved byte-for-byte for scraped/tracker/YELLOW feeds (DATA-03)."""
+    cid = store.insert_catalyst(
+        db, _catalyst([_source(source_name="RTTNews", source_type=SourceType.secondary)])
+    )
     assert verify.verify_catalyst(db, cid) == Status.unverified
+
+
+def test_single_curated_primary_nonauthoritative_stays_unverified(db):
+    """A hand-typed single PRIMARY that is NOT a registry authority (e.g. 'FDA' in a curated
+    row) still needs corroboration — authoritative-sufficiency is NAME-gated, not merely
+    source_type=primary (guards against a curated row borrowing 'primary')."""
+    cid = store.insert_catalyst(
+        db, _catalyst([_source(source_name="FDA", source_type=SourceType.primary)])
+    )
+    assert verify.verify_catalyst(db, cid) == Status.unverified
+
+
+# --- DATA-03 amendment: a single AUTHORITATIVE-SUFFICIENT source verifies -----
+
+def test_single_ctgov_readout_now_verifies(db):
+    """A single ClinicalTrials.gov primary (the registry IS the authority for a trial readout)
+    verifies + becomes tradeable on its own — this is the unblock (DATA-03 amendment)."""
+    cid = store.insert_catalyst(
+        db,
+        _catalyst(
+            [_source(source_name="ClinicalTrials.gov", source_type=SourceType.primary)],
+            catalyst_type=CatalystType.trial_readout,
+            source_origin=SourceOrigin.clinicaltrials_gov,
+        ),
+    )
+    assert verify.verify_catalyst(db, cid) == Status.verified
+    assert verify.is_tradeable(store.get_catalyst(db, cid)) is True
+
+
+def test_single_fedregister_adcom_now_verifies(db):
+    """A single Federal Register primary (the government publication IS the authority for an
+    AdCom notice) verifies on its own."""
+    cid = store.insert_catalyst(
+        db,
+        _catalyst(
+            [_source(source_name="Federal Register", source_type=SourceType.primary)],
+            catalyst_type=CatalystType.adcom,
+        ),
+    )
+    assert verify.verify_catalyst(db, cid) == Status.verified
 
 
 def test_two_agreeing_sources_with_primary_becomes_verified(db):
@@ -67,8 +111,13 @@ def test_two_sources_no_primary_not_verified(db):
 
 
 def test_two_sources_one_disagrees_not_verified(db):
+    # non-authoritative names so this tests the 2-source disagreement path (a lone agreeing CT.gov
+    # primary would legitimately single-verify under the DATA-03 amendment).
     cid = store.insert_catalyst(
-        db, _catalyst([_source(source_type=SourceType.primary), _source(source_type=SourceType.secondary, agrees=False)])
+        db, _catalyst([
+            _source(source_name="FDA", source_type=SourceType.primary),
+            _source(source_name="RTTNews", source_type=SourceType.secondary, agrees=False),
+        ])
     )
     assert verify.verify_catalyst(db, cid) != Status.verified
 

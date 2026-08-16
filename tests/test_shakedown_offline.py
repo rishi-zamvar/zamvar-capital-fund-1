@@ -115,9 +115,23 @@ def test_shakedown_produces_edge_case_report(db, tmp_path):
     assert "coverage" in report
 
 
+def _tracker_only(ticker, event_date):
+    """A single NON-authoritative tracker (RTTNews secondary): stays untradeable under DATA-03
+    (a lone Federal Register/CT.gov source WOULD now single-verify — the amendment)."""
+    return Catalyst(
+        ticker=ticker, catalyst_type=CatalystType.pdufa, event_date=event_date,
+        date_precision=DatePrecision.day, uncertainty_type=Uncertainty.soft,
+        source_origin=SourceOrigin.curated_pdufa, external_ref=f"rtt:{ticker}:{event_date}",
+        status=Status.unverified, sources=[CatalystSource(
+            source_name="RTTNews", source_url="https://rtt", source_type=SourceType.secondary,
+            reported_date=event_date, date_type=DateType.estimated,
+            retrieved_at="2026-01-01T00:00:00Z")],
+    )
+
+
 def test_shakedown_reports_tradeable_catalyst_count(db, tmp_path):
-    """The honesty line: a 2-source verified catalyst PIT-stamped in-window is counted; a
-    single-source-only feed yields 0 (a vacuous backtest is SURFACED, not hidden)."""
+    """The honesty line: a 2-source verified catalyst PIT-stamped in-window is counted; a lone
+    NON-authoritative tracker feed yields 0 (a vacuous backtest is SURFACED, not hidden)."""
     csv_path = _seed(tmp_path, [("ABCD", "Alpha Bio", False)])
 
     two = _providers(pdufa=lambda tks, s, e, company_map=None: [
@@ -126,7 +140,7 @@ def test_shakedown_reports_tradeable_catalyst_count(db, tmp_path):
     assert r_two["tradeable_catalyst_count"] == 1
 
     one = _providers(pdufa=lambda tks, s, e, company_map=None: [
-        _catalyst("SNGL", "2026-03-06", two_source=False, fr_published=_PIT)])
+        _tracker_only("SNGL", "2026-03-06")])
     csv2 = _seed(tmp_path, [("SNGL", "Single Bio", False)])
     conn2 = _db.connect(":memory:")
     _db.migrate(conn2)

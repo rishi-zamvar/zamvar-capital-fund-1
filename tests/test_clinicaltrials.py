@@ -60,6 +60,16 @@ def test_source_provenance_attached(httpx_mock, load_fixture):
     assert s.date_type is DateType.estimated  # ESTIMATED -> estimated
 
 
+def test_source_carries_last_update_post_date_as_published(httpx_mock, load_fixture):
+    """The CT.gov source carries lastUpdatePostDate as published_date — the honest point-in-time
+    date for last_verified_at (anti-look-ahead) now that a single CT.gov readout verifies."""
+    httpx_mock.add_response(json=_wrap(load_fixture("ctgov_full_date")))
+    c = ct.fetch_trial_readouts(
+        ["VRTX"], "2024-01-01", "2024-12-31", sponsor_map=SPONSOR_MAP
+    )[0]
+    assert c.sources[0].published_date == "2024-07-12"  # lastUpdatePostDateStruct.date, not the event
+
+
 def test_full_date_actual_maps_date_type_actual(httpx_mock, load_fixture):
     httpx_mock.add_response(json=_wrap(load_fixture("ctgov_full_date")))
     c = ct.fetch_trial_readouts(
