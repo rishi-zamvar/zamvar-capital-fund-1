@@ -263,3 +263,19 @@ Fable universe + pairs-discovery agents (event studies, FMP/yfinance metrics). T
 ### Phase 1 — (pending phase completion)
 - Observation: planning round-trip (planner 139k + checker 122k + revision) is the dominant cost this phase; research 109k.
 - Levers to apply next phase: graphify online (biggest), narrower per-phase research, tighter files_to_read.
+
+### Phase 6.9 — Free-Data Ingestion Layer (CLOSED 2026-08-16)
+- **Spend: ~1.73M tokens** (build). Split:
+  - Research: base 129k + price-cascade addendum 101k = **230k**
+  - Planning round-trip: planner 163k + plan-check 150k + revision 140k + re-check 84k = **537k** (2 money blockers caught + fixed + re-verified — the round-trip earned it AGAIN, 8th straight money phase)
+  - Execution: 8 plans (60+75+78+122+124+72+138+243k) = **912k** + yfinance shakedown-fix 54k = **966k**
+- **The shakedown was the biggest single line (243k)** and the highest-value: it ran 5 live network passes, caught 2 money-critical crashes (null-close, ETF asset-class) AND exposed the single-source collapse + vacuous backtest that offline tests structurally could not. Real-data verification is worth its cost on a money path.
+- **Cross-phase honesty win:** the offline suite was GREEN while the live cascade was single-source — because a fake fixture (flat columns) didn't match real yfinance (MultiIndex). Lesson recorded: **provider fixtures must mirror the real upstream response shape**, or offline-green masks a live break. The yfinance-fix RED test now reproduces the exact live bug offline.
+- **Levers that held cost down:** store-is-the-seam finding (zero downstream contract change → no desk rewrites); reuse-vs-new verdict up front (thin plumbing over already-built machinery); Graphify graph-first navigation; `.venv/bin/python` discipline.
+- **Out-of-band forward research (NOT in the 1.73M build total, tracked separately):** free-data-pipeline ecosystem 101k + free-intraday-prices 127k = **228k** — these scoped Phase 6.10 + 8.5 (edgartools/FRED/daemon; intraday monitor feed). User-requested, so bucketed apart to keep the build/Graphify metric clean.
+- **Cumulative build ≈ 15.1M** (was ~13.4M after Phase 7) + ~0.23M forward-research bucket.
+
+### Directives carried to Phase 6.10+ (append to agent prompts)
+1. **Provider/HTTP fixtures MUST mirror the real upstream shape** (MultiIndex columns, NDJSON, whatever the live source actually returns) — the yfinance MultiIndex bug shipped offline-green because the fake was flat. When adding a provider, capture a REAL response snapshot as the fixture.
+2. **Prefer live-verified real-data checks at phase close** for data-touching phases — the shakedown found what 1002 offline tests could not.
+3. Prior directives still hold: Graphify re-index before planning (done — graph re-indexed at 6.9 close), reuse-vs-new verdict up front, narrow per-phase research, tight files_to_read, plan-check ON for money phases, `.venv/bin/python -m pytest`, sequential-on-main execution.

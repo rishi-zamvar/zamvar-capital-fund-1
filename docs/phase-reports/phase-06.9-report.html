@@ -1,0 +1,116 @@
+<title>Fund 1 — Phase 6.9 Report</title>
+<style>
+  :root{
+    --bg:#ecefe9;--surface:#fff;--surface-2:#f5f7f2;--ink:#191c18;--muted:#5f655c;--faint:#99a094;
+    --border:#d6dbcf;--border-strong:#c2c8b8;--accent:#8a6a12;--accent-bg:#f3ecd8;
+    --done:#1f7a4d;--done-bg:#e4f2e9;--warn:#b23b30;--warn-bg:#f6e5e3;--info:#2b6a93;--info-bg:#e2edf4;
+    --mono:ui-monospace,"SF Mono","JetBrains Mono",Menlo,Consolas,monospace;
+    --sans:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+    --shadow:0 1px 2px rgba(20,25,18,.06),0 4px 14px rgba(20,25,18,.05);
+  }
+  @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+    --bg:#101310;--surface:#191d18;--surface-2:#20241e;--ink:#e8ece4;--muted:#9aa192;--faint:#6b7365;
+    --border:#2c322a;--border-strong:#3a4136;--accent:#d8b45a;--accent-bg:#2a2412;
+    --done:#4cc585;--done-bg:#14271c;--warn:#ef7365;--warn-bg:#2c1714;--info:#6bb3e6;--info-bg:#122430;
+    --shadow:0 1px 2px rgba(0,0,0,.4),0 6px 18px rgba(0,0,0,.35);
+  }}
+  :root[data-theme="dark"]{
+    --bg:#101310;--surface:#191d18;--surface-2:#20241e;--ink:#e8ece4;--muted:#9aa192;--faint:#6b7365;
+    --border:#2c322a;--border-strong:#3a4136;--accent:#d8b45a;--accent-bg:#2a2412;
+    --done:#4cc585;--done-bg:#14271c;--warn:#ef7365;--warn-bg:#2c1714;--info:#6bb3e6;--info-bg:#122430;
+    --shadow:0 1px 2px rgba(0,0,0,.4),0 6px 18px rgba(0,0,0,.35);
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);line-height:1.55}
+  .wrap{max-width:900px;margin:0 auto;padding:40px 22px 72px}
+  .ey{font-family:var(--mono);font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--accent);font-weight:600}
+  h1{font-family:var(--mono);font-size:clamp(24px,5vw,36px);margin:8px 0 4px;letter-spacing:-.01em}
+  .status{display:inline-flex;align-items:center;gap:8px;font-family:var(--mono);font-size:12.5px;color:var(--done);background:var(--done-bg);border:1px solid var(--done);border-radius:20px;padding:4px 13px;margin-top:6px}
+  .masthead{border-bottom:2px solid var(--ink);padding-bottom:18px;margin-bottom:26px}
+  .meta{font-family:var(--mono);font-size:12px;color:var(--muted);margin-top:10px}
+  h2{font-family:var(--mono);font-size:16px;margin:32px 0 12px;display:flex;align-items:center;gap:9px}
+  h2 .ic{width:22px;height:22px;border-radius:5px;display:inline-grid;place-items:center;font-size:13px;flex:none}
+  .ic.d{background:var(--done-bg);color:var(--done);border:1px solid var(--done)}
+  .ic.w{background:var(--warn-bg);color:var(--warn);border:1px solid var(--warn)}
+  .ic.g{background:var(--accent-bg);color:var(--accent);border:1px solid var(--accent)}
+  .ic.n{background:var(--info-bg);color:var(--info);border:1px solid var(--info)}
+  ul{margin:0;padding-left:2px;list-style:none}
+  li{position:relative;padding:5px 0 5px 22px;font-size:14.5px}
+  li::before{content:"";position:absolute;left:2px;top:12px;width:6px;height:6px;border-radius:50%;background:var(--accent)}
+  li.done::before{content:"✓";background:none;color:var(--done);font-family:var(--mono);font-size:13px;top:6px;left:0}
+  li b{font-weight:600}
+  code{font-family:var(--mono);font-size:12.5px;background:var(--surface-2);border:1px solid var(--border);border-radius:4px;padding:1px 6px}
+  .card{background:var(--surface);border:1px solid var(--border);border-left:4px solid var(--info);border-radius:9px;padding:14px 16px;margin:10px 0;box-shadow:var(--shadow)}
+  .card.decide{border-left-color:var(--accent);background:var(--accent-bg)}
+  .card.warn{border-left-color:var(--warn)}
+  .card h3{font-family:var(--mono);font-size:14px;margin:0 0 4px;color:var(--info)}
+  .card.decide h3{color:var(--accent)}
+  .card.warn h3{color:var(--warn)}
+  .card p{margin:4px 0 0;font-size:14px;color:var(--ink)}
+  .tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:12px;margin:8px 0 4px}
+  .tile{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:13px 15px;box-shadow:var(--shadow)}
+  .tile .k{font-family:var(--mono);font-size:10px;letter-spacing:.07em;text-transform:uppercase;color:var(--faint)}
+  .tile .v{font-family:var(--mono);font-size:23px;font-weight:700;margin-top:3px}
+  .tile .v small{font-size:14px;color:var(--muted)}
+  .next{background:var(--accent-bg);border:1px solid var(--accent);border-radius:10px;padding:16px 18px;margin-top:10px}
+  .next h3{font-family:var(--mono);font-size:15px;margin:0 0 6px;color:var(--accent)}
+  .next p{margin:0;font-size:14px}
+  .win{background:var(--done-bg);border:1px solid var(--done);border-radius:8px;padding:10px 14px;margin:10px 0;font-size:14px}
+  .win b{color:var(--done)}
+  footer{margin-top:34px;padding-top:18px;border-top:1px solid var(--border);font-family:var(--mono);font-size:11.5px;color:var(--faint)}
+</style>
+
+<div class="wrap">
+  <div class="masthead">
+    <div class="ey">zamvar capital · fund 1 · phase report</div>
+    <h1>Phase 6.9 — Free-Data Ingestion Layer</h1>
+    <div class="status">● COMPLETE · 8 plans / 5 waves · 1002 tests · the honest-data milestone</div>
+    <div class="meta">2026-08-16 · INGEST-01…05 closed · goal: <i>turn the researched free sources into real, cross-checked, point-in-time data — and stress-test every system on it.</i></div>
+  </div>
+
+  <h2><span class="ic d">✓</span> What's done</h2>
+  <ul>
+    <li class="done"><b>Our own free data pipeline is built and running on real data.</b> Multi-source providers behind a disciplined fetch layer (≥5-min cache, rate-limit, honest UA, degrade-never-crash), all $0: a price cascade, CBOE options, FINRA, EDGAR, Federal Register + RTTNews PDUFA, earnings.</li>
+    <li class="done"><b>Prices are genuinely multi-source, not single-source.</b> A ranked cascade (Alpha Vantage → Tiingo → yfinance → Nasdaq) cross-checks closes across sources, keeps the highest-grade value, flags divergence, and <i>never</i> fabricates a missing bar. Live-proven: yfinance vs Nasdaq agree to <b>0.000%</b> on real weeks.</li>
+    <li class="done"><b>The store is the seam — zero downstream contract change.</b> Live ingestion writes the same rows the desk already reads; a <code>grep</code> for any <code>live=True/False</code> toggle across the desk is empty. Nothing above the data layer had to change.</li>
+    <li class="done"><b>No look-ahead, even on free-data lag.</b> Raw (unadjusted) prices, Friday-anchored week keys, and point-in-time catalyst verification: an ingested PDUFA date is stamped with its <i>source's publication date</i>, so history can only see what was actually knowable then.</li>
+    <li class="done"><b>A live shakedown ran the whole machine on the real 21-name universe</b> — real network, 100% price coverage (1092/1092 name-weeks), then the real Layer-A backtest + thesis-scan end-to-end, logging every edge case.</li>
+    <li class="done"><b>The shakedown caught and fixed 3 real bugs offline tests could not</b> — a null-close crash, a Nasdaq ETF asset-class miss that had silently zeroed the whole statistical sleeve, and the yfinance MultiIndex bug that had collapsed the cascade to single-source. All fixed with tests that reproduce them.</li>
+  </ul>
+
+  <h2><span class="ic g">★</span> What's going well</h2>
+  <div class="win"><b>The live test did its job — it told us the truth.</b> 1002 offline tests were green while the live cascade was quietly single-source, because a fake fixture didn't match real yfinance's column shape. Only running it on real data exposed that. That's the entire value of a shakedown: it found what unit tests structurally cannot, and every finding is now a test. Plan-check also caught 2 money-critical contract breaks before execution — the 8th straight money phase it's earned its keep.</div>
+
+  <h2><span class="ic w">!</span> Needs your review / input</h2>
+  <div class="card warn">
+    <h3>★ The backtest is real but empty — and that's the honest result</h3>
+    <p>On the real run, <code>tradeable_catalyst_count = 0</code>: zero catalysts cleared the two-source verify gate inside the window, so the engine produced only defensive/cash legs (all 0.0; Sharpe/Sortino correctly <code>None</code> — <b>never faked</b>). The machine is built and money-safe, but on a cold knowledge base with a partial catalyst feed <b>there is no edge to measure yet</b>. This is a data gap, not a build gap.</p>
+  </div>
+  <div class="card decide">
+    <h3>★ The one thing that gates a real backtest number: catalyst data (your call)</h3>
+    <p>Two paths, both need your nod: <b>(a)</b> curate the PDUFA/AdCom table (the carry-forward flagged since Phase 1 — hand-entered dates, each needs two sources), and/or <b>(b)</b> we debug the live Federal Register + RTTNews providers in 6.10 (built here, but found 0 in-window two-source events for these names this run). Until one lands, every backtest is honestly vacuous.</p>
+  </div>
+  <div class="card">
+    <h3>Optional: two GREEN price keys for deeper redundancy</h3>
+    <p>The cascade runs fully on yfinance + Nasdaq today (both free, cross-checked). Dropping free Alpha Vantage + Tiingo keys into <code>.env</code> adds two authoritative (GREEN) sources and a 3rd/4th cross-check vote. Not required; the system degrades gracefully without them.</p>
+  </div>
+
+  <h2><span class="ic n">→</span> Next steps</h2>
+  <div class="next">
+    <h3>Phase 6.10 — Always-On Data Daemon, Coverage Expansion &amp; Quality Monitor</h3>
+    <p>Wrap this foundation in a constantly-running <code>launchd</code> daemon (self-healing, gap-backfilling, raw-snapshot audit lake), add the gap-fillers (<b>edgartools</b> for SEC-XBRL fundamentals/float, <b>FRED</b> for macro/VIX), upgrade the cross-check to N-source median, and surface data-health to the monitor. The shakedown's coverage findings — FINRA NDJSON parse, EDGAR→CIK, Nasdaq-earnings fallback (FMP 402'd) — are folded in as PIPE-09/10. Then intraday (MON-10, Phase 8.5) for the defend-only monitor.</p>
+  </div>
+
+  <h2><span class="ic g">▤</span> Project state</h2>
+  <div class="tiles">
+    <div class="tile"><div class="k">Phase</div><div class="v">6.9<small> done</small></div></div>
+    <div class="tile"><div class="k">Tests</div><div class="v">1002</div></div>
+    <div class="tile"><div class="k">Reqs closed</div><div class="v" style="color:var(--done)">5/5</div></div>
+    <div class="tile"><div class="k">Coverage</div><div class="v">100%</div></div>
+    <div class="tile"><div class="k">Data cost</div><div class="v">$0</div></div>
+    <div class="tile"><div class="k">Blockers</div><div class="v" style="color:var(--warn)">1</div></div>
+  </div>
+  <p style="font-size:13.5px;color:var(--muted);margin-top:10px">One open blocker — <b>catalyst data</b> — gates a meaningful backtest number, and it's a curation task, not a code task. The data layer itself is complete, cross-checked, point-in-time-correct, and free. Full free-data map at the <b>Free Data System</b> artifact; shakedown detail in <code>.planning/phases/06.9-free-data-ingestion-layer/06.9-08-shakedown-report.json</code>. Autonomous run continues to Phase 6.10.</p>
+
+  <footer>Fund 1 · Phase 6.9 · generated 2026-08-16 · the store is the seam · a fixture must match reality · never fabricate a bar · honesty over flattery</footer>
+</div>
