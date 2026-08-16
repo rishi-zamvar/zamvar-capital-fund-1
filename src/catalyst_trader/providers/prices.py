@@ -104,3 +104,83 @@ def _nasdaq_daily(ticker, start, end):
         b["_source"] = "nasdaq"
         b["_grade"] = "yellow"
     return weekly
+
+
+def _av_weekly(ticker, start, end):
+    """Alpha Vantage TIME_SERIES_WEEKLY RAW bars (GREEN, keyed).
+
+    Uses the NON-adjusted function on purpose (TIME_SERIES_WEEKLY, never ..._ADJUSTED) and reads
+    "4. close" (never "5. adjusted close") — adjusted = look-ahead. [] when the key is absent so
+    the cascade skips it, or on _http degrade. Native weekly series re-anchored to Friday and
+    windowed to [start, end].
+    """
+    key = settings.alpha_vantage_api_key
+    if key is None:
+        return []
+    url = "https://www.alphavantage.co/query"
+    params = {"function": "TIME_SERIES_WEEKLY", "symbol": ticker, "apikey": key}
+    data = get_json("alpha_vantage", url, params=params, ua="browser")
+    if not data:
+        return []
+    series = data.get("Weekly Time Series") or {}
+    bars = []
+    for day, row in series.items():
+        week_end = friday_week_end(day)
+        if week_end < start or week_end > end:
+            continue
+        close = _f(row.get("4. close"))  # RAW close — NOT "5. adjusted close"
+        if close is None:
+            continue
+        bars.append({
+            "week_end": week_end,
+            "open": _f(row.get("1. open")),
+            "high": _f(row.get("2. high")),
+            "low": _f(row.get("3. low")),
+            "close": close,
+            "volume": _f(row.get("6. volume")),
+            "_source": "alpha_vantage",
+            "_grade": "green",
+        })
+    bars.sort(key=lambda b: b["week_end"])
+    return bars
+
+
+def _tiingo_eod(ticker, start, end):
+    """Tiingo EOD daily RAW bars resampled to Friday weeks (GREEN, keyed).
+
+    Reads `close/open/high/low/volume` — NEVER `adjClose`/`adj*` (those bake in future
+    corporate actions). [] when the key is absent or on _http degrade.
+    """
+    key = settings.tiingo_api_key
+    if key is None:
+        return []
+    url = f"https://api.tiingo.com/tiingo/daily/{ticker}/prices"
+    params = {"token": key, "startDate": start, "endDate": end}
+    data = get_json("tiingo", url, params=params, ua="browser")
+    if not data:
+        return []
+    daily = []
+    for row in data:
+        close = _f(row.get("close"))  # RAW close — NOT row["adjClose"]
+        if close is None:
+            continue
+        daily.append({
+            "week_end": str(row["date"])[:10],  # ISO datetime -> YYYY-MM-DD
+            "open": _f(row.get("open")),
+            "high": _f(row.get("high")),
+            "low": _f(row.get("low")),
+            "close": close,
+            "volume": _f(row.get("volume")),
+        })
+    weekly = resample_daily_to_weekly(daily)
+    for b in weekly:
+        b["_source"] = "tiingo"
+        b["_grade"] = "green"
+    return weekly
+
+
+def _stooq(ticker, start, end):
+    # ponytail: registered-but-disabled; IP proof-of-work wall from this machine (RESEARCH §1);
+    # re-enable if reachable from another egress (the shape would mirror _nasdaq_daily: CSV EOD
+    # via _http, RAW OHLCV, resample_daily_to_weekly, _source="stooq"/_grade="yellow").
+    return []
