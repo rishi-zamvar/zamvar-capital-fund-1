@@ -122,4 +122,5 @@ def test_no_network_in_extract():
     from catalyst_trader.providers import pdufa_edgar
 
     src = inspect.getsource(pdufa_edgar._extract) + inspect.getsource(pdufa_edgar._normalize)
-    assert not re.search(r"get_json|get_text|httpx|requests|anthropic|openai", src)
+    # bs4's .get_text() is local parsing, not network — guard only _http fetches + HTTP/LLM libs.
+    assert not re.search(r"get_json|_http|httpx|requests|urllib|anthropic|openai", src)
