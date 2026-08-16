@@ -99,25 +99,29 @@ def _base_rate_direction(ticker, as_of, store_mod, conn, *, params):
     (desk/weekly.py L116-119): classify_drop -> _match_trigger -> weekly_base_rate.
 
     The catalyst thesis row carries trigger=None / p=None / no drop_class, so this NEVER reads them off
-    the row — it computes them (BLOCKER-2). Returns ("long", p). No measured trigger cell -> (None, None):
-    an honest skip (the leg is simply not taken), NEVER a coin-flip / None default masquerading as an edge.
+    the row — it computes them (BLOCKER-2). Returns ("long", p, expected_move) where expected_move is
+    the SAME base-rate mean_next used for sizing — computed here once so the caller never re-derives it
+    (see _base_rate_ev). No measured trigger cell -> (None, None, None): an honest skip (the leg is
+    simply not taken), NEVER a coin-flip / None default masquerading as an edge.
     """
     cd = qw.classify_drop(ticker, as_of, store_mod, conn, params=params).detail
     trigger = qw._match_trigger(cd["ret"])
     if trigger is None:
-        return None, None
-    p = qw.weekly_base_rate(ticker, trigger, cd["drop_class"], cd["turnover_flag"],
-                            as_of, store_mod, conn, params=params).value
-    return "long", p
+        return None, None, None
+    br = qw.weekly_base_rate(ticker, trigger, cd["drop_class"], cd["turnover_flag"],
+                            as_of, store_mod, conn, params=params)
+    return "long", br.value, br.detail.get("mean_next")
 
 
 def _long_runup_direction(ticker, as_of, store_mod, conn, *, params):
     """The BETA-BET comparison knob: unconditional always-long at p=0.5.
 
+    Returns expected_move=None: this naive proxy deliberately does NOT compute the base rate, so the
+    caller sizes it via _base_rate_ev independently (unchanged behaviour).
     # ponytail: exists ONLY as the naive 'just be long into the catalyst' comparison baseline that
     #           base_rate is measured AGAINST — base_rate is the default that carries the moat.
     """
-    return "long", 0.5
+    return "long", 0.5, None
 
 
 DIRECTION_PROXIES = {"base_rate": _base_rate_direction, "long_runup": _long_runup_direction}
@@ -133,10 +137,17 @@ def resolve_direction_proxy(name: str = "base_rate"):
 # ============================== run_layer_a (Task 2) + baseline (Task 3) ==============
 
 
+def _ev_from_mean_next(mean_next, default):
+    """Base-rate expected next-week move for sizing: the measured mean_next when positive, else the
+    caller's target (so a leg is never sized to the tiny FLOOR). Shared by the reuse + recompute paths."""
+    return mean_next if mean_next and mean_next > 0 else default
+
+
 def _base_rate_ev(ticker, as_of, conn, params, default):
     """The base-rate expected next-week move for a catalyst leg's sizing (expected_move in
-    size_for_survival), COMPUTED with the same tools as the direction proxy. Falls back to the
-    caller's target when there is no measured cell so the leg is never sized to the tiny FLOOR."""
+    size_for_survival), COMPUTED with the same tools as the direction proxy. Used by the long_runup
+    proxy, which does not compute the base rate itself. Falls back to the caller's target when there
+    is no measured cell so the leg is never sized to the tiny FLOOR."""
     try:
         cd = qw.classify_drop(ticker, as_of, store, conn, params=params).detail
         trig = qw._match_trigger(cd["ret"])
@@ -144,8 +155,7 @@ def _base_rate_ev(ticker, as_of, conn, params, default):
             return default
         det = qw.weekly_base_rate(ticker, trig, cd["drop_class"], cd["turnover_flag"],
                                   as_of, store, conn, params=params).detail
-        mn = det.get("mean_next")
-        return mn if mn and mn > 0 else default
+        return _ev_from_mean_next(det.get("mean_next"), default)
     except (ValueError, KeyError):
         return default
 
@@ -225,7 +235,7 @@ def run_layer_a(conn, embed, *, start, end, params=None, target_weekly=0.01,
         for cat in rec["catalysts"]:
             tk = cat["ticker"]
             try:
-                side, p = proxy_fn(tk, as_of, store, conn, params=params)
+                side, p, ev_raw = proxy_fn(tk, as_of, store, conn, params=params)
             except (ValueError, KeyError):
                 continue  # insufficient history at this as_of -> no directional read (honest skip)
             if side is None or p is None:
@@ -234,7 +244,10 @@ def run_layer_a(conn, embed, *, start, end, params=None, target_weekly=0.01,
             if filled is None:
                 continue
             entry, fill, ret = filled
-            ev = _base_rate_ev(tk, as_of, conn, params, target_weekly)
+            # reuse the base-rate mean_next the proxy already computed; long_runup (ev_raw=None)
+            # never computes it, so it still sizes via the independent _base_rate_ev recompute.
+            ev = (_ev_from_mean_next(ev_raw, target_weekly) if ev_raw is not None
+                  else _base_rate_ev(tk, as_of, conn, params, target_weekly))
             size = size_for_survival(p_loss=1.0 - p, gap=stat_gap,
                                      target_return=target_weekly, expected_move=ev).value
             hedge = _honest_hedge(conn, embed, tk, cat, as_of, exit_by)

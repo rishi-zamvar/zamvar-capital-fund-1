@@ -55,6 +55,10 @@ def build_event_set(
     cursor = date.fromisoformat(start)
     end_d = date.fromisoformat(end)
 
+    # status='verified' is week-invariant, so read the whole verified set ONCE; the per-week
+    # date/verification guards below still filter it against each as_of (no look-ahead change).
+    verified = tradeable_catalysts_light(conn)
+
     while cursor <= end_d:
         as_of = cursor.isoformat()
         hold_end = (cursor + timedelta(days=hold_days)).isoformat()
@@ -76,7 +80,7 @@ def build_event_set(
                 "event_date": c.event_date,
                 "last_verified_at": c.last_verified_at,
             }
-            for c in tradeable_catalysts_light(conn)
+            for c in verified
             # event is in the coming hold window (no past/too-far-future event) ...
             if as_of < c.event_date <= hold_end
             # ... AND we could actually have known it was verified by the effective as_of.

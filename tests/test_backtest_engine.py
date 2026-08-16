@@ -100,10 +100,11 @@ def test_direction_proxy_base_rate_computes_via_classify_drop_and_weekly_base_ra
     monkeypatch.setattr(qw, "classify_drop", fake_classify)
     monkeypatch.setattr(qw, "weekly_base_rate", fake_base_rate)
 
-    side, p = resolve_direction_proxy("base_rate")("ABCD", "2024-02-01", None, object(),
-                                                   params={"weekly": {}})
+    side, p, ev = resolve_direction_proxy("base_rate")("ABCD", "2024-02-01", None, object(),
+                                                       params={"weekly": {}})
     assert side == "long"
     assert p == 0.73                                     # the COMPUTED base rate, passed through
+    assert ev == 0.03                                    # the SAME base-rate mean_next, computed once
     assert "classify_drop" in calls
     # trigger was DERIVED via _match_trigger(ret=-0.06) -> drop_le_-0.05 and fed to weekly_base_rate
     # (NOT read off the catalyst row, which carries trigger=None) — BLOCKER-2 closed.
@@ -116,12 +117,13 @@ def test_direction_proxy_never_returns_none_or_coinflip(monkeypatch):
         detail={"ret": -0.11, "drop_class": "idio_no_news", "turnover_flag": "low"}))
     monkeypatch.setattr(qw, "weekly_base_rate", lambda *a, **k: _R(value=0.61,
                                                                    detail={"mean_next": 0.02}))
-    side, p = resolve_direction_proxy("base_rate")("ABCD", "2024-02-01", None, object(),
-                                                   params={"weekly": {}})
+    side, p, ev = resolve_direction_proxy("base_rate")("ABCD", "2024-02-01", None, object(),
+                                                       params={"weekly": {}})
     assert side == "long"
     assert p is not None
     assert p != 0.5      # a COMPUTED base rate — never the 0.5 coin-flip / None default
     assert p == 0.61
+    assert ev == 0.02    # base-rate mean_next returned alongside p (no re-derivation downstream)
 
 
 # ============================== Task 2: run_layer_a — the deterministic loop ==========
@@ -222,6 +224,46 @@ def test_layer_a_reuses_tools_not_recompute(monkeypatch):
                 for l in wk.legs if l.ticker == "CAT" and l.is_catalyst]
     assert cat_legs and cat_legs[0].p == 0.58   # used the SHIPPED weekly_base_rate (no re-derivation)
     assert "CAT" in used
+
+
+def test_layer_a_base_rate_leg_no_longer_double_computes_base_rate(monkeypatch):
+    """The base_rate proxy computes weekly_base_rate ONCE per catalyst leg (was twice: proxy + ev).
+    Byte-identical sizing is proven separately; here we pin the call count for the base_rate path."""
+    calls = []
+
+    def counting(ticker, trigger, drop_class, turnover, as_of, store, conn, *, params,
+                 window_years=None):
+        calls.append(ticker)
+        return _R(value=0.58, detail={"mean_next": 0.015})
+
+    monkeypatch.setattr(qw, "weekly_base_rate", counting)
+    conn = _conn()
+    weeks = _seed_std(conn)
+    _run_results(conn, start=weeks[5], end=weeks[5])
+    # one decision week, one verified catalyst (CAT). Before the fix CAT was passed to
+    # weekly_base_rate twice (direction proxy + _base_rate_ev); now exactly once.
+    assert calls.count("CAT") == 1
+
+
+def test_layer_a_reuse_matches_recompute_backtest_output():
+    """Behaviour-preserving guard: sizing via the reused proxy mean_next == the old independent
+    _base_rate_ev recompute. Reconstruct the recompute path and assert identical leg sizes."""
+    from catalyst_trader.backtest.engine import _base_rate_ev
+    from catalyst_trader import kb
+    conn = _conn()
+    weeks = _seed_std(conn)
+    params = kb.load_params(conn, "weekly")
+    results = _run_results(conn, start=weeks[5], end=weeks[5], params=params)
+    cat_legs = [l for wk in results for l in wk.legs if l.ticker == "CAT" and l.is_catalyst]
+    assert cat_legs
+    # the ev that would have been recomputed independently for CAT at this as_of
+    ev_recompute = _base_rate_ev("CAT", weeks[5], conn, params, 0.01)
+    # reproduce the proxy's reused ev
+    from catalyst_trader.backtest.engine import _base_rate_direction, _ev_from_mean_next
+    from catalyst_trader import store as _store
+    _, _, ev_raw = _base_rate_direction("CAT", weeks[5], _store, conn, params=params)
+    ev_reused = _ev_from_mean_next(ev_raw, 0.01)
+    assert ev_reused == ev_recompute  # reuse path == recompute path, byte-for-byte
 
 
 def test_layer_a_excludes_catalyst_verified_after_as_of():
