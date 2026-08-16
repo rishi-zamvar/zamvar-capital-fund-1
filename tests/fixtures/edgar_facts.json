@@ -1,0 +1,40 @@
+{
+  "_note": "Mirrors the REAL installed edgartools 5.49.0 typed-object surface (introspected 2026-08-16), NOT a guessed flat-JSON shape. filings -> EntityFiling(.accession_no,.form,.filing_date as datetime.date); facts -> EntityFacts.get_concept(name, return_metadata=True) -> {value, tag_used, period, period_end, filing_date, unit, concept_name}. Standardized concept names: cash_and_equivalents / operating_cash_flow / common_shares_outstanding.",
+  "cik": 1770787,
+  "filings": [
+    {"accession_no": "0001193125-26-000123", "form": "S-3ASR", "filing_date": "2026-08-01"},
+    {"accession_no": "0001193125-26-000124", "form": "424B5", "filing_date": "2026-08-05"},
+    {"accession_no": "0001193125-26-000125", "form": "S-3", "filing_date": "2026-06-10"},
+    {"accession_no": "0001193125-26-000126", "form": "FWP", "filing_date": "2026-08-06"},
+    {"accession_no": "0001193125-26-000127", "form": "8-K", "filing_date": "2026-08-11"}
+  ],
+  "facts": {
+    "common_shares_outstanding": {
+      "value": 65000000.0,
+      "tag_used": "us-gaap:CommonStockSharesOutstanding",
+      "period": "2026-Q2",
+      "period_end": "2026-06-30",
+      "filing_date": "2026-07-31",
+      "unit": "shares",
+      "concept_name": "common_shares_outstanding"
+    },
+    "cash_and_equivalents": {
+      "value": 300000000.0,
+      "tag_used": "us-gaap:CashAndCashEquivalentsAtCarryingValue",
+      "period": "2026-Q2",
+      "period_end": "2026-06-30",
+      "filing_date": "2026-07-31",
+      "unit": "USD",
+      "concept_name": "cash_and_equivalents"
+    },
+    "operating_cash_flow": {
+      "value": -90000000.0,
+      "tag_used": "us-gaap:NetCashProvidedByUsedInOperatingActivities",
+      "period": "2026-Q2",
+      "period_end": "2026-06-30",
+      "filing_date": "2026-07-31",
+      "unit": "USD",
+      "concept_name": "operating_cash_flow"
+    }
+  }
+}
