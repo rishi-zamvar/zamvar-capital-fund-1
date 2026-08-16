@@ -23,7 +23,7 @@ from __future__ import annotations
 
 from datetime import date, timedelta
 
-from ..store import bars_asof, tradeable_catalysts
+from ..store import bars_asof, tradeable_catalysts_light
 from ..universe.build import universe_as_of
 
 
@@ -76,11 +76,11 @@ def build_event_set(
                 "event_date": c.event_date,
                 "last_verified_at": c.last_verified_at,
             }
-            for c in tradeable_catalysts(conn)
+            for c in tradeable_catalysts_light(conn)
             # event is in the coming hold window (no past/too-far-future event) ...
             if as_of < c.event_date <= hold_end
             # ... AND we could actually have known it was verified by the effective as_of.
-            # tradeable_catalysts has NO date guard, so this filter is mandatory (BACK-01).
+            # tradeable_catalysts_light has NO date guard, so this filter is mandatory (BACK-01).
             and c.last_verified_at is not None
             and c.last_verified_at <= eff
         ]

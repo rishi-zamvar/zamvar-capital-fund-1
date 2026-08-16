@@ -10,10 +10,12 @@ import json
 import sqlite3
 from datetime import datetime, timezone
 from enum import Enum
+from typing import NamedTuple
 
 from catalyst_trader.models import (
     Catalyst,
     CatalystSource,
+    CatalystType,
     Status,
 )
 
@@ -169,6 +171,35 @@ def tradeable_catalysts(conn: sqlite3.Connection) -> list[Catalyst]:
         "SELECT * FROM catalyst WHERE status=? ORDER BY id", (Status.verified.value,)
     ).fetchall()
     return [_hydrate(conn, r) for r in rows]
+
+
+class CatalystLite(NamedTuple):
+    """The subset of a verified catalyst the news/hold-window/event-set callers read — no sources."""
+
+    ticker: str
+    event_date: str
+    catalyst_type: CatalystType
+    last_verified_at: str | None
+
+
+def tradeable_catalysts_light(conn: sqlite3.Connection) -> list[CatalystLite]:
+    """Same status='verified' gate as ``tradeable_catalysts`` but WITHOUT hydrating each row's
+    provenance sources — for callers that only need (ticker, event_date, catalyst_type,
+    last_verified_at). Avoids the per-row catalyst_source subquery (the N+1)."""
+    rows = conn.execute(
+        "SELECT ticker, event_date, catalyst_type, last_verified_at "
+        "FROM catalyst WHERE status=? ORDER BY id",
+        (Status.verified.value,),
+    ).fetchall()
+    return [
+        CatalystLite(
+            ticker=r["ticker"],
+            event_date=r["event_date"],
+            catalyst_type=CatalystType(r["catalyst_type"]),
+            last_verified_at=r["last_verified_at"],
+        )
+        for r in rows
+    ]
 
 
 # --- price bars (WEEK-02) --------------------------------------------------------------------

@@ -117,3 +117,31 @@ def test_tradeable_catalysts_returns_only_verified(db):
     tradeable = store.tradeable_catalysts(db)
     assert [c.ticker for c in tradeable] == ["BBB"]
     assert all(c.status == Status.verified for c in tradeable)
+
+
+def test_tradeable_catalysts_light_matches_full_hydration(db):
+    """The lightweight (no-source) read returns the SAME verified catalysts as the full path,
+    on the fields its callers use — just without hydrating provenance sources (N+1 avoided)."""
+    store.insert_catalyst(db, _catalyst(ticker="AAA", status=Status.unverified))
+    store.insert_catalyst(db, _catalyst(
+        ticker="BBB", status=Status.verified, catalyst_type=CatalystType.earnings,
+        event_date="2026-05-01", last_verified_at="2026-04-01T00:00:00Z"))
+    store.insert_catalyst(db, _catalyst(
+        ticker="DDD", status=Status.verified, catalyst_type=CatalystType.pdufa,
+        event_date="2026-06-01", external_ref="D1"))
+    store.insert_catalyst(db, _catalyst(ticker="CCC", status=Status.excluded))
+
+    full = store.tradeable_catalysts(db)
+    light = store.tradeable_catalysts_light(db)
+    assert [c.ticker for c in light] == [c.ticker for c in full]  # same rows, same order
+    assert [(c.ticker, c.event_date, c.catalyst_type, c.last_verified_at) for c in light] == [
+        (c.ticker, c.event_date, c.catalyst_type, c.last_verified_at) for c in full
+    ]
+
+
+def test_catalyst_source_index_exists(db):
+    """Migration 009 adds the catalyst_source(catalyst_id) index (kills the N+1 full scans)."""
+    idx = db.execute(
+        "SELECT name FROM sqlite_master WHERE type='index' AND name='idx_catalyst_source_cat'"
+    ).fetchone()
+    assert idx is not None

@@ -125,7 +125,7 @@ def _news_in_drop_week(store, kb_conn, ticker, bars, week_end):
     """Verified catalysts for `ticker` landing in the drop week (prev_week_end, week_end]."""
     prev = bars[-2]["week_end"]
     hits = []
-    for c in store.tradeable_catalysts(kb_conn):
+    for c in store.tradeable_catalysts_light(kb_conn):  # sources not needed here (N+1 avoided)
         if c.ticker == ticker and prev < c.event_date <= week_end:
             hits.append({"catalyst_type": c.catalyst_type.value, "event_date": c.event_date})
     return hits
@@ -330,7 +330,7 @@ def _catalyst_in_hold_window(store, kb_conn, ticker, week_end):
     end = (date.fromisoformat(week_end) + timedelta(days=7)).isoformat()
     return any(
         c.ticker == ticker and week_end < c.event_date <= end
-        for c in store.tradeable_catalysts(kb_conn)
+        for c in store.tradeable_catalysts_light(kb_conn)  # sources not needed here (N+1 avoided)
     )
 
 
