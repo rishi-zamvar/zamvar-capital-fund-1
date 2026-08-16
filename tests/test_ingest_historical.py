@@ -7,11 +7,8 @@ in-memory published_date (anti-look-ahead, BACK-01) — is idempotent (double-ru
 counts), survivorship-aware (delisted retained), and degrades per-datum without crashing.
 """
 
-import pytest
-
 from catalyst_trader import ingest, store
 from catalyst_trader.backtest.events import build_event_set
-from catalyst_trader.calendar.verify import is_tradeable
 from catalyst_trader.models import (
     Catalyst,
     CatalystSource,
@@ -167,7 +164,8 @@ def test_ingest_idempotent_double_run(db, tmp_path):
         pdufa=lambda tks, s, e, company_map=None: [
             _catalyst("ABCD", "2026-02-06", two_source=True, fr_published="2026-01-15")],
     )
-    kw = dict(start="2026-01-02", end="2026-01-09", providers=providers, universe_csv=csv_path)
+    kw = {"start": "2026-01-02", "end": "2026-01-09", "providers": providers,
+          "universe_csv": csv_path}
     ingest.ingest_history(db, **kw)
     first = _counts(db)
     ingest.ingest_history(db, **kw)

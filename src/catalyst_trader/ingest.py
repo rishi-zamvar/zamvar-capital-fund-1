@@ -120,3 +120,105 @@ def assemble_raw(providers, ticker, week_end):
         "competitor_next_7d": None,
         "nct_snapshots": None,
     }
+
+
+# --- 2. the historical ingestion loop --------------------------------------------------------
+
+
+def _load_seed(csv_path):
+    """The seed universe rows (# comment lines skipped) -> [{ticker, company_name, delisted}]."""
+    lines = [ln for ln in open(csv_path, encoding="utf-8").read().splitlines()
+             if ln.strip() and not ln.lstrip().startswith("#")]
+    return [{
+        "ticker": r["ticker"].strip(),
+        "company_name": (r.get("company_name") or "").strip(),
+        "delisted": (r.get("delisted") or "").strip().lower() == "true",
+    } for r in csv.DictReader(lines)]
+
+
+def _upsert_price_bars(conn, ticker, bars, *, delisted):
+    """Funnel get_weekly_bars output into store.upsert_bars, preserving each bar's cross-check
+    provenance by grouping the batch on (source, grade, agreeing_sources)."""
+    groups = defaultdict(list)
+    for b in bars:
+        groups[(b.get("source"), b.get("source_grade"),
+                ",".join(sorted(b.get("agreeing_sources") or [])) or None)].append(b)
+    for (source, grade, agreeing), gbars in groups.items():
+        store.upsert_bars(conn, ticker, gbars, delisted=delisted,
+                          source=source or "fixture", source_grade=grade, agreeing_sources=agreeing)
+
+
+def _pit_stamp(cat):
+    """The POINT-IN-TIME last_verified_at for a verified catalyst: the authoritative (primary-
+    preferred — mirrors verify_catalyst's selection, NOT sources[0]) agreeing source's OWN
+    publication_date, read from the IN-MEMORY Catalyst (published_date is transport-only, never
+    persisted). NOT now(), NOT event_date — either reintroduces the Phase-7 look-ahead leak
+    (BACK-01). None when the primary source has no publication_date -> the catalyst stays
+    unstamped (excluded by build_event_set), never a fabricated stamp."""
+    agreeing = [s for s in cat.sources if s.agrees]
+    authoritative = next(
+        (s for s in agreeing if s.source_type == SourceType.primary),
+        agreeing[0] if agreeing else None,
+    )
+    return authoritative.published_date if authoritative else None
+
+
+def _fetch_catalysts(providers, tickers, start, end, company_map):
+    """clinicaltrials + fmp earnings + pdufa -> one Catalyst list; each feed degrades to []."""
+    out = []
+    out += _safe(providers.get("clinicaltrials"), tickers, start, end) or []
+    out += _safe(providers.get("earnings"), tickers, start, end) or []
+    out += _safe(providers.get("pdufa"), tickers, start, end, company_map=company_map) or []
+    return out
+
+
+def ingest_history(conn, *, start, end, providers, universe_csv="data/seed_universe.csv"):
+    """Ingest the seed universe over [start, end] through the existing idempotent write-paths.
+
+    Prices -> upsert_bars (cross-check provenance, survivorship-aware). Catalysts -> insert_catalyst
+    THEN verify_catalyst (the providers only insert; the loop VERIFIES), stamping a point-in-time
+    last_verified_at from the FR primary source's in-memory published_date. Cards -> assemble_raw +
+    build_card + write_card, one per (ticker, week_end) that has bars. Idempotent by construction.
+    """
+    seed = _load_seed(universe_csv)
+    tickers = [r["ticker"] for r in seed]
+
+    # (1) prices -> upsert_bars; remember each ticker's real bar weeks for card-building.
+    weeks_by_ticker = {}
+    for r in seed:
+        bars = _safe(providers.get("prices"), r["ticker"], start, end) or []
+        _upsert_price_bars(conn, r["ticker"], bars, delisted=r["delisted"])
+        weeks_by_ticker[r["ticker"]] = sorted({b["week_end"] for b in bars})
+
+    # (2) catalysts -> insert THEN verify THEN point-in-time stamp (FedRegister ticker attribution
+    # via the curated company_map built from the seed universe — mirrors clinicaltrials' sponsor_map).
+    company_map = {r["ticker"]: [r["company_name"]] for r in seed if r["company_name"]}
+    cats_by_ticker = defaultdict(list)
+    verified = 0
+    for cat in _fetch_catalysts(providers, tickers, start, end, company_map):
+        cid = store.insert_catalyst(conn, cat)
+        if verify.verify_catalyst(conn, cid) is Status.verified:
+            stamp = _pit_stamp(cat)
+            if stamp is not None:  # null publication_date -> stays unstamped (excluded downstream)
+                conn.execute("UPDATE catalyst SET last_verified_at=? WHERE id=?", (stamp, cid))
+                conn.commit()
+                verified += 1
+        cats_by_ticker[cat.ticker].append(cat)
+
+    # (3) cards -> assemble_raw + build_card + write_card, per (ticker, week_end) with bars.
+    card_providers = {
+        "options": providers.get("options"),
+        "finra": providers.get("finra"),
+        "edgar": providers.get("edgar"),
+        "financials": providers.get("financials"),
+        "catalysts": lambda tk: cats_by_ticker.get(tk, []),
+    }
+    cards = 0
+    for ticker in tickers:
+        for week_end in weeks_by_ticker.get(ticker, []):
+            raw = assemble_raw(card_providers, ticker, week_end)
+            card = build_card(conn, ticker, week_end, raw, thesis_row={})
+            store.write_card(conn, ticker, week_end, card, source="ingest")
+            cards += 1
+
+    return {"tickers": len(tickers), "verified_catalysts": verified, "cards": cards}
