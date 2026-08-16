@@ -203,7 +203,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] 06.9-04-PLAN.md — options_cboe (implied-move seam + iv=0 gate) + finra (short interest, settlementDate EQUAL filter) (Wave 2)
 - [x] 06.9-05-PLAN.md — edgar (seen_accessions/live_shelf, SEC UA) + pdufa (Federal Register GREEN + RTTNews YELLOW → list[Catalyst]) (Wave 2)
 - [x] 06.9-06-PLAN.md — prices.py cascade: PRICE_PROVIDERS registry + get_weekly_bars cross-check/fallback (0.5% tol, divergence log, never impute) (Wave 3)
-- [ ] 06.9-07-PLAN.md — ingest.py: assemble_raw (the seam) + historical loop (idempotent, point-in-time, survivorship) + seam/historical integration tests (Wave 4)
+- [x] 06.9-07-PLAN.md — ingest.py: assemble_raw (the seam) + historical loop (idempotent, point-in-time, survivorship) + seam/historical integration tests (Wave 4)
 - [ ] 06.9-08-PLAN.md — scripts/shakedown.py LIVE run (INGEST-05) + test_shakedown_offline wiring gate (Wave 5)
 
 ### Phase 6.10: Always-On Data Daemon, Coverage Expansion & Quality Monitor

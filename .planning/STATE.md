@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Completed 06.9-06-PLAN.md
-last_updated: "2026-08-16T05:16:52.676Z"
+stopped_at: Completed 06.9-07-PLAN.md
+last_updated: "2026-08-16T05:29:58.164Z"
 last_activity: 2026-08-16
 progress:
   total_phases: 17
   completed_phases: 10
   total_plans: 60
-  completed_plans: 58
+  completed_plans: 59
 ---
 
 # Project State
@@ -25,7 +25,7 @@ See: .planning/PROJECT.md (updated 2026-08-14)
 ## Current Position
 
 Phase: 06.9
-Plan: 7 of 8
+Plan: 8 of 8
 Status: Ready to execute
 Last activity: 2026-08-16
 
@@ -109,6 +109,7 @@ Note: Phase 6.9/6.10 are retro-inserted sub-phases; the frontmatter project-wide
 | Phase 06.9 P04 | 14min | 2 tasks | 7 files |
 | Phase 06.9 P05 | 12min | 2 tasks tasks | 8 files files |
 | Phase 06.9 P06 | 8min | 1 tasks | 2 files |
+| Phase 06.9 P07 | 20min | 2 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -205,6 +206,8 @@ Recent decisions affecting current work:
 - [Phase 07-verifier-guardrails-backtest-harness]: The BACK-05 go/no-go gate (sample_based_gate) is SAMPLE-BASED never calendar: below THRESHOLDS[min_sample] it is a hard NO-GO regardless of metrics; above it names every failing metric (win_rate/sharpe/max_drawdown/hedge_effectiveness) from the 07-04 BaselineDistribution; thresholds read by direct subscript (missing key raises), undefined ratio is a named failure
 - [Phase 06.9]: CBOE provider emits complete-7key-or-None options_quote (no catalyst_date) and does NOT run the liquidity gate — deferred to build_card after assemble_raw injects catalyst_date
 - [Phase 06.9]: Extended _http.get_json with json_body->POST so FINRA's settlementDate EQUAL compareFilter (Pitfall 5) reuses the shared HTTP discipline; no new dependency
+- [Phase 06.9]: assemble_raw injects catalyst_date into the CBOE quote (8-key options_liquid shape); the store IS the seam — no live-boolean in the desk (INGEST-03)
+- [Phase 06.9]: ingest_history stamps last_verified_at point-in-time from the FR primary in-memory published_date (not now/event_date); null published_date stays unstamped (BACK-01)
 
 ### Pending Todos
 
@@ -218,6 +221,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-08-16T05:16:52.672Z
-Stopped at: Completed 06.9-06-PLAN.md
+Last session: 2026-08-16T05:29:50.500Z
+Stopped at: Completed 06.9-07-PLAN.md
 Resume file: None
