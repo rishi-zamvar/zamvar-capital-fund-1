@@ -116,7 +116,7 @@
 - [ ] **PIPE-01**: A constantly-running launchd daemon executes a stateless `run_cycle()` on an accuracy-first cadence, appending to a growing historical archive; launchd = supervisor/crash-recovery, store idempotency = resumability (re-runs never duplicate).
 - [ ] **PIPE-02**: Self-heal — gap-detector finds missing name-weeks / stale sources and auto-re-fetches; dead-source detection fails over through the ranked cascade; cycle resumes cleanly after crash.
 - [x] **PIPE-03**: SEC XBRL fundamentals/float/cash-runway via `edgartools` (MIT, keyless) — replaces + upgrades the hand-rolled edgar.py; provenance-tagged, degrade-safe. (Fills the #1 known free-data gap: float.) *(06.10-01)*
-- [ ] **PIPE-04**: FRED macro/rates/VIX regime provider (free key, ~20-line httpx, no dep) — fills the macro-regime coverage gap; env-first key.
+- [x] **PIPE-04**: FRED macro/rates/VIX regime provider (free key, ~20-line httpx, no dep) — fills the macro-regime coverage gap; env-first key.
 - [ ] **PIPE-05**: Price cross-check upgraded from 2-source-agree to N-source median/majority-vote with divergence flagged; never impute a missing bar.
 - [ ] **PIPE-06**: Raw response snapshots archived (keyed by source/ticker/fetch_ts) on local disk for audit + re-parse — the raw data lake.
 - [ ] **PIPE-07**: Data-health surfaced to the live monitor (`.monitor/data_health.json` → monitor tab): per-need freshness, staleness, cross-source divergence, source-health; alerts on degradation.
