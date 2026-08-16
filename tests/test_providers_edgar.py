@@ -155,3 +155,48 @@ def test_edgar_missing_identity_raises(monkeypatch):
     monkeypatch.setattr(settings, "sec_user_agent", None)
     with pytest.raises(RuntimeError):  # config error, not a degrade (never send an empty UA)
         edgar.fetch("KURA")
+
+
+# --- Task 2: fundamentals() — shares_outstanding + cash_runway_months (float/runway gap) -------
+
+
+def test_fundamentals_shares_and_runway(_sec_ua, _patch_edgar):
+    out = edgar.fundamentals("KURA")
+    assert out["shares_outstanding"] == 65000000.0
+    # cash 300M / monthly_burn (90M OCF over Q2 = 6 YTD months -> 15M/mo) = 20.0 months
+    assert out["cash_runway_months"] == pytest.approx(20.0, abs=0.1)
+    assert out["provenance"]["grade"] == "green"
+    assert out["provenance"]["source_url"] and out["provenance"]["fetch_ts"]
+
+
+def test_fundamentals_not_burning_runway_none(_sec_ua, monkeypatch, load_fixture):
+    data = load_fixture("edgar_facts")
+    data["facts"]["operating_cash_flow"]["value"] = 12000000.0  # cash-flow POSITIVE, not burning
+    monkeypatch.setattr(edgar_lib, "set_identity", lambda ua: None)
+    monkeypatch.setattr(edgar_lib, "Company", lambda t, *a, **k: _company_from_fixture(data))
+    out = edgar.fundamentals("KURA")
+    assert out["cash_runway_months"] is None  # never a fabricated/negative runway
+    assert out["shares_outstanding"] == 65000000.0  # shares still emitted
+
+
+def test_fundamentals_missing_facts_degrades(_sec_ua, monkeypatch, load_fixture):
+    data = load_fixture("edgar_facts")
+    data["facts"] = {}  # no XBRL facts on record
+    monkeypatch.setattr(edgar_lib, "set_identity", lambda ua: None)
+    monkeypatch.setattr(edgar_lib, "Company", lambda t, *a, **k: _company_from_fixture(data))
+    assert edgar.fundamentals("KURA") is None
+
+
+def test_fundamentals_edgartools_raises_degrades(_sec_ua, monkeypatch):
+    def _raise(ticker, *a, **k):
+        raise edgar_lib.CompanyNotFoundError(f"Company not found: {ticker!r}")
+
+    monkeypatch.setattr(edgar_lib, "set_identity", lambda ua: None)
+    monkeypatch.setattr(edgar_lib, "Company", _raise)
+    assert edgar.fundamentals("ZZZZNOTREAL") is None  # degrade, no exception
+
+
+def test_fundamentals_missing_identity_raises(monkeypatch):
+    monkeypatch.setattr(settings, "sec_user_agent", None)
+    with pytest.raises(RuntimeError):
+        edgar.fundamentals("KURA")
