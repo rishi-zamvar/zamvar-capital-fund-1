@@ -10,7 +10,7 @@ Vantage uses TIME_SERIES_WEEKLY (never _ADJUSTED); Tiingo reads `close` (never `
 Grades: always-on YELLOW = yfinance + Nasdaq (zero-config default). Keyed GREEN = Alpha Vantage
 + Tiingo, which return [] when their key is absent so the cascade simply skips them. Stooq is
 registered-but-disabled (IP proof-of-work wall from this machine, RESEARCH §1). Nothing here
-raises into the pipeline or imputes — miss/no-key/degrade all return [].
+raises into the pipeline or fabricates a bar — miss/no-key/degrade all return [].
 """
 
 import logging
@@ -184,3 +184,80 @@ def _stooq(ticker, start, end):
     # re-enable if reachable from another egress (the shape would mirror _nasdaq_daily: CSV EOD
     # via _http, RAW OHLCV, resample_daily_to_weekly, _source="stooq"/_grade="yellow").
     return []
+
+
+# ---- the cascade: ranked registry + cross-check/fallback ----------------------------------
+
+# Grade rank: keyed GREEN first (Alpha Vantage, Tiingo — [] when unkeyed, so simply skipped),
+# then always-on YELLOW (yfinance + Nasdaq = the zero-config default cross-check pair). Stooq is
+# excluded (disabled). Order IS the grade rank: the first provider that has a given week_end is
+# the highest-grade source for that week.
+PRICE_PROVIDERS = [_av_weekly, _tiingo_eod, _yf_weekly, _nasdaq_daily]
+
+
+def get_weekly_bars(ticker, start, end, *, providers=PRICE_PROVIDERS, tol_pct=0.5):
+    """Cross-checked, provenance-tagged weekly bars for one ticker (the price substrate).
+
+    Iterates the ranked `providers` (highest grade first), skipping any source that returns []
+    (no key / degrade / miss). Bars are indexed by the shared Friday `week_end` (Plan 02 anchor)
+    so only the SAME real week is ever compared. For each week_end:
+
+      - >=2 sources agree within `tol_pct` (abs(a-b)/a on close) -> high-confidence: keep the
+        highest-grade source's bar, `agreeing_sources` = every source within tolerance.
+      - any source diverges beyond `tol_pct` -> log a structured warning (ticker, week_end,
+        per-source closes, max delta), keep the highest-grade source's bar, and narrow
+        `agreeing_sources` to just the sources that agreed with it (single -> unconfirmed).
+      - one source only -> keep it, `agreeing_sources` = that one source (unconfirmed).
+      - NO available source has the week -> the bar is ABSENT (not in the output). Never
+        synthesized / fabricated / back-filled — a missing week is a degrade, not a guess.
+
+    Returns a chronological list of bar dicts each carrying `source`, `source_grade`, and an
+    `agreeing_sources` set, ready for upsert_bars(..., source_grade=, agreeing_sources=).
+    """
+    # week_end -> bars in provider-rank order (index 0 = highest-grade source for that week).
+    by_week: dict[str, list[dict]] = {}
+    for fetch in providers:
+        try:
+            bars = fetch(ticker, start, end)
+        except Exception as exc:  # a source failing must not sink the cascade — skip + degrade
+            logger.warning(
+                "price source %s failed for %s: %s", getattr(fetch, "__name__", fetch), ticker, exc
+            )
+            continue
+        for b in bars or []:
+            by_week.setdefault(b["week_end"], []).append(b)
+
+    tol = tol_pct / 100.0
+    out = []
+    for week_end in sorted(by_week):
+        candidates = by_week[week_end]  # already highest-grade first
+        ref = candidates[0]
+        ref_close = ref["close"]
+        agreeing = [ref]  # the reference always agrees with itself
+        divergent = []
+        for b in candidates[1:]:
+            if ref_close and abs(b["close"] - ref_close) / abs(ref_close) <= tol:
+                agreeing.append(b)
+            else:
+                divergent.append(b)
+        if divergent:
+            deltas = [abs(b["close"] - ref_close) / abs(ref_close) for b in candidates] if ref_close else []
+            logger.warning(
+                "price cross-check divergence %s %s: closes=%s max_delta=%.4f%%",
+                ticker,
+                week_end,
+                {b["_source"]: b["close"] for b in candidates},
+                (max(deltas) * 100) if deltas else 0.0,
+            )
+        out.append({
+            "week_end": week_end,
+            "open": ref.get("open"),
+            "high": ref.get("high"),
+            "low": ref.get("low"),
+            "close": ref["close"],
+            "volume": ref.get("volume"),
+            "source": ref["_source"],
+            "source_grade": ref["_grade"],
+            "agreeing_sources": {b["_source"] for b in agreeing},
+        })
+    return out
