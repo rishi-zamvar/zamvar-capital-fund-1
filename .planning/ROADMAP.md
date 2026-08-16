@@ -209,7 +209,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 ### Phase 6.10: Always-On Data Daemon, Coverage Expansion & Quality Monitor
 **Goal**: Turn the on-demand 6.9 providers into our own FREE data-gathering pipeline that runs constantly — a warm, always-fresh, self-healing store — and close the two coverage gaps (fundamentals/float, macro regime). Accuracy over speed; $0 forever.
 **Depends on**: Phase 6.9 (provider foundation, store write-paths, cascade/cross-check, cache/degrade base)
-**Requirements**: PIPE-01, PIPE-02, PIPE-03, PIPE-04, PIPE-05, PIPE-06, PIPE-07, PIPE-08
+**Requirements**: PIPE-01, PIPE-02, PIPE-03, PIPE-04, PIPE-05, PIPE-06, PIPE-07, PIPE-08, PIPE-09, PIPE-10
 **Research**: `.planning/research/free-data-pipeline.md` (ecosystem survey, proxy verdict, OpenBB adopt-vs-mirror, daemon architecture)
 **Success Criteria** (what must be TRUE):
   1. A constantly-running launchd daemon executes a stateless `run_cycle()` on an accuracy-first cadence, appending to a growing historical archive; launchd is the supervisor/crash-recovery, store idempotency is the resumability (re-runs never duplicate).
@@ -218,7 +218,14 @@ Decimal phases appear between their surrounding integers in numeric order.
   4. Accuracy upgrade: the price cross-check moves from 2-source-agree to N-source median/majority-vote with divergence flagged; raw response snapshots are archived (keyed by source/ticker/fetch_ts) for audit + re-parse.
   5. Data-health surfaced to the live monitor (`.monitor/data_health.json` → monitor tab): per-need freshness, staleness, cross-source divergence, source-health; alerts on degradation.
   6. OpenBB is MIRRORED not adopted (AGPL + 50-dep weight); Stooq stays disabled (route-around, no proxies). Whole design stays $0.
-**Plans**: TBD (plan after 6.9 executes — reuses the entire 6.9 foundation unchanged; thin plumbing + 2 providers + 1 daemon + 1 monitor feed)
+**Plans**: 7 plans (4 waves)
+- [ ] 06.10-01-PLAN.md — edgartools fundamentals/float provider: replace edgar.py (CIK-internal), keep seen_accessions/live_shelf, add cash_runway_months/shares_outstanding (Wave 1)
+- [ ] 06.10-02-PLAN.md — FRED macro/rates/VIX provider (env-first key, degrade-to-skip) (Wave 1)
+- [ ] 06.10-03-PLAN.md — raw-snapshot lake in _http (data/raw + re-parse + prune) + get_text json_body transport (Wave 1)
+- [ ] 06.10-04-PLAN.md — N-source median cross-check + split/bad-tick/stale detectors in prices.py (Wave 1)
+- [ ] 06.10-05-PLAN.md — coverage fixes: FINRA NDJSON parse + Nasdaq earnings FMP-fallback (Wave 2)
+- [ ] 06.10-06-PLAN.md — daemon: registry + run_cycle/cadence + detect_gaps/backfill/failover + data_health.json + monitor tab + launchd (Wave 3)
+- [ ] 06.10-07-PLAN.md — live --once operator shakedown: >=2-source median live + GREEN-key doc + catalyst debug ($0) (Wave 4)
 
 ### Phase 7: Verifier/Guardrails + Backtest Harness
 **Goal**: Prove the strategy honestly against history and stand up the runtime safety gates before any capital — real or simulated — is at stake.
