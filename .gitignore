@@ -12,3 +12,6 @@ graphify-out/
 
 .DS_Store
 .monitor/server.log
+
+# Raw-response snapshot lake (runtime data, $0 local disk)
+data/raw/

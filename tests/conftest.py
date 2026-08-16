@@ -8,8 +8,16 @@ from freezegun import freeze_time
 
 from catalyst_trader import db as _db
 from catalyst_trader import kb as _kb
+from catalyst_trader.config import settings
 
 FIXTURES = Path(__file__).parent / "fixtures"
+
+
+@pytest.fixture(autouse=True)
+def _redirect_raw_snapshot_lake(tmp_path, monkeypatch):
+    """Every successful _http fetch now archives a raw snapshot as a side-effect. Point the
+    lake at tmp_path suite-wide so no provider test writes into the repo's data/raw."""
+    monkeypatch.setattr(settings, "raw_snapshot_dir", str(tmp_path / "raw"))
 
 
 @pytest.fixture
