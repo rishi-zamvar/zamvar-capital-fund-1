@@ -9,10 +9,11 @@ age. A missing row for the ticker, or an _http degrade (403/timeout), returns No
 never fabricate. Fetched through the shared _http base (cache/rate-limit/retry/UA/degrade).
 """
 
+import json
 import logging
 from datetime import datetime, timezone
 
-from catalyst_trader.providers._http import get_json
+from catalyst_trader.providers._http import get_text
 
 logger = logging.getLogger(__name__)
 
@@ -45,7 +46,23 @@ def fetch(ticker: str, settlement_date: str = None) -> dict | None:
         # Scope to the ticker server-side (domainFilters); we still guard the row match below.
         "domainFilters": [{"fieldName": "symbolCode", "values": [ticker]}],
     }
-    rows = get_json("finra", _URL, json_body=body, ua="browser", ttl_s=300)
+    # FINRA answers with NDJSON (one JSON object per line), NOT a single array — a single
+    # json.loads() over it is the shakedown's "Extra data" degrade. Fetch raw text (Plan 03's
+    # get_text json_body passthrough) and parse line-by-line; a blank/malformed line degrades
+    # the LINE, not the whole fetch.
+    text = get_text("finra", _URL, json_body=body, ua="browser", ttl_s=300)
+    if not text:
+        return None
+
+    rows = []
+    for line in text.splitlines():
+        line = line.strip()
+        if not line:
+            continue
+        try:
+            rows.append(json.loads(line))
+        except json.JSONDecodeError:
+            continue
     if not rows:
         return None
 
