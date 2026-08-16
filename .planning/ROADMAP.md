@@ -197,8 +197,8 @@ Decimal phases appear between their surrounding integers in numeric order.
   4. A historical-ingestion path populates the price_bar + catalyst + company_card stores for the seed universe over ~1-2yr, point-in-time + survivorship-aware.
   5. LIVE SHAKEDOWN (the phase's own verification): ingest the real seed universe, then run Layer-A backtest + thesis_scan on the ingested data end-to-end; every edge case / divergence-from-synthetic is logged and triaged (real data stress-tests every system built so far).
 **Plans**: 8 plans (5 waves)
-- [ ] 06.9-01-PLAN.md — Network foundation: settings (sec_user_agent + alpha_vantage/tiingo keys) + conftest text loader + _http base (cache/rate-limit/retry/UA/degrade) (Wave 1)
-- [ ] 06.9-02-PLAN.md — Store+price foundation: migration 007 (source_grade+agreeing_sources) + upsert_bars kwargs + shared Friday week_end anchor helper (Wave 1)
+- [x] 06.9-01-PLAN.md — Network foundation: settings (sec_user_agent + alpha_vantage/tiingo keys) + conftest text loader + _http base (cache/rate-limit/retry/UA/degrade) (Wave 1)
+- [x] 06.9-02-PLAN.md — Store+price foundation: migration 007 (source_grade+agreeing_sources) + upsert_bars kwargs + shared Friday week_end anchor helper (Wave 1)
 - [ ] 06.9-03-PLAN.md — Price sources: yfinance+Nasdaq (always-on) + Alpha Vantage+Tiingo (keyed) + disabled Stooq — all RAW, Friday-anchored (Wave 2)
 - [ ] 06.9-04-PLAN.md — options_cboe (implied-move seam + iv=0 gate) + finra (short interest, settlementDate EQUAL filter) (Wave 2)
 - [ ] 06.9-05-PLAN.md — edgar (seen_accessions/live_shelf, SEC UA) + pdufa (Federal Register GREEN + RTTNews YELLOW → list[Catalyst]) (Wave 2)

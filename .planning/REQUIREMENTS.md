@@ -104,10 +104,10 @@
 
 ### Free-Data Ingestion Layer (INGEST) — added 2026-08-15
 
-- [ ] **INGEST-01**: Free-data providers BUILT per `free-data-sources.md`, each behind a uniform provider interface with provenance on every datum (source_url, fetch_ts, source_grade): a MULTI-SOURCE price cascade (Alpha Vantage → Tiingo → yfinance → Nasdaq, ranked + cross-checked, RAW/unadjusted; Stooq registered-but-IP-blocked; FMP 401s on historicals), CBOE delayed-quotes options/IV JSON, FINRA short-interest, SEC EDGAR filings, Federal Register + RTTNews PDUFA/AdCom, earnings+trial readouts.
+- [x] **INGEST-01**: Free-data providers BUILT per `free-data-sources.md`, each behind a uniform provider interface with provenance on every datum (source_url, fetch_ts, source_grade): a MULTI-SOURCE price cascade (Alpha Vantage → Tiingo → yfinance → Nasdaq, ranked + cross-checked, RAW/unadjusted; Stooq registered-but-IP-blocked; FMP 401s on historicals), CBOE delayed-quotes options/IV JSON, FINRA short-interest, SEC EDGAR filings, Federal Register + RTTNews PDUFA/AdCom, earnings+trial readouts.
 - [ ] **INGEST-02**: Scraper discipline — rate-limited, cached at >=5-min TTL, ToS-aware (documented posture per source), graceful-degrade on outage/illiquidity (never fabricate; mark UNVERIFIED/missing).
 - [ ] **INGEST-03**: The mocked seams (price bars, company card, implied-move, catalyst set) are wired to the real providers behind the SAME interfaces — zero downstream contract change.
-- [ ] **INGEST-04**: Historical-ingestion path populates price_bar + catalyst + company_card stores for the seed universe over ~1-2yr, point-in-time + survivorship-aware.
+- [x] **INGEST-04**: Historical-ingestion path populates price_bar + catalyst + company_card stores for the seed universe over ~1-2yr, point-in-time + survivorship-aware.
 - [ ] **INGEST-05**: Live shakedown — ingest the real seed universe, run Layer-A backtest + thesis_scan on real data end-to-end; edge cases logged + triaged.
 
 ### Always-On Data Daemon & Coverage Expansion (PIPE) — added 2026-08-16 (free-forever, accuracy-first, constantly-running pipeline)
