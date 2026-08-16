@@ -1,0 +1,836 @@
+{
+  "run_at": "2026-08-16T18:14:12.916974+00:00",
+  "kind": "LIVE \u2014 real SEC efts + real 8-K exhibits, keyless (read-only, moves no money)",
+  "sec_user_agent_present": true,
+  "window": {
+    "start": "2026-01-01",
+    "end": "2026-08-16"
+  },
+  "offline_suite": "1097 passed, 1 pre-existing fmp failure (test_refresh.py::test_refresh_full_pipeline_httpx \u2014 documented, out of scope)",
+  "criterion_1_proof": {
+    "per_name": {
+      "IMNM": {
+        "expected_event_date": "2027-04-28",
+        "found": true,
+        "event_date_match": true,
+        "verified": true,
+        "tradeable": true,
+        "single_sec_edgar_primary": true,
+        "pit_ok": true,
+        "accession_url": "https://www.sec.gov/Archives/edgar/data/1472012/000119312526344577/imnm-ex99_1.htm",
+        "last_verified_at": "2026-08-11"
+      },
+      "CAPR": {
+        "expected_event_date": "2026-08-22",
+        "found": true,
+        "event_date_match": true,
+        "verified": true,
+        "tradeable": true,
+        "single_sec_edgar_primary": true,
+        "pit_ok": true,
+        "accession_url": "https://www.sec.gov/Archives/edgar/data/1133869/000110465926057221/capr-20260507xex99d2.htm",
+        "last_verified_at": "2026-05-07"
+      }
+    },
+    "passed": true
+  },
+  "known_good_section": {
+    "label": "known-good (IMNM/CAPR)",
+    "window": {
+      "start": "2026-01-01",
+      "end": "2026-08-16"
+    },
+    "cik_map": {
+      "1472012": "IMNM",
+      "1133869": "CAPR"
+    },
+    "tickers_resolved": 2,
+    "tickers_requested": 2,
+    "efts": {
+      "per_query": [
+        {
+          "query": "\"PDUFA target action date\"",
+          "total": 88,
+          "returned": 88,
+          "cik_matched": 10,
+          "degraded": false
+        },
+        {
+          "query": "\"target action date\"",
+          "total": 107,
+          "returned": 100,
+          "cik_matched": 11,
+          "degraded": false
+        },
+        {
+          "query": "\"advisory committee meeting\"",
+          "total": 19,
+          "returned": 19,
+          "cik_matched": 5,
+          "degraded": false
+        }
+      ],
+      "cik_matched_accessions": [
+        {
+          "accession": "0001104659-26-025657",
+          "ticker": "CAPR",
+          "file_date": "2026-03-10",
+          "display_names": [
+            "CAPRICOR THERAPEUTICS, INC.  (CAPR)  (CIK 0001133869)"
+          ],
+          "matched_via": "\"PDUFA target action date\""
+        },
+        {
+          "accession": "0001193125-26-344577",
+          "ticker": "IMNM",
+          "file_date": "2026-08-11",
+          "display_names": [
+            "Immunome Inc.  (IMNM)  (CIK 0001472012)"
+          ],
+          "matched_via": "\"PDUFA target action date\""
+        },
+        {
+          "accession": "0001104659-26-059380",
+          "ticker": "CAPR",
+          "file_date": "2026-05-12",
+          "display_names": [
+            "CAPRICOR THERAPEUTICS, INC.  (CAPR)  (CIK 0001133869)"
+          ],
+          "matched_via": "\"PDUFA target action date\""
+        },
+        {
+          "accession": "0001104659-26-027037",
+          "ticker": "CAPR",
+          "file_date": "2026-03-12",
+          "display_names": [
+            "CAPRICOR THERAPEUTICS, INC.  (CAPR)  (CIK 0001133869)"
+          ],
+          "matched_via": "\"PDUFA target action date\""
+        },
+        {
+          "accession": "0001104659-26-087891",
+          "ticker": "CAPR",
+          "file_date": "2026-07-29",
+          "display_names": [
+            "CAPRICOR THERAPEUTICS, INC.  (CAPR)  (CIK 0001133869)"
+          ],
+          "matched_via": "\"PDUFA target action date\""
+        },
+        {
+          "accession": "0001104659-26-088667",
+          "ticker": "CAPR",
+          "file_date": "2026-07-30",
+          "display_names": [
+            "CAPRICOR THERAPEUTICS, INC.  (CAPR)  (CIK 0001133869)"
+          ],
+          "matched_via": "\"PDUFA target action date\""
+        },
+        {
+          "accession": "0001104659-26-078327",
+          "ticker": "CAPR",
+          "file_date": "2026-06-26",
+          "display_names": [
+            "CAPRICOR THERAPEUTICS, INC.  (CAPR)  (CIK 0001133869)"
+          ],
+          "matched_via": "\"PDUFA target action date\""
+        },
+        {
+          "accession": "0001104659-26-057221",
+          "ticker": "CAPR",
+          "file_date": "2026-05-07",
+          "display_names": [
+            "CAPRICOR THERAPEUTICS, INC.  (CAPR)  (CIK 0001133869)"
+          ],
+          "matched_via": "\"PDUFA target action date\""
+        }
+      ]
+    },
+    "catalysts": [
+      {
+        "ticker": "CAPR",
+        "company_name": "CAPRICOR THERAPEUTICS, INC.  (CAPR)",
+        "catalyst_type": "pdufa",
+        "event_date": "2026-08-22",
+        "status": "verified",
+        "is_tradeable": true,
+        "source_name": "SEC EDGAR",
+        "source_type": "primary",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1133869/000110465926025657/capr-20260310xex99d1.htm",
+        "source_count": 1,
+        "filing_date": "2026-03-10",
+        "last_verified_at": "2026-03-10",
+        "pit_ok": true,
+        "external_ref": "pdufa_edgar:CAPR:0001104659-26-025657"
+      },
+      {
+        "ticker": "IMNM",
+        "company_name": "Immunome Inc.  (IMNM)",
+        "catalyst_type": "pdufa",
+        "event_date": "2027-04-28",
+        "status": "verified",
+        "is_tradeable": true,
+        "source_name": "SEC EDGAR",
+        "source_type": "primary",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1472012/000119312526344577/imnm-ex99_1.htm",
+        "source_count": 1,
+        "filing_date": "2026-08-11",
+        "last_verified_at": "2026-08-11",
+        "pit_ok": true,
+        "external_ref": "pdufa_edgar:IMNM:0001193125-26-344577"
+      },
+      {
+        "ticker": "CAPR",
+        "company_name": "CAPRICOR THERAPEUTICS, INC.  (CAPR)",
+        "catalyst_type": "pdufa",
+        "event_date": "2026-08-22",
+        "status": "verified",
+        "is_tradeable": true,
+        "source_name": "SEC EDGAR",
+        "source_type": "primary",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1133869/000110465926059380/capr-20260512xex99d1.htm",
+        "source_count": 1,
+        "filing_date": "2026-05-12",
+        "last_verified_at": "2026-05-12",
+        "pit_ok": true,
+        "external_ref": "pdufa_edgar:CAPR:0001104659-26-059380"
+      },
+      {
+        "ticker": "CAPR",
+        "company_name": "CAPRICOR THERAPEUTICS, INC.  (CAPR)",
+        "catalyst_type": "pdufa",
+        "event_date": "2026-08-22",
+        "status": "verified",
+        "is_tradeable": true,
+        "source_name": "SEC EDGAR",
+        "source_type": "primary",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1133869/000110465926027037/capr-20260312xex99d1.htm",
+        "source_count": 1,
+        "filing_date": "2026-03-12",
+        "last_verified_at": "2026-03-12",
+        "pit_ok": true,
+        "external_ref": "pdufa_edgar:CAPR:0001104659-26-027037"
+      },
+      {
+        "ticker": "CAPR",
+        "company_name": "CAPRICOR THERAPEUTICS, INC.  (CAPR)",
+        "catalyst_type": "pdufa",
+        "event_date": "2026-08-22",
+        "status": "verified",
+        "is_tradeable": true,
+        "source_name": "SEC EDGAR",
+        "source_type": "primary",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1133869/000110465926087891/capr-20260729xex99d1.htm",
+        "source_count": 1,
+        "filing_date": "2026-07-29",
+        "last_verified_at": "2026-07-29",
+        "pit_ok": true,
+        "external_ref": "pdufa_edgar:CAPR:0001104659-26-087891"
+      },
+      {
+        "ticker": "CAPR",
+        "company_name": "CAPRICOR THERAPEUTICS, INC.  (CAPR)",
+        "catalyst_type": "pdufa",
+        "event_date": "2026-08-22",
+        "status": "verified",
+        "is_tradeable": true,
+        "source_name": "SEC EDGAR",
+        "source_type": "primary",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1133869/000110465926057221/capr-20260507xex99d2.htm",
+        "source_count": 1,
+        "filing_date": "2026-05-07",
+        "last_verified_at": "2026-05-07",
+        "pit_ok": true,
+        "external_ref": "pdufa_edgar:CAPR:0001104659-26-057221"
+      }
+    ],
+    "tradeable_count": 6,
+    "names_with_tradeable_pdufa": [
+      "CAPR",
+      "IMNM"
+    ],
+    "discovered_cik_matched": 8,
+    "discovered_not_emitted": [
+      {
+        "accession": "0001104659-26-088667",
+        "ticker": "CAPR",
+        "file_date": "2026-07-30",
+        "display_names": [
+          "CAPRICOR THERAPEUTICS, INC.  (CAPR)  (CIK 0001133869)"
+        ],
+        "matched_via": "\"PDUFA target action date\""
+      },
+      {
+        "accession": "0001104659-26-078327",
+        "ticker": "CAPR",
+        "file_date": "2026-06-26",
+        "display_names": [
+          "CAPRICOR THERAPEUTICS, INC.  (CAPR)  (CIK 0001133869)"
+        ],
+        "matched_via": "\"PDUFA target action date\""
+      }
+    ]
+  },
+  "universe_section": {
+    "label": "seed universe",
+    "window": {
+      "start": "2026-01-01",
+      "end": "2026-08-16"
+    },
+    "cik_map": {
+      "1830487": "PHVS",
+      "882796": "BCRX",
+      "1652130": "NTLA",
+      "1743881": "BBIO",
+      "874015": "IONS",
+      "1818794": "DYN",
+      "1590877": "RGNX",
+      "873303": "SRPT",
+      "744218": "CLDX",
+      "1676725": "IDYA",
+      "1750284": "OLMA",
+      "1816590": "CMPS",
+      "1515673": "RARE",
+      "1759425": "MIRM",
+      "1438533": "TVTX",
+      "1689548": "PRAX",
+      "1178670": "ALNY",
+      "1104506": "INSM",
+      "1157601": "MDGL",
+      "1064642": "XBI",
+      "1424958": "LABD"
+    },
+    "tickers_resolved": 21,
+    "tickers_requested": 21,
+    "efts": {
+      "per_query": [
+        {
+          "query": "\"PDUFA target action date\"",
+          "total": 88,
+          "returned": 88,
+          "cik_matched": 15,
+          "degraded": false
+        },
+        {
+          "query": "\"target action date\"",
+          "total": 107,
+          "returned": 100,
+          "cik_matched": 18,
+          "degraded": false
+        },
+        {
+          "query": "\"advisory committee meeting\"",
+          "total": 19,
+          "returned": 19,
+          "cik_matched": 6,
+          "degraded": false
+        }
+      ],
+      "cik_matched_accessions": [
+        {
+          "accession": "0001689548-26-000049",
+          "ticker": "PRAX",
+          "file_date": "2026-05-07",
+          "display_names": [
+            "Praxis Precision Medicines, Inc.  (PRAX)  (CIK 0001689548)"
+          ],
+          "matched_via": "\"PDUFA target action date\""
+        },
+        {
+          "accession": "0001140361-26-029291",
+          "ticker": "BBIO",
+          "file_date": "2026-07-22",
+          "display_names": [
+            "BridgeBio Pharma, Inc.  (BBIO)  (CIK 0001743881)"
+          ],
+          "matched_via": "\"PDUFA target action date\""
+        },
+        {
+          "accession": "0001140361-26-022979",
+          "ticker": "BBIO",
+          "file_date": "2026-05-27",
+          "display_names": [
+            "BridgeBio Pharma, Inc.  (BBIO)  (CIK 0001743881)"
+          ],
+          "matched_via": "\"PDUFA target action date\""
+        },
+        {
+          "accession": "0001193125-26-323940",
+          "ticker": "DYN",
+          "file_date": "2026-07-29",
+          "display_names": [
+            "Dyne Therapeutics, Inc.  (DYN)  (CIK 0001818794)"
+          ],
+          "matched_via": "\"PDUFA target action date\""
+        },
+        {
+          "accession": "0001140361-26-029960",
+          "ticker": "IONS",
+          "file_date": "2026-07-29",
+          "display_names": [
+            "IONIS PHARMACEUTICALS INC  (IONS)  (CIK 0000874015)"
+          ],
+          "matched_via": "\"PDUFA target action date\""
+        },
+        {
+          "accession": "0001140361-26-017637",
+          "ticker": "IONS",
+          "file_date": "2026-04-29",
+          "display_names": [
+            "IONIS PHARMACEUTICALS INC  (IONS)  (CIK 0000874015)"
+          ],
+          "matched_via": "\"PDUFA target action date\""
+        },
+        {
+          "accession": "0001689548-26-000069",
+          "ticker": "PRAX",
+          "file_date": "2026-06-29",
+          "display_names": [
+            "Praxis Precision Medicines, Inc.  (PRAX)  (CIK 0001689548)"
+          ],
+          "matched_via": "\"PDUFA target action date\""
+        },
+        {
+          "accession": "0001438533-26-000013",
+          "ticker": "TVTX",
+          "file_date": "2026-02-19",
+          "display_names": [
+            "Travere Therapeutics, Inc.  (TVTX)  (CIK 0001438533)"
+          ],
+          "matched_via": "\"PDUFA target action date\""
+        },
+        {
+          "accession": "0001438533-26-000005",
+          "ticker": "TVTX",
+          "file_date": "2026-01-13",
+          "display_names": [
+            "Travere Therapeutics, Inc.  (TVTX)  (CIK 0001438533)"
+          ],
+          "matched_via": "\"PDUFA target action date\""
+        },
+        {
+          "accession": "0001743881-26-000026",
+          "ticker": "BBIO",
+          "file_date": "2026-08-10",
+          "display_names": [
+            "BridgeBio Pharma, Inc.  (BBIO)  (CIK 0001743881)"
+          ],
+          "matched_via": "\"PDUFA target action date\""
+        },
+        {
+          "accession": "0001689548-26-000082",
+          "ticker": "PRAX",
+          "file_date": "2026-08-06",
+          "display_names": [
+            "Praxis Precision Medicines, Inc.  (PRAX)  (CIK 0001689548)"
+          ],
+          "matched_via": "\"PDUFA target action date\""
+        },
+        {
+          "accession": "0001438533-26-000003",
+          "ticker": "TVTX",
+          "file_date": "2026-01-12",
+          "display_names": [
+            "Travere Therapeutics, Inc.  (TVTX)  (CIK 0001438533)"
+          ],
+          "matched_via": "\"PDUFA target action date\""
+        },
+        {
+          "accession": "0001759425-26-000044",
+          "ticker": "MIRM",
+          "file_date": "2026-08-05",
+          "display_names": [
+            "Mirum Pharmaceuticals, Inc.  (MIRM)  (CIK 0001759425)"
+          ],
+          "matched_via": "\"PDUFA target action date\""
+        },
+        {
+          "accession": "0001689548-26-000033",
+          "ticker": "PRAX",
+          "file_date": "2026-04-14",
+          "display_names": [
+            "Praxis Precision Medicines, Inc.  (PRAX)  (CIK 0001689548)"
+          ],
+          "matched_via": "\"target action date\""
+        },
+        {
+          "accession": "0001689548-26-000031",
+          "ticker": "PRAX",
+          "file_date": "2026-04-06",
+          "display_names": [
+            "Praxis Precision Medicines, Inc.  (PRAX)  (CIK 0001689548)"
+          ],
+          "matched_via": "\"target action date\""
+        },
+        {
+          "accession": "0001193125-26-308343",
+          "ticker": "DYN",
+          "file_date": "2026-07-20",
+          "display_names": [
+            "Dyne Therapeutics, Inc.  (DYN)  (CIK 0001818794)"
+          ],
+          "matched_via": "\"target action date\""
+        },
+        {
+          "accession": "0001193125-26-206368",
+          "ticker": "RARE",
+          "file_date": "2026-05-05",
+          "display_names": [
+            "Ultragenyx Pharmaceutical Inc.  (RARE)  (CIK 0001515673)"
+          ],
+          "matched_via": "\"advisory committee meeting\""
+        }
+      ]
+    },
+    "catalysts": [
+      {
+        "ticker": "BBIO",
+        "company_name": "BridgeBio Pharma, Inc.  (BBIO)",
+        "catalyst_type": "pdufa",
+        "event_date": "2027-05-08",
+        "status": "verified",
+        "is_tradeable": true,
+        "source_name": "SEC EDGAR",
+        "source_type": "primary",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1743881/000114036126029291/ef20078442_ex99-1.htm",
+        "source_count": 1,
+        "filing_date": "2026-07-22",
+        "last_verified_at": "2026-07-22",
+        "pit_ok": true,
+        "external_ref": "pdufa_edgar:BBIO:0001140361-26-029291"
+      },
+      {
+        "ticker": "BBIO",
+        "company_name": "BridgeBio Pharma, Inc.  (BBIO)",
+        "catalyst_type": "pdufa",
+        "event_date": "2026-11-27",
+        "status": "verified",
+        "is_tradeable": true,
+        "source_name": "SEC EDGAR",
+        "source_type": "primary",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1743881/000114036126022979/ef20074977_ex99-1.htm",
+        "source_count": 1,
+        "filing_date": "2026-05-27",
+        "last_verified_at": "2026-05-27",
+        "pit_ok": true,
+        "external_ref": "pdufa_edgar:BBIO:0001140361-26-022979"
+      },
+      {
+        "ticker": "DYN",
+        "company_name": "Dyne Therapeutics, Inc.  (DYN)",
+        "catalyst_type": "pdufa",
+        "event_date": "2027-01-21",
+        "status": "verified",
+        "is_tradeable": true,
+        "source_name": "SEC EDGAR",
+        "source_type": "primary",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1818794/000119312526323940/dyn-ex99_1.htm",
+        "source_count": 1,
+        "filing_date": "2026-07-29",
+        "last_verified_at": "2026-07-29",
+        "pit_ok": true,
+        "external_ref": "pdufa_edgar:DYN:0001193125-26-323940"
+      },
+      {
+        "ticker": "PRAX",
+        "company_name": "Praxis Precision Medicines, Inc.  (PRAX)",
+        "catalyst_type": "pdufa",
+        "event_date": "2026-12-27",
+        "status": "verified",
+        "is_tradeable": true,
+        "source_name": "SEC EDGAR",
+        "source_type": "primary",
+        "source_url": "https://www.sec.gov/Archives/edgar/data/1689548/000168954826000082/praxisq22026pr.htm",
+        "source_count": 1,
+        "filing_date": "2026-08-06",
+        "last_verified_at": "2026-08-06",
+        "pit_ok": true,
+        "external_ref": "pdufa_edgar:PRAX:0001689548-26-000082"
+      }
+    ],
+    "tradeable_count": 4,
+    "names_with_tradeable_pdufa": [
+      "BBIO",
+      "DYN",
+      "PRAX"
+    ],
+    "discovered_cik_matched": 17,
+    "discovered_not_emitted": [
+      {
+        "accession": "0001689548-26-000049",
+        "ticker": "PRAX",
+        "file_date": "2026-05-07",
+        "display_names": [
+          "Praxis Precision Medicines, Inc.  (PRAX)  (CIK 0001689548)"
+        ],
+        "matched_via": "\"PDUFA target action date\""
+      },
+      {
+        "accession": "0001140361-26-029960",
+        "ticker": "IONS",
+        "file_date": "2026-07-29",
+        "display_names": [
+          "IONIS PHARMACEUTICALS INC  (IONS)  (CIK 0000874015)"
+        ],
+        "matched_via": "\"PDUFA target action date\""
+      },
+      {
+        "accession": "0001140361-26-017637",
+        "ticker": "IONS",
+        "file_date": "2026-04-29",
+        "display_names": [
+          "IONIS PHARMACEUTICALS INC  (IONS)  (CIK 0000874015)"
+        ],
+        "matched_via": "\"PDUFA target action date\""
+      },
+      {
+        "accession": "0001689548-26-000069",
+        "ticker": "PRAX",
+        "file_date": "2026-06-29",
+        "display_names": [
+          "Praxis Precision Medicines, Inc.  (PRAX)  (CIK 0001689548)"
+        ],
+        "matched_via": "\"PDUFA target action date\""
+      },
+      {
+        "accession": "0001438533-26-000013",
+        "ticker": "TVTX",
+        "file_date": "2026-02-19",
+        "display_names": [
+          "Travere Therapeutics, Inc.  (TVTX)  (CIK 0001438533)"
+        ],
+        "matched_via": "\"PDUFA target action date\""
+      },
+      {
+        "accession": "0001438533-26-000005",
+        "ticker": "TVTX",
+        "file_date": "2026-01-13",
+        "display_names": [
+          "Travere Therapeutics, Inc.  (TVTX)  (CIK 0001438533)"
+        ],
+        "matched_via": "\"PDUFA target action date\""
+      },
+      {
+        "accession": "0001743881-26-000026",
+        "ticker": "BBIO",
+        "file_date": "2026-08-10",
+        "display_names": [
+          "BridgeBio Pharma, Inc.  (BBIO)  (CIK 0001743881)"
+        ],
+        "matched_via": "\"PDUFA target action date\""
+      },
+      {
+        "accession": "0001438533-26-000003",
+        "ticker": "TVTX",
+        "file_date": "2026-01-12",
+        "display_names": [
+          "Travere Therapeutics, Inc.  (TVTX)  (CIK 0001438533)"
+        ],
+        "matched_via": "\"PDUFA target action date\""
+      },
+      {
+        "accession": "0001759425-26-000044",
+        "ticker": "MIRM",
+        "file_date": "2026-08-05",
+        "display_names": [
+          "Mirum Pharmaceuticals, Inc.  (MIRM)  (CIK 0001759425)"
+        ],
+        "matched_via": "\"PDUFA target action date\""
+      },
+      {
+        "accession": "0001689548-26-000033",
+        "ticker": "PRAX",
+        "file_date": "2026-04-14",
+        "display_names": [
+          "Praxis Precision Medicines, Inc.  (PRAX)  (CIK 0001689548)"
+        ],
+        "matched_via": "\"target action date\""
+      },
+      {
+        "accession": "0001689548-26-000031",
+        "ticker": "PRAX",
+        "file_date": "2026-04-06",
+        "display_names": [
+          "Praxis Precision Medicines, Inc.  (PRAX)  (CIK 0001689548)"
+        ],
+        "matched_via": "\"target action date\""
+      },
+      {
+        "accession": "0001193125-26-308343",
+        "ticker": "DYN",
+        "file_date": "2026-07-20",
+        "display_names": [
+          "Dyne Therapeutics, Inc.  (DYN)  (CIK 0001818794)"
+        ],
+        "matched_via": "\"target action date\""
+      },
+      {
+        "accession": "0001193125-26-206368",
+        "ticker": "RARE",
+        "file_date": "2026-05-05",
+        "display_names": [
+          "Ultragenyx Pharmaceutical Inc.  (RARE)  (CIK 0001515673)"
+        ],
+        "matched_via": "\"advisory committee meeting\""
+      }
+    ]
+  },
+  "edge_cases": {
+    "rate_limit_hits": 0,
+    "degraded_warnings": [],
+    "cik_resolution_misses": [],
+    "discovered_not_emitted_known_good": [
+      {
+        "accession": "0001104659-26-088667",
+        "ticker": "CAPR",
+        "file_date": "2026-07-30",
+        "display_names": [
+          "CAPRICOR THERAPEUTICS, INC.  (CAPR)  (CIK 0001133869)"
+        ],
+        "matched_via": "\"PDUFA target action date\""
+      },
+      {
+        "accession": "0001104659-26-078327",
+        "ticker": "CAPR",
+        "file_date": "2026-06-26",
+        "display_names": [
+          "CAPRICOR THERAPEUTICS, INC.  (CAPR)  (CIK 0001133869)"
+        ],
+        "matched_via": "\"PDUFA target action date\""
+      }
+    ],
+    "discovered_not_emitted_universe": [
+      {
+        "accession": "0001689548-26-000049",
+        "ticker": "PRAX",
+        "file_date": "2026-05-07",
+        "display_names": [
+          "Praxis Precision Medicines, Inc.  (PRAX)  (CIK 0001689548)"
+        ],
+        "matched_via": "\"PDUFA target action date\""
+      },
+      {
+        "accession": "0001140361-26-029960",
+        "ticker": "IONS",
+        "file_date": "2026-07-29",
+        "display_names": [
+          "IONIS PHARMACEUTICALS INC  (IONS)  (CIK 0000874015)"
+        ],
+        "matched_via": "\"PDUFA target action date\""
+      },
+      {
+        "accession": "0001140361-26-017637",
+        "ticker": "IONS",
+        "file_date": "2026-04-29",
+        "display_names": [
+          "IONIS PHARMACEUTICALS INC  (IONS)  (CIK 0000874015)"
+        ],
+        "matched_via": "\"PDUFA target action date\""
+      },
+      {
+        "accession": "0001689548-26-000069",
+        "ticker": "PRAX",
+        "file_date": "2026-06-29",
+        "display_names": [
+          "Praxis Precision Medicines, Inc.  (PRAX)  (CIK 0001689548)"
+        ],
+        "matched_via": "\"PDUFA target action date\""
+      },
+      {
+        "accession": "0001438533-26-000013",
+        "ticker": "TVTX",
+        "file_date": "2026-02-19",
+        "display_names": [
+          "Travere Therapeutics, Inc.  (TVTX)  (CIK 0001438533)"
+        ],
+        "matched_via": "\"PDUFA target action date\""
+      },
+      {
+        "accession": "0001438533-26-000005",
+        "ticker": "TVTX",
+        "file_date": "2026-01-13",
+        "display_names": [
+          "Travere Therapeutics, Inc.  (TVTX)  (CIK 0001438533)"
+        ],
+        "matched_via": "\"PDUFA target action date\""
+      },
+      {
+        "accession": "0001743881-26-000026",
+        "ticker": "BBIO",
+        "file_date": "2026-08-10",
+        "display_names": [
+          "BridgeBio Pharma, Inc.  (BBIO)  (CIK 0001743881)"
+        ],
+        "matched_via": "\"PDUFA target action date\""
+      },
+      {
+        "accession": "0001438533-26-000003",
+        "ticker": "TVTX",
+        "file_date": "2026-01-12",
+        "display_names": [
+          "Travere Therapeutics, Inc.  (TVTX)  (CIK 0001438533)"
+        ],
+        "matched_via": "\"PDUFA target action date\""
+      },
+      {
+        "accession": "0001759425-26-000044",
+        "ticker": "MIRM",
+        "file_date": "2026-08-05",
+        "display_names": [
+          "Mirum Pharmaceuticals, Inc.  (MIRM)  (CIK 0001759425)"
+        ],
+        "matched_via": "\"PDUFA target action date\""
+      },
+      {
+        "accession": "0001689548-26-000033",
+        "ticker": "PRAX",
+        "file_date": "2026-04-14",
+        "display_names": [
+          "Praxis Precision Medicines, Inc.  (PRAX)  (CIK 0001689548)"
+        ],
+        "matched_via": "\"target action date\""
+      },
+      {
+        "accession": "0001689548-26-000031",
+        "ticker": "PRAX",
+        "file_date": "2026-04-06",
+        "display_names": [
+          "Praxis Precision Medicines, Inc.  (PRAX)  (CIK 0001689548)"
+        ],
+        "matched_via": "\"target action date\""
+      },
+      {
+        "accession": "0001193125-26-308343",
+        "ticker": "DYN",
+        "file_date": "2026-07-20",
+        "display_names": [
+          "Dyne Therapeutics, Inc.  (DYN)  (CIK 0001818794)"
+        ],
+        "matched_via": "\"target action date\""
+      },
+      {
+        "accession": "0001193125-26-206368",
+        "ticker": "RARE",
+        "file_date": "2026-05-05",
+        "display_names": [
+          "Ultragenyx Pharmaceutical Inc.  (RARE)  (CIK 0001515673)"
+        ],
+        "matched_via": "\"advisory committee meeting\""
+      }
+    ],
+    "review_queue_rows": [
+      "# BBIO,pdufa,2026-11-27,SEC EDGAR,https://www.sec.gov/Archives/edgar/data/1743881/000174388126000026/bbio-20260630xex991.htm,primary",
+      "# BBIO,pdufa,2027-05-08,SEC EDGAR,https://www.sec.gov/Archives/edgar/data/1743881/000174388126000026/bbio-20260630xex991.htm,primary",
+      "# CAPR,adcom,2026-07-29,SEC EDGAR,https://www.sec.gov/Archives/edgar/data/1133869/000110465926078327/capr-20260626xex99d1.htm,primary",
+      "# CAPR,pdufa,2026-08-22,SEC EDGAR,https://www.sec.gov/Archives/edgar/data/1133869/000110465926078327/capr-20260626xex99d1.htm,primary",
+      "# DYN,pdufa,2027-01-21,SEC EDGAR,https://www.sec.gov/Archives/edgar/data/1818794/000119312526308343/dyn-20260720.htm,primary",
+      "# IONS,pdufa,2026-06-30,SEC EDGAR,https://www.sec.gov/Archives/edgar/data/874015/000114036126017637/ef20071749_ex99-1.htm,primary",
+      "# IONS,pdufa,2026-09-22,SEC EDGAR,https://www.sec.gov/Archives/edgar/data/874015/000114036126017637/ef20071749_ex99-1.htm,primary",
+      "# IONS,pdufa,2026-09-22,SEC EDGAR,https://www.sec.gov/Archives/edgar/data/874015/000114036126029960/ef20078953_ex99-1.htm,primary",
+      "# IONS,pdufa,2026-10-26,SEC EDGAR,https://www.sec.gov/Archives/edgar/data/874015/000114036126029960/ef20078953_ex99-1.htm,primary",
+      "# PRAX,pdufa,2026-09-27,SEC EDGAR,https://www.sec.gov/Archives/edgar/data/1689548/000168954826000049/praxisq12026pr.htm,primary",
+      "# PRAX,pdufa,2027-01-29,SEC EDGAR,https://www.sec.gov/Archives/edgar/data/1689548/000168954826000049/praxisq12026pr.htm,primary",
+      "# TVTX,pdufa,2026-04-13,SEC EDGAR,https://www.sec.gov/Archives/edgar/data/1438533/000143853326000005/tvtx-20260113.htm,primary",
+      "# TVTX,pdufa,2026-04-13,SEC EDGAR,https://www.sec.gov/Archives/edgar/data/1438533/000143853326000013/aex991_2025q4x10xkearnings.htm,primary"
+    ]
+  }
+}

@@ -1,1 +1,14 @@
 ticker,catalyst_type,event_date,source_name,source_url,source_type
+# CAPR,pdufa,2026-08-22,SEC EDGAR,https://www.sec.gov/Archives/edgar/data/1133869/000110465926078327/capr-20260626xex99d1.htm,primary
+# CAPR,adcom,2026-07-29,SEC EDGAR,https://www.sec.gov/Archives/edgar/data/1133869/000110465926078327/capr-20260626xex99d1.htm,primary
+# PRAX,pdufa,2027-01-29,SEC EDGAR,https://www.sec.gov/Archives/edgar/data/1689548/000168954826000049/praxisq12026pr.htm,primary
+# PRAX,pdufa,2026-09-27,SEC EDGAR,https://www.sec.gov/Archives/edgar/data/1689548/000168954826000049/praxisq12026pr.htm,primary
+# IONS,pdufa,2026-09-22,SEC EDGAR,https://www.sec.gov/Archives/edgar/data/874015/000114036126029960/ef20078953_ex99-1.htm,primary
+# IONS,pdufa,2026-10-26,SEC EDGAR,https://www.sec.gov/Archives/edgar/data/874015/000114036126029960/ef20078953_ex99-1.htm,primary
+# IONS,pdufa,2026-06-30,SEC EDGAR,https://www.sec.gov/Archives/edgar/data/874015/000114036126017637/ef20071749_ex99-1.htm,primary
+# IONS,pdufa,2026-09-22,SEC EDGAR,https://www.sec.gov/Archives/edgar/data/874015/000114036126017637/ef20071749_ex99-1.htm,primary
+# TVTX,pdufa,2026-04-13,SEC EDGAR,https://www.sec.gov/Archives/edgar/data/1438533/000143853326000013/aex991_2025q4x10xkearnings.htm,primary
+# TVTX,pdufa,2026-04-13,SEC EDGAR,https://www.sec.gov/Archives/edgar/data/1438533/000143853326000005/tvtx-20260113.htm,primary
+# BBIO,pdufa,2026-11-27,SEC EDGAR,https://www.sec.gov/Archives/edgar/data/1743881/000174388126000026/bbio-20260630xex991.htm,primary
+# BBIO,pdufa,2027-05-08,SEC EDGAR,https://www.sec.gov/Archives/edgar/data/1743881/000174388126000026/bbio-20260630xex991.htm,primary
+# DYN,pdufa,2027-01-21,SEC EDGAR,https://www.sec.gov/Archives/edgar/data/1818794/000119312526308343/dyn-20260720.htm,primary
