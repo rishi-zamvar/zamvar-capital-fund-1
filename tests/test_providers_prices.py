@@ -1,0 +1,88 @@
+"""Multi-source price fetchers (prices.py) — RAW/unadjusted, Friday-anchored, offline.
+
+The money-path guards live here: yfinance MUST be called with auto_adjust=False and store
+the raw Close (never Adj Close); Alpha Vantage MUST use TIME_SERIES_WEEKLY (not _ADJUSTED);
+Tiingo MUST read `close` (not `adjClose`). Adjusted prices bake future corporate-action
+knowledge into a bar = look-ahead. Every source normalizes week_end to the shared Friday
+anchor before returning. yfinance runs through an injected downloader; the JSON sources run
+through pytest-httpx. ZERO live API in this suite.
+"""
+
+import pandas as pd
+import pytest
+
+from catalyst_trader.config import settings
+from catalyst_trader.providers import _http, prices
+
+START, END = "2026-08-01", "2026-08-31"
+
+
+@pytest.fixture(autouse=True)
+def _isolate():
+    _http._clear_cache()
+    yield
+    _http._clear_cache()
+
+
+def _fake_yf_df():
+    """Monday-indexed weekly frame with Adj Close DIFFERENT from raw Close (the trap)."""
+    idx = pd.DatetimeIndex(["2026-08-03", "2026-08-10"])  # yfinance 1wk indexes by Monday
+    return pd.DataFrame(
+        {
+            "Open": [10.00, 10.60],
+            "High": [10.75, 11.60],
+            "Low": [9.95, 11.00],
+            "Close": [10.50, 11.40],   # RAW — what we must store
+            "Adj Close": [8.20, 9.00],  # split/div-adjusted — the look-ahead trap
+            "Volume": [3000.0, 6500.0],
+        },
+        index=idx,
+    )
+
+
+# ---- yfinance (YELLOW, always-on) --------------------------------------------------
+
+
+def test_yf_parses_raw_bars():
+    bars = prices._yf_weekly("TEST", START, END, downloader=lambda *a, **k: _fake_yf_df())
+    assert [b["week_end"] for b in bars] == ["2026-08-07", "2026-08-14"]  # Monday -> Friday
+    assert [b["close"] for b in bars] == [10.50, 11.40]  # raw Close, NOT Adj Close (8.20/9.00)
+    assert bars[0]["open"] == 10.00 and bars[0]["high"] == 10.75 and bars[0]["low"] == 9.95
+    assert all(b["_source"] == "yfinance" and b["_grade"] == "yellow" for b in bars)
+
+
+def test_yf_called_with_auto_adjust_false():
+    seen = {}
+
+    def spy(*args, **kwargs):
+        seen.update(kwargs)
+        return _fake_yf_df()
+
+    prices._yf_weekly("TEST", START, END, downloader=spy)
+    assert seen["auto_adjust"] is False  # money-critical: RAW prices only
+    assert seen["interval"] == "1wk"
+
+
+def test_yf_empty_returns_list():
+    assert prices._yf_weekly("TEST", START, END, downloader=lambda *a, **k: pd.DataFrame()) == []
+    assert prices._yf_weekly("TEST", START, END, downloader=lambda *a, **k: None) == []
+
+
+# ---- Nasdaq (YELLOW, always-on) ----------------------------------------------------
+
+
+def test_nasdaq_parses_and_resamples(httpx_mock, load_fixture):
+    httpx_mock.add_response(json=load_fixture("nasdaq_hist"))
+    bars = prices._nasdaq_daily("TEST", START, END)
+    assert [b["week_end"] for b in bars] == ["2026-08-07", "2026-08-14"]
+    # $-strings parsed to floats; daily rows collapsed to one weekly bar per Friday
+    assert bars[0]["open"] == 10.00 and bars[0]["close"] == 10.50  # week open=first day, close=last
+    assert bars[0]["high"] == 10.75 and bars[0]["low"] == 9.95
+    assert bars[0]["volume"] == 3000.0  # summed
+    assert bars[1]["close"] == 11.40
+    assert all(b["_source"] == "nasdaq" and b["_grade"] == "yellow" for b in bars)
+
+
+def test_nasdaq_degrade_returns_empty(httpx_mock):
+    httpx_mock.add_response(status_code=403)
+    assert prices._nasdaq_daily("TEST", START, END) == []  # _http degrade -> None -> []
