@@ -7,6 +7,10 @@ and per-endpoint User-Agent (browser for YELLOW hosts, SEC-declared-UA from
 settings for EDGAR).
 """
 
+import json
+import os
+from pathlib import Path
+
 import httpx
 import pytest
 
@@ -17,9 +21,11 @@ URL = "https://example.com/data"
 
 
 @pytest.fixture(autouse=True)
-def _isolate():
-    """Clear the module-level cache + rate-limit state around every test."""
+def _isolate(tmp_path, monkeypatch):
+    """Clear cache/rate-limit state and point the raw-snapshot lake at tmp_path
+    so no test writes into the repo's data/raw."""
     _http._clear_cache()
+    monkeypatch.setattr(settings, "raw_snapshot_dir", str(tmp_path))
     yield
     _http._clear_cache()
 
@@ -75,3 +81,81 @@ def test_http_get_text_returns_string(httpx_mock):
 def test_http_get_text_degrades_to_none(httpx_mock):
     httpx_mock.add_response(url=URL, status_code=403)
     assert _http.get_text("demo", URL) is None
+
+
+# ── Raw-snapshot lake (PIPE-06) ──────────────────────────────────────────────
+
+
+def test_successful_fetch_writes_snapshot(httpx_mock, tmp_path):
+    httpx_mock.add_response(url=URL, json={"v": 1})
+    _http.get_json("demo", URL)
+    path = _http.snapshot_path("demo", URL)
+    assert path is not None
+    p = Path(path)
+    assert p.exists()
+    assert str(tmp_path) in str(p)
+    assert "demo" in p.parts  # data/raw/{source}/...
+    assert p.suffix == ".json"
+    # Archived bytes are the raw response, re-parseable.
+    assert json.loads(p.read_text()) == {"v": 1}
+
+
+def test_degrade_writes_no_snapshot(httpx_mock, tmp_path):
+    httpx_mock.add_response(url=URL, status_code=403)
+    assert _http.get_json("demo", URL) is None
+    assert list(tmp_path.rglob("*.json")) == []
+    assert _http.snapshot_path("demo", URL) is None
+
+
+def test_cache_hit_no_double_write(httpx_mock, tmp_path):
+    httpx_mock.add_response(url=URL, json={"v": 1})
+    _http.get_json("demo", URL)
+    _http.get_json("demo", URL)  # in-TTL repeat -> cache path, no re-archive
+    assert len(httpx_mock.get_requests()) == 1
+    assert len(list(tmp_path.rglob("*.json"))) == 1
+
+
+def test_reparse_from_snapshot_offline(httpx_mock):
+    """load_snapshot re-parses an archived file with ZERO network."""
+    fixture = Path(__file__).parent / "fixtures" / "raw_snapshot_sample.json"
+    obj = _http.load_snapshot(fixture)
+    assert obj == {"symbol": "KURA", "raw": True, "value": 42}
+    assert httpx_mock.get_requests() == []  # no refetch
+
+
+def test_load_snapshot_text(tmp_path):
+    p = tmp_path / "snap.txt"
+    p.write_text("<html>raw</html>")
+    assert _http.load_snapshot(p) == "<html>raw</html>"
+
+
+def test_prune_bounds_lake_by_age(tmp_path):
+    old_dir = tmp_path / "demo" / "2020" / "01"
+    old_dir.mkdir(parents=True)
+    old = old_dir / "a_20200101T000000.json"
+    old.write_text('{"x": 1}')
+    os.utime(old, (0, 0))  # epoch — very old
+    new_dir = tmp_path / "demo" / "2026" / "08"
+    new_dir.mkdir(parents=True)
+    recent = new_dir / "b_20260816T000000.json"
+    recent.write_text('{"x": 2}')
+
+    removed = _http.prune_snapshots(older_than_days=30)
+    assert old in [Path(r) for r in removed]
+    assert not old.exists()
+    assert recent.exists()
+
+
+def test_prune_bounds_lake_by_size(tmp_path):
+    d = tmp_path / "demo" / "2026" / "08"
+    d.mkdir(parents=True)
+    older = d / "a_20260816T000001.json"
+    older.write_text("x" * 100)
+    os.utime(older, (1000, 1000))
+    newer = d / "b_20260816T000002.json"
+    newer.write_text("y" * 100)
+    os.utime(newer, (2000, 2000))
+
+    _http.prune_snapshots(max_bytes=150)  # keep newest under cap
+    assert not older.exists()  # oldest evicted first
+    assert newer.exists()
