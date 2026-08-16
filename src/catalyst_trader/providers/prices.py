@@ -77,13 +77,22 @@ def _nasdaq_daily(ticker, start, end):
 
     Prices are '$'-prefixed strings, unadjusted. Fetched via _http with a browser UA (the host
     403s non-browser agents); a degrade (None from _http) -> [].
+
+    The endpoint is asset-class-partitioned: an ETF (XBI, LABD, ...) returns NO rows under
+    ``assetclass=stocks``, so we fall through to ``assetclass=etf``. Without this the sector
+    reference XBI silently has zero bars and the whole beta/thesis_scan sleeve goes dark
+    (live-shakedown finding).
     """
     url = f"https://api.nasdaq.com/api/quote/{ticker}/historical"
-    params = {"assetclass": "stocks", "fromdate": start, "todate": end, "limit": "9999"}
-    data = get_json("nasdaq", url, params=params, ua="browser")
-    if not data:
+    rows = []
+    for assetclass in ("stocks", "etf"):
+        params = {"assetclass": assetclass, "fromdate": start, "todate": end, "limit": "9999"}
+        data = get_json("nasdaq", url, params=params, ua="browser")
+        rows = ((data or {}).get("data") or {}).get("tradesTable", {}).get("rows") or []
+        if rows:
+            break
+    if not rows:
         return []
-    rows = (data.get("data") or {}).get("tradesTable", {}).get("rows") or []
     daily = []
     for r in rows:
         close = _f(r.get("close"))

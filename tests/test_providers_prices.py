@@ -84,8 +84,19 @@ def test_nasdaq_parses_and_resamples(httpx_mock, load_fixture):
 
 
 def test_nasdaq_degrade_returns_empty(httpx_mock):
-    httpx_mock.add_response(status_code=403)
-    assert prices._nasdaq_daily("TEST", START, END) == []  # _http degrade -> None -> []
+    httpx_mock.add_response(status_code=403)  # assetclass=stocks degrades
+    httpx_mock.add_response(status_code=403)  # ... and the assetclass=etf fallthrough too
+    assert prices._nasdaq_daily("TEST", START, END) == []  # both degrade -> None -> []
+
+
+def test_nasdaq_etf_fallthrough(httpx_mock, load_fixture):
+    # An ETF (XBI/LABD) returns NO rows under assetclass=stocks -> the fetcher must retry
+    # assetclass=etf so the sector reference isn't silently absent (live-shakedown finding).
+    httpx_mock.add_response(json={"data": None})               # assetclass=stocks -> empty
+    httpx_mock.add_response(json=load_fixture("nasdaq_hist"))  # assetclass=etf -> real rows
+    bars = prices._nasdaq_daily("XBI", START, END)
+    assert [b["week_end"] for b in bars] == ["2026-08-07", "2026-08-14"]
+    assert all(b["_source"] == "nasdaq" and b["close"] is not None for b in bars)
 
 
 # ---- Alpha Vantage (GREEN, keyed) --------------------------------------------------
