@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: verifying
-stopped_at: Completed 06.10-05-PLAN.md
-last_updated: "2026-08-16T08:00:08.155Z"
+stopped_at: Completed 06.10-06-PLAN.md
+last_updated: "2026-08-16T08:15:12.550Z"
 last_activity: 2026-08-16
 progress:
   total_phases: 17
   completed_phases: 11
   total_plans: 67
-  completed_plans: 65
+  completed_plans: 66
 ---
 
 # Project State
@@ -115,6 +115,7 @@ Note: Phase 6.9/6.10 are retro-inserted sub-phases; the frontmatter project-wide
 | Phase 06.10 P03 | 15min | 2 tasks tasks | 6 files files |
 | Phase 06.10 P04 | 20m | 2 tasks | 2 files |
 | Phase 06.10 P05 | 18min | 2 tasks | 7 files |
+| Phase 06.10 P06 | 35min | 3 tasks tasks | 9 files files |
 
 ## Accumulated Context
 
@@ -219,6 +220,7 @@ Recent decisions affecting current work:
 - [Phase 06.10]: Median is a selection probe only; emitted close is always a real source bar (never impute)
 - [Phase 06.10]: Even-N 2-2 split degrades to highest-grade source as unconfirmed; split candidates flagged not auto-adjusted (RAW locked)
 - [Phase 06.10]: FINRA parses NDJSON line-by-line via get_text; SourceOrigin.nasdaq_earnings added for honest Nasdaq earnings provenance + FMP-first fallback
+- [Phase 06.10]: run_cycle reuses ingest_history whole (launchd cadence + store idempotency make re-fetch harmless); backfill widens the ingest window (no new write path)
 
 ### Pending Todos
 
@@ -232,6 +234,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-08-16T08:00:02.216Z
-Stopped at: Completed 06.10-05-PLAN.md
+Last session: 2026-08-16T08:15:06.896Z
+Stopped at: Completed 06.10-06-PLAN.md
 Resume file: None

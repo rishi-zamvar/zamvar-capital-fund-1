@@ -113,13 +113,13 @@
 
 ### Always-On Data Daemon & Coverage Expansion (PIPE) — added 2026-08-16 (free-forever, accuracy-first, constantly-running pipeline)
 
-- [ ] **PIPE-01**: A constantly-running launchd daemon executes a stateless `run_cycle()` on an accuracy-first cadence, appending to a growing historical archive; launchd = supervisor/crash-recovery, store idempotency = resumability (re-runs never duplicate).
-- [ ] **PIPE-02**: Self-heal — gap-detector finds missing name-weeks / stale sources and auto-re-fetches; dead-source detection fails over through the ranked cascade; cycle resumes cleanly after crash.
+- [x] **PIPE-01**: A constantly-running launchd daemon executes a stateless `run_cycle()` on an accuracy-first cadence, appending to a growing historical archive; launchd = supervisor/crash-recovery, store idempotency = resumability (re-runs never duplicate).
+- [x] **PIPE-02**: Self-heal — gap-detector finds missing name-weeks / stale sources and auto-re-fetches; dead-source detection fails over through the ranked cascade; cycle resumes cleanly after crash.
 - [x] **PIPE-03**: SEC XBRL fundamentals/float/cash-runway via `edgartools` (MIT, keyless) — replaces + upgrades the hand-rolled edgar.py; provenance-tagged, degrade-safe. (Fills the #1 known free-data gap: float.) *(06.10-01)*
 - [x] **PIPE-04**: FRED macro/rates/VIX regime provider (free key, ~20-line httpx, no dep) — fills the macro-regime coverage gap; env-first key.
 - [x] **PIPE-05**: Price cross-check upgraded from 2-source-agree to N-source median/majority-vote with divergence flagged; never impute a missing bar.
 - [x] **PIPE-06**: Raw response snapshots archived (keyed by source/ticker/fetch_ts) on local disk for audit + re-parse — the raw data lake.
-- [ ] **PIPE-07**: Data-health surfaced to the live monitor (`.monitor/data_health.json` → monitor tab): per-need freshness, staleness, cross-source divergence, source-health; alerts on degradation.
+- [x] **PIPE-07**: Data-health surfaced to the live monitor (`.monitor/data_health.json` → monitor tab): per-need freshness, staleness, cross-source divergence, source-health; alerts on degradation.
 - [ ] **PIPE-08**: Whole design stays FREE ($0) — OpenBB mirrored not adopted (AGPL + 50 deps); Stooq stays disabled (route-around, no proxies); only new dep is `edgartools`.
 - [x] **PIPE-09** *(shakedown finds 2026-08-16)*: Close the live-shakedown provider gaps that fed cards/flags but degraded on real data: (a) **FINRA** returns NDJSON, not a single JSON object — parse line-by-line (`get_json` did one `json.loads` → "Extra data"); (b) **EDGAR** needs a ticker→CIK map (SEC `company_tickers.json`) — subsumed by the PIPE-03 `edgartools` adoption, which resolves CIK internally; (c) **Nasdaq earnings fallback** — FMP earnings-calendar returned 402 (key tier), so activate the Nasdaq earnings provider the 6.9 plan deferred ("only if FMP fails" — it failed). Each provenance-tagged, degrade-safe, offline-tested.
 - [ ] **PIPE-10** *(shakedown find 2026-08-16)*: Real ≥2-source price cross-check must actually engage in the live daemon (the 6.9 shakedown ran effectively single-source: yfinance MultiIndex bug [fixed] + no GREEN keys). Verify N-source median (PIPE-05) triangulates ≥2 live sources on the real universe; document the GREEN-key setup (AV/Tiingo) so the cross-check has redundancy beyond yfinance+Nasdaq.
