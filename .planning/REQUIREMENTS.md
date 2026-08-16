@@ -134,6 +134,23 @@
 - [ ] **RH-DATA-02** *(GATED on operator connecting the RH MCP — cannot be done autonomously)*: run the 7-step probe-plan to enumerate + verify the RH read surface (UNVERIFIED per CLAUDE.md) via the Claude Agent SDK MCP path.
 - [x] **RH-DATA-03** *(GATED)*: wire the verified RH quotes/portfolio into the monitor (real-time cross-check) + the paper/live ledger (portfolio reconciliation).
 
+### Universe Expansion (UNIV) — added 2026-08-16 (catalyst-density-driven)
+
+- [ ] **UNIV-01**: Candidate discovery from our own free data — CT.gov near-term Ph2/Ph3 primaryCompletionDate → lead-sponsor → ticker + unfiltered EDGAR-8K PDUFA efts pass → ticker-per-hit.
+- [ ] **UNIV-02**: Screen candidates for tradeability + fit-ability: dollar-ADV floor (~$5M; $2-5M size-tiny tier), listed-options (optionability), market-cap floor/ceiling, cash-runway sanity, therapeutic-area + catalyst-type diversity (cohort cells).
+- [ ] **UNIV-03**: Measure-and-grow sizing — N is an OUTPUT: grow the shortlist until trailing-12mo store-measured tradeable-catalyst density ≥ target λ (~1.75-2.0/wk); do not hard-code N. Re-measure the soft base rates from the store, not the estimate.
+- [ ] **UNIV-04**: Write the expanded universe into the shipped survivorship-free `universe_as_of` store via `build_snapshot` (append-only, CIK-keyed for ticker-recycling), point-in-time. `universe/discover.py`.
+- [ ] **UNIV-05**: Honest breadth/depth tradeoff surfaced — more names = more diligence load; per-catalyst diligence + verify gates still gate every trade; the weekly desk SELECTS the best (≥1/wk = enough to choose from, not trade-all). Automated screening + provenance compensate for the loss of per-name eyeballing.
+
+### Catalyst-Outcome Playbook Dataset & Calibration (PLAY) — added 2026-08-16 (the moat)
+
+- [ ] **PLAY-01**: Per-catalyst record schema on the shipped KB (ZERO migration): company→catalyst→outcome + catalyst→prediction (pre-event SETUP), every node CITES an evidence_source.
+- [ ] **PLAY-02**: Pre-event setup features stamped as-of `pre_event_asof` (drop-regime, base rates, SI, options-implied move/IV, fundamentals/runway/float, analyst signals, prior analogs) — point-in-time, no peek at the outcome.
+- [ ] **PLAY-03**: Post-event outcome computed deterministically from bars + fill.py (1d/1wk move, direction, surprise-vs-expected, IV crush, hedge-leg behavior) — no LLM arithmetic.
+- [ ] **PLAY-04**: Structured RATIONALE — mechanism (sourced + cited), surprise + which pre-signals were predictive (deterministic match), inferred-vs-sourced labeled. cite-or-drop.
+- [ ] **PLAY-05**: No-look-ahead guaranteed by two disjoint as-of passes + `last_verified_at <= effective_asof`; historical backfill (backtest events → records) + forward WEEK-05 seam (each resolved trade → a record).
+- [ ] **PLAY-06**: Per-cohort (catalyst-type × therapeutic-area × drop-regime) `fitted_params` refit via seed_fitted_params/load_params, with per-stock adjustment only where a name has enough history; `analog_query` returns real analogs. `kb.insert_catalyst_record` + `scripts/build_playbooks.py`.
+
 ### Backtest / Baseline Harness (BACK)
 
 - [x] **BACK-01**: Historical event set from ~1yr of earnings calendars across the universe + dateable biotech catalysts
