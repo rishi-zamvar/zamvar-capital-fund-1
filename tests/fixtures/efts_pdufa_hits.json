@@ -1,0 +1,34 @@
+{
+  "hits": {
+    "total": {"value": 3},
+    "hits": [
+      {
+        "_id": "0001193125-26-344577:d123ex991.htm",
+        "_source": {
+          "ciks": ["0001476964"],
+          "display_names": ["Immunome, Inc. (IMNM)"],
+          "file_date": "2026-08-11",
+          "form": "8-K"
+        }
+      },
+      {
+        "_id": "0001104659-26-059380:ex991.htm",
+        "_source": {
+          "ciks": ["0001133869"],
+          "display_names": ["Capricor Therapeutics, Inc. (CAPR)"],
+          "file_date": "2026-05-12",
+          "form": "8-K"
+        }
+      },
+      {
+        "_id": "0000950170-26-000111:tm26junk.htm",
+        "_source": {
+          "ciks": ["0009999999"],
+          "display_names": ["Out Of Universe Corp (ZZZZ)"],
+          "file_date": "2026-07-01",
+          "form": "8-K"
+        }
+      }
+    ]
+  }
+}

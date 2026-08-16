@@ -124,3 +124,138 @@ def test_no_network_in_extract():
     src = inspect.getsource(pdufa_edgar._extract) + inspect.getsource(pdufa_edgar._normalize)
     # bs4's .get_text() is local parsing, not network — guard only _http fetches + HTTP/LLM libs.
     assert not re.search(r"get_json|_http|httpx|requests|urllib|anthropic|openai", src)
+
+
+# ── Task 2: efts discovery (CIK-filtered) + exhibit fetch + single-source Catalyst emit ──────
+
+import json  # noqa: E402
+from pathlib import Path  # noqa: E402
+
+import pytest  # noqa: E402
+
+from catalyst_trader.calendar import verify  # noqa: E402
+from catalyst_trader.config import settings  # noqa: E402
+from catalyst_trader.models import SourceType  # noqa: E402
+
+_CIK = {"IMNM": 1476964, "CAPR": 1133869}
+_IMNM_FRAG = "000119312526344577"  # accession no-dashes, in the built exhibit URL
+_CAPR_FRAG = "000110465926059380"
+
+
+class _FakeCompany:
+    def __init__(self, cik):
+        self.cik = cik
+
+
+def _efts_fixture():
+    return json.loads((Path(__file__).parent / "fixtures" / "efts_pdufa_hits.json").read_text())
+
+
+def _wire(monkeypatch, *, efts, text_map, tmp_csv):
+    """Monkeypatch the whole offline surface: efts get_json, exhibit get_text (routed by URL
+    fragment), edgar.Company (ticker->CIK), the SEC UA, and the review-CSV constant. NO network."""
+    import edgar as edgar_lib
+
+    from catalyst_trader.providers import pdufa_edgar
+
+    monkeypatch.setattr(settings, "sec_user_agent", "Zamvar Capital research@zamvar.example")
+    monkeypatch.setattr(edgar_lib, "set_identity", lambda ua: None)
+    monkeypatch.setattr(edgar_lib, "Company", lambda t, *a, **k: _FakeCompany(_CIK[t.upper()]))
+    monkeypatch.setattr(pdufa_edgar, "get_json", lambda *a, **k: efts)
+
+    def _fake_get_text(source, url, **k):
+        for frag, val in text_map.items():
+            if frag in url:
+                return val
+        return None
+
+    monkeypatch.setattr(pdufa_edgar, "get_text", _fake_get_text)
+    monkeypatch.setattr(pdufa_edgar, "_CURATED_CSV", tmp_csv)
+    return pdufa_edgar
+
+
+def _by_ticker(cats, ticker):
+    return next((c for c in cats if c.ticker == ticker), None)
+
+
+def test_fetch_cik_filter_drops_out_of_universe(monkeypatch, tmp_path):
+    pe = _wire(
+        monkeypatch,
+        efts=_efts_fixture(),
+        text_map={_IMNM_FRAG: _load_htm("edgar_8k_imnm.htm"), _CAPR_FRAG: _load_htm("edgar_8k_capr.htm")},
+        tmp_csv=tmp_path / "pdufa_curated.csv",
+    )
+    out = pe.fetch(["IMNM", "CAPR"], "2026-01-01", "2026-12-31")
+    assert {c.ticker for c in out} == {"IMNM", "CAPR"}  # out-of-universe CIK dropped (no fuzzy title)
+
+
+def test_fetch_emits_single_sec_edgar_primary(monkeypatch, tmp_path):
+    pe = _wire(
+        monkeypatch,
+        efts=_efts_fixture(),
+        text_map={_IMNM_FRAG: _load_htm("edgar_8k_imnm.htm"), _CAPR_FRAG: _load_htm("edgar_8k_capr.htm")},
+        tmp_csv=tmp_path / "pdufa_curated.csv",
+    )
+    out = pe.fetch(["IMNM", "CAPR"], "2026-01-01", "2026-12-31")
+    imnm = _by_ticker(out, "IMNM")
+    assert imnm is not None
+    assert imnm.event_date == "2027-04-28"
+    assert len(imnm.sources) == 1
+    src = imnm.sources[0]
+    assert src.source_name == "SEC EDGAR"
+    assert src.source_type == SourceType.primary
+    assert _IMNM_FRAG in src.source_url  # authoritative accession exhibit URL
+    assert src.published_date == "2026-08-11"  # point-in-time: the 8-K filing_date
+    assert imnm.external_ref == "pdufa_edgar:IMNM:0001193125-26-344577"
+
+
+def test_fetch_catalyst_self_verifies(monkeypatch, tmp_path):
+    pe = _wire(
+        monkeypatch,
+        efts=_efts_fixture(),
+        text_map={_IMNM_FRAG: _load_htm("edgar_8k_imnm.htm"), _CAPR_FRAG: _load_htm("edgar_8k_capr.htm")},
+        tmp_csv=tmp_path / "pdufa_curated.csv",
+    )
+    out = pe.fetch(["IMNM", "CAPR"], "2026-01-01", "2026-12-31")
+    imnm = _by_ticker(out, "IMNM")
+    # the single-EDGAR-8K-self-verifies invariant, proven against the REAL verify.py (zero edit)
+    assert verify._authoritative_single(imnm.sources) is True
+
+
+def test_fetch_medium_routes_to_review_csv_not_emitted(monkeypatch, tmp_path):
+    tmp_csv = tmp_path / "pdufa_curated.csv"
+    # single IMNM hit whose exhibit is MEDIUM ("target action date" without a PDUFA token)
+    efts = {"hits": {"hits": [
+        {"_id": "0001193125-26-344577:d.htm",
+         "_source": {"ciks": ["0001476964"], "display_names": ["Immunome, Inc. (IMNM)"], "file_date": "2026-08-11"}}
+    ]}}
+    medium_html = "<p>The FDA set a target action date of August 22, 2026 for the application.</p>"
+    pe = _wire(monkeypatch, efts=efts, text_map={_IMNM_FRAG: medium_html}, tmp_csv=tmp_csv)
+
+    out = pe.fetch(["IMNM"], "2026-01-01", "2026-12-31")
+    assert out == []  # MEDIUM never auto-emitted as tradeable
+
+    body = tmp_csv.read_text()
+    lines = [ln for ln in body.splitlines() if ln.strip()]
+    assert len(lines) == 1
+    assert lines[0].startswith("# ")  # #-commented -> verify.load_curated_pdufa SKIPS it (human gate)
+    assert "SEC EDGAR" in lines[0] and "2026-08-22" in lines[0] and _IMNM_FRAG in lines[0]
+
+    pe.fetch(["IMNM"], "2026-01-01", "2026-12-31")  # re-run
+    assert len([ln for ln in tmp_csv.read_text().splitlines() if ln.strip()]) == 1  # idempotent
+
+
+def test_fetch_efts_degrades(monkeypatch, tmp_path):
+    pe = _wire(monkeypatch, efts=None, text_map={}, tmp_csv=tmp_path / "c.csv")
+    assert pe.fetch(["IMNM", "CAPR"], "2026-01-01", "2026-12-31") == []  # no raise
+
+
+def test_fetch_exhibit_degrades(monkeypatch, tmp_path):
+    pe = _wire(
+        monkeypatch,
+        efts=_efts_fixture(),
+        text_map={_IMNM_FRAG: _load_htm("edgar_8k_imnm.htm")},  # CAPR url -> None (missing)
+        tmp_csv=tmp_path / "c.csv",
+    )
+    out = pe.fetch(["IMNM", "CAPR"], "2026-01-01", "2026-12-31")
+    assert {c.ticker for c in out} == {"IMNM"}  # CAPR exhibit degraded -> skipped, IMNM still emits
