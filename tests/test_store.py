@@ -45,6 +45,20 @@ def _catalyst(sources=None, **over):
     return Catalyst(**base)
 
 
+def test_insert_catalyst_accepts_nasdaq_earnings_origin(db):
+    # Regression (06.10-07 live shakedown): the FMP-402 -> Nasdaq earnings fallback emits
+    # source_origin=nasdaq_earnings, but the 001_init CHECK whitelist omitted it, so insert_catalyst
+    # raised `CHECK constraint failed` and crashed the whole daemon run_cycle. Migration 008 widens
+    # the constraint; this proves a nasdaq_earnings Catalyst now persists.
+    cid = store.insert_catalyst(db, _catalyst(
+        catalyst_type=CatalystType.earnings,
+        source_origin=SourceOrigin.nasdaq_earnings,
+        sources=[_source(source_name="Nasdaq", source_type=SourceType.secondary)],
+    ))
+    row = db.execute("SELECT source_origin FROM catalyst WHERE id=?", (cid,)).fetchone()
+    assert row["source_origin"] == SourceOrigin.nasdaq_earnings.value
+
+
 def test_insert_catalyst_writes_catalyst_and_source_rows(db):
     cid = store.insert_catalyst(db, _catalyst(sources=[_source(), _source(source_type=SourceType.secondary)]))
     assert isinstance(cid, int)
