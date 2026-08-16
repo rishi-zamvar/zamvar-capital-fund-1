@@ -17,8 +17,8 @@ import pytest
 from catalyst_trader.models import SourceType, Status
 from catalyst_trader.providers import _http, pdufa
 
-_FR = re.compile(r"federalregister\.gov")
-_RTT = re.compile(r"rttnews\.com")
+_FR = re.compile(r"https://www\.federalregister\.gov.*")
+_RTT = re.compile(r"https://www\.rttnews\.com.*")
 
 _TICKERS = ["KURA", "CDEX", "SOME"]
 _MAP = {"KURA": ["Ziftomenib", "Kura Oncology"], "CDEX": ["Cardiodex"]}
