@@ -1,0 +1,21 @@
+{
+  "timestamp": "2026-08-16T15:30:00Z",
+  "data": {
+    "symbol": "KURA",
+    "current_price": 12.34,
+    "bid": 12.30,
+    "ask": 12.40,
+    "volume": 512345,
+    "iv30": 0.85,
+    "options": [
+      {"option": "KURA260821C00012500", "bid": 0.60, "ask": 0.75, "iv": 0.83, "open_interest": 200, "volume": 50},
+      {"option": "KURA260821P00012500", "bid": 0.55, "ask": 0.70, "iv": 0.84, "open_interest": 180, "volume": 40},
+      {"option": "KURA260821C00010000", "bid": 2.50, "ask": 2.70, "iv": 0.90, "open_interest": 100, "volume": 10},
+      {"option": "KURA260821P00010000", "bid": 0.10, "ask": 0.20, "iv": 0.95, "open_interest": 50, "volume": 5},
+      {"option": "KURA260821C00050000", "bid": 0.00, "ask": 0.05, "iv": 0.00, "open_interest": 0, "volume": 0},
+      {"option": "KURA260821P00050000", "bid": 0.00, "ask": 0.05, "iv": 0.00, "open_interest": 0, "volume": 0},
+      {"option": "KURA260918C00012500", "bid": 0.90, "ask": 1.10, "iv": 0.88, "open_interest": 150, "volume": 30},
+      {"option": "KURA260918P00012500", "bid": 0.85, "ask": 1.05, "iv": 0.89, "open_interest": 140, "volume": 25}
+    ]
+  }
+}
