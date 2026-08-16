@@ -305,3 +305,82 @@ def get_weekly_bars(ticker, start, end, *, providers=PRICE_PROVIDERS, tol_pct=0.
             "agreeing_sources": agreeing_srcs,
         })
     return out
+
+
+# ---- quality detectors (research §2.3) — pure/log-only, consumed by the daemon (Plans 06/07)
+
+
+def flag_split_candidates(bars, *, ticker=None, split_tol=0.1, vol_spike=1.5):
+    """Flag ~2x / ~0.5x RAW-close jumps vs the ADJACENT week with no corroborating volume spike as
+    candidate corporate actions (research §2.3). LOG + return the flags — NEVER auto-adjust; RAW is
+    locked, the flag IS the signal. A genuine news move comes WITH a volume spike; a split moves
+    price on ~flat volume, so we only flag when volume did NOT spike. Pure/offline.
+
+    Returns a list of {ticker, week_end, prev_close, close, ratio} — the shape Plan 06 counts."""
+    flags = []
+    ordered = sorted(bars, key=lambda b: b["week_end"])
+    for prev, cur in zip(ordered, ordered[1:]):
+        pc, cc = prev.get("close"), cur.get("close")
+        if not pc or not cc:
+            continue
+        ratio = cc / pc
+        split_like = abs(ratio - 2.0) <= split_tol or abs(ratio - 0.5) <= split_tol / 2
+        if not split_like:
+            continue
+        pv, cv = prev.get("volume") or 0.0, cur.get("volume") or 0.0
+        vol_ratio = (cv / pv) if pv else 0.0
+        if vol_ratio >= vol_spike:  # a real volume spike -> a news move, not a split
+            continue
+        flags.append({"ticker": ticker, "week_end": cur["week_end"],
+                      "prev_close": pc, "close": cc, "ratio": ratio})
+        logger.warning(
+            "split/dividend candidate %s %s: %.4f->%.4f (%.2fx) volx=%.2f (RAW not adjusted)",
+            ticker, cur["week_end"], pc, cc, ratio, vol_ratio,
+        )
+    return flags
+
+
+def drop_bad_ticks(bars, *, n_sigma=4.0, revert_tol=0.1):
+    """Drop a single-bar close that spikes > n_sigma over the local window AND reverts the next bar
+    (a bad tick), returning a NEW list; adjacent bars are untouched. Needs >=3 bars. Pure/offline.
+
+    The window centre/scale use the robust median + population stdev of the OTHER closes. When the
+    window is perfectly flat (sigma==0) no tick can be scored, so it is left in place.
+    # ponytail: median/stdev over the whole series, not a rolling window — fine at ~weekly bars.
+    """
+    ordered = sorted(bars, key=lambda b: b["week_end"])
+    if len(ordered) < 3:
+        return ordered
+    closes = [b["close"] for b in ordered]
+    drop = set()
+    for i in range(1, len(ordered) - 1):
+        prev, cur, nxt = closes[i - 1], closes[i], closes[i + 1]
+        if not prev or abs(nxt - prev) / abs(prev) > revert_tol:
+            continue  # does not revert -> a real move, not a bad tick
+        window = [c for j, c in enumerate(closes) if j != i]
+        center = statistics.median(window)
+        sigma = statistics.pstdev(window)
+        if sigma > 0 and abs(cur - center) > n_sigma * sigma:
+            drop.add(i)
+            logger.warning(
+                "bad tick dropped %s %s: close=%.4f reverts to ~%.4f (%.1fσ over window median %.4f)",
+                ordered[i].get("_source") or ordered[i].get("source"),
+                ordered[i].get("week_end"), cur, prev, abs(cur - center) / sigma, center,
+            )
+    return [b for j, b in enumerate(ordered) if j not in drop]
+
+
+def is_stale(fetch_ts, cadence_s, *, now=None):
+    """True if the last successful fetch is older than 2x the source cadence — the daemon/health
+    JSON degrade signal (Plans 06/07). `fetch_ts`: ISO-8601 string, datetime, or None (never
+    fetched -> stale). `cadence_s`: expected seconds between fetches. Pure/offline."""
+    if fetch_ts is None:
+        return True
+    if isinstance(fetch_ts, str):
+        fetch_ts = datetime.fromisoformat(fetch_ts)
+    now = now or datetime.now(timezone.utc)
+    if fetch_ts.tzinfo is None:
+        fetch_ts = fetch_ts.replace(tzinfo=timezone.utc)
+    if now.tzinfo is None:
+        now = now.replace(tzinfo=timezone.utc)
+    return (now - fetch_ts).total_seconds() > 2 * cadence_s
