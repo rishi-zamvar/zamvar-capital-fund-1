@@ -261,3 +261,70 @@ def test_thesis_scan_catalyst_precedence(db):
     row = _rows_by_ticker(thesis_scan(["CAT"], we, store, db, params=_params(db)))["CAT"]
     assert row["thesis_type"] == "catalyst"
     assert "catalyst_precedence" in row["veto_reasons"]
+
+
+# --- cohort caching: behaviour-preserving equivalence (O(U^2) -> O(U)) -----------------------
+
+
+def _cohort_events_ref(store_mod, kb_conn, target, as_of, lookback, op, thr):
+    """Reference (pre-refactor) cohort pool: rescan every ticker != target. The cached
+    total-minus-target path must return byte-identical counts to this."""
+    from catalyst_trader.quant.weekly import _trigger_hit, _weekly_returns
+    rows = kb_conn.execute(
+        "SELECT DISTINCT ticker FROM price_bar WHERE ticker != ?", (target,)
+    ).fetchall()
+    up = n = 0
+    for r in rows:
+        rets = _weekly_returns(store_mod.bars_asof(kb_conn, r[0], as_of, lookback_weeks=lookback))
+        for i in range(len(rets) - 1):
+            if _trigger_hit(rets[i], op, thr):
+                n += 1
+                if rets[i + 1] > 0:
+                    up += 1
+    return up, n
+
+
+def _seed_cohort_universe(db):
+    """A varied multi-ticker universe (all five trigger cells exercised) + XBI."""
+    store.upsert_bars(db, "XBI", _bars(_osc(160)))
+    patterns = {
+        "AAA": _rep([0.03, -0.06], 70),
+        "BBB": _rep([-0.06, 0.03, -0.06, -0.02], 40),
+        "CCC": _rep([0.10, -0.16], 50),
+        "DDD": _rep([0.07, -0.11, 0.02, -0.03], 40),
+        "EEE": _osc(160, amp=0.01),
+        "FFF": _rep([-0.06, 0.03], 80),
+        "GGG": _rep([0.06, -0.12, 0.03, -0.07], 35),
+        "HHH": _rep([0.03, -0.06, 0.03, 0.03], 40),
+    }
+    for tk, p in patterns.items():
+        store.upsert_bars(db, tk, _bars(p))
+    db.commit()
+    return list(patterns.keys())
+
+
+def test_cohort_events_cache_matches_full_rescan(db):
+    """The cached total-minus-target pool == the per-target rescan for every ticker x trigger,
+    including a ticker with no bars (subtracting a (0,0) contribution)."""
+    from catalyst_trader.quant.weekly import _TRIGGERS, _cohort_events
+    universe = _seed_cohort_universe(db)
+    as_of = _bars(_rep([0.03, -0.06], 70))[-1]["week_end"]
+    lookback = kb.load_params(db, "weekly")["weekly"]["window_years"] * 52
+    cache: dict = {}
+    for tk in universe + ["ZZZ_NO_BARS"]:
+        for _trig, (op, thr) in _TRIGGERS.items():
+            ref = _cohort_events_ref(store, db, tk, as_of, lookback, op, thr)
+            cached = _cohort_events(store, db, tk, as_of, lookback, op, thr, cache=cache)
+            uncached = _cohort_events(store, db, tk, as_of, lookback, op, thr)
+            assert cached == ref  # cache path identical to full rescan
+            assert uncached == ref  # no-cache path identical to full rescan
+
+
+def test_thesis_scan_identical_with_and_without_shared_cache(db):
+    """thesis_scan (shared cohort cache) == per-name scans with no shared cache — byte-for-byte."""
+    universe = _seed_cohort_universe(db)
+    we = _bars(_rep([0.03, -0.06], 70))[-1]["week_end"]
+    params = _params(db)
+    shared = thesis_scan(universe, we, store, db, params=params).detail["rows"]
+    per_name = [thesis_scan([tk], we, store, db, params=params).detail["rows"][0] for tk in universe]
+    assert shared == per_name

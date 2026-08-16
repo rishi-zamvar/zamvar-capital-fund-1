@@ -135,7 +135,7 @@ def _news_in_drop_week(store, kb_conn, ticker, bars, week_end):
 
 
 def weekly_base_rate(ticker, trigger, drop_class, turnover, as_of, store, kb_conn, *,
-                     params, window_years=None):
+                     params, window_years=None, cohort_cache=None):
     """Beta-binomial-shrunk conditional P(next-week-up) for a (trigger, drop_class, turnover) cell.
 
     The thin-per-name trap: a name with 4 historical bounces is NOT a 100% edge. We shrink the raw
@@ -164,7 +164,7 @@ def weekly_base_rate(ticker, trigger, drop_class, turnover, as_of, store, kb_con
     # parent cohort: SAME-trigger events pooled over every OTHER ticker (universe level).
     # ponytail: therapeutic-area sub-cohort is a future feed; the universe pool is the widest
     # cohort available offline (ladder collapses to it), with a 0.5 uninformative prior when empty.
-    c_up, c_n = _cohort_events(store, kb_conn, ticker, as_of, lookback, op, thr)
+    c_up, c_n = _cohort_events(store, kb_conn, ticker, as_of, lookback, op, thr, cache=cohort_cache)
     if c_n:
         p_cohort, cohort_level = c_up / c_n, "universe"
     else:
@@ -228,21 +228,45 @@ def _trigger_events(store, kb_conn, ticker, as_of, lookback, op, thr, turnover, 
     return n_up, nexts, dates
 
 
-def _cohort_events(store, kb_conn, target, as_of, lookback, op, thr):
-    """Same-trigger next-week-up counts pooled over every ticker except `target` (parent cohort)."""
-    rows = kb_conn.execute(
-        "SELECT DISTINCT ticker FROM price_bar WHERE ticker != ?", (target,)
-    ).fetchall()
-    up = n = 0
+def _cohort_events(store, kb_conn, target, as_of, lookback, op, thr, cache=None):
+    """Same-trigger next-week-up counts pooled over every ticker except `target` (parent cohort).
+
+    Excluding `target` == (whole-universe pool) minus (target's own contribution) — identical
+    integer arithmetic. So the whole-universe pool is computed ONCE per (as_of, lookback, op, thr)
+    and each per-ticker cohort is a subtraction, collapsing thesis_scan's O(U^2) recomputation to
+    O(U). Behaviour-preserving: same counts as the per-target rescan. ``cache`` (a plain dict,
+    threaded by thesis_scan) memoizes the pool across the U calls of one scan; direct callers pass
+    nothing and just get the pool built fresh.
+    """
+    key = (as_of, lookback, op, thr)
+    if cache is not None and key in cache:
+        total_up, total_n, per = cache[key]
+    else:
+        total_up, total_n, per = _cohort_pool(store, kb_conn, as_of, lookback, op, thr)
+        if cache is not None:
+            cache[key] = (total_up, total_n, per)
+    t_up, t_n = per.get(target, (0, 0))  # target absent from price_bar -> (0, 0), pool unchanged
+    return total_up - t_up, total_n - t_n
+
+
+def _cohort_pool(store, kb_conn, as_of, lookback, op, thr):
+    """Per-ticker (up, n) trigger counts over the WHOLE universe + the totals (parent-cohort pool)."""
+    rows = kb_conn.execute("SELECT DISTINCT ticker FROM price_bar").fetchall()
+    per: dict[str, tuple[int, int]] = {}
+    total_up = total_n = 0
     for r in rows:
         tk = r[0]
         rets = _weekly_returns(store.bars_asof(kb_conn, tk, as_of, lookback_weeks=lookback))
+        up = n = 0
         for i in range(len(rets) - 1):
             if _trigger_hit(rets[i], op, thr):
                 n += 1
                 if rets[i + 1] > 0:
                     up += 1
-    return up, n
+        per[tk] = (up, n)
+        total_up += up
+        total_n += n
+    return total_up, total_n, per
 
 
 def _mean_ci(arr):
@@ -326,8 +350,11 @@ def thesis_scan(universe, week_end, store, kb_conn, *, params):
     hard_veto = w["hard_veto_drop"]
 
     tickers = [getattr(item, "ticker", item) for item in universe]
+    # One cohort pool per (as_of, trigger) shared across all U names — collapses O(U^2) to O(U).
+    cohort_cache: dict = {}
     rows = [
-        _thesis_row(tk, week_end, store, kb_conn, params, edge_min, min_n, cost_floor, hard_veto)
+        _thesis_row(tk, week_end, store, kb_conn, params, edge_min, min_n, cost_floor, hard_veto,
+                    cohort_cache)
         for tk in tickers
     ]
 
@@ -340,7 +367,8 @@ def thesis_scan(universe, week_end, store, kb_conn, *, params):
     )
 
 
-def _thesis_row(ticker, week_end, store, kb_conn, params, edge_min, min_n, cost_floor, hard_veto):
+def _thesis_row(ticker, week_end, store, kb_conn, params, edge_min, min_n, cost_floor, hard_veto,
+                cohort_cache=None):
     cd = classify_drop(ticker, week_end, store, kb_conn, params=params).detail
     ret, drop_class, turnover = cd["ret"], cd["drop_class"], cd["turnover_flag"]
 
@@ -357,7 +385,7 @@ def _thesis_row(ticker, week_end, store, kb_conn, params, edge_min, min_n, cost_
                 "veto_reasons": ["no_trigger"]}
 
     br = weekly_base_rate(ticker, trigger, drop_class, turnover, week_end, store, kb_conn,
-                          params=params).detail
+                          params=params, cohort_cache=cohort_cache).detail
     p, mean_next, ci_low = br["p_shrunk"], br["mean_next"], br["ci_low"]
     n_eff = br["n_effective"]
     edge = p - br["p_cohort"]
