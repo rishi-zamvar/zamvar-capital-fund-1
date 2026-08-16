@@ -54,19 +54,25 @@ def _parse_study(study: dict, ticker: str, allowed_sponsors: set[str]) -> Cataly
     lead = ps.get("sponsorCollaboratorsModule", {}).get("leadSponsor", {}).get("name")
     if lead not in allowed_sponsors:  # lead-sponsor filter (collaborator gotcha)
         return None
-    pcd = ps.get("statusModule", {}).get("primaryCompletionDateStruct")
+    sm = ps.get("statusModule", {})
+    pcd = sm.get("primaryCompletionDateStruct")
     if not pcd or not pcd.get("date"):
         return None  # no date -> nothing to attribute
     raw_date = pcd["date"]
     ctype = pcd.get("type", "ESTIMATED")  # ESTIMATED | ACTUAL
     nct = ps.get("identificationModule", {}).get("nctId")
     date_type = DateType.estimated if ctype == "ESTIMATED" else DateType.actual
+    # The record's last-posted date (distinct from the event date). Now that a single CT.gov
+    # readout verifies (DATA-03 amendment), this is the point-in-time last_verified_at stamp —
+    # anti-look-ahead (BACK-01): when the record became knowable, NEVER now()/event_date.
+    last_update = (sm.get("lastUpdatePostDateStruct") or {}).get("date")
     source = CatalystSource(
         source_name="ClinicalTrials.gov",
         source_url=f"https://clinicaltrials.gov/study/{nct}",
         source_type=SourceType.primary,
         reported_date=raw_date,
         date_type=date_type,  # DATA-04: persist the source's own precision typing
+        published_date=last_update,  # transport-only -> point-in-time last_verified_at stamp
         retrieved_at=_now(),
     )
     return Catalyst(

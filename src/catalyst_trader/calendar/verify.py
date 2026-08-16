@@ -1,7 +1,10 @@
-"""Two-source verification rule + uncertainty re-derivation + curated PDUFA loader.
+"""Verification rule + uncertainty re-derivation + curated PDUFA loader.
 
 The tradeable gate lives here as ONE predicate. A catalyst is verified (and thus
-tradeable) iff it has >=2 agreeing source rows with at least one primary source.
+tradeable) iff EITHER:
+  (a) it has >=2 agreeing source rows with at least one primary source, OR
+  (b) it has >=1 agreeing AUTHORITATIVE-SUFFICIENT source — a single government/
+      registry primary that IS the authority for its own date (DATA-03 amendment).
 Uncertainty is never a judgement call: verify re-derives it via ``classify()``
 from the most-authoritative (primary-preferred) source row's persisted
 ``date_type`` — it reads the source's own ESTIMATED/ACTUAL precision, never guesses.
@@ -26,6 +29,29 @@ from catalyst_trader.models import (
     Status,
     Uncertainty,
 )
+
+
+# DATA-03 amendment (operator decision, 2026-08-16): a SINGLE government/registry primary that
+# IS the authority for its own date verifies on its own — unblocking CT.gov trial readouts +
+# Federal Register AdComs (and future SEC EDGAR filings) as tradeable catalysts. Tracker /
+# scraped / exchange-convenience feeds (RTTNews, Nasdaq earnings) are deliberately NOT here and
+# still require the 2-source path. Keyed by source_name so it is tunable + auditable in ONE place;
+# EDGAR is listed for future filing catalysts (no catalyst flow emits it yet).
+AUTHORITATIVE_SUFFICIENT = frozenset({
+    "ClinicalTrials.gov",  # trial readouts — the registry (primaryCompletionDate)
+    "Federal Register",    # AdCom / FDA notices — the government publication of record
+    "SEC EDGAR",           # SEC filings — the government filing system (future catalyst flows)
+})
+
+
+def _authoritative_single(agreeing: list[CatalystSource]) -> bool:
+    """True iff some agreeing PRIMARY source is a named government/registry authority — the
+    single-source verify path (DATA-03 amendment). Requires source_type==primary so a hand-typed
+    curated row that merely borrows an authoritative name (as a secondary) cannot self-verify."""
+    return any(
+        s.source_type == SourceType.primary and s.source_name in AUTHORITATIVE_SUFFICIENT
+        for s in agreeing
+    )
 
 
 def is_tradeable(catalyst: Catalyst) -> bool:
@@ -58,7 +84,8 @@ def verify_catalyst(conn: sqlite3.Connection, catalyst_id: int, now: str | None 
         catalyst.event_date, date_type, source_count=len(agreeing), has_primary=has_primary
     )
 
-    verified = len(agreeing) >= 2 and has_primary
+    # DATA-03: the 2-source path (unchanged, byte-for-byte) OR a single authoritative source.
+    verified = (len(agreeing) >= 2 and has_primary) or _authoritative_single(agreeing)
     if verified:
         new_status = Status.verified
     elif catalyst.status in (Status.unverified, Status.verified):
