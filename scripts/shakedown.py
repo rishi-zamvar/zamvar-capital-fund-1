@@ -14,7 +14,6 @@ had >=2 free in-window sources) is SURFACED honestly, never hidden.
 
 from __future__ import annotations
 
-import functools
 import json
 import logging
 from collections import Counter
@@ -230,65 +229,13 @@ def _load_params(conn):
 # --- the LIVE wiring (real providers) ---------------------------------------------------------
 
 
-def _recent_si_settlement(end: str) -> str:
-    """The most recent FINRA settlement date (15th / EOM) published by `end` (~T+9 business days).
-    Picks the latest of {15th, month-end} that is >= 12 calendar days before end."""
-    from calendar import monthrange
-    e = date.fromisoformat(end)
-    cutoff = e - timedelta(days=12)
-    candidates = []
-    for back in range(3):  # this month + two prior
-        y, m = e.year, e.month - back
-        while m <= 0:
-            y, m = y - 1, m + 12
-        candidates.append(date(y, m, 15))
-        candidates.append(date(y, m, monthrange(y, m)[1]))
-    valid = sorted(d for d in candidates if d <= cutoff)
-    return valid[-1].isoformat()
-
-
 def _live_providers(end: str) -> dict:
-    """Wire the REAL free providers into the ingest seam. Each degrades to None/[] independently
-    (ingest._safe / the cascade), so a missing key or a source outage is a LOGGED edge case.
-
-    The per-ticker datum providers (options/finra/edgar) are week-INVARIANT but ingest_history calls
-    them once per (ticker, week_end); memoize per ticker so a degrading endpoint isn't re-hit 52x
-    (a shakedown-run optimization — the data is genuinely per-ticker; _http already caches successes,
-    this also caches the degrade so a dead source is queried once, not weekly)."""
-
-    from catalyst_trader.providers import (
-        clinicaltrials,
-        edgar,
-        finra,
-        fmp,
-        options_cboe,
-        pdufa,
-        prices,
-    )
-    si_date = _recent_si_settlement(end)
-
-    @functools.cache
-    def _options(tk):
-        return options_cboe.fetch(tk)
-
-    @functools.cache
-    def _finra(tk):
-        return finra.fetch(tk, si_date)
-
-    @functools.cache
-    def _edgar(tk):
-        return edgar.fetch(tk)
-
-    return {
-        "prices": lambda tk, s, e: prices.get_weekly_bars(tk, s, e),
-        "options": _options,
-        "finra": _finra,
-        "edgar": _edgar,
-        "financials": None,  # FMP fundamentals slot — optional (Plan 07 documented degrade)
-        "clinicaltrials": lambda tks, s, e: clinicaltrials.fetch_trial_readouts(tks, s, e),
-        "earnings": lambda tks, s, e: fmp.fetch_earnings(tks, s, e),  # RuntimeError if no key -> _safe
-        "pdufa": lambda tks, s, e, company_map=None: pdufa.fetch(tks, s, e, company_map=company_map),
-    }
+    """Wire the REAL free providers into the ingest seam via the SHARED registry (no duplicate dict).
+    Each slot degrades to None/[] independently (ingest._safe / the cascade), so a missing key or a
+    source outage is a LOGGED edge case. The per-ticker closures keep their @functools.cache in the
+    registry, so a degrading endpoint is queried ONCE per ticker per run, not 52x."""
+    from catalyst_trader.providers import registry
+    return registry.build_providers(settings, end=end)
 
 
 def _window(weeks: int = 52) -> tuple[str, str]:
