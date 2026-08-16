@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: executing
-stopped_at: Completed 06.9-07-PLAN.md
-last_updated: "2026-08-16T05:29:58.164Z"
+status: verifying
+stopped_at: Completed 06.9-08-PLAN.md (live shakedown INGEST-05 executed)
+last_updated: "2026-08-16T06:37:48.321Z"
 last_activity: 2026-08-16
 progress:
   total_phases: 17
-  completed_phases: 10
+  completed_phases: 11
   total_plans: 60
-  completed_plans: 59
+  completed_plans: 60
 ---
 
 # Project State
@@ -26,7 +26,7 @@ See: .planning/PROJECT.md (updated 2026-08-14)
 
 Phase: 06.9
 Plan: 8 of 8
-Status: Ready to execute
+Status: Phase complete — ready for verification
 Last activity: 2026-08-16
 
 Progress: [██████░░░░] 5/8 plans
@@ -110,6 +110,7 @@ Note: Phase 6.9/6.10 are retro-inserted sub-phases; the frontmatter project-wide
 | Phase 06.9 P05 | 12min | 2 tasks tasks | 8 files files |
 | Phase 06.9 P06 | 8min | 1 tasks | 2 files |
 | Phase 06.9 P07 | 20min | 2 tasks | 3 files |
+| Phase 06.9 P08 | 110min | 2 tasks tasks | 7 files files |
 
 ## Accumulated Context
 
@@ -208,6 +209,8 @@ Recent decisions affecting current work:
 - [Phase 06.9]: Extended _http.get_json with json_body->POST so FINRA's settlementDate EQUAL compareFilter (Pitfall 5) reuses the shared HTTP discipline; no new dependency
 - [Phase 06.9]: assemble_raw injects catalyst_date into the CBOE quote (8-key options_liquid shape); the store IS the seam — no live-boolean in the desk (INGEST-03)
 - [Phase 06.9]: ingest_history stamps last_verified_at point-in-time from the FR primary in-memory published_date (not now/event_date); null published_date stays unstamped (BACK-01)
+- [Phase 06.9]: Live shakedown (INGEST-05) executed: 100% price coverage but tradeable_catalyst_count=0 -> backtest honestly vacuous on catalysts; feed ran single-source (nasdaq) as yfinance nulled + no GREEN keys
+- [Phase 06.9]: Two money-critical cascade bugs found+fixed with tests: null-close bars crash ingest; nasdaq ETF asset-class miss killed XBI sector reference
 
 ### Pending Todos
 
@@ -221,6 +224,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-08-16T05:29:50.500Z
-Stopped at: Completed 06.9-07-PLAN.md
+Last session: 2026-08-16T06:37:41.656Z
+Stopped at: Completed 06.9-08-PLAN.md (live shakedown INGEST-05 executed)
 Resume file: None
