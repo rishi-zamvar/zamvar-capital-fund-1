@@ -1,0 +1,17 @@
+{
+  "cik": "1770787",
+  "name": "Kura Oncology, Inc.",
+  "tickers": ["KURA"],
+  "filings": {
+    "recent": {
+      "accessionNumber": [
+        "0001193125-26-000789",
+        "0001193125-26-000456",
+        "0001193125-26-000123"
+      ],
+      "form": ["424B5", "8-K", "S-3ASR"],
+      "filingDate": ["2026-08-12", "2026-08-10", "2026-08-01"],
+      "primaryDocument": ["d424b5.htm", "d8k.htm", "ds3asr.htm"]
+    }
+  }
+}
