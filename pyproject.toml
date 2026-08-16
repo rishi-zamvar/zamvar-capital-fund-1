@@ -15,6 +15,10 @@ dependencies = [
     "statsmodels==0.14.6",  # cointegration (Engle-Granger/Johansen); pulls numpy/scipy/pandas/patsy
     "edgartools==5.49.0",  # SEC EDGAR filings + XBRL fundamentals (CIK-internal); the one new dep (PIPE-08)
     "claude-agent-sdk==0.2.139",  # headless agent runtime (query/output_format/@tool)
+    "beautifulsoup4==4.15.0",  # Federal Register PDUFA HTML parsing (providers/pdufa*.py)
+    "lxml==6.1.1",  # BeautifulSoup parser backend used by providers/pdufa.py
+    "yfinance==1.6.0",  # paper-phase price bars (providers/prices.py)
+    "pandas==3.0.5",  # price-bar frames (providers/prices.py); also transitively via statsmodels
 ]
 
 [project.optional-dependencies]
