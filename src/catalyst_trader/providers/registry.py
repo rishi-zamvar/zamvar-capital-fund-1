@@ -30,6 +30,7 @@ CADENCE: dict[str, int] = {
     "clinicaltrials": _DAY,   # catalysts daily
     "earnings": _DAY,         # catalysts daily
     "pdufa": _DAY,            # curated catalysts daily
+    "pdufa_edgar": _DAY,      # own SEC-EDGAR PDUFA discovery, daily (on the daemon path)
     "quotes_rt": 300,         # RH real-time quotes — intraday monitor cadence (5 min)
     "float": 7 * _DAY,        # RH fundamentals/float, weekly (like financials)
     "portfolio": _DAY,        # RH ledger reconciliation, daily
@@ -72,6 +73,7 @@ def build_providers(settings, *, end: str | None = None) -> dict:
         nasdaq_earnings,
         options_cboe,
         pdufa,
+        pdufa_edgar,
         prices,
         robinhood,
     )
@@ -114,6 +116,9 @@ def build_providers(settings, *, end: str | None = None) -> dict:
         "earnings": nasdaq_earnings.fetch_earnings_with_fallback(
             fmp.fetch_earnings, nasdaq_earnings.fetch),  # FMP-first, Nasdaq fallback
         "pdufa": lambda tks, s, e, company_map=None: pdufa.fetch(tks, s, e, company_map=company_map),
+        # own SEC-EDGAR PDUFA discovery — self-verifying single-source primary, on the daemon path
+        # (the gap the pdufa debug found: the curated loader was NEVER on run_cycle). Sibling of pdufa.
+        "pdufa_edgar": lambda tks, s, e, company_map=None: pdufa_edgar.fetch(tks, s, e, company_map=company_map),
         # RH read slots — None until settings.rh_mcp_call is bound (mirrors macro/FRED gate).
         "quotes_rt": (lambda tks: robinhood.quotes_rt(tks, mcp_call=rh_call)) if rh_call else None,
         "float": (lambda tk: robinhood.fundamentals(tk, mcp_call=rh_call)) if rh_call else None,

@@ -170,11 +170,13 @@ def _pit_stamp(cat):
 
 
 def _fetch_catalysts(providers, tickers, start, end, company_map):
-    """clinicaltrials + fmp earnings + pdufa -> one Catalyst list; each feed degrades to []."""
+    """clinicaltrials + fmp earnings + pdufa + pdufa_edgar -> one Catalyst list; each degrades to []."""
     out = []
     out += _safe(providers.get("clinicaltrials"), tickers, start, end) or []
     out += _safe(providers.get("earnings"), tickers, start, end) or []
     out += _safe(providers.get("pdufa"), tickers, start, end, company_map=company_map) or []
+    # own SEC-EDGAR PDUFA discovery on the daemon path (self-verifying single "SEC EDGAR" primary).
+    out += _safe(providers.get("pdufa_edgar"), tickers, start, end, company_map=company_map) or []
     return out
 
 
