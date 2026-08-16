@@ -53,9 +53,18 @@ def fetch_earnings(
         cal = client.get(CALENDAR_URL, params=params)
         cal.raise_for_status()
         calendar_rows = cal.json()
+        # FMP returns a dict (e.g. {"Error Message": ...}) on error/rate-limit, not the
+        # expected list of rows. Degrade to [] rather than crash the caller (degrade-never-crash).
+        if not isinstance(calendar_rows, list):
+            return []
         conf = client.get(CONFIRMED_URL, params=params)
         conf.raise_for_status()
-        confirmed_symbols = {row["symbol"] for row in conf.json()}
+        conf_rows = conf.json()
+        # Same guard: a dict-shaped confirmed response just means "no confirmations known",
+        # so the calendar rows stay estimated rather than losing all earnings data.
+        confirmed_symbols = (
+            {row["symbol"] for row in conf_rows} if isinstance(conf_rows, list) else set()
+        )
     finally:
         if own_client:
             client.close()

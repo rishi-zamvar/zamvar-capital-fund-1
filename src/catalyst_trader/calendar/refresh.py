@@ -61,7 +61,7 @@ def refresh(
     if fmp_enabled:
         try:
             fetched += fmp_fetch(tickers, date_from, date_to, client=client)
-        except RuntimeError as exc:  # missing key / provider error -> degrade, never crash
+        except Exception as exc:  # any single provider slot degrades-to-empty, never crashes the cycle
             logger.warning("FMP unavailable (%s) — continuing with CT.gov + curated", exc)
     else:
         logger.warning("FMP key absent — continuing with CT.gov + curated")

@@ -215,18 +215,49 @@ def test_refresh_excludes_stale_near_event(db):
 def test_refresh_full_pipeline_httpx(db, httpx_mock, load_fixture, monkeypatch):
     monkeypatch.setattr(settings, "fmp_api_key", "TESTKEY")
     monkeypatch.setattr(settings, "ctgov_request_spacing_s", 0)
-    # FIFO: CT.gov /studies, then FMP calendar, then FMP confirmed.
-    httpx_mock.add_response(
-        json={"studies": [load_fixture("ctgov_full_date")], "totalCount": 1}
+    # SRPT is in the curated sponsor map (VRTX is not), so CT.gov actually fires for it —
+    # attribute the study to Sarepta so the CT.gov leg genuinely wires in.
+    study = load_fixture("ctgov_full_date")
+    study["protocolSection"]["sponsorCollaboratorsModule"]["leadSponsor"]["name"] = (
+        "Sarepta Therapeutics, Inc."
     )
+    # FIFO: CT.gov /studies (SRPT), then FMP calendar, then FMP confirmed.
+    httpx_mock.add_response(json={"studies": [study], "totalCount": 1})
     httpx_mock.add_response(json=load_fixture("fmp_earnings_calendar"))
     httpx_mock.add_response(json=load_fixture("fmp_earnings_confirmed"))
     with freeze_time("2024-06-10T12:00:00Z"):
-        summary = refresh.refresh(db, ["VRTX"], now=datetime.now(timezone.utc))
-    # CT.gov VRTX trial + FMP VRTX earnings persisted through the real providers
-    tickers = {r["ticker"] for r in db.execute("SELECT ticker FROM catalyst").fetchall()}
+        summary = refresh.refresh(db, ["SRPT", "VRTX"], now=datetime.now(timezone.utc))
+    rows = db.execute("SELECT ticker, catalyst_type FROM catalyst").fetchall()
+    tickers = {r["ticker"] for r in rows}
+    types = {r["catalyst_type"] for r in rows}
+    # CT.gov SRPT trial + FMP VRTX earnings persisted through the real providers
+    assert "SRPT" in tickers
     assert "VRTX" in tickers
+    assert CatalystType.trial_readout.value in types  # CT.gov leg wired in
+    assert CatalystType.earnings.value in types  # FMP leg wired in
     assert summary["fetched"] >= 2
+
+
+def test_refresh_degrades_on_fmp_dict_response(db, httpx_mock, load_fixture, monkeypatch):
+    """A dict-shaped FMP error/rate-limit response degrades that slot to [] — the whole
+    daily refresh must still complete with the CT.gov catalysts (degrade-never-crash)."""
+    monkeypatch.setattr(settings, "fmp_api_key", "TESTKEY")
+    monkeypatch.setattr(settings, "ctgov_request_spacing_s", 0)
+    study = load_fixture("ctgov_full_date")
+    study["protocolSection"]["sponsorCollaboratorsModule"]["leadSponsor"]["name"] = (
+        "Sarepta Therapeutics, Inc."
+    )
+    httpx_mock.add_response(json={"studies": [study], "totalCount": 1})  # CT.gov SRPT
+    # FMP calendar returns a dict (error shape) -> provider returns [] before the confirmed call.
+    httpx_mock.add_response(json={"Error Message": "Limit Reach . Please upgrade your plan."})
+    with freeze_time("2024-06-10T12:00:00Z"):
+        summary = refresh.refresh(db, ["SRPT", "VRTX"], now=datetime.now(timezone.utc))
+    rows = db.execute("SELECT ticker, catalyst_type FROM catalyst").fetchall()
+    types = {r["catalyst_type"] for r in rows}
+    # CT.gov catalyst persisted; FMP slot degraded to [] (no earnings), refresh completed
+    assert CatalystType.trial_readout.value in types
+    assert CatalystType.earnings.value not in types
+    assert summary["fetched"] >= 1
 
 
 def test_main_entrypoint_exists():
