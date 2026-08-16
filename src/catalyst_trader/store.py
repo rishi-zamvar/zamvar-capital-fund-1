@@ -183,6 +183,8 @@ def upsert_bars(
     *,
     delisted: bool = False,
     source: str = "fixture",
+    source_grade: str | None = None,
+    agreeing_sources: str | None = None,
 ) -> int:
     """UPSERT weekly OHLCV bars for one ticker; return the count written.
 
@@ -190,6 +192,10 @@ def upsert_bars(
     (ticker, week_end): an existing week is UPDATED in place, never duplicated (mirrors
     insert_catalyst). Atomic — the whole batch commits or rolls back. XBI is just another
     ticker; delisted names are retained (survivorship-free).
+
+    `source_grade` ('green'|'yellow') + `agreeing_sources` (comma-joined cross-check set) are
+    OPTIONAL columnar provenance from the multi-source cascade (INGEST-01/04). Both default None
+    so every existing source='fixture' caller keeps working; the natural key is unchanged.
     """
     now = _now()
     d = 1 if delisted else 0
@@ -202,17 +208,21 @@ def upsert_bars(
             if existing is not None:
                 conn.execute(
                     "UPDATE price_bar SET open=?, high=?, low=?, close=?, volume=?, "
-                    "delisted=?, source=?, retrieved_at=? WHERE id=?",
+                    "delisted=?, source=?, retrieved_at=?, source_grade=?, agreeing_sources=? "
+                    "WHERE id=?",
                     (b.get("open"), b.get("high"), b.get("low"), b["close"],
-                     b.get("volume"), d, source, now, existing["id"]),
+                     b.get("volume"), d, source, now, source_grade, agreeing_sources,
+                     existing["id"]),
                 )
             else:
                 conn.execute(
                     "INSERT INTO price_bar "
-                    "(ticker, week_end, open, high, low, close, volume, delisted, source, retrieved_at) "
-                    "VALUES (?,?,?,?,?,?,?,?,?,?)",
+                    "(ticker, week_end, open, high, low, close, volume, delisted, source, "
+                    "retrieved_at, source_grade, agreeing_sources) "
+                    "VALUES (?,?,?,?,?,?,?,?,?,?,?,?)",
                     (ticker, b["week_end"], b.get("open"), b.get("high"), b.get("low"),
-                     b["close"], b.get("volume"), d, source, now),
+                     b["close"], b.get("volume"), d, source, now, source_grade,
+                     agreeing_sources),
                 )
         conn.commit()
         return len(bars)
