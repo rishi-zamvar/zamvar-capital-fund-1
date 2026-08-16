@@ -10,6 +10,17 @@ from types import SimpleNamespace
 
 from catalyst_trader import ingest, store
 from catalyst_trader.desk import company_scan
+from catalyst_trader.models import (
+    Catalyst,
+    CatalystSource,
+    CatalystType,
+    DatePrecision,
+    DateType,
+    SourceOrigin,
+    SourceType,
+    Status,
+    Uncertainty,
+)
 
 # The REAL CBOE 7-market-key options_quote (options_cboe.fetch shape) — NO catalyst_date; that is
 # the ticker's next-catalyst date the provider cannot know, which assemble_raw injects downstream.
@@ -118,3 +129,65 @@ def test_ingested_bars_read_pointintime_unchanged(db):
     green = store.bars_asof(db, "GRN", "2026-01-09")
     fixture = store.bars_asof(db, "FIX", "2026-01-09")
     assert green == fixture  # provenance never leaks into the read contract
+
+
+# --- pdufa_edgar daemon-path verify-synergy (PDUFA-EDGAR-04) ----------------------------------
+# The chain the debug exposed: our OWN SEC-EDGAR PDUFA source, run on the daemon path
+# (ingest_history -> _fetch_catalysts -> insert -> verify -> _pit_stamp), must reach verified +
+# tradeable with a POINT-IN-TIME last_verified_at == the 8-K filing_date (never now/event_date).
+
+
+def _seed_csv(tmp_path):
+    """A tiny seed_universe.csv (one active name, # comment skipped) -> its path."""
+    path = tmp_path / "seed.csv"
+    path.write_text("ticker,company_name,market_cap,adv_usd,therapeutic_area,delisted\n"
+                    "# comment line to skip\n"
+                    "ABCD,Alpha Bio,1,1,x,false\n")
+    return str(path)
+
+
+def _edgar_pdufa_catalyst(ticker, event_date, *, filing_date):
+    """Mirror pdufa_edgar._to_catalyst: a SINGLE 'SEC EDGAR' primary Catalyst carrying the 8-K
+    filing_date as published_date. Under DATA-03 this single authoritative source self-verifies;
+    the loop stamps last_verified_at from published_date (the 8-K filing_date, point-in-time)."""
+    return Catalyst(
+        ticker=ticker, catalyst_type=CatalystType.pdufa, event_date=event_date,
+        date_precision=DatePrecision.day, uncertainty_type=Uncertainty.window,
+        source_origin=SourceOrigin.curated_pdufa,
+        external_ref=f"pdufa_edgar:{ticker}:0000000000-26-000001",
+        status=Status.unverified,
+        sources=[CatalystSource(
+            source_name="SEC EDGAR", source_url="https://www.sec.gov/Archives/edgar/data/0/x-8k.htm",
+            source_type=SourceType.primary, reported_date=event_date, date_type=DateType.estimated,
+            published_date=filing_date, retrieved_at="2026-08-11T00:00:00Z")],
+    )
+
+
+def test_pdufa_edgar_single_source_verifies_and_stamps(db, tmp_path):
+    """A pdufa_edgar 'SEC EDGAR' primary flows insert->verify->_pit_stamp on the daemon path to
+    Status.verified AND last_verified_at == the 8-K filing_date AND appears in tradeable_catalysts —
+    the DATA-03 self-verify synergy end-to-end, against the REAL verify pipeline (verify.py unchanged)."""
+    csv_path = _seed_csv(tmp_path)
+    providers = {
+        "prices": lambda tk, s, e: [],  # no bars needed for the catalyst chain
+        "options": lambda tk: None, "finra": lambda tk: None, "edgar": lambda tk: None,
+        "pdufa_edgar": lambda tks, s, e, company_map=None: [
+            _edgar_pdufa_catalyst("ABCD", "2026-10-01", filing_date="2026-08-11")],
+    }
+    ingest.ingest_history(db, start="2026-01-02", end="2026-01-09", providers=providers,
+                          universe_csv=csv_path)
+    cat = store.tradeable_catalysts(db)
+    assert len(cat) == 1
+    assert cat[0].status == Status.verified                 # single 'SEC EDGAR' primary self-verifies
+    assert cat[0].last_verified_at == "2026-08-11"          # the 8-K filing_date — NOT now, NOT event_date
+
+
+def test_pdufa_edgar_degrades_when_slot_missing(db, tmp_path):
+    """No pdufa_edgar slot in the providers dict -> ingest_history runs clean (no raise), zero
+    pdufa_edgar catalysts (the slot degrades to [] via _safe)."""
+    csv_path = _seed_csv(tmp_path)
+    providers = {"prices": lambda tk, s, e: [], "options": lambda tk: None,
+                 "finra": lambda tk: None, "edgar": lambda tk: None}
+    ingest.ingest_history(db, start="2026-01-02", end="2026-01-09", providers=providers,
+                          universe_csv=csv_path)
+    assert store.tradeable_catalysts(db) == []
