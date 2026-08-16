@@ -17,11 +17,11 @@ never raise into the pipeline, never fabricate (esp. never a fabricated/negative
 """
 
 import logging
-from datetime import datetime, timezone
 
 import edgar
 
 from catalyst_trader.config import settings
+from catalyst_trader.dates import now_iso
 
 logger = logging.getLogger(__name__)
 
@@ -82,7 +82,7 @@ def fetch(ticker: str) -> dict | None:
         "live_shelf": any(r["form"] in _SHELF_FORMS for r in rows),
         "provenance": {
             "source_url": _company_source_url(getattr(company, "cik", None)),
-            "fetch_ts": datetime.now(timezone.utc).isoformat(),
+            "fetch_ts": now_iso(),
             "grade": "green",
         },
     }
@@ -143,7 +143,7 @@ def fundamentals(ticker: str) -> dict | None:
         "cash_runway_months": _runway_months(cash, ocf),
         "provenance": {
             "source_url": f"https://data.sec.gov/api/xbrl/companyfacts/CIK{getattr(company, 'cik', 0):010d}.json",
-            "fetch_ts": datetime.now(timezone.utc).isoformat(),
+            "fetch_ts": now_iso(),
             "filing_date": str(latest["filing_date"]) if latest else None,
             "grade": "green",
         },

@@ -12,12 +12,11 @@ source corroborates it. There is no separate write path for user dates.
 
 import argparse
 import sqlite3
-from datetime import datetime, timezone
 
 from catalyst_trader import db as _db
 from catalyst_trader import store
 from catalyst_trader.calendar import verify
-from catalyst_trader.dates import classify, parse_precision
+from catalyst_trader.dates import classify, now_iso, parse_precision
 from catalyst_trader.models import (
     Catalyst,
     CatalystSource,
@@ -47,7 +46,7 @@ def inject(
     with the documented default date_type='estimated' (a user lead is an
     unconfirmed target, not a realized actual).
     """
-    now = datetime.now(timezone.utc).isoformat()
+    now = now_iso()
     precision = parse_precision(date)  # raises ValueError on a bad date -> no fabrication
     source = CatalystSource(
         source_name=source_name,

@@ -11,13 +11,18 @@ fabricating a false-precision date, which in this domain is a total-loss vector)
 """
 
 import re
-from datetime import date
+from datetime import date, datetime, timezone
 
 from catalyst_trader.models import DatePrecision, Uncertainty
 
 _DAY = re.compile(r"^\d{4}-\d{2}-\d{2}$")
 _MONTH = re.compile(r"^\d{4}-\d{2}$")
 _YEAR = re.compile(r"^\d{4}$")
+
+
+def now_iso() -> str:
+    """The single UTC-now ISO-8601 timestamp helper — the retrieved_at/fetch_ts provenance stamp."""
+    return datetime.now(timezone.utc).isoformat()
 
 
 def parse_precision(raw: str) -> DatePrecision:

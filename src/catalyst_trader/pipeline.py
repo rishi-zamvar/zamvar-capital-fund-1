@@ -16,10 +16,11 @@ from __future__ import annotations
 
 import json
 import os
-from datetime import date, datetime, timedelta, timezone
+from datetime import date, timedelta
 from pathlib import Path
 
 from catalyst_trader import ingest, store
+from catalyst_trader.dates import now_iso
 from catalyst_trader.providers import prices, registry  # registry.CADENCE re-exported for callers
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -106,7 +107,7 @@ def write_data_health(conn, source_states, gaps, divergences_this_cycle, *, path
      from the log-tap); `coverage_pct` is derived from the persisted agreeing_sources column."""
     path = path or DEFAULT_HEALTH_PATH
     payload = {
-        "updated": datetime.now(timezone.utc).isoformat(),
+        "updated": now_iso(),
         "sources": source_states,
         "coverage_pct": _coverage_pct(conn),
         "stale_sources": gaps.get("stale_sources", []),

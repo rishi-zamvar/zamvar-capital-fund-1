@@ -22,8 +22,8 @@ provider does no money arithmetic itself. _http degrade (403/timeout) -> return 
 
 import logging
 from collections import defaultdict
-from datetime import datetime, timezone
 
+from catalyst_trader.dates import now_iso
 from catalyst_trader.providers._http import get_json
 from catalyst_trader.quant import options as _quant
 
@@ -103,7 +103,7 @@ def fetch(ticker: str) -> dict | None:
             near_expiry = e
             break
 
-    now = datetime.now(timezone.utc).isoformat()
+    now = now_iso()
     prov = {"source_url": url, "fetch_ts": now, "grade": "yellow"}
     fields = ("options_quote", "underlying_quote", "iv30", "term_spread",
               "straddle_move_pct", "underlying_price")

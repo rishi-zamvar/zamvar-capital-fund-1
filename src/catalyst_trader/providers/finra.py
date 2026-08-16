@@ -15,8 +15,8 @@ NDJSON -> every line failed json.loads and SILENTLY returned no data. The real f
 """
 
 import logging
-from datetime import datetime, timezone
 
+from catalyst_trader.dates import now_iso
 from catalyst_trader.providers._http import get_json
 
 logger = logging.getLogger(__name__)
@@ -71,7 +71,7 @@ def fetch(ticker: str, settlement_date: str = None) -> dict | None:
         "si_settlement_date": row.get("settlementDate") or settlement_date,  # honest staleness
         "provenance": {
             "source_url": _URL,
-            "fetch_ts": datetime.now(timezone.utc).isoformat(),
+            "fetch_ts": now_iso(),
             "grade": "green",
         },
     }

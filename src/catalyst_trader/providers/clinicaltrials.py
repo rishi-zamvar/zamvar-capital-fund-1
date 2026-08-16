@@ -10,13 +10,12 @@ Two verified gotchas shape this parser (see 01-RESEARCH.md):
 
 import csv
 import time
-from datetime import datetime, timezone
 from pathlib import Path
 
 import httpx
 
 from catalyst_trader.config import settings
-from catalyst_trader.dates import classify, parse_precision
+from catalyst_trader.dates import classify, now_iso, parse_precision
 from catalyst_trader.models import (
     Catalyst,
     CatalystSource,
@@ -31,8 +30,6 @@ FIELDS = "NCTId,BriefTitle,Phase,OverallStatus,PrimaryCompletionDate,LeadSponsor
 _DATA_DIR = Path(__file__).resolve().parents[3] / "data"
 
 
-def _now() -> str:
-    return datetime.now(timezone.utc).isoformat()
 
 
 def load_sponsor_map(path: str | Path | None = None) -> dict[str, list[str]]:
@@ -73,7 +70,7 @@ def _parse_study(study: dict, ticker: str, allowed_sponsors: set[str]) -> Cataly
         reported_date=raw_date,
         date_type=date_type,  # DATA-04: persist the source's own precision typing
         published_date=last_update,  # transport-only -> point-in-time last_verified_at stamp
-        retrieved_at=_now(),
+        retrieved_at=now_iso(),
     )
     return Catalyst(
         ticker=ticker,

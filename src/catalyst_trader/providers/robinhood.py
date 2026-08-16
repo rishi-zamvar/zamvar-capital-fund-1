@@ -28,7 +28,8 @@ and not the free spine).
 from __future__ import annotations
 
 import logging
-from datetime import datetime, timezone
+
+from catalyst_trader.dates import now_iso
 
 logger = logging.getLogger(__name__)
 
@@ -47,7 +48,7 @@ def _f(x):
 
 def _provenance() -> dict:
     return {"source_name": "Robinhood", "grade": "yellow",
-            "fetch_ts": datetime.now(timezone.utc).isoformat()}
+            "fetch_ts": now_iso()}
 
 
 def _call(mcp_call, tool_name, args):

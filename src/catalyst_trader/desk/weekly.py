@@ -23,7 +23,9 @@ shortlisted but produce no leg this phase — the statistical + defensive sleeve
 #           (size_for_survival, select_book). This file only WIRES them into the weekly cadence.
 """
 
-from datetime import date, datetime, timedelta, timezone
+from datetime import date, timedelta
+
+from catalyst_trader.dates import now_iso
 
 from .. import kb, store
 from ..quant.weekly import classify_drop, thesis_scan
@@ -171,7 +173,7 @@ def record_weekly_outcome(conn, leg, *, embed=None):
     ref = tool_ref_for("weekly_base_rate", br_inputs)          # resolved-by-construction (cite-or-drop)
     ev = kb.EvidenceSource(
         url=ref,
-        retrieved_at=datetime.now(timezone.utc).isoformat(),
+        retrieved_at=now_iso(),
         snippet_hash=ref.split("#", 1)[1],
         quote=f"p_up={leg['p_quoted']} thesis={leg['thesis_type']} trigger={leg['trigger']}",
     )

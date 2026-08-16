@@ -8,20 +8,16 @@ is written, and a mid-insert source failure rolls the whole thing back.
 
 import json
 import sqlite3
-from datetime import datetime, timezone
 from enum import Enum
 from typing import NamedTuple
 
+from catalyst_trader.dates import now_iso
 from catalyst_trader.models import (
     Catalyst,
     CatalystSource,
     CatalystType,
     Status,
 )
-
-
-def _now() -> str:
-    return datetime.now(timezone.utc).isoformat()
 
 
 def _v(x):
@@ -78,7 +74,7 @@ def insert_catalyst(conn: sqlite3.Connection, catalyst: Catalyst) -> int:
     if not catalyst.sources:
         raise ValueError("cannot persist a catalyst without a source row (no LLM-sourced dates)")
 
-    now = _now()
+    now = now_iso()
     try:
         existing = None
         if catalyst.external_ref:
@@ -228,7 +224,7 @@ def upsert_bars(
     OPTIONAL columnar provenance from the multi-source cascade (INGEST-01/04). Both default None
     so every existing source='fixture' caller keeps working; the natural key is unchanged.
     """
-    now = _now()
+    now = now_iso()
     d = 1 if delisted else 0
     try:
         for b in bars:
@@ -309,7 +305,7 @@ def write_card(
     """UPSERT one company card; return its row id. Idempotent on (ticker, week_end): an
     existing week is UPDATED in place, never duplicated (mirrors upsert_bars). The card dict is
     json.dumps'd into the single `card` TEXT column and round-trips losslessly."""
-    now = _now()
+    now = now_iso()
     payload = json.dumps(card)
     try:
         existing = conn.execute(

@@ -15,10 +15,9 @@ this module leaves a documented ``now`` hook but does not implement that logic.
 
 import csv
 import sqlite3
-from datetime import datetime, timezone
 
 from catalyst_trader import store
-from catalyst_trader.dates import classify, parse_precision
+from catalyst_trader.dates import classify, now_iso, parse_precision
 from catalyst_trader.models import (
     Catalyst,
     CatalystSource,
@@ -27,7 +26,6 @@ from catalyst_trader.models import (
     SourceOrigin,
     SourceType,
     Status,
-    Uncertainty,
 )
 
 
@@ -95,7 +93,7 @@ def verify_catalyst(conn: sqlite3.Connection, catalyst_id: int, now: str | None 
 
     conn.execute(
         "UPDATE catalyst SET status=?, uncertainty_type=?, updated_at=? WHERE id=?",
-        (new_status.value, uncertainty.value, now or datetime.now(timezone.utc).isoformat(), catalyst_id),
+        (new_status.value, uncertainty.value, now or now_iso(), catalyst_id),
     )
     conn.commit()
     return new_status
@@ -109,7 +107,7 @@ def load_curated_pdufa(conn: sqlite3.Connection, csv_path: str) -> list[int]:
     CSV columns: ticker,catalyst_type,event_date,source_name,source_url,source_type
     Blank lines and '#'-comment lines are ignored (template placeholders).
     """
-    now = datetime.now(timezone.utc).isoformat()
+    now = now_iso()
     lines = [
         ln
         for ln in open(csv_path, encoding="utf-8").read().splitlines()

@@ -27,12 +27,11 @@ Discipline:
 
 import logging
 import re
-from datetime import datetime, timezone
 from pathlib import Path
 
 import edgar
 
-from catalyst_trader.dates import classify, parse_precision
+from catalyst_trader.dates import classify, now_iso, parse_precision
 from catalyst_trader.models import (
     Catalyst,
     CatalystSource,
@@ -71,8 +70,6 @@ _ADCOM_RX = re.compile(
 )
 
 
-def _now() -> str:
-    return datetime.now(timezone.utc).isoformat()
 
 
 def _normalize(html: str) -> str:
@@ -218,7 +215,7 @@ def _to_catalyst(hit: dict, accession: str, url: str, cand: dict) -> Catalyst:
                 reported_date=event_date,
                 date_type=DateType.estimated,  # announced target, not realized
                 published_date=hit["file_date"],  # transport-only -> point-in-time last_verified_at
-                retrieved_at=_now(),
+                retrieved_at=now_iso(),
             )
         ],
         # last_verified_at deliberately unset — the insert->verify pipeline owns it.

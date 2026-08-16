@@ -26,11 +26,11 @@ Discipline:
 
 import logging
 import re
-from datetime import datetime, timezone
+from datetime import datetime
 
 from bs4 import BeautifulSoup
 
-from catalyst_trader.dates import classify, parse_precision
+from catalyst_trader.dates import classify, now_iso, parse_precision
 from catalyst_trader.models import (
     Catalyst,
     CatalystSource,
@@ -50,8 +50,6 @@ _RTT_URL = "https://www.rttnews.com/corpinfo/fdacalendar.aspx"
 _DATE_RX = re.compile(r"([A-Z][a-z]+\.?\s+\d{1,2},\s+\d{4})")
 
 
-def _now() -> str:
-    return datetime.now(timezone.utc).isoformat()
 
 
 def _norm_date(raw: str) -> str | None:
@@ -189,7 +187,7 @@ def fetch(
                     reported_date=event_date,
                     date_type=DateType.estimated,  # announced target, not realized
                     published_date=doc.get("publication_date"),  # transport-only (Plan 07)
-                    retrieved_at=_now(),
+                    retrieved_at=now_iso(),
                 )
             )
         if row is not None:
@@ -200,7 +198,7 @@ def fetch(
                     source_type=SourceType.secondary,
                     reported_date=event_date,
                     date_type=DateType.estimated,  # discovery — never authoritative alone
-                    retrieved_at=_now(),
+                    retrieved_at=now_iso(),
                 )
             )
 

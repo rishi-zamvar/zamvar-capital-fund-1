@@ -12,9 +12,9 @@ we DROP it — never coerce to 0, never fabricate a rate. Fetched through the sh
 """
 
 import logging
-from datetime import datetime, timezone
 
 from catalyst_trader.config import settings
+from catalyst_trader.dates import now_iso
 from catalyst_trader.providers._http import get_json
 
 logger = logging.getLogger(__name__)
@@ -67,7 +67,7 @@ def fetch_series(series_id: str) -> dict | None:
         "latest": observations[-1]["value"] if observations else None,
         "provenance": {
             "source_url": _URL,
-            "fetch_ts": datetime.now(timezone.utc).isoformat(),
+            "fetch_ts": now_iso(),
             "grade": "green",
         },
     }

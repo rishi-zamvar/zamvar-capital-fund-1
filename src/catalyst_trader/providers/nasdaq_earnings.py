@@ -10,9 +10,9 @@ timeout/empty day degrades to [] (never raise, never fabricate) via the shared _
 """
 
 import logging
-from datetime import date, datetime, timedelta, timezone
+from datetime import date, timedelta
 
-from catalyst_trader.dates import classify, parse_precision
+from catalyst_trader.dates import classify, now_iso, parse_precision
 from catalyst_trader.models import (
     Catalyst,
     CatalystSource,
@@ -28,8 +28,6 @@ logger = logging.getLogger(__name__)
 _URL = "https://api.nasdaq.com/api/calendar/earnings"
 
 
-def _now() -> str:
-    return datetime.now(timezone.utc).isoformat()
 
 
 def _days(start: str, end: str):
@@ -47,7 +45,7 @@ def fetch(tickers: list[str], start: str, end: str) -> list[Catalyst]:
     to [] on 403/timeout/empty — never raises, never fabricates a date.
     """
     wanted = {t.upper() for t in tickers}
-    now = _now()
+    now = now_iso()
     out: list[Catalyst] = []
     for day in _days(start, end):
         data = get_json("nasdaq", _URL, params={"date": day}, ua="browser", ttl_s=300)

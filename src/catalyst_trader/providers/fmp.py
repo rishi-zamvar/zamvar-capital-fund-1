@@ -7,12 +7,11 @@ calendar-only symbol stays ``estimated``. The API key is env-only — a missing 
 raises loudly rather than hardcoding a placeholder or silently returning nothing.
 """
 
-from datetime import datetime, timezone
 
 import httpx
 
 from catalyst_trader.config import settings
-from catalyst_trader.dates import classify, parse_precision
+from catalyst_trader.dates import classify, now_iso, parse_precision
 from catalyst_trader.models import (
     Catalyst,
     CatalystSource,
@@ -26,8 +25,6 @@ CALENDAR_URL = "https://financialmodelingprep.com/stable/earnings-calendar"
 CONFIRMED_URL = "https://financialmodelingprep.com/stable/earnings-calendar-confirmed"
 
 
-def _now() -> str:
-    return datetime.now(timezone.utc).isoformat()
 
 
 def fetch_earnings(
@@ -69,7 +66,7 @@ def fetch_earnings(
         if own_client:
             client.close()
 
-    now = _now()
+    now = now_iso()
     out: list[Catalyst] = []
     for row in calendar_rows:
         symbol = row["symbol"]

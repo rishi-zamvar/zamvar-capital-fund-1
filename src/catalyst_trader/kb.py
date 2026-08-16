@@ -17,11 +17,12 @@ import copy
 import hashlib
 import json
 import sqlite3
-from datetime import datetime, timezone
 from pathlib import Path
 
 from pydantic import BaseModel, field_validator
 from sqlite_vec import serialize_float32
+
+from catalyst_trader.dates import now_iso
 
 EMBED_DIM = 1024
 _DATA_DIR = Path(__file__).resolve().parents[2] / "data"  # repo-root/data (mirrors quant/base_rates.py)
@@ -36,8 +37,6 @@ _NODE_KINDS = frozenset(
 )
 
 
-def _now() -> str:
-    return datetime.now(timezone.utc).isoformat()
 
 
 class EvidenceSource(BaseModel):
@@ -88,7 +87,7 @@ def _upsert_evidence(conn: sqlite3.Connection, ev: EvidenceSource) -> int:
     return conn.execute(
         "INSERT INTO kb_node (kind, ref_id, attrs_json, confidence, created_at) "
         "VALUES ('evidence_source', NULL, ?, NULL, ?)",
-        (attrs, _now()),
+        (attrs, now_iso()),
     ).lastrowid
 
 
@@ -97,7 +96,7 @@ def add_edge(conn, src_id, rel, dst_id, weight=None, attrs=None) -> int:
     for CITES and by Plan 02-04 for HEDGE_PEER etc."""
     return conn.execute(
         "INSERT INTO kb_edge (src_id, rel, dst_id, weight, attrs_json, created_at) VALUES (?,?,?,?,?,?)",
-        (src_id, rel, dst_id, weight, json.dumps(attrs) if attrs is not None else None, _now()),
+        (src_id, rel, dst_id, weight, json.dumps(attrs) if attrs is not None else None, now_iso()),
     ).lastrowid
 
 
@@ -113,7 +112,7 @@ def insert_claim(conn, node: KBNode, evidence: list[EvidenceSource], embed=None,
     try:
         nid = conn.execute(
             "INSERT INTO kb_node (kind, ref_id, attrs_json, confidence, created_at) VALUES (?,?,?,?,?)",
-            (node.kind, node.ref_id, node.attrs_json, node.confidence, _now()),
+            (node.kind, node.ref_id, node.attrs_json, node.confidence, now_iso()),
         ).lastrowid
         for ev in evidence:
             eid = _upsert_evidence(conn, ev)
@@ -200,7 +199,7 @@ def _get_or_create_company(conn, ticker: str) -> int:
     return conn.execute(
         "INSERT INTO kb_node (kind, ref_id, attrs_json, confidence, created_at) "
         "VALUES ('company', NULL, ?, NULL, ?)",
-        (json.dumps({"ticker": ticker}), _now()),
+        (json.dumps({"ticker": ticker}), now_iso()),
     ).lastrowid
 
 
@@ -308,7 +307,7 @@ def seed_fitted_params(conn, csv_path: str | None = None) -> int:
         }
         ev = EvidenceSource(
             url=r["evidence_url"],
-            retrieved_at=_now(),
+            retrieved_at=now_iso(),
             snippet_hash=hashlib.sha256(r["evidence_snippet"].encode()).hexdigest(),
             quote=r["evidence_snippet"] or None,
         )
