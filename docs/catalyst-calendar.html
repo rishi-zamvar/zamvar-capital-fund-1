@@ -1,0 +1,139 @@
+<title>Catalyst Calendar</title>
+<style>
+  :root{
+    --bg:#ecefe9;--surface:#fff;--surface-2:#f5f7f2;--ink:#191c18;--muted:#5f655c;--faint:#99a094;
+    --border:#d6dbcf;--border-strong:#c2c8b8;--accent:#8a6a12;--accent-bg:#f3ecd8;
+    --green:#1f7a4d;--green-bg:#e4f2e9;--yellow:#8a6a12;--yellow-bg:#f3ecd8;--red:#b23b30;--red-bg:#f6e5e3;
+    --info:#2b6a93;--info-bg:#e2edf4;
+    --mono:ui-monospace,"SF Mono","JetBrains Mono",Menlo,Consolas,monospace;
+    --sans:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+    --shadow:0 1px 2px rgba(20,25,18,.06),0 4px 14px rgba(20,25,18,.05);
+  }
+  @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+    --bg:#101310;--surface:#191d18;--surface-2:#20241e;--ink:#e8ece4;--muted:#9aa192;--faint:#6b7365;
+    --border:#2c322a;--border-strong:#3a4136;--accent:#d8b45a;--accent-bg:#2a2412;
+    --green:#4cc585;--green-bg:#14271c;--yellow:#d8b45a;--yellow-bg:#2a2412;--red:#ef7365;--red-bg:#2c1714;
+    --info:#6bb3e6;--info-bg:#122430;--shadow:0 1px 2px rgba(0,0,0,.4),0 6px 18px rgba(0,0,0,.35);
+  }}
+  :root[data-theme="dark"]{
+    --bg:#101310;--surface:#191d18;--surface-2:#20241e;--ink:#e8ece4;--muted:#9aa192;--faint:#6b7365;
+    --border:#2c322a;--border-strong:#3a4136;--accent:#d8b45a;--accent-bg:#2a2412;
+    --green:#4cc585;--green-bg:#14271c;--yellow:#d8b45a;--yellow-bg:#2a2412;--red:#ef7365;--red-bg:#2c1714;
+    --info:#6bb3e6;--info-bg:#122430;--shadow:0 1px 2px rgba(0,0,0,.4),0 6px 18px rgba(0,0,0,.35);
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);line-height:1.55}
+  .wrap{max-width:940px;margin:0 auto;padding:40px 22px 72px}
+  .ey{font-family:var(--mono);font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--accent);font-weight:600}
+  h1{font-family:var(--mono);font-size:clamp(23px,5vw,34px);margin:8px 0 8px;letter-spacing:-.01em;text-wrap:balance}
+  .lede{font-size:15.5px;color:var(--muted);max-width:72ch;margin:0}
+  .verdict{display:inline-flex;align-items:center;gap:9px;font-family:var(--mono);font-size:13px;color:var(--green);background:var(--green-bg);border:1px solid var(--green);border-radius:20px;padding:5px 15px;margin-top:14px}
+  .masthead{border-bottom:2px solid var(--ink);padding-bottom:20px;margin-bottom:10px}
+  h2{font-family:var(--mono);font-size:16px;margin:34px 0 12px;display:flex;align-items:center;gap:9px}
+  h2 .ic{width:24px;height:24px;border-radius:6px;display:inline-grid;place-items:center;font-size:13px;flex:none;background:var(--accent-bg);color:var(--accent);border:1px solid var(--accent)}
+  p{margin:6px 0}
+  .sub{font-size:13.5px;color:var(--muted);margin:2px 0 14px;max-width:76ch}
+  code{font-family:var(--mono);font-size:12px;background:var(--surface-2);border:1px solid var(--border);border-radius:4px;padding:1px 5px}
+  a{color:var(--info)}
+  .scroll{overflow-x:auto;border:1px solid var(--border);border-radius:10px;box-shadow:var(--shadow)}
+  table{border-collapse:collapse;width:100%;min-width:640px;font-size:13.5px;background:var(--surface)}
+  th{font-family:var(--mono);font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--faint);text-align:left;padding:10px 13px;border-bottom:1px solid var(--border-strong);background:var(--surface-2)}
+  td{padding:10px 13px;border-bottom:1px solid var(--border);vertical-align:middle}
+  tr:last-child td{border-bottom:none}
+  .tk{font-family:var(--mono);font-weight:700;font-size:14px}
+  .mono{font-family:var(--mono);font-size:12px}
+  .tick{font-variant-numeric:tabular-nums}
+  .mrow{background:var(--accent-bg)}
+  .pill{font-family:var(--mono);font-size:10px;font-weight:600;padding:2px 7px;border-radius:20px;white-space:nowrap;display:inline-block}
+  .firm{color:var(--green);background:var(--green-bg);border:1px solid var(--green)}
+  .win{color:var(--yellow);background:var(--yellow-bg);border:1px solid var(--yellow)}
+  .g{color:var(--green);background:var(--green-bg);border:1px solid var(--green)}
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px;margin-top:6px}
+  .card{background:var(--surface);border:1px solid var(--border);border-left:4px solid var(--accent);border-radius:10px;padding:14px 16px;box-shadow:var(--shadow)}
+  .card.green{border-left-color:var(--green)} .card.red{border-left-color:var(--red)} .card.info{border-left-color:var(--info)}
+  .card h3{font-family:var(--mono);font-size:13px;margin:0 0 6px}
+  .card p{font-size:13.5px;margin:4px 0 0}
+  .src{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px dashed var(--border);font-size:13.5px}
+  .src:last-child{border-bottom:none}
+  .src .st{font-family:var(--mono);font-size:11px;font-weight:700;flex:none;width:78px}
+  .tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:12px;margin:8px 0}
+  .tile{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:13px 15px;box-shadow:var(--shadow)}
+  .tile .k{font-family:var(--mono);font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:var(--faint)}
+  .tile .v{font-family:var(--mono);font-size:22px;font-weight:700;margin-top:3px;color:var(--accent)}
+  ol{margin:6px 0;padding-left:20px} ol li{padding:4px 0;font-size:14px}
+  .flow{font-family:var(--mono);font-size:12.5px;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:14px 16px;box-shadow:var(--shadow);overflow-x:auto;white-space:nowrap}
+  footer{margin-top:38px;padding-top:18px;border-top:1px solid var(--border);font-family:var(--mono);font-size:11.5px;color:var(--faint);line-height:1.7}
+</style>
+
+<div class="wrap">
+  <div class="masthead">
+    <div class="ey">zamvar capital · fund 1 · catalyst calendar</div>
+    <h1>Do we have tradeable catalyst data?</h1>
+    <p class="lede">Yes — for trial readouts, the primary biotech catalyst. This calendar is pulled <b>live and free from ClinicalTrials.gov</b> right now (2026-08-16) for our 19 operating names. It's real data with real trial IDs, not a mockup. The honest nuances — date precision, the tradeable-gate, and the one gap (PDUFA) — are spelled out below.</p>
+    <div class="verdict">● 9 real trial readouts found · next ~3.5 months · $0 · source: ClinicalTrials.gov v2</div>
+  </div>
+
+  <h2><span class="ic">▤</span> The live forward calendar</h2>
+  <p class="sub">Every row is a real trial whose <b>primary completion date</b> (the readout-timing proxy) falls in the forward window, attributed to our ticker by its exact CT.gov lead-sponsor name. Click an NCT to open the trial. <span class="pill firm">firm</span> = a specific day; <span class="pill win">window</span> = month-precision (CT.gov's date firms up as the trial nears completion). Highlighted row = within the next 30 days.</p>
+  <div class="scroll">
+    <table>
+      <thead><tr><th>Expected</th><th>Precision</th><th>Ticker</th><th>Company / sponsor</th><th>Trial</th><th>Type</th><th>Source</th></tr></thead>
+      <tbody>
+        <tr class="mrow"><td class="mono tick">2026-09</td><td><span class="pill win">window</span></td><td class="tk">RGNX</td><td>REGENXBIO</td><td class="mono"><a href="https://clinicaltrials.gov/study/NCT05693142" target="_blank" rel="noopener">NCT05693142</a></td><td class="mono">trial readout</td><td><span class="pill g">CT.gov</span></td></tr>
+        <tr><td class="mono tick">2026-10</td><td><span class="pill win">window</span></td><td class="tk">BCRX</td><td>BioCryst Pharmaceuticals</td><td class="mono"><a href="https://clinicaltrials.gov/study/NCT06539507" target="_blank" rel="noopener">NCT06539507</a></td><td class="mono">trial readout</td><td><span class="pill g">CT.gov</span></td></tr>
+        <tr><td class="mono tick">2026-10</td><td><span class="pill win">window</span></td><td class="tk">BBIO</td><td>BridgeBio (QED)</td><td class="mono"><a href="https://clinicaltrials.gov/study/NCT06410976" target="_blank" rel="noopener">NCT06410976</a></td><td class="mono">trial readout</td><td><span class="pill g">CT.gov</span></td></tr>
+        <tr><td class="mono tick">2026-10</td><td><span class="pill win">window</span></td><td class="tk">CLDX</td><td>Celldex Therapeutics</td><td class="mono"><a href="https://clinicaltrials.gov/study/NCT06455202" target="_blank" rel="noopener">NCT06455202</a></td><td class="mono">trial readout</td><td><span class="pill g">CT.gov</span></td></tr>
+        <tr><td class="mono tick">2026-10</td><td><span class="pill win">window</span></td><td class="tk">CLDX</td><td>Celldex Therapeutics</td><td class="mono"><a href="https://clinicaltrials.gov/study/NCT06445023" target="_blank" rel="noopener">NCT06445023</a></td><td class="mono">trial readout</td><td><span class="pill g">CT.gov</span></td></tr>
+        <tr><td class="mono tick">2026-10</td><td><span class="pill win">window</span></td><td class="tk">IDYA</td><td>IDEAYA Biosciences</td><td class="mono"><a href="https://clinicaltrials.gov/study/NCT05787587" target="_blank" rel="noopener">NCT05787587</a></td><td class="mono">trial readout</td><td><span class="pill g">CT.gov</span></td></tr>
+        <tr><td class="mono tick">2026-10</td><td><span class="pill win">window</span></td><td class="tk">MIRM</td><td>Mirum Pharmaceuticals</td><td class="mono"><a href="https://clinicaltrials.gov/study/NCT06553768" target="_blank" rel="noopener">NCT06553768</a></td><td class="mono">trial readout</td><td><span class="pill g">CT.gov</span></td></tr>
+        <tr><td class="mono tick">2026-10-31</td><td><span class="pill firm">firm</span></td><td class="tk">SRPT</td><td>Sarepta Therapeutics</td><td class="mono"><a href="https://clinicaltrials.gov/study/NCT03992430" target="_blank" rel="noopener">NCT03992430</a></td><td class="mono">trial readout</td><td><span class="pill g">CT.gov</span></td></tr>
+        <tr><td class="mono tick">2026-10-31</td><td><span class="pill firm">firm</span></td><td class="tk">OLMA</td><td>Olema Pharmaceuticals</td><td class="mono"><a href="https://clinicaltrials.gov/study/NCT06016738" target="_blank" rel="noopener">NCT06016738</a></td><td class="mono">trial readout</td><td><span class="pill g">CT.gov</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="tiles">
+    <div class="tile"><div class="k">Readouts found</div><div class="v">9</div></div>
+    <div class="tile"><div class="k">Names covered</div><div class="v">8<small>/19</small></div></div>
+    <div class="tile"><div class="k">Next 30 days</div><div class="v">1</div></div>
+    <div class="tile"><div class="k">October cluster</div><div class="v">8</div></div>
+    <div class="tile"><div class="k">Data cost</div><div class="v">$0</div></div>
+  </div>
+
+  <h2><span class="ic">◆</span> Which catalyst sources actually work (free)</h2>
+  <div class="card info" style="border-left-color:var(--info)">
+    <div class="src"><span class="st" style="color:var(--green)">✅ CT.gov</span><div><b>Trial readouts — working, shown above.</b> The government trial registry: authoritative, free, no key. Gives the watch-list of which names read out in which month. This is the primary biotech catalyst and our main tradeable supply.</div></div>
+    <div class="src"><span class="st" style="color:var(--green)">✅ Nasdaq</span><div><b>Earnings dates — working, free.</b> Date-precise. Pulled on the daemon's schedule (one call/day covers the market — too slow to pull inline here, so not in the table above). A secondary catalyst.</div></div>
+    <div class="src"><span class="st" style="color:var(--red)">❌ PDUFA</span><div><b>FDA decision dates — no free authoritative source.</b> FedRegister publishes AdCom meeting notices only (never PDUFA target dates); the old RTTNews scraper died (site went JS). This is the one real gap — it needs a hand-curated table (see below).</div></div>
+  </div>
+
+  <h2><span class="ic">!</span> The honest caveats (so this number isn't oversold)</h2>
+  <div class="grid">
+    <div class="card win" style="border-left-color:var(--yellow)">
+      <h3>Dates are mostly month-precision</h3>
+      <p>8 of 9 are "expected October," not a specific day. CT.gov's <code>primaryCompletionDate</code> firms up as a trial nears completion; the exact readout day is confirmed by the company's press release / 8-K near the event. So this is the <b>watch-list</b> — the T-2 trading trigger fires once a date firms up.</p>
+    </div>
+    <div class="card">
+      <h3>Ingested ≠ tradeable (yet)</h3>
+      <p>These flow into the store today, but our verify gate (<code>DATA-03</code>) requires 2 sources, and a CT.gov readout carries one authoritative source. The pending decision — allow a single <i>authoritative</i> source to verify — is what flips these from "ingested" to "tradeable." One-line policy call.</p>
+    </div>
+    <div class="card">
+      <h3>Next 30 days is thin; October is the cluster</h3>
+      <p>Only RGNX reads out inside the next month (and month-precision at that). The real density is late October — 8 readouts, two firm on Oct 31 (SRPT, OLMA). A one-week-hold desk would be quiet now and busy into October.</p>
+    </div>
+  </div>
+
+  <h2><span class="ic">⚙</span> How we build our own calendar</h2>
+  <p class="sub">We already do — this page <i>is</i> it, generated from our free providers. The pipeline assembles the calendar on the daemon's schedule and keeps it warm:</p>
+  <div class="flow">CT.gov readouts + Nasdaq earnings + [curated PDUFA] &nbsp;→&nbsp; provenance-tagged Catalysts &nbsp;→&nbsp; 2-source verify gate &nbsp;→&nbsp; tradeable calendar &nbsp;→&nbsp; T-2 trigger → the desk</div>
+  <ol>
+    <li><b>Readouts + earnings are automated + free</b> — CT.gov (by curated lead-sponsor name) and Nasdaq, refreshed by the always-on daemon, cross-checked, cite-or-drop.</li>
+    <li><b>PDUFA is the one manual piece</b> — no free authoritative source exists, so it needs a small hand-curated table (<code>data/pdufa_curated.csv</code>): ticker, drug, PDUFA date, and its two confirming sources (FDA/company PR + a tracker). ~10 min per name, and only for names with a filing under review. Once curated, it joins the same calendar.</li>
+    <li><b>The verify gate is the switch</b> — decide whether a single authoritative source (CT.gov, FDA PR) verifies, or every date needs two. That decision turns this watch-list into a tradeable calendar.</li>
+  </ol>
+
+  <footer>
+    Zamvar Capital · Fund 1 · Catalyst Calendar · generated live 2026-08-16 from ClinicalTrials.gov v2<br>
+    Real trials, real NCT IDs · attributed by curated lead-sponsor name · $0 · earnings via Nasdaq (daemon-scheduled) · PDUFA needs curation<br>
+    Every date is a completion-date proxy that firms up near the event — never a fabricated date (no-LLM-dates invariant).
+  </footer>
+</div>
