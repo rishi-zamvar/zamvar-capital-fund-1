@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: executing
-stopped_at: Completed 07-04-PLAN.md
-last_updated: "2026-08-15T23:58:44.042Z"
-last_activity: 2026-08-15
+status: verifying
+stopped_at: Completed 07-05-PLAN.md
+last_updated: "2026-08-16T00:10:14.957Z"
+last_activity: 2026-08-16
 progress:
   total_phases: 15
-  completed_phases: 9
+  completed_phases: 10
   total_plans: 52
-  completed_plans: 51
+  completed_plans: 52
   percent: 0
 ---
 
@@ -27,8 +27,8 @@ See: .planning/PROJECT.md (updated 2026-08-14)
 
 Phase: 07 (verifier-guardrails-backtest-harness) — EXECUTING
 Plan: 5 of 5
-Status: Ready to execute
-Last activity: 2026-08-15
+Status: Phase complete — ready for verification
+Last activity: 2026-08-16
 
 Progress: [░░░░░░░░░░] 0%
 
@@ -102,6 +102,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 07 P02 | 8min | 3 tasks tasks | 7 files files |
 | Phase 07 P03 | 8min | 2 tasks | 2 files |
 | Phase 07-verifier-guardrails-backtest-harness P04 | 16min | 3 tasks | 2 files |
+| Phase 07-verifier-guardrails-backtest-harness P05 | 13min | 3 tasks tasks | 4 files files |
 
 ## Accumulated Context
 
@@ -194,6 +195,8 @@ Recent decisions affecting current work:
 - [Phase 07]: guardrails.py aggregates the 5 shipped OPS-03 pre-trade invariants into ONE fail-closed gate (check_guardrails/assert_guardrails + frozen GuardrailReport); re-implements none — reuse of is_tradeable/concentration/DiligenceInput firewall/enforce*/web-free ALLOWED_TOOLS
 - [Phase 07]: dd_firewall_sealed proves the TOP-LEVEL firewall only (DiligenceInput.catalyst is a raw dict, not deep-sealed); 07-05 outcome-blind projection is the Layer-B nested-key safeguard; live-position monitors (SL/TP/countdown/P&L) deferred to Phase 8/8.5
 - [Phase 07-verifier-guardrails-backtest-harness]: Layer A (run_layer_a) is the NO-LLM deterministic weekly backtest: re-expresses the corrected cadence over the 07-02 point-in-time event set (never imports/calls the LLM desk), catalyst-leg direction COMPUTED via classify_drop->_match_trigger->weekly_base_rate (BLOCKER-2, never off the null catalyst row) as a named swappable proxy (default base_rate), pessimistic gap-open fills, no-zero-trade defensive fallback -> BaselineDistribution (win/avg-win-loss/Sharpe/Sortino/max-DD/hedge-effectiveness) for the 07-05 gate
+- [Phase 07-verifier-guardrails-backtest-harness]: Layer B (run_layer_b) is the guarded AGENTIC replay: projects each point-in-time catalyst onto OutcomeBlindCatalyst (extra=forbid firewall), asserts web-free (reuses guardrails._no_scrape_to_order), runs the REAL run_desk, labels every LayerBResult biased_optimistic=True (structural field), samples with a logged drop-list (no silent [:N] cap) — offline via the mocked run_structured seam
+- [Phase 07-verifier-guardrails-backtest-harness]: The BACK-05 go/no-go gate (sample_based_gate) is SAMPLE-BASED never calendar: below THRESHOLDS[min_sample] it is a hard NO-GO regardless of metrics; above it names every failing metric (win_rate/sharpe/max_drawdown/hedge_effectiveness) from the 07-04 BaselineDistribution; thresholds read by direct subscript (missing key raises), undefined ratio is a named failure
 
 ### Pending Todos
 
@@ -207,6 +210,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-08-15T23:58:36.306Z
-Stopped at: Completed 07-04-PLAN.md
+Last session: 2026-08-16T00:10:06.014Z
+Stopped at: Completed 07-05-PLAN.md
 Resume file: None
