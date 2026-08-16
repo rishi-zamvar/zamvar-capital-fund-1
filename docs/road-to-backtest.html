@@ -1,0 +1,142 @@
+<title>Road to the Backtest</title>
+<style>
+  :root{
+    --bg:#ecefe9;--surface:#fff;--surface-2:#f5f7f2;--ink:#191c18;--muted:#5f655c;--faint:#99a094;
+    --border:#d6dbcf;--border-strong:#c2c8b8;--accent:#8a6a12;--accent-bg:#f3ecd8;
+    --done:#1f7a4d;--done-bg:#e4f2e9;--warn:#b23b30;--warn-bg:#f6e5e3;--info:#2b6a93;--info-bg:#e2edf4;
+    --new:#5a3fb0;--new-bg:#ece7f7;
+    --mono:ui-monospace,"SF Mono","JetBrains Mono",Menlo,Consolas,monospace;
+    --sans:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+    --shadow:0 1px 2px rgba(20,25,18,.06),0 4px 14px rgba(20,25,18,.05);
+  }
+  @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+    --bg:#101310;--surface:#191d18;--surface-2:#20241e;--ink:#e8ece4;--muted:#9aa192;--faint:#6b7365;
+    --border:#2c322a;--border-strong:#3a4136;--accent:#d8b45a;--accent-bg:#2a2412;
+    --done:#4cc585;--done-bg:#14271c;--warn:#ef7365;--warn-bg:#2c1714;--info:#6bb3e6;--info-bg:#122430;
+    --new:#b9a3f0;--new-bg:#211a38;--shadow:0 1px 2px rgba(0,0,0,.4),0 6px 18px rgba(0,0,0,.35);
+  }}
+  :root[data-theme="dark"]{
+    --bg:#101310;--surface:#191d18;--surface-2:#20241e;--ink:#e8ece4;--muted:#9aa192;--faint:#6b7365;
+    --border:#2c322a;--border-strong:#3a4136;--accent:#d8b45a;--accent-bg:#2a2412;
+    --done:#4cc585;--done-bg:#14271c;--warn:#ef7365;--warn-bg:#2c1714;--info:#6bb3e6;--info-bg:#122430;
+    --new:#b9a3f0;--new-bg:#211a38;--shadow:0 1px 2px rgba(0,0,0,.4),0 6px 18px rgba(0,0,0,.35);
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);line-height:1.55}
+  .wrap{max-width:940px;margin:0 auto;padding:40px 22px 72px}
+  .ey{font-family:var(--mono);font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--accent);font-weight:600}
+  h1{font-family:var(--mono);font-size:clamp(23px,5vw,34px);margin:8px 0 8px;letter-spacing:-.01em;text-wrap:balance}
+  .lede{font-size:15.5px;color:var(--muted);max-width:74ch;margin:0}
+  .masthead{border-bottom:2px solid var(--ink);padding-bottom:20px;margin-bottom:12px}
+  h2{font-family:var(--mono);font-size:16px;margin:34px 0 12px;display:flex;align-items:center;gap:9px}
+  h2 .n{width:26px;height:26px;border-radius:7px;display:inline-grid;place-items:center;font-size:13px;flex:none;background:var(--accent-bg);color:var(--accent);border:1px solid var(--accent);font-family:var(--mono);font-weight:700}
+  p{margin:6px 0} code{font-family:var(--mono);font-size:12px;background:var(--surface-2);border:1px solid var(--border);border-radius:4px;padding:1px 5px}
+  .stage{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px 18px;margin:10px 0;box-shadow:var(--shadow);border-left:4px solid var(--border-strong)}
+  .stage.built{border-left-color:var(--done)} .stage.mostly{border-left-color:var(--accent)} .stage.new{border-left-color:var(--new)}
+  .stage h3{font-family:var(--mono);font-size:15px;margin:0 0 2px;display:flex;flex-wrap:wrap;align-items:center;gap:9px}
+  .stage .role{font-size:12.5px;color:var(--faint);margin:0 0 10px}
+  .badge{font-family:var(--mono);font-size:9.5px;font-weight:700;padding:2px 8px;border-radius:20px;white-space:nowrap;letter-spacing:.03em}
+  .b-built{color:var(--done);background:var(--done-bg);border:1px solid var(--done)}
+  .b-mostly{color:var(--accent);background:var(--accent-bg);border:1px solid var(--accent)}
+  .b-new{color:var(--new);background:var(--new-bg);border:1px solid var(--new)}
+  ul{margin:6px 0 0;padding-left:0;list-style:none}
+  li{position:relative;padding:4px 0 4px 20px;font-size:13.5px}
+  li::before{content:"";position:absolute;left:3px;top:11px;width:5px;height:5px;border-radius:50%;background:var(--accent)}
+  li.have::before{content:"✓";background:none;color:var(--done);font-family:var(--mono);font-size:12px;top:5px;left:0}
+  li.need::before{content:"→";background:none;color:var(--new);font-family:var(--mono);font-size:12px;top:5px;left:0}
+  li b{font-weight:600}
+  .caveat{background:var(--warn-bg);border:1px solid var(--warn);border-radius:10px;padding:14px 16px;margin:8px 0}
+  .caveat h3{font-family:var(--mono);font-size:13.5px;margin:0 0 5px;color:var(--warn)}
+  .caveat p{font-size:13.5px;margin:4px 0 0}
+  .flowtiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin:6px 0}
+  .ft{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px 14px;box-shadow:var(--shadow)}
+  .ft .k{font-family:var(--mono);font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:var(--faint)}
+  .ft .v{font-size:13px;margin-top:4px}
+  .legend{display:flex;flex-wrap:wrap;gap:10px;margin:4px 0 0;font-size:12px;color:var(--muted)}
+  footer{margin-top:38px;padding-top:18px;border-top:1px solid var(--border);font-family:var(--mono);font-size:11.5px;color:var(--faint);line-height:1.7}
+</style>
+
+<div class="wrap">
+  <div class="masthead">
+    <div class="ey">zamvar capital · fund 1 · the road ahead</div>
+    <h1>What's needed to run the 1-year backtest, calibrate per stock, and build playbooks</h1>
+    <p class="lede">Five stages from where we are to a real, calibrated, playbook-backed strategy. The honest split: the backtest itself is nearly a data pass away — the machinery exists — but the per-stock fine-tuning and playbooks (the actual edge) are genuinely new work, and the data is thinner than it looks.</p>
+    <div class="legend"><span class="badge b-built">BUILT</span> exists today · <span class="badge b-mostly">MOSTLY — a run away</span> · <span class="badge b-new">NEW — real work</span></div>
+  </div>
+
+  <h2><span class="n">1</span> Assemble the historical event set</h2>
+  <div class="stage mostly">
+    <h3>Historical catalysts + prices over the window <span class="badge b-mostly">MOSTLY — a run away</span></h3>
+    <p class="role">The raw material: every past catalyst in the window + the price action around it, point-in-time, survivorship-free.</p>
+    <ul>
+      <li class="have"><b>Prices</b> — multi-source cross-checked ingestion is built (6.9/6.10); ingest 1–2 yr of weekly bars for the 19 names</li>
+      <li class="have"><b>Trial readouts</b> — CT.gov, flowing + verifying (authoritative single source)</li>
+      <li class="have"><b>Earnings</b> — Nasdaq calendar, free</li>
+      <li class="have"><b>PDUFA/AdCom</b> — our own EDGAR-8K tracker (6.11); it found forward events — <b>now run it over the *past* year</b> (a historical efts pass) to pull past PDUFA 8-Ks + dates</li>
+      <li class="need"><b>The run:</b> one historical-ingestion pass populates the store; <code>build_event_set</code> (already built, Phase 7) assembles it — point-in-time, delisted-inclusive, no look-ahead</li>
+    </ul>
+  </div>
+
+  <h2><span class="n">2</span> Run the Layer-A backtest</h2>
+  <div class="stage built">
+    <h3>Mechanical baseline + honest go/no-go <span class="badge b-built">BUILT</span></h3>
+    <p class="role">The trustworthy number: deterministic replay, pessimistic fills, no AI in the loop.</p>
+    <ul>
+      <li class="have"><b>The harness exists</b> (Phase 7) — <code>run_layer_a</code> replays the corrected weekly strategy with gap-open fills, producing win rate, avg win/loss, Sharpe, Sortino, max drawdown, hedge-effectiveness</li>
+      <li class="have"><b>The sample-based gate</b> — too few events = automatic no-go, no matter how good the numbers look (it refuses to flatter a thin sample)</li>
+      <li class="need"><b>Just point it at Stage 1's event set</b> and read the first real baseline — this is the "have we done our backtest" answer</li>
+    </ul>
+  </div>
+
+  <h2><span class="n">3</span> Fine-tune the assumptions — per stock / per cohort</h2>
+  <div class="stage new">
+    <h3>Fit the model parameters from realized outcomes <span class="badge b-new">NEW — real work</span></h3>
+    <p class="role"><b>This is the moat.</b> The tools are commodities; the edge is calibrating their assumptions against what actually happened.</p>
+    <ul>
+      <li class="have"><b>The seam exists</b> — Phase 5 built <code>load_params</code>: tools read a top-confidence "fitted params" row, falling back to bootstrap defaults. The refit was deliberately deferred to here.</li>
+      <li class="need"><b>Compute the realized outcome per event</b> (the actual +/- move around each catalyst, from the price bars)</li>
+      <li class="need"><b>Fit, per stock and per cohort:</b> the catalyst move distribution (the +/- estimate), the base rates (phase-transition LoA, drop-classifier reversal, AdCom follow-through), adaptive SL/TP levels, IV-crush, and the hedge payoff matrix</li>
+      <li class="need"><b>Store as versioned, confidence-scored <code>fitted_params</code></b> — which the live desk then reads automatically. Refit as new outcomes land.</li>
+    </ul>
+  </div>
+
+  <h2><span class="n">4</span> Build the playbooks</h2>
+  <div class="stage new">
+    <h3>Write per-stock scenarios + outcomes into the knowledge base <span class="badge b-new">NEW — real work</span></h3>
+    <p class="role">So the live desk can ask "what happened last time a name like this had a catalyst like this?"</p>
+    <ul>
+      <li class="have"><b>The KB exists</b> (Phase 2) — SQLite + vector search, playbook/outcome nodes, cite-or-drop, and <code>analog_query</code> that retrieves nearest past scenarios with their outcomes</li>
+      <li class="have"><b>The record seam exists</b> — Phase 6.5 writes weekly outcomes back as cited KB claims</li>
+      <li class="need"><b>Populate it from history:</b> turn each backtested event + its outcome into a per-stock/cohort playbook entry — the pattern, the base rate, what worked, confidence, and the source citation</li>
+      <li class="need"><b>Result:</b> analog_query returns real analogs (not bootstrap stubs) to every analyst on every live catalyst</li>
+    </ul>
+  </div>
+
+  <h2><span class="n">5</span> Close the loop</h2>
+  <div class="stage new">
+    <h3>Predict → realize → score → refit, without overfitting <span class="badge b-new">NEW — Phase 10</span></h3>
+    <p class="role">The desk gets measurably better each week — and can never quietly reward-hack the money path.</p>
+    <ul>
+      <li class="need"><b>The learning loop</b> (roadmapped as Phase 10): score every resolved prediction vs. realized, propose a parameter diff, and gate it behind golden-set regression + walk-forward evaluation so a change must prove out-of-sample before it ships</li>
+      <li class="have"><b>The paper ledger</b> (Phase 8) is the forward out-of-sample test that feeds this — the month-long proof before real capital</li>
+    </ul>
+  </div>
+
+  <h2><span class="n">!</span> The honest constraint you should know going in</h2>
+  <div class="caveat">
+    <h3>1 year × 19 names is thin data — per-stock fitting will be data-starved</h3>
+    <p>Biotech catalysts are sparse per name: a single stock might have 1–3 real catalysts in a year. You can't fit a trustworthy per-stock move distribution from 2 events. The sound approach: <b>fit at the cohort level</b> (catalyst-type × therapeutic-area × drop-regime), then apply <b>per-stock adjustments only where a name has enough history</b>. And <b>pull a multi-year window</b> (3–5 yr — the free pipeline supports it, delisted names included) for real statistical power. "Assumptions are the moat" only holds if the assumptions are calibrated on enough realized outcomes to be trusted — so the backtest window and the fitting granularity are themselves money-critical choices.</p>
+  </div>
+
+  <h2><span class="n">▸</span> The sequence, and what each stage costs</h2>
+  <div class="flowtiles">
+    <div class="ft"><div class="k">Stage 1–2</div><div class="v"><b>One focused phase</b> — historical ingestion pass + run the harness. Gets you the first real baseline + go/no-go.</div></div>
+    <div class="ft"><div class="k">Stage 3–4</div><div class="v"><b>The calibration phase</b> — fit params + build playbooks from the backtest outcomes. The moat; the biggest new build.</div></div>
+    <div class="ft"><div class="k">Stage 5</div><div class="v"><b>Phase 10</b> — the gated learning loop, running continuously once paper trading (Phase 8) is live.</div></div>
+  </div>
+  <p style="font-size:13.5px;color:var(--muted);margin-top:8px">Everything in Stages 1–2 is buildable now on free data (plus the multi-year-window choice). Stages 3–5 are where the real intellectual work is — and where the edge, if there is one, gets made and proven honestly.</p>
+
+  <footer>
+    Zamvar Capital · Fund 1 · Road to the Backtest · 2026-08-16 · the tools are commodities, the calibrated assumptions are the moat · a thin sample is a no-go, not a number to flatter
+  </footer>
+</div>
