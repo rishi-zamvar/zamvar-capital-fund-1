@@ -398,6 +398,52 @@ def review_items():
     return items[-20:]
 
 
+# ------------------------------------------------------------------ data health (PIPE-07)
+
+COVERAGE_ALERT_PCT = 80.0   # cross-check coverage below this -> alert
+DIVERGENCE_ALERT = 5        # this many cross-check divergences in one cycle -> alert
+_last_alert_sig = [None]    # de-dupe: only ping when the alert set CHANGES
+
+
+def _ping_alerts(alerts):
+    """Best-effort ZeeChat push (non-blocking, de-duped). NEVER blocks or crashes the monitor —
+    a failing/absent ping script is silently ignored."""
+    sig = "|".join(sorted(alerts))
+    if sig == _last_alert_sig[0]:
+        return
+    _last_alert_sig[0] = sig
+    try:
+        subprocess.Popen(
+            ["bash", os.path.expanduser("~/.claude/skills/zeechat/scripts/ping.sh"),
+             "Fund1 data-health: " + "; ".join(alerts)],
+            stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    except Exception:
+        pass
+
+
+def data_health():
+    """The pipeline-health snapshot the daemon writes each cycle (.monitor/data_health.json) plus a
+    computed `alerts` list: a degraded source / a coverage drop / a divergence spike. Empty {} when
+    the daemon has not written a cycle yet (never a crash)."""
+    dh = read_json(os.path.join(MONDIR, "data_health.json"), {})
+    if not dh:
+        return {}
+    alerts = []
+    for name, s in (dh.get("sources") or {}).items():
+        if s.get("degraded"):
+            alerts.append("source degraded: " + name)
+    cov = dh.get("coverage_pct")
+    if cov is not None and cov < COVERAGE_ALERT_PCT:
+        alerts.append("coverage %.0f%% (< %.0f%%)" % (cov, COVERAGE_ALERT_PCT))
+    div = dh.get("divergences_this_cycle") or 0
+    if div >= DIVERGENCE_ALERT:
+        alerts.append("divergence spike: %d this cycle" % div)
+    dh["alerts"] = alerts
+    if alerts:
+        _ping_alerts(alerts)
+    return dh
+
+
 # ------------------------------------------------------------------ sample loop
 
 def sample():
@@ -418,7 +464,8 @@ def sample():
             "tokens": tokens_total(), "graphify": graphify_savings(), "feed": feed,
             "decisions": decisions(), "research": research_docs(),
             "deliverables": deliverables(), "blocker": blocker(),
-            "review": review_items(), "scope": roadmap_scope()}
+            "review": review_items(), "scope": roadmap_scope(),
+            "data_health": data_health()}
 
 
 def sampler():
@@ -708,12 +755,14 @@ h1{font-size:23px;margin:6px 0 0;letter-spacing:-.01em}
         <div class="tab" data-tab="dec">Decisions</div>
         <div class="tab" data-tab="res">Research</div>
         <div class="tab" data-tab="del">Deliverables</div>
+        <div class="tab" data-tab="dh">Data health</div>
       </div>
       <div class="tabpane on" id="pane-rev"></div>
       <div class="tabpane" id="pane-road"></div>
       <div class="tabpane" id="pane-dec"></div>
       <div class="tabpane" id="pane-res"></div>
       <div class="tabpane" id="pane-del"></div>
+      <div class="tabpane" id="pane-dh"></div>
     </div>
     <div class="panel">
       <h2>Orchestrator — this session</h2>
@@ -825,6 +874,17 @@ function render(d){
     if(x.crits&&x.crits.length){road+='<div class="crits">';x.crits.forEach(function(c){road+='<div class="crit">✓ '+esc(c)+'</div>'});road+='</div>'}
     road+='</div>'});
   document.getElementById("pane-road").innerHTML=road||'<div class="empty">no roadmap scope parsed</div>';
+  // data health
+  var dh=d.data_health||{};var dhH="";
+  if(!dh.updated){dhH='<div class="empty">daemon has not written a cycle yet — .monitor/data_health.json absent</div>';}
+  else{
+    (dh.alerts||[]).forEach(function(a){dhH+='<div class="item"><div class="t"><span class="tag rev" style="background:var(--red)">ALERT</span>'+esc(a)+'</div></div>'});
+    dhH+='<div class="item"><div class="t">coverage <b>'+esc(String(dh.coverage_pct))+'%</b> · divergences this cycle <b>'+esc(String(dh.divergences_this_cycle))+'</b>'+(dh.degraded?' · <span class="tag rev">degraded</span>':'')+'</div>';
+    var g=dh.gaps||{};dhH+='<div class="m">gaps: '+esc(String(g.price_weeks_missing||0))+' price-weeks · '+esc(String(g.missing_cards||0))+' cards · '+((dh.stale_sources||[]).length)+' stale sources · updated '+esc((dh.updated||"").slice(0,19))+'</div></div>';
+    Object.keys(dh.sources||{}).forEach(function(nm){var s=dh.sources[nm];
+      dhH+='<div class="item"><div class="t"><span class="tag p">'+esc(nm)+'</span>'+(s.degraded?'<span class="tag rev">degraded</span>':'ok')+'</div><div class="m">last success '+esc(String(s.last_success||"never"))+' · consec fail '+esc(String(s.consec_fail||0))+'</div></div>'});
+  }
+  document.getElementById("pane-dh").innerHTML=dhH;
   // orchestrator feed
   renderFeed("feed",d.feed,"quiet");
   // commits
