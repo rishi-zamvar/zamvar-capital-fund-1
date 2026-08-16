@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN"
+  "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+  Fund 1 always-on data daemon — the SUPERVISOR + crash-recovery for scripts/daemon.py.
+
+  Model: launchd runs ONE `daemon.py --once` cycle on the accuracy-first cadence; the store's
+  idempotent UPSERTs are the resumability (a re-run writes no duplicate rows, a mid-cycle crash
+  just re-runs cleanly). There is NO long-lived loop and NO queue. Cost = $0 (launchd + local disk).
+
+  StartInterval : one cycle every 6h (21600s) — daily-after-close prices are the tightest cadence
+                  that actually MOVES the accuracy-first book; 4x/day gives headroom for retries.
+  KeepAlive     : restart ONLY on a non-zero exit (a crash) — NOT on a clean one-cycle exit
+                  (SuccessfulExit=false => "keep alive when it did NOT exit successfully"). This is
+                  the crash-recovery; the normal path is exit-0 and wait for the next StartInterval.
+
+  Install (paths are absolute — edit WorkingDirectory / ProgramArguments to this checkout, then):
+    cp launchd/com.zamvar.fund1.daemon.plist ~/Library/LaunchAgents/
+    launchctl load  ~/Library/LaunchAgents/com.zamvar.fund1.daemon.plist   # start
+    launchctl start com.zamvar.fund1.daemon                                 # run one now
+    launchctl unload ~/Library/LaunchAgents/com.zamvar.fund1.daemon.plist  # stop
+  Logs: .monitor/daemon.out.log / .monitor/daemon.err.log (health JSON at .monitor/data_health.json).
+-->
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string>com.zamvar.fund1.daemon</string>
+
+  <key>WorkingDirectory</key>
+  <string>/Users/rishizamvar/Documents/Projects/Zamvar Capital/Fund 1 Strategy</string>
+
+  <key>ProgramArguments</key>
+  <array>
+    <string>/Users/rishizamvar/Documents/Projects/Zamvar Capital/Fund 1 Strategy/.venv/bin/python</string>
+    <string>scripts/daemon.py</string>
+    <string>--once</string>
+  </array>
+
+  <key>StartInterval</key>
+  <integer>21600</integer>
+
+  <key>KeepAlive</key>
+  <dict>
+    <key>SuccessfulExit</key>
+    <false/>
+  </dict>
+
+  <key>RunAtLoad</key>
+  <true/>
+
+  <key>StandardOutPath</key>
+  <string>/Users/rishizamvar/Documents/Projects/Zamvar Capital/Fund 1 Strategy/.monitor/daemon.out.log</string>
+  <key>StandardErrorPath</key>
+  <string>/Users/rishizamvar/Documents/Projects/Zamvar Capital/Fund 1 Strategy/.monitor/daemon.err.log</string>
+</dict>
+</plist>
