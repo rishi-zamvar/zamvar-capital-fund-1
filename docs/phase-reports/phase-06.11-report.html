@@ -1,0 +1,129 @@
+<title>Fund 1 — Phase 6.11 Report</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🧬</text></svg>">
+<style>
+  :root{
+    --bg:#ecefe9;--surface:#fff;--surface-2:#f5f7f2;--ink:#191c18;--muted:#5f655c;--faint:#99a094;
+    --border:#d6dbcf;--border-strong:#c2c8b8;--accent:#8a6a12;--accent-bg:#f3ecd8;
+    --done:#1f7a4d;--done-bg:#e4f2e9;--warn:#b23b30;--warn-bg:#f6e5e3;--info:#2b6a93;--info-bg:#e2edf4;
+    --mono:ui-monospace,"SF Mono","JetBrains Mono",Menlo,Consolas,monospace;
+    --sans:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+    --shadow:0 1px 2px rgba(20,25,18,.06),0 4px 14px rgba(20,25,18,.05);
+  }
+  @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+    --bg:#101310;--surface:#191d18;--surface-2:#20241e;--ink:#e8ece4;--muted:#9aa192;--faint:#6b7365;
+    --border:#2c322a;--border-strong:#3a4136;--accent:#d8b45a;--accent-bg:#2a2412;
+    --done:#4cc585;--done-bg:#14271c;--warn:#ef7365;--warn-bg:#2c1714;--info:#6bb3e6;--info-bg:#122430;
+    --shadow:0 1px 2px rgba(0,0,0,.4),0 6px 18px rgba(0,0,0,.35);
+  }}
+  :root[data-theme="dark"]{
+    --bg:#101310;--surface:#191d18;--surface-2:#20241e;--ink:#e8ece4;--muted:#9aa192;--faint:#6b7365;
+    --border:#2c322a;--border-strong:#3a4136;--accent:#d8b45a;--accent-bg:#2a2412;
+    --done:#4cc585;--done-bg:#14271c;--warn:#ef7365;--warn-bg:#2c1714;--info:#6bb3e6;--info-bg:#122430;
+    --shadow:0 1px 2px rgba(0,0,0,.4),0 6px 18px rgba(0,0,0,.35);
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);line-height:1.55}
+  .wrap{max-width:900px;margin:0 auto;padding:40px 22px 72px}
+  .ey{font-family:var(--mono);font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--accent);font-weight:600}
+  h1{font-family:var(--mono);font-size:clamp(24px,5vw,36px);margin:8px 0 4px;letter-spacing:-.01em}
+  .status{display:inline-flex;align-items:center;gap:8px;font-family:var(--mono);font-size:12.5px;color:var(--done);background:var(--done-bg);border:1px solid var(--done);border-radius:20px;padding:4px 13px;margin-top:6px}
+  .masthead{border-bottom:2px solid var(--ink);padding-bottom:18px;margin-bottom:26px}
+  .meta{font-family:var(--mono);font-size:12px;color:var(--muted);margin-top:10px}
+  h2{font-family:var(--mono);font-size:16px;margin:32px 0 12px;display:flex;align-items:center;gap:9px}
+  h2 .ic{width:22px;height:22px;border-radius:5px;display:inline-grid;place-items:center;font-size:13px;flex:none}
+  .ic.d{background:var(--done-bg);color:var(--done);border:1px solid var(--done)}
+  .ic.w{background:var(--warn-bg);color:var(--warn);border:1px solid var(--warn)}
+  .ic.g{background:var(--accent-bg);color:var(--accent);border:1px solid var(--accent)}
+  .ic.n{background:var(--info-bg);color:var(--info);border:1px solid var(--info)}
+  ul{margin:0;padding-left:2px;list-style:none}
+  li{position:relative;padding:5px 0 5px 22px;font-size:14.5px}
+  li::before{content:"";position:absolute;left:2px;top:12px;width:6px;height:6px;border-radius:50%;background:var(--accent)}
+  li.done::before{content:"✓";background:none;color:var(--done);font-family:var(--mono);font-size:13px;top:6px;left:0}
+  li b{font-weight:600}
+  code{font-family:var(--mono);font-size:12.5px;background:var(--surface-2);border:1px solid var(--border);border-radius:4px;padding:1px 6px}
+  .card{background:var(--surface);border:1px solid var(--border);border-left:4px solid var(--info);border-radius:9px;padding:14px 16px;margin:10px 0;box-shadow:var(--shadow)}
+  .card.decide{border-left-color:var(--accent);background:var(--accent-bg)}
+  .card.warn{border-left-color:var(--warn)}
+  .card h3{font-family:var(--mono);font-size:14px;margin:0 0 4px;color:var(--info)}
+  .card.decide h3{color:var(--accent)}
+  .card.warn h3{color:var(--warn)}
+  .card p{margin:4px 0 0;font-size:14px;color:var(--ink)}
+  table{width:100%;border-collapse:collapse;margin:10px 0;font-size:13px}
+  th,td{text-align:left;padding:7px 10px;border-bottom:1px solid var(--border)}
+  th{font-family:var(--mono);font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--faint)}
+  td code{font-size:11.5px}
+  .yes{color:var(--done);font-family:var(--mono)}
+  .tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(118px,1fr));gap:12px;margin:8px 0 4px}
+  .tile{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:13px 15px;box-shadow:var(--shadow)}
+  .tile .k{font-family:var(--mono);font-size:10px;letter-spacing:.07em;text-transform:uppercase;color:var(--faint)}
+  .tile .v{font-family:var(--mono);font-size:22px;font-weight:700;margin-top:3px}
+  .tile .v small{font-size:13px;color:var(--muted)}
+  .next{background:var(--accent-bg);border:1px solid var(--accent);border-radius:10px;padding:16px 18px;margin-top:10px}
+  .next h3{font-family:var(--mono);font-size:15px;margin:0 0 6px;color:var(--accent)}
+  .next p{margin:0;font-size:14px}
+  .win{background:var(--done-bg);border:1px solid var(--done);border-radius:8px;padding:10px 14px;margin:10px 0;font-size:14px}
+  .win b{color:var(--done)}
+  .delta{font-family:var(--mono);font-size:13px}
+  .delta b{color:var(--done)}
+  footer{margin-top:34px;padding-top:18px;border-top:1px solid var(--border);font-family:var(--mono);font-size:11.5px;color:var(--faint)}
+</style>
+
+<div class="wrap">
+  <div class="masthead">
+    <div class="ey">zamvar capital · fund 1 · phase report</div>
+    <h1>Phase 6.11 — Our Own PDUFA Source</h1>
+    <div class="status">● COMPLETE · 4 plans / 3 waves · 1097 tests · the blocker-clearing phase</div>
+    <div class="meta">2026-08-16 · PDUFA-EDGAR-01…04 + RH-DATA-01/03 closed · goal: <i>build our own free, authoritative PDUFA/AdCom catalyst source from SEC 8-K filings — and prove it live.</i></div>
+  </div>
+
+  <h2><span class="ic d">✓</span> What's done</h2>
+  <ul>
+    <li class="done"><b>We now mint our own PDUFA dates — free, keyless, authoritative.</b> <code>providers/pdufa_edgar.py</code> discovers PDUFA/AdCom 8-Ks via SEC EDGAR full-text search (CIK-filtered to our universe, no HTML scraping), fetches the real EX-99.1 exhibit, and extracts the date with a deterministic regex — <b>no LLM ever mints a date</b> (cite-or-drop: only a date verbatim-adjacent to a keyword in a real linked filing).</li>
+    <li class="done"><b>A single SEC-EDGAR filing self-verifies → tradeable</b> with <i>zero</i> change to the verify rule (SEC EDGAR was already whitelisted as an authoritative single source). The catalyst is point-in-time stamped from the 8-K's own filing_date — no look-ahead.</li>
+    <li class="done"><b>It runs on the daemon path automatically.</b> Wired into <code>ingest._fetch_catalysts</code> + the provider registry, so PDUFA dates auto-populate every <code>run_cycle</code> — closing the exact wiring gap the earlier pdufa debug exposed.</li>
+    <li class="done"><b>Confidence gating with a human review queue.</b> Clean single-date filings auto-emit as tradeable; multi-date / ambiguous / AdCom-only filings route to a <code>#</code>-commented review CSV for you to confirm — the ~10-min/week task, now auto-populated from real filings.</li>
+    <li class="done"><b>A read-only Robinhood data adapter</b> (quotes / float / portfolio, degrade-to-None) landed as a bonus — pluggable, offline-tested, never sole-source, and gated off until you connect the MCP.</li>
+    <li class="done"><b>Proven LIVE on real SEC data</b> (this closing plan) — see below.</li>
+  </ul>
+
+  <h2><span class="ic g">★</span> What's going well</h2>
+  <div class="win"><b>The blocker that gated Phases 6.9 and 6.10 is cleared.</b> Both prior phases closed with the same warning: <code>tradeable_catalyst_count = 0</code>, because catalysts had no authoritative source to clear the verify gate. The live shakedown just proved that's over — <span class="delta">tradeable PDUFA catalysts <b>0 → 6</b></span> (IMNM, CAPR, BBIO×2, DYN, PRAX), each from a real 8-K with a citable accession URL. The extractor worked on live HTML on the <i>first</i> real run — no normalization miss, no rate-limit, no degrade, no bug fix to the module.</div>
+  <div class="win"><b>The false-positive guard earns its keep.</b> Of 17 in-window universe 8-Ks, 4 auto-emitted clean; the other 13 were correctly held for review — real multi-date filings (IONS' 3 dates, BBIO's combined quarterly), 10-K/earnings mentions without a "PDUFA" token, and AdCom-only notices. Nothing ambiguous slipped through to tradeable; nothing real was silently dropped.</div>
+
+  <h2><span class="ic d">✓</span> Live proof (real efts + real 8-K exhibits, keyless, $0)</h2>
+  <table>
+    <tr><th>Ticker</th><th>PDUFA date</th><th>Verified</th><th>Tradeable</th><th>Single SEC EDGAR primary</th><th>Point-in-time stamp</th></tr>
+    <tr><td><b>IMNM</b></td><td>2027-04-28</td><td class="yes">✓</td><td class="yes">✓</td><td class="yes">✓</td><td><code>2026-08-11</code> (filing_date)</td></tr>
+    <tr><td><b>CAPR</b></td><td>2026-08-22</td><td class="yes">✓</td><td class="yes">✓</td><td class="yes">✓</td><td><code>2026-05-07</code> (filing_date)</td></tr>
+  </table>
+  <p style="font-size:13.5px;color:var(--muted)">Universe scan: 21/21 CIK-resolved · 17 in-window 8-Ks · <b>4 HIGH auto-emitted → tradeable</b> (BBIO 2027-05-08 &amp; 2026-11-27, DYN 2027-01-21, PRAX 2026-12-27) · <b>13 routed to the review queue</b>. Full evidence: <code>.planning/phases/06.11-edgar-pdufa-autopop/06.11-04-live-verify-report.json</code>.</p>
+
+  <h2><span class="ic w">!</span> Needs your review / input</h2>
+  <div class="card decide">
+    <h3>★ Confirm the 13 review-queue rows (money-adjacent, ~10 min)</h3>
+    <p>Real multi-date/ambiguous PDUFA filings landed as <code>#</code>-commented rows in <code>data/pdufa_curated.csv</code> — e.g. IONS has three candidate dates in one filing, CAPR has a PDUFA + an AdCom, PRAX quarterlies list two. Open the linked 8-K, pick the right date, and uncomment the row to promote it to a tradeable catalyst. These deliberately do <b>not</b> auto-trade — the human gate on money is inviolable.</p>
+  </div>
+  <div class="card warn">
+    <h3>RH-DATA-02 — connect the Robinhood MCP (gated, cannot be done autonomously)</h3>
+    <p>The read-only RH data adapter is built + tested, but the live read surface is unverified per project docs and the callable stays unbound until you connect the RH MCP via the Claude Agent SDK (OAuth + funded agent account). One deferred step; the free stack is the spine, so nothing downstream is blocked on it.</p>
+  </div>
+
+  <h2><span class="ic n">→</span> Next steps</h2>
+  <div class="next">
+    <h3>The catalyst spine is real — now the strategy can run on true tradeable events</h3>
+    <p>Phases 6.9 + 6.10 built the data foundation; 6.11 gave it the missing authoritative catalyst. The backtest harness (Phase 7) and paper ledger (Phase 8) already exist to consume these — and now, for the first time, they have real verified + point-in-time PDUFA catalysts to score. Confirming the review queue widens that set further. Next up: run the strategy against this live catalyst spine.</p>
+  </div>
+
+  <h2><span class="ic g">▤</span> Project state</h2>
+  <div class="tiles">
+    <div class="tile"><div class="k">Phase</div><div class="v">6.11<small> done</small></div></div>
+    <div class="tile"><div class="k">Tests</div><div class="v">1097</div></div>
+    <div class="tile"><div class="k">Reqs</div><div class="v" style="color:var(--done)">6/7</div></div>
+    <div class="tile"><div class="k">Tradeable PDUFA</div><div class="v" style="color:var(--done)">6</div></div>
+    <div class="tile"><div class="k">Data cost</div><div class="v">$0</div></div>
+    <div class="tile"><div class="k">Blockers</div><div class="v" style="color:var(--done)">0</div></div>
+  </div>
+  <p style="font-size:13.5px;color:var(--muted);margin-top:10px">The prior single blocker — <b>catalyst curation</b> — is resolved: PDUFA now auto-populates from SEC filings and self-verifies. One requirement (RH-DATA-02) stays gated on you connecting the RH MCP; it blocks nothing. Live results in <code>06.11-04-live-verify-report.json</code>; extractor in <code>src/catalyst_trader/providers/pdufa_edgar.py</code>. Autonomous run continues.</p>
+
+  <footer>Fund 1 · Phase 6.11 · generated 2026-08-16 · tradeable PDUFA 0→6 · our own free authoritative source · no LLM mints a date · cite-or-drop · honesty over flattery</footer>
+</div>

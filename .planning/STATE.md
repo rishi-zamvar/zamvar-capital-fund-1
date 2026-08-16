@@ -3,8 +3,8 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: verifying
-stopped_at: Completed 06.11-02-PLAN.md
-last_updated: "2026-08-16T18:06:51.232Z"
+stopped_at: Completed 06.11-04-PLAN.md (LIVE close of Phase 6.11)
+last_updated: "2026-08-16T18:16:38.385Z"
 last_activity: 2026-08-16
 progress:
   total_phases: 17
@@ -119,6 +119,7 @@ Note: Phase 6.9/6.10 are retro-inserted sub-phases; the frontmatter project-wide
 | Phase 06.11 P01 | 25min | 2 tasks | 5 files |
 | Phase 06.11 P03 | 5min | 2 tasks | 6 files |
 | Phase 06.11-edgar-pdufa-autopop P02 | 15min | 2 tasks tasks | 4 files files |
+| Phase 06.11 P04 | 20m | 1 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -226,6 +227,7 @@ Recent decisions affecting current work:
 - [Phase 06.10]: run_cycle reuses ingest_history whole (launchd cadence + store idempotency make re-fetch harmless); backfill widens the ingest window (no new write path)
 - [Phase 06.11]: pdufa_edgar: HTML->text normalize before regex closes the offline-green/live-broken tag-split trap; single SEC EDGAR primary self-verifies (DATA-03), MEDIUM/LOW route to #-commented review CSV
 - [Phase 06.11-edgar-pdufa-autopop]: pdufa_edgar wired as a distinct daemon-path slot alongside the untouched pdufa slot (discovery redundancy)
+- [Phase 06.11]: LIVE-proven: IMNM 2027-04-28 + CAPR 2026-08-22 extract from real 8-Ks -> verified + tradeable, single SEC EDGAR primary, point-in-time stamped (PDUFA-EDGAR-04 closed)
 
 ### Pending Todos
 
@@ -239,6 +241,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-08-16T18:06:46.537Z
-Stopped at: Completed 06.11-02-PLAN.md
+Last session: 2026-08-16T18:16:32.028Z
+Stopped at: Completed 06.11-04-PLAN.md (LIVE close of Phase 6.11)
 Resume file: None
