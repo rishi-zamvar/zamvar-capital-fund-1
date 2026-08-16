@@ -1,0 +1,232 @@
+<title>API Key Stack</title>
+<style>
+  :root{
+    --bg:#ecefe9;--surface:#fff;--surface-2:#f5f7f2;--ink:#191c18;--muted:#5f655c;--faint:#99a094;
+    --border:#d6dbcf;--border-strong:#c2c8b8;--accent:#8a6a12;--accent-bg:#f3ecd8;
+    --green:#1f7a4d;--green-bg:#e4f2e9;--yellow:#8a6a12;--yellow-bg:#f3ecd8;--red:#b23b30;--red-bg:#f6e5e3;
+    --info:#2b6a93;--info-bg:#e2edf4;
+    --mono:ui-monospace,"SF Mono","JetBrains Mono",Menlo,Consolas,monospace;
+    --sans:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+    --shadow:0 1px 2px rgba(20,25,18,.06),0 4px 14px rgba(20,25,18,.05);
+  }
+  @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+    --bg:#101310;--surface:#191d18;--surface-2:#20241e;--ink:#e8ece4;--muted:#9aa192;--faint:#6b7365;
+    --border:#2c322a;--border-strong:#3a4136;--accent:#d8b45a;--accent-bg:#2a2412;
+    --green:#4cc585;--green-bg:#14271c;--yellow:#d8b45a;--yellow-bg:#2a2412;--red:#ef7365;--red-bg:#2c1714;
+    --info:#6bb3e6;--info-bg:#122430;--shadow:0 1px 2px rgba(0,0,0,.4),0 6px 18px rgba(0,0,0,.35);
+  }}
+  :root[data-theme="dark"]{
+    --bg:#101310;--surface:#191d18;--surface-2:#20241e;--ink:#e8ece4;--muted:#9aa192;--faint:#6b7365;
+    --border:#2c322a;--border-strong:#3a4136;--accent:#d8b45a;--accent-bg:#2a2412;
+    --green:#4cc585;--green-bg:#14271c;--yellow:#d8b45a;--yellow-bg:#2a2412;--red:#ef7365;--red-bg:#2c1714;
+    --info:#6bb3e6;--info-bg:#122430;--shadow:0 1px 2px rgba(0,0,0,.4),0 6px 18px rgba(0,0,0,.35);
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);line-height:1.55}
+  .wrap{max-width:1000px;margin:0 auto;padding:40px 22px 72px}
+  .ey{font-family:var(--mono);font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--accent);font-weight:600}
+  h1{font-family:var(--mono);font-size:clamp(23px,5vw,34px);margin:8px 0 8px;letter-spacing:-.01em;text-wrap:balance}
+  .lede{font-size:15.5px;color:var(--muted);max-width:74ch;margin:0}
+  .verdict{display:inline-flex;align-items:center;gap:9px;font-family:var(--mono);font-size:13px;color:var(--green);background:var(--green-bg);border:1px solid var(--green);border-radius:20px;padding:5px 15px;margin-top:14px}
+  .masthead{border-bottom:2px solid var(--ink);padding-bottom:20px;margin-bottom:10px}
+  h2{font-family:var(--mono);font-size:16px;margin:36px 0 12px;display:flex;align-items:center;gap:9px}
+  h2 .ic{width:24px;height:24px;border-radius:6px;display:inline-grid;place-items:center;font-size:13px;flex:none;background:var(--accent-bg);color:var(--accent);border:1px solid var(--accent)}
+  p{margin:6px 0} a{color:var(--info)}
+  .sub{font-size:13.5px;color:var(--muted);margin:2px 0 14px;max-width:78ch}
+  code{font-family:var(--mono);font-size:12px;background:var(--surface-2);border:1px solid var(--border);border-radius:4px;padding:1px 5px}
+
+  .bignum{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:14px;margin:8px 0}
+  .bn{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px 18px;box-shadow:var(--shadow)}
+  .bn.hero{border:2px solid var(--green);background:var(--green-bg)}
+  .bn .k{font-family:var(--mono);font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--faint)}
+  .bn .v{font-family:var(--mono);font-size:30px;font-weight:800;margin-top:4px;line-height:1}
+  .bn.hero .v{color:var(--green)}
+  .bn .d{font-size:12.5px;color:var(--muted);margin-top:6px}
+
+  /* action list */
+  .action{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:6px 18px;box-shadow:var(--shadow)}
+  .act{display:flex;flex-wrap:wrap;align-items:baseline;gap:8px 12px;padding:12px 0;border-bottom:1px solid var(--border)}
+  .act:last-child{border-bottom:none}
+  .act .n{font-family:var(--mono);font-weight:700;font-size:14px;min-width:130px}
+  .act .why{font-size:13.5px;color:var(--muted);flex:1;min-width:180px}
+  .act a{font-family:var(--mono);font-size:12px;word-break:break-all}
+
+  .badge{font-family:var(--mono);font-size:9.5px;font-weight:700;padding:2px 7px;border-radius:20px;white-space:nowrap;display:inline-block;letter-spacing:.03em}
+  .keyless{color:var(--green);background:var(--green-bg);border:1px solid var(--green)}
+  .freekey{color:var(--info);background:var(--info-bg);border:1px solid var(--info)}
+  .paid{color:var(--red);background:var(--red-bg);border:1px solid var(--red)}
+  .req{color:var(--accent);background:var(--accent-bg);border:1px solid var(--accent)}
+
+  /* capability cards */
+  .caps{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:14px}
+  .cap{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:15px 17px;box-shadow:var(--shadow)}
+  .cap h3{font-family:var(--mono);font-size:13.5px;margin:0 0 3px;display:flex;align-items:center;gap:8px}
+  .cap .cd{font-size:12px;color:var(--faint);margin:0 0 10px}
+  .row{display:flex;align-items:baseline;gap:8px;padding:7px 0;border-top:1px dashed var(--border);font-size:13px}
+  .row .rk{font-family:var(--mono);font-size:9.5px;color:var(--faint);width:58px;flex:none;padding-top:2px}
+  .row .nm{font-weight:600;flex:1}
+  .row .nm .lim{display:block;font-family:var(--mono);font-size:11px;color:var(--muted);font-weight:400}
+  .row .nm a{font-family:var(--mono);font-size:11px;font-weight:400}
+  .row .cost{font-family:var(--mono);font-size:11.5px;text-align:right;white-space:nowrap;color:var(--muted)}
+  .row .cost b{color:var(--green)}
+
+  .scroll{overflow-x:auto;border:1px solid var(--border);border-radius:10px;box-shadow:var(--shadow)}
+  table{border-collapse:collapse;width:100%;min-width:640px;font-size:13px;background:var(--surface)}
+  th{font-family:var(--mono);font-size:10px;letter-spacing:.05em;text-transform:uppercase;color:var(--faint);text-align:left;padding:10px 12px;border-bottom:1px solid var(--border-strong);background:var(--surface-2)}
+  td{padding:9px 12px;border-bottom:1px solid var(--border);vertical-align:top}
+  tr:last-child td{border-bottom:none}
+  .tick{font-variant-numeric:tabular-nums;font-family:var(--mono)}
+  .card{background:var(--surface);border:1px solid var(--border);border-left:4px solid var(--accent);border-radius:10px;padding:14px 16px;margin:10px 0;box-shadow:var(--shadow)}
+  .card.warn{border-left-color:var(--red)} .card.info{border-left-color:var(--info)}
+  .card h3{font-family:var(--mono);font-size:13.5px;margin:0 0 5px} .card p{font-size:13.5px}
+  footer{margin-top:38px;padding-top:18px;border-top:1px solid var(--border);font-family:var(--mono);font-size:11.5px;color:var(--faint);line-height:1.7}
+</style>
+
+<div class="wrap">
+  <div class="masthead">
+    <div class="ey">zamvar capital · fund 1 · what you need to set up</div>
+    <h1>The API Key Stack</h1>
+    <p class="lede">Everything the desk needs, segmented by what it gives us, with a redundant free source behind every capability so one provider's rate-limit never stops the system. The headline: <b>the minimum required to run it is $0/month.</b> The only thing money buys is PDUFA-date convenience.</p>
+    <div class="verdict">● minimum required spend: $0/mo · every capability has a free source · prices ✅ verified live 2026-08-16</div>
+  </div>
+
+  <h2><span class="ic">◆</span> The bottom line</h2>
+  <div class="bignum">
+    <div class="bn hero"><div class="k">Required data spend</div><div class="v">$0<span style="font-size:15px">/mo</span></div><div class="d">Every capability runs on a free source — already live-proven (99.6% cross-check on real data).</div></div>
+    <div class="bn"><div class="k">Free keys to grab</div><div class="v">4<small style="font-size:14px;color:var(--muted)"> +1</small></div><div class="d">All free, ~10 min total — they add redundancy, not capability. Links below.</div></div>
+    <div class="bn"><div class="k">The one paid choice</div><div class="v" style="color:var(--yellow)">PDUFA</div><div class="d">Optional tracker, ~$30–100/mo <i>band</i> (unverified) — or curate free. Convenience, not capability.</div></div>
+    <div class="bn"><div class="k">Always-on runtime</div><div class="v" style="color:var(--info)">~$12–65<span style="font-size:14px">/mo</span></div><div class="d">Anthropic API (Claude) — usage-based estimate, not a data key. Scales with desk runs.</div></div>
+  </div>
+
+  <h2><span class="ic">▸</span> What's absolutely required from you</h2>
+  <p class="sub">Honestly? Almost nothing. The system runs today with zero keys on the keyless sources. These free keys just harden it with redundancy — grab them when convenient. <span class="badge freekey">FREE KEY</span> = instant signup, no card.</p>
+  <div class="action">
+    <div class="act"><span class="n">FRED</span><span class="badge freekey">FREE KEY</span><span class="why">Macro / rates / <b>VIX history</b> — the risk-regime input we otherwise have zero of. The one free key with real added capability.</span><a href="https://fredaccount.stlouisfed.org/apikeys" target="_blank" rel="noopener">fredaccount.stlouisfed.org/apikeys</a></div>
+    <div class="act"><span class="n">Alpha Vantage</span><span class="badge freekey">FREE KEY</span><span class="why">2nd/3rd price source + historical options for backtest calibration. Free = 25 req/day.</span><a href="https://www.alphavantage.co/support/#api-key" target="_blank" rel="noopener">alphavantage.co/support/#api-key</a></div>
+    <div class="act"><span class="n">Tiingo</span><span class="badge freekey">FREE KEY</span><span class="why">Another GREEN price source for the N-source cross-check. Free = 500 symbols/mo.</span><a href="https://www.tiingo.com/account/token" target="_blank" rel="noopener">tiingo.com/account/token</a></div>
+    <div class="act"><span class="n">Finnhub</span><span class="badge freekey">FREE KEY</span><span class="why">Redundant earnings + per-ticker news headlines for the intra-week monitor. Free = 60 calls/min.</span><a href="https://finnhub.io/register" target="_blank" rel="noopener">finnhub.io/register</a></div>
+    <div class="act"><span class="n">openFDA</span><span class="badge freekey">FREE KEY · optional</span><span class="why">Optional — raises the keyless limit (40→240/min). Retrospective approvals only, low value for forward dates.</span><a href="https://open.fda.gov/apis/authentication/" target="_blank" rel="noopener">open.fda.gov/apis/authentication</a></div>
+    <div class="act"><span class="n">Robinhood</span><span class="badge req">EXECUTION</span><span class="why">The broker — a <b>funded Robinhood account</b> + connect the official Agentic Trading MCP. $0 for the MCP, commission-free equities. Only needed at go-live (Phase 11).</span><a href="https://robinhood.com/us/en/agentic-trading/" target="_blank" rel="noopener">robinhood.com/us/en/agentic-trading</a></div>
+  </div>
+  <p class="sub" style="margin-top:12px">Already wired + needs nothing from you: <span class="badge keyless">KEYLESS</span> ClinicalTrials.gov · Federal Register · SEC EDGAR (uses a contact-email UA, already set) · FINRA · CBOE · Nasdaq · GDELT · yfinance.</p>
+
+  <h2><span class="ic">▤</span> The stack, segmented by capability</h2>
+  <p class="sub">Each capability lists its sources in fallback order — <b>primary</b> is what runs, the rest catch a rate-limit or outage. <span class="badge keyless">KEYLESS</span> no signup · <span class="badge freekey">FREE KEY</span> free instant key · <span class="badge paid">PAID</span> costs money.</p>
+  <div class="caps">
+
+    <div class="cap">
+      <h3>📈 Prices / OHLC <span class="badge req">required</span></h3>
+      <p class="cd">The price spine — weekly bars, N-source cross-checked</p>
+      <div class="row"><span class="rk">primary</span><span class="nm">yfinance <span class="badge keyless">KEYLESS</span><span class="lim">EOD OHLC + float estimate</span></span><span class="cost"><b>$0</b></span></div>
+      <div class="row"><span class="rk">secondary</span><span class="nm">Alpha Vantage <span class="badge freekey">FREE KEY</span><span class="lim">25 req/day free</span></span><span class="cost"><b>$0</b><br>$49.99+</span></div>
+      <div class="row"><span class="rk">secondary</span><span class="nm">Tiingo <span class="badge freekey">FREE KEY</span><span class="lim">500 sym/mo free</span></span><span class="cost"><b>$0</b><br>$30</span></div>
+      <div class="row"><span class="rk">tertiary</span><span class="nm">Twelve Data · Polygon · EODHD · Marketstack<span class="lim">deep fallback bench</span></span><span class="cost"><b>$0</b><br>tiers</span></div>
+      <div class="row"><span class="rk">disabled</span><span class="nm">Stooq <span class="badge keyless">KEYLESS</span><span class="lim">IP-blocked here; redundant</span></span><span class="cost">—</span></div>
+    </div>
+
+    <div class="cap">
+      <h3>📊 Options / IV <span class="badge req">required</span></h3>
+      <p class="cd">Implied-move signal + backtest calibration</p>
+      <div class="row"><span class="rk">primary</span><span class="nm">CBOE delayed JSON <span class="badge keyless">KEYLESS</span><span class="lim">exchange IV + greeks + iv30 — best free anywhere</span></span><span class="cost"><b>$0</b></span></div>
+      <div class="row"><span class="rk">secondary</span><span class="nm">yfinance chains <span class="badge keyless">KEYLESS</span><span class="lim">cross-check</span></span><span class="cost"><b>$0</b></span></div>
+      <div class="row"><span class="rk">secondary</span><span class="nm">AV HISTORICAL_OPTIONS <span class="badge freekey">FREE KEY</span><span class="lim">15yr history, drip 25/day</span></span><span class="cost"><b>$0</b></span></div>
+      <div class="row"><span class="rk">tertiary</span><span class="nm">Tradier · Polygon Options<span class="lim">Polygon $29 = real-time greeks</span></span><span class="cost"><b>$0</b><br>$29</span></div>
+    </div>
+
+    <div class="cap">
+      <h3>🧪 Trial readouts <span class="badge req">required</span></h3>
+      <p class="cd">The primary biotech catalyst</p>
+      <div class="row"><span class="rk">primary</span><span class="nm">ClinicalTrials.gov v2 <span class="badge keyless">KEYLESS</span><span class="lim">authoritative registry — dates, phase, sponsor</span></span><span class="cost"><b>$0</b></span></div>
+      <div class="row"><span class="rk">secondary</span><span class="nm">WHO ICTRP · ISRCTN · EU CTIS <span class="badge keyless">KEYLESS</span><span class="lim">ex-US registry redundancy</span></span><span class="cost"><b>$0</b></span></div>
+    </div>
+
+    <div class="cap" style="border-color:var(--red)">
+      <h3>💊 PDUFA / FDA dates <span class="badge paid">the paid choice</span></h3>
+      <p class="cd">No free authoritative <i>forward</i> API — the one real decision</p>
+      <div class="row"><span class="rk">free-1</span><span class="nm">RTTNews FDA calendar <span class="badge keyless">KEYLESS</span><span class="lim">discovery (scraper needs repair)</span></span><span class="cost"><b>$0</b></span></div>
+      <div class="row"><span class="rk">free-2</span><span class="nm">Federal Register <span class="badge keyless">KEYLESS</span><span class="lim">AdCom — legally complete</span></span><span class="cost"><b>$0</b></span></div>
+      <div class="row"><span class="rk">free-3</span><span class="nm">Company 8-K/PR via EDGAR <span class="badge keyless">KEYLESS</span><span class="lim">authoritative confirmation</span></span><span class="cost"><b>$0</b></span></div>
+      <div class="row"><span class="rk">paid opt</span><span class="nm">BioPharmaCatalyst/BPIQ <span class="badge paid">PAID</span><span class="lim"><a href="https://www.biopharmacatalyst.com/pro" target="_blank" rel="noopener">biopharmacatalyst.com/pro</a> — verify price</span></span><span class="cost">~$30–100?<br>⚠️ unverif.</span></div>
+    </div>
+
+    <div class="cap">
+      <h3>📅 Earnings <span class="badge req">required</span></h3>
+      <p class="cd">Secondary catalyst, date-precise</p>
+      <div class="row"><span class="rk">primary</span><span class="nm">Nasdaq public JSON <span class="badge keyless">KEYLESS</span><span class="lim">whole market, 1 req/day</span></span><span class="cost"><b>$0</b></span></div>
+      <div class="row"><span class="rk">secondary</span><span class="nm">Finnhub · Alpha Vantage · Twelve Data <span class="badge freekey">FREE KEY</span><span class="lim">redundant calendars</span></span><span class="cost"><b>$0</b></span></div>
+    </div>
+
+    <div class="cap">
+      <h3>🩳 Short interest <span class="badge req">required</span></h3>
+      <p class="cd">Positioning / squeeze signal</p>
+      <div class="row"><span class="rk">primary</span><span class="nm">FINRA Query API <span class="badge keyless">KEYLESS</span><span class="lim">bi-monthly, triple-verified</span></span><span class="cost"><b>$0</b></span></div>
+      <div class="row"><span class="rk">secondary</span><span class="nm">Nasdaq · yfinance <span class="badge keyless">KEYLESS</span><span class="lim">cross-check</span></span><span class="cost"><b>$0</b></span></div>
+    </div>
+
+    <div class="cap">
+      <h3>📄 Fundamentals / float <span class="badge req">required</span></h3>
+      <p class="cd">Cash-runway, shares-out, filings, insiders</p>
+      <div class="row"><span class="rk">primary</span><span class="nm">SEC EDGAR / edgartools <span class="badge keyless">KEYLESS</span><span class="lim">XBRL — authoritative, keyless (set email)</span></span><span class="cost"><b>$0</b></span></div>
+      <div class="row"><span class="rk">secondary</span><span class="nm">SEC XBRL raw · yfinance float <span class="badge keyless">KEYLESS</span><span class="lim">fallback + float denominator</span></span><span class="cost"><b>$0</b></span></div>
+    </div>
+
+    <div class="cap">
+      <h3>🌐 Macro / VIX <span class="badge req">required</span></h3>
+      <p class="cd">Risk-regime context</p>
+      <div class="row"><span class="rk">primary</span><span class="nm">FRED <span class="badge freekey">FREE KEY</span><span class="lim">rates, curve, VIX, CPI — ~120 req/min</span></span><span class="cost"><b>$0</b></span></div>
+    </div>
+
+    <div class="cap">
+      <h3>📰 News / headlines <span style="color:var(--faint);font-size:11px">monitor</span></h3>
+      <p class="cd">Intra-week trigger feed (Phase 8.5)</p>
+      <div class="row"><span class="rk">primary</span><span class="nm">EDGAR 8-K <span class="badge keyless">KEYLESS</span><span class="lim">authoritative material events</span></span><span class="cost"><b>$0</b></span></div>
+      <div class="row"><span class="rk">secondary</span><span class="nm">Finnhub news · GDELT · RSS<span class="lim">headline monitoring</span></span><span class="cost"><b>$0</b></span></div>
+    </div>
+
+    <div class="cap">
+      <h3>💵 Execution <span class="badge req">go-live only</span></h3>
+      <p class="cd">The broker (Phase 11, behind your gate)</p>
+      <div class="row"><span class="rk">primary</span><span class="nm">Robinhood Agentic MCP <span class="badge freekey">OAUTH</span><span class="lim">$0 MCP · funded acct · commission-free · segregated agent account</span></span><span class="cost"><b>$0</b></span></div>
+    </div>
+
+  </div>
+
+  <h2><span class="ic">💊</span> The one decision money is actually about: PDUFA</h2>
+  <div class="card warn">
+    <h3>No free authoritative forward-PDUFA API exists</h3>
+    <p>Company PRs originate PDUFA dates; commercial trackers just aggregate them — so a subscription buys <b>breadth + convenience, not authoritativeness</b>. For our curated ~20 names, the free stack (RTTNews discovery + Federal Register AdCom + EDGAR PR confirmation) already reduces PDUFA to a ~10-min/week <i>review</i>. <b>Recommendation: stay $0</b>, curate PDUFA as a reviewed table, and buy a tracker only if you expand well past 20 names.</p>
+  </div>
+  <div class="card info">
+    <h3>Honest pricing gap</h3>
+    <p>I could <b>not verify a single paid-PDUFA price</b> — BPIQ, FDATracker, MarketBeat, and Benzinga all bot-wall automated fetching, and the research session's web-search budget was exhausted. Per our no-fabricated-numbers rule I won't print a number I can't source. The <b>~$30–100/mo</b> figure is a historical band to size the decision, <b>not a quote</b>. Opening <a href="https://www.biopharmacatalyst.com/pro" target="_blank" rel="noopener">biopharmacatalyst.com/pro</a> in a browser is a 2-minute check I'm structurally blocked from doing.</p>
+  </div>
+
+  <h2><span class="ic">✅</span> Verified prices (for the optional upgrades, if ever wanted)</h2>
+  <p class="sub">All fetched live from the vendor's own pricing page on 2026-08-16. None of these is required — the free tier of each already serves the desk.</p>
+  <div class="scroll">
+    <table>
+      <thead><tr><th>Source</th><th>Free tier</th><th>Cheapest paid</th><th>What the paid tier adds</th></tr></thead>
+      <tbody>
+        <tr><td>Alpha Vantage</td><td class="tick">25 req/day</td><td class="tick">$49.99/mo</td><td>75 req/min (higher throughput)</td></tr>
+        <tr><td>Tiingo</td><td class="tick">500 sym/mo</td><td class="tick">$30/mo</td><td>10k req/hr</td></tr>
+        <tr><td>Twelve Data</td><td class="tick">800 req/day</td><td class="tick">$29/mo</td><td>real-time, higher limits</td></tr>
+        <tr><td>Polygon Options</td><td class="tick">5/min, no IV</td><td class="tick">$29/mo</td><td>real-time greeks + IV (CBOE-free covers this)</td></tr>
+        <tr><td>EODHD</td><td class="tick">20 req/day</td><td class="tick">$19.99/mo</td><td>All-World EOD + fundamentals</td></tr>
+        <tr><td>Marketstack</td><td class="tick">100 req/mo</td><td class="tick">$9.99/mo</td><td>10k req EOD</td></tr>
+        <tr><td>FMP</td><td class="tick">250 req/day*</td><td class="tick">⚠️ unverified</td><td>bot-walled — earnings/fundamentals already free via Nasdaq+EDGAR</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h2><span class="ic">🤖</span> The always-on cost that isn't a data key: Claude</h2>
+  <p class="sub">The desk's engine is the Anthropic API — usage-based, scales with how many desk cycles run per week and the model mix. Verified per-MTok prices (2026-08-16): Opus 4.8 $5/$25 · Sonnet 5 $2/$10 · Haiku 4.5 $1/$5 (Batch −50%, cache reads 0.1×).</p>
+  <div class="card">
+    <h3>~$12–65/month — order-of-magnitude estimate, not a subscription</h3>
+    <p>Derived from build-phase token sizes, not a metered runtime number — the real figure lands after the first live cycles. A Sonnet-heavy mix with prompt caching is the low end; Opus-heavy is ~2–4×. It's the one cost that's always present, and it's what makes the desk <i>think</i> — separate from the (free) data it thinks about.</p>
+  </div>
+
+  <footer>
+    Zamvar Capital · Fund 1 · API Key Stack · compiled 2026-08-16 · full detail in <code>.planning/research/api-keys-and-costs.md</code><br>
+    Minimum required data spend: $0/mo · every capability has a redundant free source · PDUFA is the only paid <i>choice</i> · prices ✅ verified live or ⚠️ flagged unverified — never guessed.
+  </footer>
+</div>
