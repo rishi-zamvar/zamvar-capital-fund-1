@@ -26,7 +26,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [ ] **Phase 6.11: EDGAR-8K PDUFA Autopopulation (+ Robinhood data, gated)** *(added 2026-08-16)* - Build our OWN PDUFA/AdCom source from SEC 8-K/PR filings (authoritative, free, provenance-native, tunable) — verifies as a single authoritative source (DATA-03 amendment) → tradeable PDUFA without a paid tracker; + Robinhood pluggable data adapter (quotes/portfolio) design + probe-plan gated on MCP connection
   - **Plans:** 4 plans in 3 waves
     - [x] 06.11-01-PLAN.md — providers/pdufa_edgar.py core: efts CIK-filtered discovery + deterministic regex extraction (no-LLM-dates/cite-or-drop) + single-source "SEC EDGAR" self-verifying Catalyst emit [PDUFA-EDGAR-01/02/03]
-    - [ ] 06.11-02-PLAN.md — wire pdufa_edgar onto the daemon path (ingest._fetch_catalysts + registry + CADENCE) + verify-synergy integration test [PDUFA-EDGAR-04]
+    - [x] 06.11-02-PLAN.md — wire pdufa_edgar onto the daemon path (ingest._fetch_catalysts + registry + CADENCE) + verify-synergy integration test [PDUFA-EDGAR-04]
     - [x] 06.11-03-PLAN.md — Robinhood degrade-to-None MCP-tool data adapter (quotes_rt/portfolio) + registry slots + gated 7-step probe-plan doc [RH-DATA-01; RH-DATA-02/03 deferred]
     - [ ] 06.11-04-PLAN.md — operator-directed LIVE verification: real efts + IMNM/CAPR 8-K -> extract->verify->tradeable proof + human-verify gate [PDUFA-EDGAR-04 live-close]
 - [ ] **Phase 7: Verifier/Guardrails + Backtest Harness** - Fact-check verifier + runtime monitors + mechanical (Layer A) and guarded-agentic (Layer B) backtests
