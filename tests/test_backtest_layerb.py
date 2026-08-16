@@ -17,6 +17,7 @@ from catalyst_trader.backtest.layerb import (
     LayerBResult,
     OutcomeBlindCatalyst,
     run_layer_b,
+    sample_catalysts,
 )
 from catalyst_trader.contracts import AnalystSignal, DebateVerdict
 from catalyst_trader.desk import analysts, debate, diligence, md, orchestrator, verifier
@@ -123,3 +124,61 @@ async def test_layer_b_asserts_web_free(db, embed, monkeypatch, load_fixture):
 
     with pytest.raises(GuardrailViolation):
         await run_layer_b(db, embed, start=start, end=end)
+
+
+# ============================== Task 2: sampling + logged drop-list ====================
+
+
+def _seed_four_catalysts(db):
+    """Seed four point-in-time-visible catalysts across distinct weeks; return (start, end)."""
+    weeks = week_ends(10)
+    cats = [
+        {"ticker": t, "event_date": weeks[i], "last_verified_at": weeks[0]}
+        for t, i in (("ACME", 3), ("BETA", 4), ("GAMM", 5), ("DELT", 6))
+    ]
+    seed_history(db, tickers=["ACME", "BETA", "GAMM", "DELT"], weeks=10, catalysts=cats)
+    return weeks[0], weeks[-1]
+
+
+async def test_layer_b_sample_logs_dropped(db, embed, monkeypatch, load_fixture):
+    """n < available -> the dropped list is populated, sampled+dropped == all, reason set."""
+    _patch_seam(monkeypatch, _seam(load_fixture))
+    start, end = _seed_four_catalysts(db)
+
+    batch = await run_layer_b(db, embed, start=start, end=end, n=2)
+
+    log = batch.sample_log
+    assert len(log.sampled) == 2
+    assert len(log.dropped) >= 1, "n < available must log the dropped catalysts, never silently cap"
+    assert len(log.sampled) + len(log.dropped) == 4
+    assert log.reason
+    assert len(batch.results) == len(log.sampled)
+
+
+async def test_layer_b_sample_all_when_n_ge_len(db, embed, monkeypatch, load_fixture):
+    """n >= available -> everything sampled, nothing dropped (the SampleLog is a full replay)."""
+    _patch_seam(monkeypatch, _seam(load_fixture))
+    start, end = _seed_one_catalyst(db)
+
+    batch = await run_layer_b(db, embed, start=start, end=end, n=99)
+
+    assert batch.sample_log.dropped == []
+    assert len(batch.sample_log.sampled) == len(batch.results) == 1
+
+
+def test_layer_b_sample_catalysts_no_silent_cap():
+    """sample_catalysts records EVERY dropped item with a reason — never a truncated list."""
+    items = [{"catalyst": {"catalyst_type": "pdufa"}} for _ in range(5)]
+    out = sample_catalysts(items, n=2, seed=0)
+    assert len(out["sampled"]) == 2
+    assert len(out["dropped"]) == 3
+    assert len(out["sampled"]) + len(out["dropped"]) == len(items)
+    assert out["reason"]
+
+
+def test_layer_b_sample_catalysts_deterministic():
+    """Same (items, n, seed) -> identical sample (deterministic, reproducible)."""
+    items = [{"catalyst": {"catalyst_type": t}} for t in ("a", "b", "a", "b", "c", "c")]
+    a = sample_catalysts(items, n=3, seed=7)
+    b = sample_catalysts(items, n=3, seed=7)
+    assert a["sampled"] == b["sampled"]

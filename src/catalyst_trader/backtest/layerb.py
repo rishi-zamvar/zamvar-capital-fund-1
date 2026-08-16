@@ -102,6 +102,59 @@ def _flatten(records: list[dict]) -> list[dict]:
     ]
 
 
+def sample_catalysts(items: list[dict], *, n: int, strategy: str = "stratified", seed: int = 0) -> dict:
+    """Deterministically pick ``n`` work-items, LOGGING every dropped one (never a silent [:N] cap).
+
+    ``n >= len(items)`` -> all sampled, none dropped. Otherwise, by ``strategy``:
+      - "stratified": round-robin across catalyst_type buckets (seeded shuffle within each) so the
+        sample keeps the type mix rather than over-weighting whichever type happens to sort first;
+      - "random": a single seeded shuffle, then the first n.
+
+    Returns ``{"sampled": [...], "dropped": [...], "reason": str}`` — the drop-list is the sanctioned
+    mechanism; a silent slice would hide which catalysts the baseline never saw.
+
+    # ponytail: stratified is a naive equal round-robin over catalyst_type; swap in a proportional
+    #           allocator if the type mix ever needs weighting — the drop-list contract is unchanged.
+    """
+    items = list(items)
+    if n >= len(items):
+        return {"sampled": items, "dropped": [],
+                "reason": f"n={n} >= available {len(items)}: full replay, none dropped"}
+
+    rng = random.Random(seed)
+    idx = list(range(len(items)))
+    if strategy == "random":
+        rng.shuffle(idx)
+        sel = idx[:n]  # NOT a silent cap: the complement is computed + logged as `dropped` below
+    elif strategy == "stratified":
+        buckets: dict = {}
+        for i in idx:
+            buckets.setdefault(items[i]["catalyst"]["catalyst_type"], []).append(i)
+        for b in buckets.values():
+            rng.shuffle(b)
+        sel = []
+        keys = sorted(buckets)  # deterministic bucket order
+        while len(sel) < n:
+            progressed = False
+            for k in keys:
+                if buckets[k]:
+                    sel.append(buckets[k].pop(0))
+                    progressed = True
+                    if len(sel) == n:
+                        break
+            if not progressed:  # safety: cannot happen since n < total, but never spin forever
+                break
+    else:
+        raise ValueError(f"unknown sampling strategy {strategy!r}; use 'stratified' or 'random'")
+
+    sel_set = set(sel)
+    sampled = [items[i] for i in sel]
+    dropped = [items[i] for i in idx if i not in sel_set]
+    return {"sampled": sampled, "dropped": dropped,
+            "reason": (f"{strategy} sample n={n} of {len(items)} (seed={seed}); "
+                       f"{len(dropped)} catalysts logged as dropped (not silently capped)")}
+
+
 def _assert_web_free() -> None:
     """Guardrail: the desk ALLOWED_TOOLS must be web-free before any replay. Reuses the shipped
     OPS-03 check (reads ALLOWED_TOOLS live, so a monkeypatched web tool is caught)."""
@@ -125,18 +178,29 @@ async def _replay_one(conn, item: dict) -> LayerBResult:
     )
 
 
-async def run_layer_b(conn, embed, *, start: str, end: str, latency_cfg: dict | None = None) -> LayerBBatch:
+def _log_entry(item: dict) -> dict:
+    """The audit-log shape for one sampled/dropped catalyst (its identity + the week it was seen)."""
+    return {**item["catalyst"], "as_of": item["as_of"]}
+
+
+async def run_layer_b(
+    conn, embed, *, start: str, end: str, latency_cfg: dict | None = None,
+    n: int | None = None, strategy: str = "stratified", seed: int = 0,
+) -> LayerBBatch:
     """Replay the REAL desk pipeline on the point-in-time historical catalysts behind the web-free +
     point-in-time + outcome-blind guardrails, labeling every result biased_optimistic=True.
 
-    Offline via the mocked run_structured seam. Sampling (a logged drop-list) is added in Task 2;
-    here every visible catalyst is replayed and recorded in the SampleLog as a full replay.
+    Offline via the mocked run_structured seam. ``n`` bounds the SAMPLE (Layer B is expensive — it
+    invokes the LLM desk per catalyst); ``n=None`` replays everything. Whatever is not sampled is
+    recorded in the SampleLog drop-list with a reason — NEVER a silent cap.
     """
     _assert_web_free()
     items = _flatten(build_event_set(conn, start=start, end=end, latency_cfg=latency_cfg))
-    results = [await _replay_one(conn, it) for it in items]
+    sample = sample_catalysts(items, n=(len(items) if n is None else n), strategy=strategy, seed=seed)
+    results = [await _replay_one(conn, it) for it in sample["sampled"]]
     log = SampleLog(
-        sampled=[it["catalyst"] for it in items], dropped=[],
-        reason=f"full replay of all {len(items)} point-in-time catalysts (no sampling)",
+        sampled=[_log_entry(it) for it in sample["sampled"]],
+        dropped=[_log_entry(it) for it in sample["dropped"]],
+        reason=sample["reason"],
     )
     return LayerBBatch(results=results, sample_log=log)
