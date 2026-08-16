@@ -1,0 +1,117 @@
+<title>Fund 1 — Phase 7 Report</title>
+<style>
+  :root{
+    --bg:#ecefe9;--surface:#fff;--surface-2:#f5f7f2;--ink:#191c18;--muted:#5f655c;--faint:#99a094;
+    --border:#d6dbcf;--border-strong:#c2c8b8;--accent:#8a6a12;--accent-bg:#f3ecd8;
+    --done:#1f7a4d;--done-bg:#e4f2e9;--warn:#b23b30;--warn-bg:#f6e5e3;--info:#2b6a93;--info-bg:#e2edf4;
+    --mono:ui-monospace,"SF Mono","JetBrains Mono",Menlo,Consolas,monospace;
+    --sans:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+    --shadow:0 1px 2px rgba(20,25,18,.06),0 4px 14px rgba(20,25,18,.05);
+  }
+  @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+    --bg:#101310;--surface:#191d18;--surface-2:#20241e;--ink:#e8ece4;--muted:#9aa192;--faint:#6b7365;
+    --border:#2c322a;--border-strong:#3a4136;--accent:#d8b45a;--accent-bg:#2a2412;
+    --done:#4cc585;--done-bg:#14271c;--warn:#ef7365;--warn-bg:#2c1714;--info:#6bb3e6;--info-bg:#122430;
+    --shadow:0 1px 2px rgba(0,0,0,.4),0 6px 18px rgba(0,0,0,.35);
+  }}
+  :root[data-theme="dark"]{
+    --bg:#101310;--surface:#191d18;--surface-2:#20241e;--ink:#e8ece4;--muted:#9aa192;--faint:#6b7365;
+    --border:#2c322a;--border-strong:#3a4136;--accent:#d8b45a;--accent-bg:#2a2412;
+    --done:#4cc585;--done-bg:#14271c;--warn:#ef7365;--warn-bg:#2c1714;--info:#6bb3e6;--info-bg:#122430;
+    --shadow:0 1px 2px rgba(0,0,0,.4),0 6px 18px rgba(0,0,0,.35);
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);line-height:1.55}
+  .wrap{max-width:900px;margin:0 auto;padding:40px 22px 72px}
+  .ey{font-family:var(--mono);font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--accent);font-weight:600}
+  h1{font-family:var(--mono);font-size:clamp(24px,5vw,36px);margin:8px 0 4px;letter-spacing:-.01em}
+  .status{display:inline-flex;align-items:center;gap:8px;font-family:var(--mono);font-size:12.5px;color:var(--done);background:var(--done-bg);border:1px solid var(--done);border-radius:20px;padding:4px 13px;margin-top:6px}
+  .masthead{border-bottom:2px solid var(--ink);padding-bottom:18px;margin-bottom:26px}
+  .meta{font-family:var(--mono);font-size:12px;color:var(--muted);margin-top:10px}
+  h2{font-family:var(--mono);font-size:16px;margin:32px 0 12px;display:flex;align-items:center;gap:9px}
+  h2 .ic{width:22px;height:22px;border-radius:5px;display:inline-grid;place-items:center;font-size:13px;flex:none}
+  .ic.d{background:var(--done-bg);color:var(--done);border:1px solid var(--done)}
+  .ic.w{background:var(--warn-bg);color:var(--warn);border:1px solid var(--warn)}
+  .ic.g{background:var(--accent-bg);color:var(--accent);border:1px solid var(--accent)}
+  .ic.n{background:var(--info-bg);color:var(--info);border:1px solid var(--info)}
+  ul{margin:0;padding-left:2px;list-style:none}
+  li{position:relative;padding:5px 0 5px 22px;font-size:14.5px}
+  li::before{content:"";position:absolute;left:2px;top:12px;width:6px;height:6px;border-radius:50%;background:var(--accent)}
+  li.done::before{content:"✓";background:none;color:var(--done);font-family:var(--mono);font-size:13px;top:6px;left:0}
+  li b{font-weight:600}
+  code{font-family:var(--mono);font-size:12.5px;background:var(--surface-2);border:1px solid var(--border);border-radius:4px;padding:1px 6px}
+  .card{background:var(--surface);border:1px solid var(--border);border-left:4px solid var(--info);border-radius:9px;padding:14px 16px;margin:10px 0;box-shadow:var(--shadow)}
+  .card.decide{border-left-color:var(--accent);background:var(--accent-bg)}
+  .card h3{font-family:var(--mono);font-size:14px;margin:0 0 4px;color:var(--info)}
+  .card.decide h3{color:var(--accent)}
+  .card p{margin:4px 0 0;font-size:14px;color:var(--ink)}
+  .tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:12px;margin:8px 0 4px}
+  .tile{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:13px 15px;box-shadow:var(--shadow)}
+  .tile .k{font-family:var(--mono);font-size:10px;letter-spacing:.07em;text-transform:uppercase;color:var(--faint)}
+  .tile .v{font-family:var(--mono);font-size:23px;font-weight:700;margin-top:3px}
+  .tile .v small{font-size:14px;color:var(--muted)}
+  .bar{height:9px;background:var(--surface-2);border:1px solid var(--border);border-radius:5px;overflow:hidden;margin:14px 0 4px}
+  .bar>i{display:block;height:100%;width:66%;background:var(--accent)}
+  .next{background:var(--accent-bg);border:1px solid var(--accent);border-radius:10px;padding:16px 18px;margin-top:10px}
+  .next h3{font-family:var(--mono);font-size:15px;margin:0 0 6px;color:var(--accent)}
+  .next p{margin:0;font-size:14px}
+  .win{background:var(--done-bg);border:1px solid var(--done);border-radius:8px;padding:10px 14px;margin:10px 0;font-size:14px}
+  .win b{color:var(--done)}
+  footer{margin-top:34px;padding-top:18px;border-top:1px solid var(--border);font-family:var(--mono);font-size:11.5px;color:var(--faint)}
+</style>
+
+<div class="wrap">
+  <div class="masthead">
+    <div class="ey">zamvar capital · fund 1 · phase report</div>
+    <h1>Phase 7 — Verifier/Guardrails + Backtest Harness</h1>
+    <div class="status">● VERIFIED · 8/8 must-haves · 919 tests · the honesty milestone</div>
+    <div class="meta">2026-08-15 · BACK-01…05 + OPS-03 closed · goal: <i>prove the corrected strategy honestly against history, and stand up the safety gates — before any capital.</i></div>
+  </div>
+
+  <h2><span class="ic d">✓</span> What's done</h2>
+  <ul>
+    <li class="done"><b>Two backtests, deliberately different in what you can trust</b> — a <b>Layer A mechanical</b> replay (no AI at all) gives a <i>trustworthy</i> baseline: win rate, avg win/loss, Sharpe, Sortino, max drawdown, hedge-effectiveness. A <b>Layer B guarded-agentic</b> replay runs the real desk on history and is <i>explicitly labeled "biased-optimistic"</i> because an AI reading old cases can leak future knowledge — honesty over flattery.</li>
+    <li class="done"><b>The backtest measures the CORRECTED strategy</b> — the weekly cadence, target-within-survival-cap sizing, no-zero-trade defensive weeks, the measured thesis engine — not some idealized version.</li>
+    <li class="done"><b>The fill model is pessimistic on purpose</b> — a trade held through a binary event fills at the <i>gapped open</i>, never at the stop level (a stop can't save you across a gap). So the baseline can't flatter itself on exactly the risk that matters most in biotech.</li>
+    <li class="done"><b>No look-ahead — even on the free-data lag you flagged</b> — a data-latency knob replays only what would <i>actually</i> have been known at decision time (delayed quotes, bi-monthly short interest). The review even caught two silent leaks (a catalyst "verified" after the fact, a direction read from empty fields) and both are now fixed with tests.</li>
+    <li class="done"><b>Survivorship-free</b> — the event set includes delisted names, so the backtest isn't quietly cheating by only testing survivors.</li>
+    <li class="done"><b>Runtime safety gates, fail-closed</b> — a pre-trade guardrail gate enforces catalyst-date freshness, cite-or-drop provenance, the diligence firewall, concentration caps, and "no scraped content can become an order" — any single check failing blocks the trade.</li>
+    <li class="done"><b>An honest go/no-go gate</b> — sample-based, never calendar-based: too few historical trades = automatic no-go, no matter how good the numbers look. 919 tests, fully offline, zero new dependencies.</li>
+  </ul>
+
+  <h2><span class="ic g">★</span> What's going well</h2>
+  <div class="win"><b>Plan-check caught its sharpest bugs yet — the 7th straight money phase.</b> Two <i>silent</i> look-ahead leaks that the written tests would have passed: a catalyst table with no time-guard (so history could "see" a catalyst verified later), and a direction estimate reading fields that are empty for catalyst trades (a hidden coin-flip). These are exactly the failure modes a backtest exists to prevent — caught at plan time, before a misleading number could ever be reported.</div>
+
+  <h2><span class="ic w">!</span> Needs your review / input</h2>
+  <div class="card decide">
+    <h3>★ Before the backtest means anything: real data</h3>
+    <p>The harness + all its tests run on synthetic history today. To get a <i>real</i> baseline number you need: your curated ~20-name seed universe + PDUFA dates, and historical price/catalyst ingestion (~1yr, all free sources — CBOE/FINRA/EDGAR/FMP). That's the gating input for a meaningful go/no-go. In the monitor's "For your review" tab.</p>
+  </div>
+  <div class="card">
+    <h3>Layer B scope (follow-on, not a gap)</h3>
+    <p>The guarded-agentic replay currently runs the catalyst-call layer — the highest-value comparison vs the mechanical baseline. Extending it to the full portfolio/diligence/reconcile chain is a reasonable (more expensive) follow-on. Flagged for your eval.</p>
+  </div>
+  <div class="card">
+    <h3>Graphify-as-MCP wiring — still your call</h3>
+    <p>Can wire it whenever you want it real rather than instruction-only.</p>
+  </div>
+
+  <h2><span class="ic n">→</span> Next steps</h2>
+  <div class="next">
+    <h3>Phase 8 — Paper Ledger, Attribution &amp; Post-Mortem (Layer C)</h3>
+    <p>The true out-of-sample test: run the full desk <i>forward</i> against live quotes on a simulated ledger, track real P&amp;L + attribution, and post-mortem every resolved trade back into the knowledge base. This is the month-long shakedown that has to prove out before any real capital. Then: 8.5 monitor → 9 iOS → 10 learning loop → 11 live.</p>
+  </div>
+
+  <h2><span class="ic g">▤</span> Project state</h2>
+  <div class="bar"><i></i></div>
+  <div class="tiles">
+    <div class="tile"><div class="k">Phases</div><div class="v">7<small>/14</small></div></div>
+    <div class="tile"><div class="k">Tests</div><div class="v">919</div></div>
+    <div class="tile"><div class="k">Must-haves</div><div class="v" style="color:var(--done)">8/8</div></div>
+    <div class="tile"><div class="k">Build tokens</div><div class="v">~13.4M</div></div>
+    <div class="tile"><div class="k">Blockers</div><div class="v" style="color:var(--done)">0</div></div>
+  </div>
+  <p style="font-size:13.5px;color:var(--muted);margin-top:10px">No blockers. The build half (predict/build/vet/decide/scan) and the honest-proving half (backtest + guardrails + gate) are both substantially done. What remains is the forward paper test, your dashboard, the learning loop, and — strictly last — live execution. Live monitor at <code>http://127.0.0.1:8799</code>; full architecture map in Deliverables. Autonomous run continues to Phase 8.</p>
+
+  <footer>Fund 1 · Phase 7 of 14 · generated 2026-08-15 · a stop can't fill inside a gap · too few trades is a no-go · honesty over flattery</footer>
+</div>

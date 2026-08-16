@@ -178,6 +178,30 @@
 
 **Cumulative build (measured, so far): ~11,853,000 subagent tokens (+ P6.8 ~1,093,000).**
 
+### Phase 7 — Verifier/Guardrails + Backtest Harness (CLOSED)
+| Agent | Tokens |
+|-------|--------|
+| Researcher | 141,602 |
+| Planner | 186,548 |
+| Plan-checker (2 blockers → revised) | 132,533 |
+| Revision planner | 150,944 |
+| Plan-checker (re-check, PASSED) | 109,560 |
+| Executor 07-01 (4 metrics) | 106,298 |
+| Executor 07-02 (event set + fill + latency) | 142,529 |
+| Executor 07-03 (guardrail gate) | 103,394 |
+| Executor 07-04 (Layer A engine) | 201,816 |
+| Executor 07-05 (Layer B + gate) | 155,422 |
+| Verifier | 111,400 |
+| **Phase 7 subtotal** | **~1,542,000** |
+
+**Cumulative build (measured, so far): ~13,395,000 subagent tokens (+ P7 ~1,542,000).**
+
+### Phase 7 Retrospective
+- **Spend:** ~1.54M — the most expensive phase (5 plans, a whole new `backtest/` package). 07-04 (Layer A engine) was priciest at 202k (the deterministic weekly-loop re-expression is genuinely intricate).
+- **Plan-check earned its cost a 7th straight money phase — and this was the sharpest catch yet:** two SILENT look-ahead leaks that the specified tests would have passed — `tradeable_catalysts` has no `as_of` guard (a catalyst verified AFTER the simulated week would be visible), and the direction proxy read `trigger`/`drop_class` off a catalyst thesis row where they're null (→ crash or coin-flip). Both are exactly the failure modes a backtest exists to prevent; both were invisible to TDD. This is the strongest evidence yet for keeping plan-check on for money phases.
+- **The "already-a-free-seam" pattern held again:** Layer B "web blocked" was free (desk already web-free); the 4 metrics were numpy (no quantstats/empyrical dep). Research surfacing these kept the phase from ballooning.
+- Directives carried forward: research MUST verify assumed guards actually exist in source (the tradeable_catalysts miss was a research-premise error the plan-check caught); plan-check ON for money phases (7/7); graph re-index each code phase (now 2844 nodes).
+
 ### Phase 6.8 Retrospective
 - **Spend:** ~1.09M — the cheapest agentic phase, thanks to the "routing is free" research finding (reconcile already ingested WeeklyFlags → zero md.py work) and heavy pattern-mirroring (card store cloned the 6.5 price store).
 - **Plan-check earned its cost a 6th straight money phase:** caught the write-before-delta latch-persistence bug — silent (no unit test on hand-built dicts would fail), broke SCAN-02 week-over-week replayability, contradicted a locked CONTEXT decision. Fix = reorder + a 2-week DB round-trip regression test. This class of bug (cross-plan sequencing that unit tests miss) is the single strongest argument for keeping plan-check on.
