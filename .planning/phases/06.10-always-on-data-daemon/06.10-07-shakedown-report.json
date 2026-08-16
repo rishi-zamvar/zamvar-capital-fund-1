@@ -1,0 +1,150 @@
+{
+  "coverage": {
+    "expected_name_weeks": 1092,
+    "present_name_weeks": 1092,
+    "pct": 100.0,
+    "fridays_in_window": 52,
+    "listed_names": 21
+  },
+  "cross_check": {
+    "total_bars": 1092,
+    "confirmed_2plus": 1088,
+    "unconfirmed_single": 4,
+    "confirmed_pct": 99.6,
+    "bars_by_source": {
+      "yfinance": 1092
+    }
+  },
+  "tradeable_catalyst_count": 0,
+  "tradeable_catalysts": [],
+  "illiquid": [],
+  "missing_bars": [],
+  "divergence_count": 4,
+  "divergences": [
+    "WARNING catalyst_trader.providers.prices: price cross-check divergence PHVS 2026-07-31: closes={'yfinance': 33.880001068115234, 'nasdaq': 32.62} max_delta=3.8627%",
+    "WARNING catalyst_trader.providers.prices: price cross-check divergence BBIO 2026-07-31: closes={'yfinance': 82.13999938964844, 'nasdaq': 80.09} max_delta=2.5596%",
+    "WARNING catalyst_trader.providers.prices: price cross-check divergence RGNX 2026-07-31: closes={'yfinance': 10.119999885559082, 'nasdaq': 9.69} max_delta=4.4376%",
+    "WARNING catalyst_trader.providers.prices: price cross-check divergence INSM 2026-07-31: closes={'yfinance': 101.48999786376953, 'nasdaq': 98.6} max_delta=2.9310%"
+  ],
+  "stale": [],
+  "delisting": [],
+  "ticker_mismatch": [],
+  "gaps": {
+    "count": 0,
+    "sample": []
+  },
+  "rate_limit": 0,
+  "degraded": {
+    "unique": 3,
+    "total": 3,
+    "by_message": {
+      "WARNING catalyst_trader.providers.nasdaq_earnings: FMP earnings degraded (Client error '402 Payment Required' for url 'https://financialmodelingprep.com/stable/earnings-calendar?from=2025-08-22&to=2026-08-14&apikey=qhGAuW63dYWqAGIixa8poO7zuvgdR1sW'": 1,
+      "WARNING catalyst_trader.providers.edgar: edgar.fundamentals degraded for XBI: 'NoneType' object has no attribute 'get_concept'": 1,
+      "WARNING catalyst_trader.providers.edgar: edgar.fundamentals degraded for LABD: 'NoneType' object has no attribute 'get_concept'": 1
+    }
+  },
+  "window": {
+    "start": "2025-08-22",
+    "end": "2026-08-14"
+  },
+  "fundamentals_populated": {
+    "cash_runway_months": {
+      "count": 15,
+      "tickers": [
+        "BBIO",
+        "CLDX",
+        "CMPS",
+        "DYN",
+        "IDYA",
+        "INSM",
+        "IONS",
+        "MDGL",
+        "MIRM",
+        "NTLA",
+        "OLMA",
+        "PRAX",
+        "RARE",
+        "RGNX",
+        "SRPT"
+      ]
+    },
+    "edgar_filings_resolved": {
+      "count": 19,
+      "tickers": [
+        "ALNY",
+        "BBIO",
+        "BCRX",
+        "CLDX",
+        "CMPS",
+        "DYN",
+        "IDYA",
+        "INSM",
+        "IONS",
+        "MDGL",
+        "MIRM",
+        "NTLA",
+        "OLMA",
+        "PHVS",
+        "PRAX",
+        "RARE",
+        "RGNX",
+        "SRPT",
+        "TVTX"
+      ]
+    },
+    "no_cik_degrades": 0
+  },
+  "finra": {
+    "finra_ok": true,
+    "extra_data_degrades": 0,
+    "si_populated": {
+      "count": 0,
+      "tickers": []
+    }
+  },
+  "earnings_source": "nasdaq-fallback",
+  "catalysts": {
+    "total": 19,
+    "verified": 0,
+    "two_source_events": 0,
+    "by_origin": {
+      "nasdaq_earnings": 19
+    }
+  },
+  "quality_flags": {
+    "split_dividend_candidates": 0,
+    "bad_ticks_dropped": 0
+  },
+  "cost_confirmation": {
+    "cost_usd": 0,
+    "paid_calls": 0,
+    "only_edgartools_added": true,
+    "openbb_adopted": false,
+    "stooq_enabled": true,
+    "note": "FMP free-tier 402'd -> Nasdaq fallback (no paid call); yfinance+nasdaq+edgartools+FRED/CT.gov/FINRA/FederalRegister are all free. GREEN price keys (AV/Tiingo) absent this run; cross-check still triangulated via yfinance+nasdaq."
+  },
+  "data_health": {
+    "updated": "2026-08-16T09:05:16.687764+00:00",
+    "sources": {
+      "nasdaq": {
+        "last_success": "2026-08-16T08:49:25.604886+00:00",
+        "consec_fail": 0,
+        "degraded": false
+      },
+      "yfinance": {
+        "last_success": "2026-08-16T08:49:25.604886+00:00",
+        "consec_fail": 0,
+        "degraded": false
+      }
+    },
+    "coverage_pct": 99.6,
+    "stale_sources": [],
+    "gaps": {
+      "price_weeks_missing": 0,
+      "missing_cards": 0,
+      "stale_sources": 0
+    },
+    "divergences_this_cycle": 4,
+    "degraded": false
+  }
+}

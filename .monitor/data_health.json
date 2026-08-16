@@ -1,0 +1,24 @@
+{
+  "updated": "2026-08-16T09:05:16.687764+00:00",
+  "sources": {
+    "nasdaq": {
+      "last_success": "2026-08-16T08:49:25.604886+00:00",
+      "consec_fail": 0,
+      "degraded": false
+    },
+    "yfinance": {
+      "last_success": "2026-08-16T08:49:25.604886+00:00",
+      "consec_fail": 0,
+      "degraded": false
+    }
+  },
+  "coverage_pct": 99.6,
+  "stale_sources": [],
+  "gaps": {
+    "price_weeks_missing": 0,
+    "missing_cards": 0,
+    "stale_sources": 0
+  },
+  "divergences_this_cycle": 4,
+  "degraded": false
+}
