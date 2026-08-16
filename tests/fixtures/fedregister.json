@@ -1,0 +1,22 @@
+{
+  "count": 2,
+  "description": "Documents matching FDA advisory committee / PDUFA notices",
+  "results": [
+    {
+      "document_number": "2026-17777",
+      "title": "Oncologic Drugs Advisory Committee; Notice of Meeting; Ziftomenib",
+      "publication_date": "2026-08-10",
+      "html_url": "https://www.federalregister.gov/documents/2026/08/10/2026-17777/odac-ziftomenib",
+      "agencies": [{"raw_name": "Food and Drug Administration"}],
+      "dates": "The meeting will be held on November 14, 2026."
+    },
+    {
+      "document_number": "2026-18888",
+      "title": "Cardiovascular and Renal Drugs Advisory Committee; Notice of Meeting; Cardiodex",
+      "publication_date": "2026-08-12",
+      "html_url": "https://www.federalregister.gov/documents/2026/08/12/2026-18888/crd-cardiodex",
+      "agencies": [{"raw_name": "Food and Drug Administration"}],
+      "dates": "The meeting will be held on December 05, 2026."
+    }
+  ]
+}
