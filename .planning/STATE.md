@@ -3,8 +3,8 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: verifying
-stopped_at: Completed 06.10-06-PLAN.md
-last_updated: "2026-08-16T08:15:12.550Z"
+stopped_at: Completed 06.11-01-PLAN.md
+last_updated: "2026-08-16T17:53:14.052Z"
 last_activity: 2026-08-16
 progress:
   total_phases: 17
@@ -116,6 +116,7 @@ Note: Phase 6.9/6.10 are retro-inserted sub-phases; the frontmatter project-wide
 | Phase 06.10 P04 | 20m | 2 tasks | 2 files |
 | Phase 06.10 P05 | 18min | 2 tasks | 7 files |
 | Phase 06.10 P06 | 35min | 3 tasks tasks | 9 files files |
+| Phase 06.11 P01 | 25min | 2 tasks | 5 files |
 
 ## Accumulated Context
 
@@ -221,6 +222,7 @@ Recent decisions affecting current work:
 - [Phase 06.10]: Even-N 2-2 split degrades to highest-grade source as unconfirmed; split candidates flagged not auto-adjusted (RAW locked)
 - [Phase 06.10]: FINRA parses NDJSON line-by-line via get_text; SourceOrigin.nasdaq_earnings added for honest Nasdaq earnings provenance + FMP-first fallback
 - [Phase 06.10]: run_cycle reuses ingest_history whole (launchd cadence + store idempotency make re-fetch harmless); backfill widens the ingest window (no new write path)
+- [Phase 06.11]: pdufa_edgar: HTML->text normalize before regex closes the offline-green/live-broken tag-split trap; single SEC EDGAR primary self-verifies (DATA-03), MEDIUM/LOW route to #-commented review CSV
 
 ### Pending Todos
 
@@ -234,6 +236,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-08-16T08:15:06.896Z
-Stopped at: Completed 06.10-06-PLAN.md
+Last session: 2026-08-16T17:53:14.047Z
+Stopped at: Completed 06.11-01-PLAN.md
 Resume file: None
