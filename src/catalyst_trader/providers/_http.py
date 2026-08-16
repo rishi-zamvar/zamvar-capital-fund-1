@@ -153,13 +153,15 @@ def _rate_limit(host: str) -> None:
     _last_request[host] = time.monotonic()
 
 
-def _fetch(kind, source, url, params, ua, ttl_s, host_key, json_body=None):
+def _fetch(kind, source, url, params, ua, ttl_s, host_key, json_body=None, accept=None):
     key = _key(kind, source, url, params, json_body)
     hit = _cache.get(key)
     if hit is not None and hit[1] > time.monotonic():
         return hit[0]  # cache path: no re-archive
 
     headers = {"User-Agent": _resolve_ua(ua)}  # raises on unset SEC UA (config error)
+    if accept:  # some hosts content-negotiate (FINRA defaults to CSV; ask for JSON explicitly)
+        headers["Accept"] = accept
     _rate_limit(host_key or httpx.URL(url).host)
     try:
         with httpx.Client(transport=httpx.HTTPTransport(retries=2)) as client:
@@ -182,14 +184,15 @@ def _fetch(kind, source, url, params, ua, ttl_s, host_key, json_body=None):
 
 
 def get_json(
-    source, url, *, params=None, json_body=None, ua="browser", ttl_s=300, host_key=None
-) -> dict | None:
+    source, url, *, params=None, json_body=None, ua="browser", ttl_s=300, host_key=None, accept=None
+) -> dict | list | None:
     """Cached, rate-limited, retrying JSON fetch. None on degrade, never raises/fabricates.
 
     GET by default; pass ``json_body`` to POST it (FINRA's Query API takes its compareFilters
-    in the request body). The body is part of the cache key so distinct queries don't collide.
+    in the request body). Pass ``accept`` to content-negotiate (FINRA defaults to CSV — ask for
+    application/json). The body is part of the cache key so distinct queries don't collide.
     """
-    return _fetch("json", source, url, params, ua, ttl_s, host_key, json_body)
+    return _fetch("json", source, url, params, ua, ttl_s, host_key, json_body, accept)
 
 
 def get_text(

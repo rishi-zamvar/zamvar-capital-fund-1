@@ -7,13 +7,17 @@ explicit settlement date (the 15th & EOM, published ~T+9 business days). si_sett
 recorded as the actual settlement date so downstream freshness logic sees the real (bi-monthly)
 age. A missing row for the ticker, or an _http degrade (403/timeout), returns None — never raise,
 never fabricate. Fetched through the shared _http base (cache/rate-limit/retry/UA/degrade).
+
+Content-negotiation gotcha (06.10-07 live shakedown): FINRA defaults to CSV (``text/plain``) for a
+``*/*`` request. 6.9 did one json.loads over that CSV -> "Extra data"; 6.10-05 then parsed it as
+NDJSON -> every line failed json.loads and SILENTLY returned no data. The real fix is to send
+``Accept: application/json`` — FINRA then answers with a proper JSON ARRAY, parsed directly.
 """
 
-import json
 import logging
 from datetime import datetime, timezone
 
-from catalyst_trader.providers._http import get_text
+from catalyst_trader.providers._http import get_json
 
 logger = logging.getLogger(__name__)
 
@@ -46,24 +50,11 @@ def fetch(ticker: str, settlement_date: str = None) -> dict | None:
         # Scope to the ticker server-side (domainFilters); we still guard the row match below.
         "domainFilters": [{"fieldName": "symbolCode", "values": [ticker]}],
     }
-    # FINRA answers with NDJSON (one JSON object per line), NOT a single array — a single
-    # json.loads() over it is the shakedown's "Extra data" degrade. Fetch raw text (Plan 03's
-    # get_text json_body passthrough) and parse line-by-line; a blank/malformed line degrades
-    # the LINE, not the whole fetch.
-    text = get_text("finra", _URL, json_body=body, ua="browser", ttl_s=300)
-    if not text:
-        return None
-
-    rows = []
-    for line in text.splitlines():
-        line = line.strip()
-        if not line:
-            continue
-        try:
-            rows.append(json.loads(line))
-        except json.JSONDecodeError:
-            continue
-    if not rows:
+    # Ask for JSON explicitly (FINRA content-negotiates; a */* request gets CSV). With
+    # Accept: application/json it returns a JSON ARRAY of rows, parsed by get_json directly.
+    rows = get_json("finra", _URL, json_body=body, ua="browser", ttl_s=300,
+                    accept="application/json")
+    if not rows:  # None on degrade (403/timeout/non-JSON) or an empty array — no data, never guess
         return None
 
     row = next((r for r in rows if str(r.get("symbolCode", "")).upper() == ticker), None)
