@@ -1,21 +1,25 @@
 ticker,company_name,market_cap,adv_usd,therapeutic_area,delisted
-# ---------------------------------------------------------------------------
-# Curated seed universe (DATA-06). The universe builder scores each name on
-# catalyst density (from the catalyst table), market cap, liquidity (ADV $), and
-# therapeutic area, then writes an append-only point-in-time snapshot.
-#
-# STARTER TEMPLATE — REQUIRES HUMAN CURATION (Plan 06 curation checkpoint).
-# The two rows below are labelled EXAMPLES so the pipeline runs end-to-end. Their
-# market_cap / adv_usd are APPROXIMATE placeholders pending FMP-live enrichment
-# (a documented follow-up, not this phase) — do NOT treat them as exact figures.
-# ticker / company_name / therapeutic_area are public facts and are correct.
-#
-# TO CURATE: add ~20-30 real life-science/biotech tickers with known upcoming
-# catalysts (seed by hand from a free source such as BiopharmaWatch's 2026 PDUFA
-# calendar). Fill market_cap, adv_usd, therapeutic_area from FMP. Include a few
-# delisted names (delisted=1) for backtest realism — the builder retains them.
-# Columns: ticker,company_name,market_cap(USD),adv_usd(USD avg daily $ vol),
-#          therapeutic_area,delisted(0/1). Quote any field containing a comma.
-# ---------------------------------------------------------------------------
-VRTX,Vertex Pharmaceuticals Incorporated,120000000000,500000000,Cystic Fibrosis,0
-REGN,Regeneron Pharmaceuticals Inc,70000000000,400000000,Immunology,0
+# Curated from .planning/research/universe-candidates.md (FMP metrics pulled 2026-08-14, HIGH conf on cap/price/volume).
+# Core tradeable names + hedge-peer mega-caps (ALNY/INSM/MDGL) + inverse-ETF damper (LABD) + sector ref (XBI).
+# market_cap in USD, adv_usd = 30d dollar-ADV approximation (M/day * 1e6). delisted=false = actively trading per FMP.
+PHVS,Pharvaris N.V.,2460000000,13800000,angioedema,false
+BCRX,BioCryst Pharmaceuticals,2480000000,45600000,angioedema,false
+NTLA,Intellia Therapeutics,1660000000,69200000,gene-editing,false
+BBIO,BridgeBio Pharma,15600000000,249900000,cardiomyopathy,false
+IONS,Ionis Pharmaceuticals,9500000000,142900000,antisense-rna,false
+DYN,Dyne Therapeutics,4800000000,51900000,neuromuscular,false
+RGNX,REGENXBIO,557000000,19000000,gene-therapy,false
+SRPT,Sarepta Therapeutics,1900000000,57400000,neuromuscular,false
+CLDX,Celldex Therapeutics,2800000000,43200000,immunology,false
+IDYA,IDEAYA Biosciences,3500000000,44600000,oncology,false
+OLMA,Olema Pharmaceuticals,929000000,13400000,oncology,false
+CMPS,COMPASS Pathways,1800000000,57700000,neuro-psych,false
+RARE,Ultragenyx Pharmaceutical,2600000000,55500000,rare-disease,false
+MIRM,Mirum Pharmaceuticals,6100000000,92600000,rare-disease,false
+TVTX,Travere Therapeutics,5800000000,140600000,nephrology,false
+PRAX,Praxis Precision Medicines,10200000000,171500000,neurology,false
+ALNY,Alnylam Pharmaceuticals,30600000000,334800000,antisense-rna,false
+INSM,Insmed,26800000000,434000000,pulmonology,false
+MDGL,Madrigal Pharmaceuticals,11700000000,174000000,mash-nash,false
+XBI,SPDR S&P Biotech ETF,0,900000000,sector-etf,false
+LABD,Direxion Daily S&P Biotech Bear 3X,0,107000000,inverse-etf,false

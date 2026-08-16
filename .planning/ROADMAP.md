@@ -21,6 +21,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [ ] **Phase 6.5: Weekly Strategy Correction** - Sizing amendment (target-within-survival-cap), NO zero-trade weeks, universe-wide weekly thesis engine (catalyst + mean-reversion + continuation, each with a measured edge), weekly build/exit/monitor cadence — reworks Phase-5 sizing before any backtest
 - [ ] **Phase 6.7: MD/GP Reconciliation Loop** - GP integrates catalyst-call + portfolio + diligence; bounded iterative re-trigger of Workflow 1 or 2 with DD's missing info until convergence/cap; residual caveats → LP; firewall preserved
 - [ ] **Phase 6.8: Weekly Company-Vetting Scanner (Haiku DD-Replica)** - Haiku replica of the diligence workflow vetting each company forward for the week; refreshable week-over-week deltas (company card), monitor-by-exception (deterministic-first, cheap); surfaces volatility opportunities → MD routes to verification → weekly portfolio → intra-week monitor
+- [ ] **Phase 6.9: Free-Data Ingestion Layer** *(added 2026-08-15)* - Build the researched free-data providers/scrapers (yfinance prices, CBOE options JSON, FINRA, EDGAR, Federal Register/RTTNews PDUFA, Nasdaq earnings) with rate-limit/cache/provenance discipline; wire the mocked seams to real sources; ingest real history → enables the first REAL backtest + live shakedown
 - [ ] **Phase 7: Verifier/Guardrails + Backtest Harness** - Fact-check verifier + runtime monitors + mechanical (Layer A) and guarded-agentic (Layer B) backtests
 - [ ] **Phase 8: Paper Ledger, Attribution & Post-Mortem (Layer C)** - Simulated ledger vs live quotes + P&L attribution + post-mortem into the KB
 - [ ] **Phase 8.5: Intra-Week Position Monitor** *(BUILD DEFERRED)* - Light/fast Haiku agent group, event-triggered by deterministic monitors (TA thresholds/news), flags positions → routes adjustment back to portfolio builder; no order placement
@@ -182,6 +183,19 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] 06.8-01-PLAN.md — Foundations: migration 006 company_card/scan_flag store + ScanInput/OpportunityFlag contracts (Wave 1)
 - [x] 06.8-02-PLAN.md — Deterministic Stage-1: SCAN_PARAMS + build_card (no-recompute) + delta_card (F1-F13 transitions, latching/hysteresis/tier gate) (Wave 2)
 - [x] 06.8-03-PLAN.md — Stage-2 Haiku once-over (one pass, cite-or-drop) + to_weekly_flag routing to the MD (zero md.py change) (Wave 3)
+
+### Phase 6.9: Free-Data Ingestion Layer
+**Goal**: Turn the fully-researched free-data sources into actually-built providers/scrapers, wire them to the mocked seams across the desk, and ingest real history — so the backtest, scanner, and monitor run on REAL data, not fixtures.
+**Depends on**: Phase 1 (providers/store pattern), Phase 6.5 (price_bar store), Phase 6.8 (company_card), Phase 7 (backtest consumes it)
+**Requirements**: INGEST-01, INGEST-02, INGEST-03, INGEST-04, INGEST-05
+**Research**: `.planning/research/free-data-sources.md` (all sources verified-live + ToS posture) + `weekly-company-scanner.md` (flag-source map) + `intra-week-monitoring.md` (trigger sources)
+**Success Criteria** (what must be TRUE):
+  1. Free-data providers are BUILT per research, each behind a uniform provider interface with provenance on every datum (source_url, fetch_ts, source_grade): yfinance historical prices (FMP is 401 on historicals — confirmed; yfinance is primary), CBOE delayed-quotes options/IV JSON, FINRA short-interest, SEC EDGAR filings, Federal Register + RTTNews PDUFA/AdCom, Nasdaq/CT.gov earnings+trial readouts.
+  2. Scraper discipline enforced: rate-limited, cached at >=5-min TTL, ToS-aware (documented posture per source), graceful-degrade when a source is down/illiquid (never fabricate — mark UNVERIFIED/missing).
+  3. The mocked seams built in Phases 6.5/6.8/7 (price bars, company card, implied-move, catalyst set) are wired to these real providers behind the SAME interfaces — no downstream contract change.
+  4. A historical-ingestion path populates the price_bar + catalyst + company_card stores for the seed universe over ~1-2yr, point-in-time + survivorship-aware.
+  5. LIVE SHAKEDOWN (the phase's own verification): ingest the real seed universe, then run Layer-A backtest + thesis_scan on the ingested data end-to-end; every edge case / divergence-from-synthetic is logged and triaged (real data stress-tests every system built so far).
+**Plans**: TBD (research → plan)
 
 ### Phase 7: Verifier/Guardrails + Backtest Harness
 **Goal**: Prove the strategy honestly against history and stand up the runtime safety gates before any capital — real or simulated — is at stake.

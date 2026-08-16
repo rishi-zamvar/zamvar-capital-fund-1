@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "graphify": {
+      "command": "graphify-mcp",
+      "args": [
+        "/Users/rishizamvar/Documents/Projects/Zamvar Capital/Fund 1 Strategy/graphify-out/graph.json",
+        "--transport",
+        "stdio"
+      ]
+    }
+  }
+}

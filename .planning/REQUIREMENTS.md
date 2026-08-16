@@ -102,6 +102,14 @@
 - [x] **SCAN-03**: LIGHT / not token-heavy — DETERMINISTIC-FIRST: metric deltas computed by tools (no LLM); the Haiku agentic pass wakes ONLY on a name whose deltas cross the materiality bar (monitor-by-exception — most names most weeks are a cheap deterministic "no material change" row). Composes with (does not duplicate) the deterministic `quant/weekly.py`. Escalate beyond Haiku only on genuine ambiguity.
 - [x] **SCAN-04**: An opportunity flag routes UP to the MD (RECON-08); the MD routes actionable ones to the appropriate workflow to be VERIFICATION-tested (catalyst call for direction, measured-edge tools, mini-backtest — the scanner's opportunity is NEVER trusted un-verified). Verified assumptions are added to the weekly portfolio (`run_weekly`), then monitored intra-week (Phase 8.5). The opportunity flag carries the opportunity + evidence + which verification is needed (gap-not-answer discipline).
 
+### Free-Data Ingestion Layer (INGEST) — added 2026-08-15
+
+- [ ] **INGEST-01**: Free-data providers BUILT per `free-data-sources.md`, each behind a uniform provider interface with provenance on every datum (source_url, fetch_ts, source_grade): yfinance historical prices (primary — FMP 401s on historicals), CBOE delayed-quotes options/IV JSON, FINRA short-interest, SEC EDGAR filings, Federal Register + RTTNews PDUFA/AdCom, earnings+trial readouts.
+- [ ] **INGEST-02**: Scraper discipline — rate-limited, cached at >=5-min TTL, ToS-aware (documented posture per source), graceful-degrade on outage/illiquidity (never fabricate; mark UNVERIFIED/missing).
+- [ ] **INGEST-03**: The mocked seams (price bars, company card, implied-move, catalyst set) are wired to the real providers behind the SAME interfaces — zero downstream contract change.
+- [ ] **INGEST-04**: Historical-ingestion path populates price_bar + catalyst + company_card stores for the seed universe over ~1-2yr, point-in-time + survivorship-aware.
+- [ ] **INGEST-05**: Live shakedown — ingest the real seed universe, run Layer-A backtest + thesis_scan on real data end-to-end; edge cases logged + triaged.
+
 ### Backtest / Baseline Harness (BACK)
 
 - [x] **BACK-01**: Historical event set from ~1yr of earnings calendars across the universe + dateable biotech catalysts
