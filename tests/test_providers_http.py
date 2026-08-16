@@ -159,3 +159,16 @@ def test_prune_bounds_lake_by_size(tmp_path):
     _http.prune_snapshots(max_bytes=150)  # keep newest under cap
     assert not older.exists()  # oldest evicted first
     assert newer.exists()
+
+
+# ── get_text(json_body=) POST-text transport (FINRA NDJSON enabler) ───────────
+
+
+def test_get_text_posts_json_body(httpx_mock):
+    httpx_mock.add_response(url=URL, method="POST", text="a\nb\nc")  # NDJSON body
+    body = {"compareFilters": [{"fieldName": "issueSymbolIdentifier", "compareType": "EQUAL"}]}
+    out = _http.get_text("finra", URL, json_body=body)
+    assert out == "a\nb\nc"
+    req = httpx_mock.get_requests()[0]
+    assert req.method == "POST"
+    assert json.loads(req.content) == body
