@@ -2,16 +2,15 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: verifying
-stopped_at: Completed 06.9-03-PLAN.md
-last_updated: "2026-08-16T04:47:33.212Z"
+status: executing
+stopped_at: Completed 06.9-04-PLAN.md
+last_updated: "2026-08-16T04:57:41.623Z"
 last_activity: 2026-08-16
 progress:
   total_phases: 17
   completed_phases: 10
   total_plans: 60
-  completed_plans: 55
-  percent: 0
+  completed_plans: 56
 ---
 
 # Project State
@@ -21,16 +20,18 @@ progress:
 See: .planning/PROJECT.md (updated 2026-08-14)
 
 **Core value:** Given an imminent biotech catalyst, produce a data-backed, portfolio-aware, hedged one-week trade recommendation the user can trust enough to approve — and get measurably better at it every week.
-**Current focus:** Phase 07 — verifier-guardrails-backtest-harness
+**Current focus:** Phase 06.9 — free-data-ingestion-layer (multi-source real-data build + live shakedown)
 
 ## Current Position
 
-Phase: 8
-Plan: Not started
-Status: Phase complete — ready for verification
+Phase: 06.9
+Plan: 4 of 8
+Status: Ready to execute
 Last activity: 2026-08-16
 
-Progress: [░░░░░░░░░░] 0%
+Progress: [███░░░░░░░] 3/8 plans
+
+Note: Phase 6.9/6.10 are retro-inserted sub-phases; the frontmatter project-wide plan counter predates them and is not authoritative. ROADMAP.md is the source of truth for phase/plan status.
 
 ## Performance Metrics
 
@@ -105,6 +106,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 07-verifier-guardrails-backtest-harness P05 | 13min | 3 tasks tasks | 4 files files |
 | Phase 06.9 P02 | 8min | 2 tasks tasks | 5 files files |
 | Phase 06.9 P03 | 8min | 2 tasks tasks | 5 files files |
+| Phase 06.9 P04 | 14min | 2 tasks | 7 files |
 
 ## Accumulated Context
 
@@ -199,6 +201,8 @@ Recent decisions affecting current work:
 - [Phase 07-verifier-guardrails-backtest-harness]: Layer A (run_layer_a) is the NO-LLM deterministic weekly backtest: re-expresses the corrected cadence over the 07-02 point-in-time event set (never imports/calls the LLM desk), catalyst-leg direction COMPUTED via classify_drop->_match_trigger->weekly_base_rate (BLOCKER-2, never off the null catalyst row) as a named swappable proxy (default base_rate), pessimistic gap-open fills, no-zero-trade defensive fallback -> BaselineDistribution (win/avg-win-loss/Sharpe/Sortino/max-DD/hedge-effectiveness) for the 07-05 gate
 - [Phase 07-verifier-guardrails-backtest-harness]: Layer B (run_layer_b) is the guarded AGENTIC replay: projects each point-in-time catalyst onto OutcomeBlindCatalyst (extra=forbid firewall), asserts web-free (reuses guardrails._no_scrape_to_order), runs the REAL run_desk, labels every LayerBResult biased_optimistic=True (structural field), samples with a logged drop-list (no silent [:N] cap) — offline via the mocked run_structured seam
 - [Phase 07-verifier-guardrails-backtest-harness]: The BACK-05 go/no-go gate (sample_based_gate) is SAMPLE-BASED never calendar: below THRESHOLDS[min_sample] it is a hard NO-GO regardless of metrics; above it names every failing metric (win_rate/sharpe/max_drawdown/hedge_effectiveness) from the 07-04 BaselineDistribution; thresholds read by direct subscript (missing key raises), undefined ratio is a named failure
+- [Phase 06.9]: CBOE provider emits complete-7key-or-None options_quote (no catalyst_date) and does NOT run the liquidity gate — deferred to build_card after assemble_raw injects catalyst_date
+- [Phase 06.9]: Extended _http.get_json with json_body->POST so FINRA's settlementDate EQUAL compareFilter (Pitfall 5) reuses the shared HTTP discipline; no new dependency
 
 ### Pending Todos
 
@@ -212,6 +216,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-08-16T04:47:33.208Z
-Stopped at: Completed 06.9-03-PLAN.md
+Last session: 2026-08-16T04:57:29.482Z
+Stopped at: Completed 06.9-04-PLAN.md
 Resume file: None

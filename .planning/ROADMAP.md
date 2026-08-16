@@ -200,7 +200,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] 06.9-01-PLAN.md — Network foundation: settings (sec_user_agent + alpha_vantage/tiingo keys) + conftest text loader + _http base (cache/rate-limit/retry/UA/degrade) (Wave 1)
 - [x] 06.9-02-PLAN.md — Store+price foundation: migration 007 (source_grade+agreeing_sources) + upsert_bars kwargs + shared Friday week_end anchor helper (Wave 1)
 - [x] 06.9-03-PLAN.md — Price sources: yfinance+Nasdaq (always-on) + Alpha Vantage+Tiingo (keyed) + disabled Stooq — all RAW, Friday-anchored (Wave 2)
-- [ ] 06.9-04-PLAN.md — options_cboe (implied-move seam + iv=0 gate) + finra (short interest, settlementDate EQUAL filter) (Wave 2)
+- [x] 06.9-04-PLAN.md — options_cboe (implied-move seam + iv=0 gate) + finra (short interest, settlementDate EQUAL filter) (Wave 2)
 - [ ] 06.9-05-PLAN.md — edgar (seen_accessions/live_shelf, SEC UA) + pdufa (Federal Register GREEN + RTTNews YELLOW → list[Catalyst]) (Wave 2)
 - [ ] 06.9-06-PLAN.md — prices.py cascade: PRICE_PROVIDERS registry + get_weekly_bars cross-check/fallback (0.5% tol, divergence log, never impute) (Wave 3)
 - [ ] 06.9-07-PLAN.md — ingest.py: assemble_raw (the seam) + historical loop (idempotent, point-in-time, survivorship) + seam/historical integration tests (Wave 4)
