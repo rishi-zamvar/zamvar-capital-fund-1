@@ -225,6 +225,13 @@ def get_weekly_bars(ticker, start, end, *, providers=PRICE_PROVIDERS, tol_pct=0.
             )
             continue
         for b in bars or []:
+            # A bar without a close is not a usable price observation — a source returning
+            # close=None (Yahoo NaN rows, an incomplete current week) is a DEGRADE, not data.
+            # Drop it here so it can never (a) become the cross-check reference and be emitted with
+            # close=None (NOT NULL crash in upsert_bars), (b) trip a None-arithmetic TypeError in
+            # the divergence delta, or (c) masquerade as a genuine cross-source divergence.
+            if b.get("close") is None:
+                continue
             by_week.setdefault(b["week_end"], []).append(b)
 
     tol = tol_pct / 100.0

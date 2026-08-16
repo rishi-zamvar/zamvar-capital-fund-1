@@ -108,6 +108,33 @@ def test_no_available_source_returns_empty():
     assert out == []  # degrade, never a fabricated series
 
 
+# ---- null-close bars are a degrade, never data (live-shakedown regression) --------------
+
+
+def test_null_close_bar_dropped_not_emitted(caplog):
+    # The highest-RANKED available source returns close=None (Yahoo NaN); a lower-ranked source
+    # has the real close. The null-close bar must be DROPPED — never emitted (would crash
+    # upsert_bars NOT NULL) and never counted as a cross-source divergence against the real close.
+    yf_null = _stub({**_bar(W1, 99.0, "yfinance", "yellow"), "close": None})
+    nasdaq = _stub(_bar(W1, 25.0, "nasdaq", "yellow"))
+    with caplog.at_level(logging.WARNING):
+        out = prices.get_weekly_bars(TICKER, START, END, providers=[yf_null, nasdaq])
+    assert len(out) == 1
+    b = out[0]
+    assert b["close"] == 25.0 and b["source"] == "nasdaq"  # the real observation wins
+    assert b["agreeing_sources"] == {"nasdaq"}             # single real source, unconfirmed
+    assert "diverg" not in caplog.text.lower()             # null-vs-real is not a divergence
+
+
+def test_all_bars_null_close_week_is_absent():
+    # Every source returns close=None for the week -> no usable observation -> the week is ABSENT
+    # (degrade), never a fabricated/null bar in the output.
+    p1 = _stub({**_bar(W1, 10.0, "yfinance", "yellow"), "close": None})
+    p2 = _stub({**_bar(W1, 10.0, "nasdaq", "yellow"), "close": None})
+    out = prices.get_weekly_bars(TICKER, START, END, providers=[p1, p2])
+    assert out == []
+
+
 # ---- no keys -> degrade to always-on ----------------------------------------------------
 
 
