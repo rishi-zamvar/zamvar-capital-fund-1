@@ -14,6 +14,8 @@ raises into the pipeline or fabricates a bar — miss/no-key/degrade all return 
 """
 
 import logging
+import statistics
+from datetime import datetime, timezone
 
 import pandas as pd
 import yfinance as yf
@@ -216,19 +218,25 @@ def get_weekly_bars(ticker, start, end, *, providers=PRICE_PROVIDERS, tol_pct=0.
 
     Iterates the ranked `providers` (highest grade first), skipping any source that returns []
     (no key / degrade / miss). Bars are indexed by the shared Friday `week_end` (Plan 02 anchor)
-    so only the SAME real week is ever compared. For each week_end:
+    so only the SAME real week is ever compared. For each week_end (research §2.3):
 
-      - >=2 sources agree within `tol_pct` (abs(a-b)/a on close) -> high-confidence: keep the
-        highest-grade source's bar, `agreeing_sources` = every source within tolerance.
-      - any source diverges beyond `tol_pct` -> log a structured warning (ticker, week_end,
-        per-source closes, max delta), keep the highest-grade source's bar, and narrow
-        `agreeing_sources` to just the sources that agreed with it (single -> unconfirmed).
-      - one source only -> keep it, `agreeing_sources` = that one source (unconfirmed).
+      - >=3 sources -> N-source median triangulation: the median close is the consensus PROBE;
+        the in-tolerance set = sources within `tol_pct` of it; keep the HIGHEST-GRADE in-tolerance
+        source's REAL bar, `agreeing_sources` = that in-tolerance set. Robust to one bad source
+        (even when it is the highest grade). Out-of-tolerance sources are excluded + logged.
+      - >=3 sources but an EVEN-N no-consensus split (e.g. 2-2) leaves the median BETWEEN clusters
+        and the in-tolerance set EMPTY -> DEGRADE: keep the highest-grade source's bar,
+        `agreeing_sources` = {that one source}, log unconfirmed. Never no-bar, never the median.
+      - 2 sources -> unchanged pairwise: agree within tol -> both in `agreeing_sources`; diverge
+        -> keep the highest-grade bar, narrow to one (unconfirmed).
+      - 1 source -> keep it, `agreeing_sources` = that one (unconfirmed).
       - NO available source has the week -> the bar is ABSENT (not in the output). Never
         synthesized / fabricated / back-filled — a missing week is a degrade, not a guess.
 
-    Returns a chronological list of bar dicts each carrying `source`, `source_grade`, and an
-    `agreeing_sources` set, ready for upsert_bars(..., source_grade=, agreeing_sources=).
+    The median is used ONLY to SELECT the agreeing set; the emitted close is ALWAYS a real source
+    bar, never the median (and never a between-clusters value). Returns a chronological list of
+    bar dicts each carrying `source`, `source_grade`, and an `agreeing_sources` set, ready for
+    upsert_bars(..., source_grade=, agreeing_sources=).
     """
     # week_end -> bars in provider-rank order (index 0 = highest-grade source for that week).
     by_week: dict[str, list[dict]] = {}
@@ -253,24 +261,37 @@ def get_weekly_bars(ticker, start, end, *, providers=PRICE_PROVIDERS, tol_pct=0.
     tol = tol_pct / 100.0
     out = []
     for week_end in sorted(by_week):
-        candidates = by_week[week_end]  # already highest-grade first
-        ref = candidates[0]
-        ref_close = ref["close"]
-        agreeing = [ref]  # the reference always agrees with itself
-        divergent = []
-        for b in candidates[1:]:
-            if ref_close and abs(b["close"] - ref_close) / abs(ref_close) <= tol:
-                agreeing.append(b)
-            else:
-                divergent.append(b)
+        candidates = by_week[week_end]  # already highest-grade first (provider rank)
+        if len(candidates) >= 3:
+            # N-source median triangulation. The median is only a SELECTION probe — the in-tol set
+            # is every source within tol of it. `candidates` order is preserved so agreeing[0] is
+            # the highest-grade in-tol source. An outlier (even the highest-grade one) falls out.
+            med = statistics.median(b["close"] for b in candidates)
+            agreeing = [b for b in candidates if med and abs(b["close"] - med) / abs(med) <= tol]
+            if not agreeing:
+                # even-N no-consensus split: median between clusters, in-tol set empty. Degrade to
+                # the highest-grade source as unconfirmed — never no-bar, never the median value.
+                agreeing = [candidates[0]]
+        else:
+            # <=2 sources: unchanged 6.9 pairwise vs the highest-grade reference.
+            ref_close = candidates[0]["close"]
+            agreeing = [candidates[0]]
+            for b in candidates[1:]:
+                if ref_close and abs(b["close"] - ref_close) / abs(ref_close) <= tol:
+                    agreeing.append(b)
+        ref = agreeing[0]  # highest-grade agreeing source's REAL bar (never a synthesized value)
+        agreeing_srcs = {b["_source"] for b in agreeing}
+        divergent = [b for b in candidates if b["_source"] not in agreeing_srcs]
         if divergent:
-            deltas = [abs(b["close"] - ref_close) / abs(ref_close) for b in candidates] if ref_close else []
+            closes = [b["close"] for b in candidates]
+            lo, hi = min(closes), max(closes)
+            max_delta = (hi - lo) / abs(lo) if lo else 0.0
             logger.warning(
                 "price cross-check divergence %s %s: closes=%s max_delta=%.4f%%",
                 ticker,
                 week_end,
                 {b["_source"]: b["close"] for b in candidates},
-                (max(deltas) * 100) if deltas else 0.0,
+                max_delta * 100,
             )
         out.append({
             "week_end": week_end,
@@ -281,6 +302,6 @@ def get_weekly_bars(ticker, start, end, *, providers=PRICE_PROVIDERS, tol_pct=0.
             "volume": ref.get("volume"),
             "source": ref["_source"],
             "source_grade": ref["_grade"],
-            "agreeing_sources": {b["_source"] for b in agreeing},
+            "agreeing_sources": agreeing_srcs,
         })
     return out
