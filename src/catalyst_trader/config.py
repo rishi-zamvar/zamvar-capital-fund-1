@@ -10,6 +10,7 @@ class Settings(BaseSettings):
     sec_user_agent: str | None = None  # env: SEC_USER_AGENT — SEC requires a declared UA with contact email
     alpha_vantage_api_key: str | None = None  # env: ALPHA_VANTAGE_API_KEY — GREEN weekly source when set
     tiingo_api_key: str | None = None  # env: TIINGO_API_KEY — GREEN EOD source when set
+    fred_api_key: str | None = None  # env: FRED_API_KEY — GREEN macro/rates/VIX source when set
     db_path: str = "catalyst.db"
     freshness_near_event_hours: int = 48
     freshness_default_days: int = 7

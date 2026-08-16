@@ -11,6 +11,7 @@ import pytest
 
 from catalyst_trader.config import settings
 from catalyst_trader.providers import _http, fred
+from catalyst_trader.providers.fred import MACRO_SERIES
 
 
 @pytest.fixture(autouse=True)
@@ -59,16 +60,17 @@ def test_fred_403_degrades(httpx_mock, monkeypatch):
 
 def test_fred_macro_bundle(httpx_mock, load_fixture, monkeypatch):
     monkeypatch.setattr(settings, "fred_api_key", "FREDKEY")
-    # A degraded series (403) is simply absent from the bundle — never fabricated.
-    httpx_mock.add_response(status_code=403, is_reusable=True, is_optional=True)
-    httpx_mock.add_response(
-        url__regex=r".*series_id=DGS10.*", json=load_fixture("fred_dgs10"), is_reusable=True
-    )
+    # One reusable success matches each series call; the bundle is keyed by series_id.
+    httpx_mock.add_response(json=load_fixture("fred_dgs10"), is_reusable=True)
     macro = fred.fetch_macro()
-    assert "DGS10" in macro
+    assert set(macro) == set(MACRO_SERIES)  # the full regime bundle
     assert macro["DGS10"]["latest"] == 4.23
-    assert macro["DGS10"]["provenance"]["grade"] == "green"
-    # Every present series is keyed by its series_id and carries provenance.
     for sid, series in macro.items():
-        assert series["series_id"] == sid
-        assert series["provenance"]["grade"] == "green"
+        assert series["series_id"] == sid  # keyed by its own series_id, not the fixture's
+        assert series["provenance"]["grade"] == "green"  # every datum green-provenanced
+
+
+def test_fred_macro_degraded_series_absent(httpx_mock, monkeypatch):
+    monkeypatch.setattr(settings, "fred_api_key", "FREDKEY")
+    httpx_mock.add_response(status_code=403, is_reusable=True)  # every series degrades
+    assert fred.fetch_macro() == {}  # degraded series simply absent, never fabricated
