@@ -133,7 +133,11 @@ def _edge_report(conn, capture: _EdgeCapture, seed: list[dict], start: str, end:
 
     divergences = capture.matching("cross-check divergence")
     rate_limit = capture.matching("429", "Too Many", "rate limit", "RateLimit")
-    degraded = Counter(capture.matching("degraded", "failed"))
+    # "returning None"/"no CIK" catch the provider-level degrades that don't say "degraded"
+    # (e.g. EDGAR: no ticker->CIK map -> every name dark) so the report doesn't undercount them.
+    degraded = Counter(m for m in capture.matching(
+        "degraded", "failed", "returning None", "no CIK")
+        if "cross-check divergence" not in m)
 
     return {
         "coverage": {"expected_name_weeks": expected, "present_name_weeks": present_listed,

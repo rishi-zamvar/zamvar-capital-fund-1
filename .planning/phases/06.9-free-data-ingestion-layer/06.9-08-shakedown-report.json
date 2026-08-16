@@ -1,0 +1,96 @@
+{
+  "coverage": {
+    "expected_name_weeks": 1092,
+    "present_name_weeks": 1092,
+    "pct": 100.0,
+    "fridays_in_window": 52,
+    "listed_names": 21
+  },
+  "cross_check": {
+    "total_bars": 1092,
+    "confirmed_2plus": 0,
+    "unconfirmed_single": 1092,
+    "confirmed_pct": 0.0,
+    "bars_by_source": {
+      "nasdaq": 1092
+    }
+  },
+  "tradeable_catalyst_count": 0,
+  "tradeable_catalysts": [],
+  "illiquid": [],
+  "missing_bars": [],
+  "divergence_count": 0,
+  "divergences": [],
+  "stale": [],
+  "delisting": [],
+  "ticker_mismatch": [],
+  "gaps": {
+    "count": 0,
+    "sample": []
+  },
+  "rate_limit": 0,
+  "degraded": {
+    "unique": 23,
+    "total": 43,
+    "by_message": {
+      "finra degraded (Extra data: line 1 column 28 (char 27)) \u2014 returning None": 21,
+      "provider <lambda> degraded: Client error '402 Payment Required' for url 'https://financialmodelingprep.com/stable/earnings-calendar?from=2025-08-22&to=2026-08-14&apikey=qhGAuW63dYWqAGIixa8poO7zuvgdR1sW'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/402": 1,
+      "edgar: no CIK for PHVS \u2014 cannot query SEC, returning None": 1,
+      "edgar: no CIK for BCRX \u2014 cannot query SEC, returning None": 1,
+      "edgar: no CIK for NTLA \u2014 cannot query SEC, returning None": 1,
+      "edgar: no CIK for BBIO \u2014 cannot query SEC, returning None": 1,
+      "edgar: no CIK for IONS \u2014 cannot query SEC, returning None": 1,
+      "edgar: no CIK for DYN \u2014 cannot query SEC, returning None": 1,
+      "edgar: no CIK for RGNX \u2014 cannot query SEC, returning None": 1,
+      "edgar: no CIK for SRPT \u2014 cannot query SEC, returning None": 1,
+      "edgar: no CIK for CLDX \u2014 cannot query SEC, returning None": 1,
+      "edgar: no CIK for IDYA \u2014 cannot query SEC, returning None": 1,
+      "edgar: no CIK for OLMA \u2014 cannot query SEC, returning None": 1,
+      "edgar: no CIK for CMPS \u2014 cannot query SEC, returning None": 1,
+      "edgar: no CIK for RARE \u2014 cannot query SEC, returning None": 1,
+      "edgar: no CIK for MIRM \u2014 cannot query SEC, returning None": 1,
+      "edgar: no CIK for TVTX \u2014 cannot query SEC, returning None": 1,
+      "edgar: no CIK for PRAX \u2014 cannot query SEC, returning None": 1,
+      "edgar: no CIK for ALNY \u2014 cannot query SEC, returning None": 1,
+      "edgar: no CIK for INSM \u2014 cannot query SEC, returning None": 1
+    }
+  },
+  "window": {
+    "start": "2025-08-22",
+    "end": "2026-08-14"
+  },
+  "ingest_stats": {
+    "tickers": 21,
+    "verified_catalysts": 0,
+    "cards": 1092
+  },
+  "backtest": {
+    "distribution": {
+      "win_rate": 0.0,
+      "avg_win": 0.0,
+      "avg_loss": 0.0,
+      "sharpe": null,
+      "sortino": null,
+      "max_drawdown": 0.0,
+      "hedge_effectiveness": null,
+      "n_trades": 156,
+      "n_weeks": 52
+    },
+    "n_weeks": 52
+  },
+  "thesis_scan": {
+    "week_end": "2026-08-14",
+    "n_rows": 21,
+    "n_eligible": 0,
+    "by_type": {
+      "mean_reversion": 21
+    }
+  },
+  "source_availability": {
+    "alpha_vantage (GREEN price)": false,
+    "tiingo (GREEN price)": false,
+    "fmp (earnings)": true,
+    "sec_user_agent (EDGAR)": true,
+    "yfinance+nasdaq (always-on price)": true
+  }
+}
