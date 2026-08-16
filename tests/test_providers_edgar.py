@@ -23,7 +23,6 @@ import pytest
 from catalyst_trader.config import settings
 from catalyst_trader.providers import edgar
 
-
 # --- fakes pinned to the introspected edgartools surface -------------------------------------
 
 

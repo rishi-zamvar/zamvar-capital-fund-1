@@ -86,3 +86,65 @@ def fetch(ticker: str) -> dict | None:
             "grade": "green",
         },
     }
+
+
+def _period_months(period: str | None) -> int | None:
+    """'2026-Q3' -> 9, '2026-FY' -> 12 (cumulative YTD span of an OCF fact); unknown -> None."""
+    if not period:
+        return None
+    return _YTD_MONTHS.get(period.split("-")[-1])
+
+
+def _runway_months(cash_meta: dict | None, ocf_meta: dict | None) -> float | None:
+    """cash / average monthly operating burn, or None. Never a fabricated/negative runway: needs
+    cash AND a genuine burn (OCF < 0) over a known period. Not burning (OCF >= 0), missing
+    cash/OCF, or an unknown period -> None."""
+    if not cash_meta or not ocf_meta:
+        return None
+    cash, ocf = cash_meta.get("value"), ocf_meta.get("value")
+    months = _period_months(ocf_meta.get("period"))
+    if cash is None or ocf is None or not months or ocf >= 0:
+        return None
+    monthly_burn = -ocf / months
+    return round(cash / monthly_burn, 1) if monthly_burn > 0 else None
+
+
+def fundamentals(ticker: str) -> dict | None:
+    """XBRL float/runway gap-filler for ``ticker`` ->
+    {shares_outstanding, cash_runway_months, provenance}, or None.
+
+    From edgartools' STANDARDIZED facts (synonym-resolved, robust across filers):
+    common_shares_outstanding, cash_and_equivalents, operating_cash_flow. cash_runway_months is
+    model-free arithmetic (cash / monthly operating burn) — None when not burning or facts are
+    missing (never fabricated). Any edgartools error / no usable facts -> None (degrade).
+    """
+    _set_identity()  # config error if no UA (raises, not a degrade)
+    try:
+        company = edgar.Company(ticker)  # ticker->CIK resolved by edgartools
+        facts = company.get_facts()
+        shares = facts.get_concept("common_shares_outstanding", return_metadata=True)
+        cash = facts.get_concept("cash_and_equivalents", return_metadata=True)
+        ocf = facts.get_concept("operating_cash_flow", return_metadata=True)
+    except Exception as e:  # noqa: BLE001 — degrade on ANY edgartools failure, never crash pipeline
+        logger.warning("edgar.fundamentals degraded for %s: %s", ticker, e)
+        return None
+
+    if not shares and not cash:  # no usable XBRL facts on record
+        return None
+
+    # point-in-time honesty: carry the freshest fact's filing date in provenance
+    latest = max(
+        (m for m in (shares, cash, ocf) if m and m.get("filing_date")),
+        key=lambda m: m["filing_date"],
+        default=None,
+    )
+    return {
+        "shares_outstanding": shares.get("value") if shares else None,
+        "cash_runway_months": _runway_months(cash, ocf),
+        "provenance": {
+            "source_url": f"https://data.sec.gov/api/xbrl/companyfacts/CIK{getattr(company, 'cik', 0):010d}.json",
+            "fetch_ts": datetime.now(timezone.utc).isoformat(),
+            "filing_date": str(latest["filing_date"]) if latest else None,
+            "grade": "green",
+        },
+    }
