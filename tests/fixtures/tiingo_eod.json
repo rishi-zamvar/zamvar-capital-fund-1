@@ -1,0 +1,6 @@
+[
+  {"date": "2026-08-06T00:00:00.000Z", "open": 10.00, "high": 10.30, "low": 9.95, "close": 10.20, "volume": 1000, "adjClose": 8.10, "adjOpen": 7.95, "adjHigh": 8.20, "adjLow": 7.90, "adjVolume": 1000},
+  {"date": "2026-08-07T00:00:00.000Z", "open": 10.25, "high": 10.75, "low": 10.10, "close": 10.50, "volume": 2000, "adjClose": 8.30, "adjOpen": 8.15, "adjHigh": 8.55, "adjLow": 8.00, "adjVolume": 2000},
+  {"date": "2026-08-13T00:00:00.000Z", "open": 10.60, "high": 11.20, "low": 10.55, "close": 11.00, "volume": 1500, "adjClose": 8.70, "adjOpen": 8.40, "adjHigh": 8.85, "adjLow": 8.35, "adjVolume": 1500},
+  {"date": "2026-08-14T00:00:00.000Z", "open": 11.05, "high": 11.60, "low": 11.00, "close": 11.40, "volume": 2500, "adjClose": 9.00, "adjOpen": 8.75, "adjHigh": 9.15, "adjLow": 8.70, "adjVolume": 2500}
+]

@@ -86,3 +86,57 @@ def test_nasdaq_parses_and_resamples(httpx_mock, load_fixture):
 def test_nasdaq_degrade_returns_empty(httpx_mock):
     httpx_mock.add_response(status_code=403)
     assert prices._nasdaq_daily("TEST", START, END) == []  # _http degrade -> None -> []
+
+
+# ---- Alpha Vantage (GREEN, keyed) --------------------------------------------------
+
+
+def test_av_no_key_returns_empty(monkeypatch):
+    monkeypatch.setattr(settings, "alpha_vantage_api_key", None)
+    assert prices._av_weekly("TEST", START, END) == []  # skipped by cascade, no network
+
+
+def test_av_parses_raw_weekly(httpx_mock, load_fixture, monkeypatch):
+    monkeypatch.setattr(settings, "alpha_vantage_api_key", "AVKEY")
+    httpx_mock.add_response(json=load_fixture("av_weekly"))
+    bars = prices._av_weekly("TEST", START, END)
+    assert [b["week_end"] for b in bars] == ["2026-08-07", "2026-08-14"]  # sorted, Friday-anchored
+    # RAW "4. close" chosen, NOT "5. adjusted close" (8.20/9.00 in fixture)
+    assert [b["close"] for b in bars] == [10.50, 11.40]
+    assert bars[0]["open"] == 10.00 and bars[0]["volume"] == 3000.0
+    assert all(b["_source"] == "alpha_vantage" and b["_grade"] == "green" for b in bars)
+    # money-critical: non-adjusted endpoint
+    req_url = str(httpx_mock.get_requests()[0].url)
+    assert "TIME_SERIES_WEEKLY" in req_url and "_ADJUSTED" not in req_url
+
+
+# ---- Tiingo (GREEN, keyed) ---------------------------------------------------------
+
+
+def test_tiingo_no_key_returns_empty(monkeypatch):
+    monkeypatch.setattr(settings, "tiingo_api_key", None)
+    assert prices._tiingo_eod("TEST", START, END) == []
+
+
+def test_tiingo_reads_close_not_adjclose(httpx_mock, load_fixture, monkeypatch):
+    monkeypatch.setattr(settings, "tiingo_api_key", "TIINGOKEY")
+    httpx_mock.add_response(json=load_fixture("tiingo_eod"))
+    bars = prices._tiingo_eod("TEST", START, END)
+    # fixture close != adjClose everywhere; the weekly close must be the RAW last-day close
+    assert bars[0]["close"] == 10.50 and bars[1]["close"] == 11.40  # raw, not adjClose 8.30/9.00
+    assert all(b["_source"] == "tiingo" and b["_grade"] == "green" for b in bars)
+
+
+def test_tiingo_resampled_to_friday(httpx_mock, load_fixture, monkeypatch):
+    monkeypatch.setattr(settings, "tiingo_api_key", "TIINGOKEY")
+    httpx_mock.add_response(json=load_fixture("tiingo_eod"))
+    bars = prices._tiingo_eod("TEST", START, END)
+    assert [b["week_end"] for b in bars] == ["2026-08-07", "2026-08-14"]
+    assert bars[0]["open"] == 10.00 and bars[0]["high"] == 10.75 and bars[0]["volume"] == 3000.0
+
+
+# ---- Stooq (registered-but-disabled) ----------------------------------------------
+
+
+def test_stooq_disabled_returns_empty():
+    assert prices._stooq("TEST", START, END) == []  # IP-blocked from this machine; off by design
