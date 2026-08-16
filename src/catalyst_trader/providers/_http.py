@@ -192,6 +192,12 @@ def get_json(
     return _fetch("json", source, url, params, ua, ttl_s, host_key, json_body)
 
 
-def get_text(source, url, *, params=None, ua="browser", ttl_s=300, host_key=None) -> str | None:
-    """Same discipline as get_json but returns raw text (RTTNews HTML / CSV)."""
-    return _fetch("text", source, url, params, ua, ttl_s, host_key)
+def get_text(
+    source, url, *, params=None, json_body=None, ua="browser", ttl_s=300, host_key=None
+) -> str | None:
+    """Same discipline as get_json but returns raw text (RTTNews HTML / CSV).
+
+    Pass ``json_body`` to POST it and get the raw text back (FINRA's Query API takes its
+    compareFilters in the body and answers with NDJSON) — symmetric with get_json.
+    """
+    return _fetch("text", source, url, params, ua, ttl_s, host_key, json_body)
