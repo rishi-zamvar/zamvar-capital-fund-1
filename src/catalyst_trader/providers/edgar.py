@@ -1,60 +1,87 @@
-"""SEC EDGAR submissions -> the two filings signals build_card consumes (INGEST-01, GREEN).
+"""SEC EDGAR via edgartools -> filings signals (build_card contract) + XBRL fundamentals.
 
-Scope is deliberately narrow: desk/company_scan.build_card reads only
-``raw["seen_accessions"]`` (its F9 offering-signal flag) and ``raw["live_shelf"]``, so this
-provider returns ONLY those two + provenance. Form-4 / 13F ownership are DEFERRED until a
-consumer exists (YAGNI — RESEARCH Open Q3).
+Two providers, both edgartools-backed (PIPE-03/08/09), both degrade-never-crash:
 
-SEC requires a declared User-Agent carrying a contact email (Pitfall 3); a missing one is a
-config error surfaced by _http (never send an empty UA). A 403/timeout, a missing CIK, or a
-structure change degrades to None — never raise into the pipeline, never fabricate. Fetched
-through the shared _http base (cache/rate-limit/retry/UA/degrade).
+- ``fetch(ticker)`` keeps the EXACT contract desk/company_scan.build_card consumes —
+  ``seen_accessions`` (list of {accession, form, filing_date}) + ``live_shelf`` (bool) — but
+  resolves the CIK INTERNALLY via ``edgar.Company(ticker)`` (edgartools maps ticker->CIK), so the
+  6.9 shakedown's "no CIK for TICKER" degrade is gone for every real universe name. Form-4/13F
+  ownership stay DEFERRED (no consumer — YAGNI, RESEARCH Open Q3).
+- ``fundamentals(ticker)`` is the float/runway gap-filler: ``shares_outstanding`` +
+  ``cash_runway_months`` from edgartools' standardized XBRL facts, + provenance.
+
+edgartools needs a declared contact-email UA (``set_identity``, from ``settings.sec_user_agent`` —
+Pitfall 3); an unset one is the ONE legit config error (RuntimeError, matching _http's UA rule —
+never send an empty UA). Any edgartools error / unknown ticker / missing facts degrades to None:
+never raise into the pipeline, never fabricate (esp. never a fabricated/negative cash runway).
 """
 
 import logging
 from datetime import datetime, timezone
 
-from catalyst_trader.providers._http import get_json
+import edgar
+
+from catalyst_trader.config import settings
 
 logger = logging.getLogger(__name__)
 
 # S-3ASR is auto-effective on filing; a plain S-3 becomes a shelf once declared effective.
-# ponytail: presence-of-form heuristic — the submissions feed carries no "effective" flag;
-# tighten (join the EFFECT filing) only if a stale/withdrawn shelf produces a false F9.
+# ponytail: presence-of-form heuristic — the feed carries no "effective" flag; tighten (join the
+# EFFECT filing) only if a stale/withdrawn shelf produces a false F9.
 _SHELF_FORMS = {"S-3", "S-3ASR"}
+# Only the forms build_card reads: company_scan._OFFERING_FORMS {424B5, FWP} for F9 + S-3/S-3ASR
+# for live_shelf. A narrow fetch is cheap AND keeps seen_accessions the exact offering surface.
+# (edgartools prefix-matches, so "S-3" also pulls S-3/A amendments into seen_accessions.)
+_TRACKED_FORMS = ["424B5", "FWP", "S-3", "S-3ASR"]
+
+# A 10-Q's operating_cash_flow is period-to-date (cumulative), so the fiscal-period suffix maps to
+# YTD months. ponytail: derived from the period string; if a filer reports non-cumulative quarterly
+# OCF this mis-scales burn — tighten via the fact's period_start/period_end if it ever bites.
+_YTD_MONTHS = {"Q1": 3, "Q2": 6, "Q3": 9, "Q4": 12, "FY": 12}
 
 
-def fetch(ticker: str, cik: str | int | None = None) -> dict | None:
-    """SEC submissions for ``ticker`` -> {seen_accessions, live_shelf, provenance}, or None.
+def _set_identity() -> None:
+    """Declare the SEC UA once per call from settings; unset -> RuntimeError (config error)."""
+    ua = settings.sec_user_agent
+    if not ua:
+        raise RuntimeError("SEC_USER_AGENT unset — edgartools needs a declared contact-email UA")
+    edgar.set_identity(ua)
 
-    ``cik`` is required to address the submissions endpoint; when None we cannot query SEC and
-    degrade to None (Plan 07 wires the curated ticker->CIK map). seen_accessions is a list of
-    {accession, form, filing_date}; live_shelf is True iff a live S-3 shelf form is present.
+
+def _company_source_url(cik) -> str:
+    return (
+        "https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany"
+        f"&CIK={cik}&type=&dateb=&owner=include&count=40"
+    )
+
+
+def fetch(ticker: str) -> dict | None:
+    """SEC filings for ``ticker`` -> {seen_accessions, live_shelf, provenance}, or None.
+
+    CIK is resolved INTERNALLY by edgartools (no caller cik, no ticker->CIK map). seen_accessions
+    is a list of {accession, form, filing_date}; live_shelf is True iff a live S-3 shelf is present.
+    Unknown ticker / edgartools error / no tracked filings -> None (degrade, never raise).
     """
-    if not cik:
-        logger.warning("edgar: no CIK for %s — cannot query SEC, returning None", ticker)
+    _set_identity()  # config error if no UA (raises, not a degrade)
+    try:
+        company = edgar.Company(ticker)  # ticker->CIK resolved by edgartools
+        filings = company.get_filings(form=_TRACKED_FORMS)
+        rows = [
+            {"accession": f.accession_no, "form": f.form, "filing_date": str(f.filing_date)}
+            for f in filings
+        ]
+    except Exception as e:  # noqa: BLE001 — degrade on ANY edgartools failure, never crash pipeline
+        logger.warning("edgar.fetch degraded for %s: %s", ticker, e)
         return None
 
-    url = f"https://data.sec.gov/submissions/CIK{int(cik):010d}.json"
-    data = get_json("edgar", url, ua="sec", ttl_s=300)  # raises on unset SEC UA (config error)
-    if not data:
+    if not rows:  # no offering/shelf filings on record -> nothing for build_card to read
         return None
-
-    recent = data.get("filings", {}).get("recent", {})
-    accnos = recent.get("accessionNumber", [])
-    forms = recent.get("form", [])
-    dates = recent.get("filingDate", [])
-    seen_accessions = [
-        {"accession": a, "form": f, "filing_date": d}
-        for a, f, d in zip(accnos, forms, dates)
-    ]
-    live_shelf = any(f in _SHELF_FORMS for f in forms)
 
     return {
-        "seen_accessions": seen_accessions,
-        "live_shelf": live_shelf,
+        "seen_accessions": rows,
+        "live_shelf": any(r["form"] in _SHELF_FORMS for r in rows),
         "provenance": {
-            "source_url": url,
+            "source_url": _company_source_url(getattr(company, "cik", None)),
             "fetch_ts": datetime.now(timezone.utc).isoformat(),
             "grade": "green",
         },

@@ -13,6 +13,7 @@ dependencies = [
     "pydantic-settings>=2,<3",
     "sqlite-vec>=0.1.9",
     "statsmodels==0.14.6",  # cointegration (Engle-Granger/Johansen); pulls numpy/scipy/pandas/patsy
+    "edgartools==5.49.0",  # SEC EDGAR filings + XBRL fundamentals (CIK-internal); the one new dep (PIPE-08)
     "claude-agent-sdk==0.2.139",  # headless agent runtime (query/output_format/@tool)
 ]
 
