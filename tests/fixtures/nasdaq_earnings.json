@@ -1,0 +1,46 @@
+{
+  "data": {
+    "asOf": "Tue, Aug 4, 2026",
+    "headers": {
+      "symbol": "Symbol",
+      "name": "Company Name",
+      "time": "Time",
+      "marketCap": "Market Cap",
+      "fiscalQuarterEnding": "Fiscal Quarter Ending",
+      "epsForecast": "EPS Forecast",
+      "noOfEsts": "# of Ests",
+      "lastYearRptDt": "Last Year's Report Date",
+      "lastYearEPS": "Last Year's EPS"
+    },
+    "rows": [
+      {
+        "lastYearRptDt": "8/5/2025",
+        "lastYearEPS": "($0.55)",
+        "time": "time-after-hours",
+        "symbol": "KURA",
+        "name": "Kura Oncology Inc.",
+        "marketCap": "$1,200,000,000",
+        "fiscalQuarterEnding": "Jun/2026",
+        "epsForecast": "($0.48)",
+        "noOfEsts": "6"
+      },
+      {
+        "lastYearRptDt": "8/6/2025",
+        "lastYearEPS": "($1.10)",
+        "time": "time-pre-market",
+        "symbol": "IOVA",
+        "name": "Iovance Biotherapeutics Inc.",
+        "marketCap": "$2,500,000,000",
+        "fiscalQuarterEnding": "Jun/2026",
+        "epsForecast": "($0.30)",
+        "noOfEsts": "8"
+      }
+    ]
+  },
+  "message": null,
+  "status": {
+    "rCode": 200,
+    "bCodeMessage": null,
+    "developerMessage": null
+  }
+}

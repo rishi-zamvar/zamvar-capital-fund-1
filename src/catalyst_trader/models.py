@@ -39,6 +39,11 @@ class SourceOrigin(str, Enum):
     fmp_earnings = "fmp_earnings"
     curated_pdufa = "curated_pdufa"
     ad_hoc_user = "ad_hoc_user"
+    # Honest provenance for the Nasdaq earnings feed (the FMP-402 fallback). A Nasdaq-sourced
+    # earnings Catalyst carries its OWN origin — it must NOT reuse fmp_earnings (false provenance
+    # on a money-adjacent feed) nor raise ValidationError at the enum boundary. Additive: no
+    # match/case, DB CHECK, or exhaustive iteration over SourceOrigin, so no consumer breaks.
+    nasdaq_earnings = "nasdaq_earnings"
 
 
 class SourceType(str, Enum):
