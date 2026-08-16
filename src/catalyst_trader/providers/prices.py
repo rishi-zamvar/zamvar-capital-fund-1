@@ -15,6 +15,7 @@ raises into the pipeline or fabricates a bar — miss/no-key/degrade all return 
 
 import logging
 
+import pandas as pd
 import yfinance as yf
 
 from catalyst_trader.config import settings
@@ -51,6 +52,12 @@ def _yf_weekly(ticker, start, end, *, downloader=yf.download):
     )
     if df is None or df.empty:
         return []
+    # yfinance 1.6.0 returns MultiIndex (field, ticker) columns even for a single ticker, so
+    # row["Close"] would be a Series (the ticker sub-level), not a scalar — the NaN guard never
+    # fires and every bar comes back all-None. Flatten to the field level so row["Close"] is a
+    # scalar again. Handle both MultiIndex (real) and flat (defensive) column shapes.
+    if isinstance(df.columns, pd.MultiIndex):
+        df = df.droplevel(axis=1, level=1)
     bars = []
     for idx, row in df.iterrows():
         try:
