@@ -1,8 +1,30 @@
 ticker,legal_sponsor_name
-# STARTER TEMPLATE — REQUIRES HUMAN CURATION (completed in the Plan 06 curation checkpoint).
 # Maps a ticker to the EXACT legal name(s) as they appear in ClinicalTrials.gov
-# leadSponsor.name. Loose sponsor search pulls in collaborator/university trials, so a
-# study is attributed to a ticker ONLY when its lead sponsor matches a name below.
-# One row per (ticker, legal name); quote names that contain a comma.
-VRTX,Vertex Pharmaceuticals Incorporated
-REGN,"Regeneron Pharmaceuticals, Inc."
+# leadSponsor.name. Loose sponsor search (query.spons) pulls in collaborator/university
+# trials, so a study is attributed to a ticker ONLY when its lead sponsor matches a name
+# below. One row per (ticker, legal name); quote names that contain a comma.
+#
+# CURATED 2026-08-16 from LIVE ClinicalTrials.gov v2 leadSponsor.name probes (cite-or-drop:
+# every name below was returned by the API for that company). BBIO runs its trials under
+# subsidiary sponsors (QED / Calcilytix), so both are mapped. ETFs (XBI, LABD) run no trials
+# and are intentionally absent.
+PHVS,Pharvaris Netherlands B.V.
+BCRX,BioCryst Pharmaceuticals
+NTLA,Intellia Therapeutics
+BBIO,"QED Therapeutics, a BridgeBio company"
+BBIO,"Calcilytix Therapeutics, Inc., a BridgeBio company"
+IONS,"Ionis Pharmaceuticals, Inc."
+DYN,Dyne Therapeutics
+RGNX,REGENXBIO Inc.
+SRPT,"Sarepta Therapeutics, Inc."
+CLDX,Celldex Therapeutics
+IDYA,IDEAYA Biosciences
+OLMA,"Olema Pharmaceuticals, Inc."
+CMPS,COMPASS Pathways
+RARE,Ultragenyx Pharmaceutical Inc
+MIRM,"Mirum Pharmaceuticals, Inc."
+TVTX,"Travere Therapeutics, Inc."
+PRAX,Praxis Precision Medicines
+ALNY,Alnylam Pharmaceuticals
+INSM,Insmed Incorporated
+MDGL,"Madrigal Pharmaceuticals, Inc."

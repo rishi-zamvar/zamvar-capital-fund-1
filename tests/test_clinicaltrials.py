@@ -106,5 +106,27 @@ def test_builds_date_range_and_sponsor_query(httpx_mock, load_fixture):
 
 def test_default_sponsor_map_loads_from_csv():
     m = ct.load_sponsor_map()
-    assert "VRTX" in m
-    assert "Vertex Pharmaceuticals Incorporated" in m["VRTX"]
+    assert "IONS" in m
+    assert "Ionis Pharmaceuticals, Inc." in m["IONS"]
+    # comma-in-name row is CSV-quoted, not split
+    assert "QED Therapeutics, a BridgeBio company" in m["BBIO"]
+
+
+def test_sponsor_map_covers_every_non_etf_universe_ticker():
+    """Regression for the zero-catalyst bug: the sponsor map MUST cover every operating
+    universe ticker, else fetch_trial_readouts silently returns [] (no API call fires) for
+    the uncovered names. ETFs (XBI/LABD) run no trials and are intentionally excluded."""
+    import csv as _csv
+    from pathlib import Path
+
+    seed = Path(__file__).resolve().parents[1] / "data" / "seed_universe.csv"
+    rows = [
+        ln
+        for ln in seed.read_text().splitlines()
+        if ln.strip() and not ln.lstrip().startswith("#")
+    ]
+    universe = {r["ticker"].strip() for r in _csv.DictReader(rows)}
+    operating = universe - {"XBI", "LABD"}  # ETFs: no clinical trials
+    m = ct.load_sponsor_map()
+    missing = operating - m.keys()
+    assert not missing, f"universe tickers with no CT.gov sponsor mapping: {sorted(missing)}"
