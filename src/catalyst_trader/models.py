@@ -61,6 +61,11 @@ class CatalystSource(BaseModel):
     date_type: DateType = DateType.estimated
     agrees: bool = True
     retrieved_at: str
+    # The source's OWN publication date (for Federal Register: the document publication_date) —
+    # DISTINCT from reported_date (the event date). Transport/in-memory ONLY: not persisted, not
+    # read by verify. Plan 07 reads it off the in-memory Catalyst to stamp last_verified_at
+    # point-in-time (anti-look-ahead, Pitfall 4). Default None (e.g. RTTNews leaves it None).
+    published_date: str | None = None
 
 
 class Catalyst(BaseModel):
