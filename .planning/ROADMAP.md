@@ -21,7 +21,8 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [ ] **Phase 6.5: Weekly Strategy Correction** - Sizing amendment (target-within-survival-cap), NO zero-trade weeks, universe-wide weekly thesis engine (catalyst + mean-reversion + continuation, each with a measured edge), weekly build/exit/monitor cadence — reworks Phase-5 sizing before any backtest
 - [ ] **Phase 6.7: MD/GP Reconciliation Loop** - GP integrates catalyst-call + portfolio + diligence; bounded iterative re-trigger of Workflow 1 or 2 with DD's missing info until convergence/cap; residual caveats → LP; firewall preserved
 - [ ] **Phase 6.8: Weekly Company-Vetting Scanner (Haiku DD-Replica)** - Haiku replica of the diligence workflow vetting each company forward for the week; refreshable week-over-week deltas (company card), monitor-by-exception (deterministic-first, cheap); surfaces volatility opportunities → MD routes to verification → weekly portfolio → intra-week monitor
-- [ ] **Phase 6.9: Free-Data Ingestion Layer** *(added 2026-08-15)* - Build the researched free-data providers/scrapers (yfinance prices, CBOE options JSON, FINRA, EDGAR, Federal Register/RTTNews PDUFA, Nasdaq earnings) with rate-limit/cache/provenance discipline; wire the mocked seams to real sources; ingest real history → enables the first REAL backtest + live shakedown
+- [ ] **Phase 6.9: Free-Data Ingestion Layer** *(added 2026-08-15)* - Build the researched free-data providers/scrapers (multi-source price cascade [AV/Tiingo/yfinance/Nasdaq, cross-checked], CBOE options JSON, FINRA, EDGAR, Federal Register/RTTNews PDUFA, Nasdaq earnings) with rate-limit/cache/provenance discipline; wire the mocked seams to real sources; ingest real history → enables the first REAL backtest + live shakedown
+- [ ] **Phase 6.10: Always-On Data Daemon, Coverage Expansion & Quality Monitor** *(added 2026-08-16)* - Wrap the 6.9 foundation in a constantly-running launchd daemon (stateless run_cycle + gap-detector + self-heal + raw-snapshot lake); add the gap-filler free sources (SEC XBRL fundamentals/float via edgartools, FRED macro/rates/VIX); upgrade price cross-check to N-source median; surface data-health to the monitor. FREE + accuracy-first, $0.
 - [ ] **Phase 7: Verifier/Guardrails + Backtest Harness** - Fact-check verifier + runtime monitors + mechanical (Layer A) and guarded-agentic (Layer B) backtests
 - [ ] **Phase 8: Paper Ledger, Attribution & Post-Mortem (Layer C)** - Simulated ledger vs live quotes + P&L attribution + post-mortem into the KB
 - [ ] **Phase 8.5: Intra-Week Position Monitor** *(BUILD DEFERRED)* - Light/fast Haiku agent group, event-triggered by deterministic monitors (TA thresholds/news), flags positions → routes adjustment back to portfolio builder; no order placement
@@ -190,12 +191,34 @@ Decimal phases appear between their surrounding integers in numeric order.
 **Requirements**: INGEST-01, INGEST-02, INGEST-03, INGEST-04, INGEST-05
 **Research**: `.planning/research/free-data-sources.md` (all sources verified-live + ToS posture) + `weekly-company-scanner.md` (flag-source map) + `intra-week-monitoring.md` (trigger sources)
 **Success Criteria** (what must be TRUE):
-  1. Free-data providers are BUILT per research, each behind a uniform provider interface with provenance on every datum (source_url, fetch_ts, source_grade): yfinance historical prices (FMP is 401 on historicals — confirmed; yfinance is primary), CBOE delayed-quotes options/IV JSON, FINRA short-interest, SEC EDGAR filings, Federal Register + RTTNews PDUFA/AdCom, Nasdaq/CT.gov earnings+trial readouts.
+  1. Free-data providers are BUILT per research, each behind a uniform provider interface with provenance on every datum (source_url, fetch_ts, source_grade): a MULTI-SOURCE price cascade (Alpha Vantage → Tiingo → yfinance → Nasdaq, ranked/cross-checked, RAW/unadjusted; Stooq registered-but-IP-blocked; FMP 401 on historicals — confirmed), CBOE delayed-quotes options/IV JSON, FINRA short-interest, SEC EDGAR filings, Federal Register + RTTNews PDUFA/AdCom, Nasdaq/CT.gov earnings+trial readouts.
   2. Scraper discipline enforced: rate-limited, cached at >=5-min TTL, ToS-aware (documented posture per source), graceful-degrade when a source is down/illiquid (never fabricate — mark UNVERIFIED/missing).
   3. The mocked seams built in Phases 6.5/6.8/7 (price bars, company card, implied-move, catalyst set) are wired to these real providers behind the SAME interfaces — no downstream contract change.
   4. A historical-ingestion path populates the price_bar + catalyst + company_card stores for the seed universe over ~1-2yr, point-in-time + survivorship-aware.
   5. LIVE SHAKEDOWN (the phase's own verification): ingest the real seed universe, then run Layer-A backtest + thesis_scan on the ingested data end-to-end; every edge case / divergence-from-synthetic is logged and triaged (real data stress-tests every system built so far).
-**Plans**: TBD (research → plan)
+**Plans**: 8 plans (5 waves)
+- [ ] 06.9-01-PLAN.md — Network foundation: settings (sec_user_agent + alpha_vantage/tiingo keys) + conftest text loader + _http base (cache/rate-limit/retry/UA/degrade) (Wave 1)
+- [ ] 06.9-02-PLAN.md — Store+price foundation: migration 007 (source_grade+agreeing_sources) + upsert_bars kwargs + shared Friday week_end anchor helper (Wave 1)
+- [ ] 06.9-03-PLAN.md — Price sources: yfinance+Nasdaq (always-on) + Alpha Vantage+Tiingo (keyed) + disabled Stooq — all RAW, Friday-anchored (Wave 2)
+- [ ] 06.9-04-PLAN.md — options_cboe (implied-move seam + iv=0 gate) + finra (short interest, settlementDate EQUAL filter) (Wave 2)
+- [ ] 06.9-05-PLAN.md — edgar (seen_accessions/live_shelf, SEC UA) + pdufa (Federal Register GREEN + RTTNews YELLOW → list[Catalyst]) (Wave 2)
+- [ ] 06.9-06-PLAN.md — prices.py cascade: PRICE_PROVIDERS registry + get_weekly_bars cross-check/fallback (0.5% tol, divergence log, never impute) (Wave 3)
+- [ ] 06.9-07-PLAN.md — ingest.py: assemble_raw (the seam) + historical loop (idempotent, point-in-time, survivorship) + seam/historical integration tests (Wave 4)
+- [ ] 06.9-08-PLAN.md — scripts/shakedown.py LIVE run (INGEST-05) + test_shakedown_offline wiring gate (Wave 5)
+
+### Phase 6.10: Always-On Data Daemon, Coverage Expansion & Quality Monitor
+**Goal**: Turn the on-demand 6.9 providers into our own FREE data-gathering pipeline that runs constantly — a warm, always-fresh, self-healing store — and close the two coverage gaps (fundamentals/float, macro regime). Accuracy over speed; $0 forever.
+**Depends on**: Phase 6.9 (provider foundation, store write-paths, cascade/cross-check, cache/degrade base)
+**Requirements**: PIPE-01, PIPE-02, PIPE-03, PIPE-04, PIPE-05, PIPE-06, PIPE-07, PIPE-08
+**Research**: `.planning/research/free-data-pipeline.md` (ecosystem survey, proxy verdict, OpenBB adopt-vs-mirror, daemon architecture)
+**Success Criteria** (what must be TRUE):
+  1. A constantly-running launchd daemon executes a stateless `run_cycle()` on an accuracy-first cadence, appending to a growing historical archive; launchd is the supervisor/crash-recovery, store idempotency is the resumability (re-runs never duplicate).
+  2. Self-healing: a gap-detector finds missing name-weeks / stale sources and auto-re-fetches; dead-source detection fails over through the ranked cascade; the cycle resumes cleanly after a crash.
+  3. Coverage expansion (the gap-fillers): SEC XBRL fundamentals/float/cash-runway via `edgartools` (MIT, keyless — replaces + upgrades the hand-rolled edgar.py) and FRED macro/rates/VIX (free key, ~20-line httpx provider). Both free, provenance-tagged, degrade-safe.
+  4. Accuracy upgrade: the price cross-check moves from 2-source-agree to N-source median/majority-vote with divergence flagged; raw response snapshots are archived (keyed by source/ticker/fetch_ts) for audit + re-parse.
+  5. Data-health surfaced to the live monitor (`.monitor/data_health.json` → monitor tab): per-need freshness, staleness, cross-source divergence, source-health; alerts on degradation.
+  6. OpenBB is MIRRORED not adopted (AGPL + 50-dep weight); Stooq stays disabled (route-around, no proxies). Whole design stays $0.
+**Plans**: TBD (plan after 6.9 executes — reuses the entire 6.9 foundation unchanged; thin plumbing + 2 providers + 1 daemon + 1 monitor feed)
 
 ### Phase 7: Verifier/Guardrails + Backtest Harness
 **Goal**: Prove the strategy honestly against history and stand up the runtime safety gates before any capital — real or simulated — is at stake.

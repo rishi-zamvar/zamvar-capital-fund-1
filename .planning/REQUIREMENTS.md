@@ -104,11 +104,22 @@
 
 ### Free-Data Ingestion Layer (INGEST) — added 2026-08-15
 
-- [ ] **INGEST-01**: Free-data providers BUILT per `free-data-sources.md`, each behind a uniform provider interface with provenance on every datum (source_url, fetch_ts, source_grade): yfinance historical prices (primary — FMP 401s on historicals), CBOE delayed-quotes options/IV JSON, FINRA short-interest, SEC EDGAR filings, Federal Register + RTTNews PDUFA/AdCom, earnings+trial readouts.
+- [ ] **INGEST-01**: Free-data providers BUILT per `free-data-sources.md`, each behind a uniform provider interface with provenance on every datum (source_url, fetch_ts, source_grade): a MULTI-SOURCE price cascade (Alpha Vantage → Tiingo → yfinance → Nasdaq, ranked + cross-checked, RAW/unadjusted; Stooq registered-but-IP-blocked; FMP 401s on historicals), CBOE delayed-quotes options/IV JSON, FINRA short-interest, SEC EDGAR filings, Federal Register + RTTNews PDUFA/AdCom, earnings+trial readouts.
 - [ ] **INGEST-02**: Scraper discipline — rate-limited, cached at >=5-min TTL, ToS-aware (documented posture per source), graceful-degrade on outage/illiquidity (never fabricate; mark UNVERIFIED/missing).
 - [ ] **INGEST-03**: The mocked seams (price bars, company card, implied-move, catalyst set) are wired to the real providers behind the SAME interfaces — zero downstream contract change.
 - [ ] **INGEST-04**: Historical-ingestion path populates price_bar + catalyst + company_card stores for the seed universe over ~1-2yr, point-in-time + survivorship-aware.
 - [ ] **INGEST-05**: Live shakedown — ingest the real seed universe, run Layer-A backtest + thesis_scan on real data end-to-end; edge cases logged + triaged.
+
+### Always-On Data Daemon & Coverage Expansion (PIPE) — added 2026-08-16 (free-forever, accuracy-first, constantly-running pipeline)
+
+- [ ] **PIPE-01**: A constantly-running launchd daemon executes a stateless `run_cycle()` on an accuracy-first cadence, appending to a growing historical archive; launchd = supervisor/crash-recovery, store idempotency = resumability (re-runs never duplicate).
+- [ ] **PIPE-02**: Self-heal — gap-detector finds missing name-weeks / stale sources and auto-re-fetches; dead-source detection fails over through the ranked cascade; cycle resumes cleanly after crash.
+- [ ] **PIPE-03**: SEC XBRL fundamentals/float/cash-runway via `edgartools` (MIT, keyless) — replaces + upgrades the hand-rolled edgar.py; provenance-tagged, degrade-safe. (Fills the #1 known free-data gap: float.)
+- [ ] **PIPE-04**: FRED macro/rates/VIX regime provider (free key, ~20-line httpx, no dep) — fills the macro-regime coverage gap; env-first key.
+- [ ] **PIPE-05**: Price cross-check upgraded from 2-source-agree to N-source median/majority-vote with divergence flagged; never impute a missing bar.
+- [ ] **PIPE-06**: Raw response snapshots archived (keyed by source/ticker/fetch_ts) on local disk for audit + re-parse — the raw data lake.
+- [ ] **PIPE-07**: Data-health surfaced to the live monitor (`.monitor/data_health.json` → monitor tab): per-need freshness, staleness, cross-source divergence, source-health; alerts on degradation.
+- [ ] **PIPE-08**: Whole design stays FREE ($0) — OpenBB mirrored not adopted (AGPL + 50 deps); Stooq stays disabled (route-around, no proxies); only new dep is `edgartools`.
 
 ### Backtest / Baseline Harness (BACK)
 
