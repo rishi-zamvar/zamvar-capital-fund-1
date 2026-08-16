@@ -124,6 +124,16 @@
 - [x] **PIPE-09** *(shakedown finds 2026-08-16)*: Close the live-shakedown provider gaps that fed cards/flags but degraded on real data: (a) **FINRA** returns NDJSON, not a single JSON object — parse line-by-line (`get_json` did one `json.loads` → "Extra data"); (b) **EDGAR** needs a ticker→CIK map (SEC `company_tickers.json`) — subsumed by the PIPE-03 `edgartools` adoption, which resolves CIK internally; (c) **Nasdaq earnings fallback** — FMP earnings-calendar returned 402 (key tier), so activate the Nasdaq earnings provider the 6.9 plan deferred ("only if FMP fails" — it failed). Each provenance-tagged, degrade-safe, offline-tested.
 - [x] **PIPE-10** *(shakedown find 2026-08-16)*: Real ≥2-source price cross-check must actually engage in the live daemon (the 6.9 shakedown ran effectively single-source: yfinance MultiIndex bug [fixed] + no GREEN keys). Verify N-source median (PIPE-05) triangulates ≥2 live sources on the real universe; document the GREEN-key setup (AV/Tiingo) so the cross-check has redundancy beyond yfinance+Nasdaq.
 
+### Own PDUFA + Robinhood Data (PDUFA-EDGAR / RH-DATA) — added 2026-08-16 (build-our-own, operator directive)
+
+- [ ] **PDUFA-EDGAR-01**: `providers/pdufa_edgar.py` discovers PDUFA/AdCom 8-Ks via EDGAR full-text search (efts, CIK-filtered per universe) — no HTML scraping.
+- [ ] **PDUFA-EDGAR-02**: Deterministic regex extraction of the PDUFA/target-action/goal/AdCom date verbatim-adjacent to the keyword (no-LLM-dates; cite-or-drop; 8-K accession URL = authoritative provenance). Verified phrasing: `PDUFA target action date {of|set for} <Month DD, YYYY>`.
+- [ ] **PDUFA-EDGAR-03**: Emits `Catalyst(source_name="SEC EDGAR", source_type=primary)` → verifies as a single authoritative source (DATA-03 amendment, zero verify.py change) → tradeable; `last_verified_at` point-in-time from the 8-K filing_date. HIGH-confidence auto-emits; MEDIUM/LOW route to the `load_curated_pdufa` review CSV.
+- [ ] **PDUFA-EDGAR-04**: Wired into `ingest._fetch_catalysts` (the daemon path) + registered in `providers/registry.py`; live-verified a real PDUFA (IMNM 2027-04-28 / CAPR 2026-08-22) extracts→verifies→tradeable.
+- [ ] **RH-DATA-01**: Pluggable Robinhood MCP-tool data adapter (`quotes_rt` via get_equity_quotes, `portfolio` via get_portfolio) that degrades-to-None when the MCP is disconnected; never sole-source; NOT for bulk/historical (broker/account-safety).
+- [ ] **RH-DATA-02** *(GATED on operator connecting the RH MCP — cannot be done autonomously)*: run the 7-step probe-plan to enumerate + verify the RH read surface (UNVERIFIED per CLAUDE.md) via the Claude Agent SDK MCP path.
+- [ ] **RH-DATA-03** *(GATED)*: wire the verified RH quotes/portfolio into the monitor (real-time cross-check) + the paper/live ledger (portfolio reconciliation).
+
 ### Backtest / Baseline Harness (BACK)
 
 - [x] **BACK-01**: Historical event set from ~1yr of earnings calendars across the universe + dateable biotech catalysts
