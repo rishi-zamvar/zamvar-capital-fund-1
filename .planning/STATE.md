@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: verifying
-stopped_at: Completed 06.10-02-PLAN.md
-last_updated: "2026-08-16T07:36:30.802Z"
+stopped_at: Completed 06.10-03-PLAN.md
+last_updated: "2026-08-16T07:44:06.916Z"
 last_activity: 2026-08-16
 progress:
   total_phases: 17
   completed_phases: 11
   total_plans: 67
-  completed_plans: 62
+  completed_plans: 63
 ---
 
 # Project State
@@ -112,6 +112,7 @@ Note: Phase 6.9/6.10 are retro-inserted sub-phases; the frontmatter project-wide
 | Phase 06.9 P07 | 20min | 2 tasks | 3 files |
 | Phase 06.9 P08 | 110min | 2 tasks tasks | 7 files files |
 | Phase 06.10 P02 | 12m | 1 tasks | 4 files |
+| Phase 06.10 P03 | 15min | 2 tasks tasks | 6 files files |
 
 ## Accumulated Context
 
@@ -212,6 +213,7 @@ Recent decisions affecting current work:
 - [Phase 06.9]: ingest_history stamps last_verified_at point-in-time from the FR primary in-memory published_date (not now/event_date); null published_date stays unstamped (BACK-01)
 - [Phase 06.9]: Live shakedown (INGEST-05) executed: 100% price coverage but tradeable_catalyst_count=0 -> backtest honestly vacuous on catalysts; feed ran single-source (nasdaq) as yfinance nulled + no GREEN keys
 - [Phase 06.9]: Two money-critical cascade bugs found+fixed with tests: null-close bars crash ingest; nasdaq ETF asset-class miss killed XBI sector reference
+- [Phase 06.10]: Raw-snapshot lake keyed by cache-key; snapshot_path() recomputes key so providers get raw_snapshot_path without knowing internals
 
 ### Pending Todos
 
@@ -225,6 +227,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-08-16T07:36:30.798Z
-Stopped at: Completed 06.10-02-PLAN.md
+Last session: 2026-08-16T07:44:01.577Z
+Stopped at: Completed 06.10-03-PLAN.md
 Resume file: None
