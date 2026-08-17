@@ -1,0 +1,53 @@
+{
+  "totalCount": 4,
+  "studies": [
+    {
+      "protocolSection": {
+        "identificationModule": {"nctId": "NCT06000001", "briefTitle": "Phase 3 Study of BCX-Drug in HAE"},
+        "sponsorCollaboratorsModule": {"leadSponsor": {"name": "BioCryst Pharmaceuticals"}},
+        "statusModule": {
+          "overallStatus": "ACTIVE_NOT_RECRUITING",
+          "primaryCompletionDateStruct": {"date": "2026-11-30", "type": "ESTIMATED"},
+          "lastUpdatePostDateStruct": {"date": "2026-07-01"}
+        },
+        "designModule": {"phases": ["PHASE3"], "studyType": "INTERVENTIONAL"}
+      }
+    },
+    {
+      "protocolSection": {
+        "identificationModule": {"nctId": "NCT06000002", "briefTitle": "Phase 3 Study of NX-Degrader"},
+        "sponsorCollaboratorsModule": {"leadSponsor": {"name": "Nurix Therapeutics, Inc."}},
+        "statusModule": {
+          "overallStatus": "RECRUITING",
+          "primaryCompletionDateStruct": {"date": "2026-12-15", "type": "ESTIMATED"},
+          "lastUpdatePostDateStruct": {"date": "2026-07-02"}
+        },
+        "designModule": {"phases": ["PHASE3"], "studyType": "INTERVENTIONAL"}
+      }
+    },
+    {
+      "protocolSection": {
+        "identificationModule": {"nctId": "NCT06000003", "briefTitle": "Phase 1 Dose Escalation"},
+        "sponsorCollaboratorsModule": {"leadSponsor": {"name": "Kura Oncology, Inc."}},
+        "statusModule": {
+          "overallStatus": "RECRUITING",
+          "primaryCompletionDateStruct": {"date": "2026-10-31", "type": "ESTIMATED"},
+          "lastUpdatePostDateStruct": {"date": "2026-06-15"}
+        },
+        "designModule": {"phases": ["PHASE1"], "studyType": "INTERVENTIONAL"}
+      }
+    },
+    {
+      "protocolSection": {
+        "identificationModule": {"nctId": "NCT06000004", "briefTitle": "Phase 2 Study of IMM-Drug"},
+        "sponsorCollaboratorsModule": {"leadSponsor": {"name": "Immunome, Inc."}},
+        "statusModule": {
+          "overallStatus": "ACTIVE_NOT_RECRUITING",
+          "primaryCompletionDateStruct": {"date": "2026-09-30", "type": "ESTIMATED"},
+          "lastUpdatePostDateStruct": {"date": "2026-08-01"}
+        },
+        "designModule": {"phases": ["PHASE2"], "studyType": "INTERVENTIONAL"}
+      }
+    }
+  ]
+}
