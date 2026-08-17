@@ -1,0 +1,19 @@
+{
+  "timestamp": "2026-08-17T15:30:00Z",
+  "data": {
+    "symbol": "NUVL",
+    "current_price": 80.00,
+    "bid": 79.90,
+    "ask": 80.10,
+    "volume": 1200000,
+    "iv30": 0.62,
+    "options": [
+      {"option": "NUVL261016C00080000", "bid": 4.20, "ask": 4.60, "iv": 0.60, "open_interest": 850, "volume": 120},
+      {"option": "NUVL261016P00080000", "bid": 3.90, "ask": 4.30, "iv": 0.61, "open_interest": 780, "volume": 110},
+      {"option": "NUVL261016C00100000", "bid": 1.10, "ask": 1.40, "iv": 0.66, "open_interest": 300, "volume": 40},
+      {"option": "NUVL261016P00060000", "bid": 0.90, "ask": 1.20, "iv": 0.70, "open_interest": 260, "volume": 30},
+      {"option": "NUVL261120C00080000", "bid": 6.10, "ask": 6.60, "iv": 0.64, "open_interest": 400, "volume": 60},
+      {"option": "NUVL261120P00080000", "bid": 5.80, "ask": 6.30, "iv": 0.65, "open_interest": 380, "volume": 55}
+    ]
+  }
+}
