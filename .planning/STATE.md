@@ -3,8 +3,8 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: verifying
-stopped_at: Completed 06.11-04-PLAN.md (LIVE close of Phase 6.11)
-last_updated: "2026-08-16T18:16:38.385Z"
+stopped_at: Completed 06.12-01 + 06.12-02 (offline TDD discovery+screen+size+write); 06.12-03 LIVE run NOT executed — operator-gated
+last_updated: "2026-08-17T20:29:43.306Z"
 last_activity: 2026-08-16
 progress:
   total_phases: 17
@@ -120,6 +120,8 @@ Note: Phase 6.9/6.10 are retro-inserted sub-phases; the frontmatter project-wide
 | Phase 06.11 P03 | 5min | 2 tasks | 6 files |
 | Phase 06.11-edgar-pdufa-autopop P02 | 15min | 2 tasks tasks | 4 files files |
 | Phase 06.11 P04 | 20m | 1 tasks | 3 files |
+| Phase 06.12 P01 | 20min | 2 tasks | 5 files |
+| Phase 06.12 P02 | 25min | 3 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -228,6 +230,8 @@ Recent decisions affecting current work:
 - [Phase 06.11]: pdufa_edgar: HTML->text normalize before regex closes the offline-green/live-broken tag-split trap; single SEC EDGAR primary self-verifies (DATA-03), MEDIUM/LOW route to #-commented review CSV
 - [Phase 06.11-edgar-pdufa-autopop]: pdufa_edgar wired as a distinct daemon-path slot alongside the untouched pdufa slot (discovery redundancy)
 - [Phase 06.11]: LIVE-proven: IMNM 2027-04-28 + CAPR 2026-08-22 extract from real 8-Ks -> verified + tradeable, single SEC EDGAR primary, point-in-time stamped (PDUFA-EDGAR-04 closed)
+- [Phase 06.12]: Universe discovery build_universe passes min_catalyst_density=0 (Blocker 1: catalyst table vacuous pre-7.5; store-density floor re-engages in 7.5)
+- [Phase 06.12]: N is measured-and-grown as an output (target lambda 1.75 avg/yr), never hard-coded 80; optionability = bid both legs + OI>=100 + spread/mid<0.6
 
 ### Pending Todos
 
@@ -241,6 +245,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-08-16T18:16:32.028Z
-Stopped at: Completed 06.11-04-PLAN.md (LIVE close of Phase 6.11)
+Last session: 2026-08-17T20:29:43.302Z
+Stopped at: Completed 06.12-01 + 06.12-02 (offline TDD discovery+screen+size+write); 06.12-03 LIVE run NOT executed — operator-gated
 Resume file: None
