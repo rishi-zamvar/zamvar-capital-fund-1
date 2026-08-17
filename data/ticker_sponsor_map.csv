@@ -28,3 +28,14 @@ PRAX,Praxis Precision Medicines
 ALNY,Alnylam Pharmaceuticals
 INSM,Insmed Incorporated
 MDGL,"Madrigal Pharmaceuticals, Inc."
+# EXTENDED 2026-08-17 (Phase 6.12 universe expansion): additional live-shaped legal
+# leadSponsor names to raise reverse-map coverage for CT.gov discovery (cite-or-drop —
+# these are the legal-entity names CT.gov returns for each company; live-verify in Plan 03).
+IMNM,"Immunome, Inc."
+CAPR,"Capricor Therapeutics, Inc."
+KURA,"Kura Oncology, Inc."
+VKTX,"Viking Therapeutics, Inc."
+NUVL,"Nuvalent, Inc."
+ARQT,"Arcutis Biotherapeutics, Inc."
+CRNX,"Crinetics Pharmaceuticals, Inc."
+AKRO,"Akero Therapeutics, Inc."
