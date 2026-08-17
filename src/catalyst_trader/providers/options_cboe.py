@@ -22,6 +22,7 @@ provider does no money arithmetic itself. _http degrade (403/timeout) -> return 
 
 import logging
 from collections import defaultdict
+from datetime import date
 
 from catalyst_trader.dates import now_iso
 from catalyst_trader.providers._http import get_json
@@ -30,6 +31,12 @@ from catalyst_trader.quant import options as _quant
 logger = logging.getLogger(__name__)
 
 _URL = "https://cdn.cboe.com/api/global/delayed_quotes/options/{ticker}.json"
+
+# A qualifying ATM pair needs REAL two-sided open interest (rejects a 1-lot ghost weekly) — below
+# the screen's 100 gate (which stays in discover._optionable) — and a strike genuinely NEAR spot,
+# so a far-OTM-only chain can't masquerade as at-the-money (the VERA $0.20 deep-OTM live bug).
+MIN_ATM_OI = 25
+ATM_BAND = 0.15
 
 
 def _f(x):
@@ -50,14 +57,28 @@ def _parse_occ(sym: str):
     return f"20{d[0:2]}-{d[2:4]}-{d[4:6]}", cp, strike
 
 
+def _is_monthly(expiry_iso: str) -> bool:
+    """True iff the expiry is a STANDARD MONTHLY — the 3rd Friday (weekday()==4 and 15<=day<=21)."""
+    y, m, d = (int(x) for x in expiry_iso.split("-"))
+    return date(y, m, d).weekday() == 4 and 15 <= d <= 21
+
+
 def _atm_live_pair(records, spot):
-    """The near-the-money call+put with a LIVE bid>0 on BOTH legs (Pitfall 2). None if none qualify."""
+    """The LIQUID at-the-money call+put for ONE expiry, or None if none qualify.
+
+    A pair qualifies iff BOTH legs have a live bid>0 (Pitfall 2), their combined open interest is
+    >= MIN_ATM_OI (rejects a 1-lot ghost), and the strike sits within ATM_BAND of spot (genuinely
+    near-the-money — not the least-bad of a far-OTM-only chain). Nearest-to-spot among qualifiers.
+    """
     calls = {r["strike"]: r for r in records if r["cp"] == "C" and r["bid"] > 0}
     puts = {r["strike"]: r for r in records if r["cp"] == "P" and r["bid"] > 0}
-    common = set(calls) & set(puts)
-    if not common:
+    qualifying = [
+        s for s in set(calls) & set(puts)
+        if abs(s / spot - 1) <= ATM_BAND and calls[s]["oi"] + puts[s]["oi"] >= MIN_ATM_OI
+    ]
+    if not qualifying:
         return None
-    strike = min(common, key=lambda s: abs(s - spot))
+    strike = min(qualifying, key=lambda s: abs(s - spot))
     return calls[strike], puts[strike]
 
 
@@ -96,12 +117,16 @@ def fetch(ticker: str) -> dict | None:
     for r in parsed:
         by_expiry[r["expiry"]].append(r)
 
-    pair, near_expiry = None, None
-    for e in sorted(by_expiry):
-        pair = _atm_live_pair(by_expiry[e], spot)
-        if pair:
-            near_expiry = e
-            break
+    # Monthly-preferred selection: among expiries WITH a qualifying liquid ATM pair, take the
+    # earliest STANDARD MONTHLY (3rd-Friday) — real liquidity lives there — falling back to the
+    # earliest qualifying expiry only if no monthly qualifies. NOT merely the earliest expiry with
+    # any bid>0 pair (the old bug: a thin near-dated weekly's far-from-spot strike).
+    # ponytail: monthly-preferred, nearest-to-spot liquid — not full greeks-weighted ATM; upgrade
+    # only if a size decision ever hinges on sub-strike precision.
+    qualifying = [e for e in by_expiry if _atm_live_pair(by_expiry[e], spot)]
+    monthlies = [e for e in qualifying if _is_monthly(e)]
+    near_expiry = min(monthlies) if monthlies else (min(qualifying) if qualifying else None)
+    pair = _atm_live_pair(by_expiry[near_expiry], spot) if near_expiry else None
 
     now = now_iso()
     prov = {"source_url": url, "fetch_ts": now, "grade": "yellow"}
