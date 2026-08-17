@@ -81,8 +81,8 @@ def _yf_weekly(ticker, start, end, *, downloader=yf.download):
     return bars
 
 
-def _nasdaq_daily(ticker, start, end):
-    """Nasdaq historical JSON -> RAW daily bars resampled to Friday weeks (YELLOW, always-on).
+def _nasdaq_daily_bars(ticker, start, end):
+    """Nasdaq historical JSON -> RAW *daily* bars (the pre-resample list), YELLOW, always-on.
 
     Prices are '$'-prefixed strings, unadjusted. Fetched via _http with a browser UA (the host
     403s non-browser agents); a degrade (None from _http) -> [].
@@ -90,7 +90,8 @@ def _nasdaq_daily(ticker, start, end):
     The endpoint is asset-class-partitioned: an ETF (XBI, LABD, ...) returns NO rows under
     ``assetclass=stocks``, so we fall through to ``assetclass=etf``. Without this the sector
     reference XBI silently has zero bars and the whole beta/thesis_scan sleeve goes dark
-    (live-shakedown finding).
+    (live-shakedown finding). Each bar's `week_end` is the raw TRADE date (ISO) — resampling to
+    Friday weeks (get_weekly_bars) or keeping it daily (get_daily_bars) is the caller's choice.
     """
     url = f"https://api.nasdaq.com/api/quote/{ticker}/historical"
     rows = []
@@ -107,7 +108,7 @@ def _nasdaq_daily(ticker, start, end):
         close = _f(r.get("close"))
         if close is None:
             continue
-        # Nasdaq date is MM/DD/YYYY -> ISO for the anchor.
+        # Nasdaq date is MM/DD/YYYY -> ISO trade date.
         m, d, y = r["date"].split("/")
         daily.append({
             "week_end": f"{y}-{m}-{d}",
@@ -116,8 +117,15 @@ def _nasdaq_daily(ticker, start, end):
             "low": _f(r.get("low")),
             "close": close,
             "volume": _f(r.get("volume")),
+            "_source": "nasdaq",
+            "_grade": "yellow",
         })
-    weekly = resample_daily_to_weekly(daily)
+    return daily
+
+
+def _nasdaq_daily(ticker, start, end):
+    """Nasdaq RAW daily bars resampled to Friday weeks (YELLOW). Weekly wrapper over the daily fetch."""
+    weekly = resample_daily_to_weekly(_nasdaq_daily_bars(ticker, start, end))
     for b in weekly:
         b["_source"] = "nasdaq"
         b["_grade"] = "yellow"
@@ -163,11 +171,12 @@ def _av_weekly(ticker, start, end):
     return bars
 
 
-def _tiingo_eod(ticker, start, end):
-    """Tiingo EOD daily RAW bars resampled to Friday weeks (GREEN, keyed).
+def _tiingo_daily_bars(ticker, start, end):
+    """Tiingo EOD RAW *daily* bars (the pre-resample list), GREEN, keyed.
 
     Reads `close/open/high/low/volume` — NEVER `adjClose`/`adj*` (those bake in future
-    corporate actions). [] when the key is absent or on _http degrade.
+    corporate actions). [] when the key is absent or on _http degrade. `week_end` is the raw
+    trade date (ISO).
     """
     key = settings.tiingo_api_key
     if key is None:
@@ -183,14 +192,21 @@ def _tiingo_eod(ticker, start, end):
         if close is None:
             continue
         daily.append({
-            "week_end": str(row["date"])[:10],  # ISO datetime -> YYYY-MM-DD
+            "week_end": str(row["date"])[:10],  # ISO datetime -> YYYY-MM-DD trade date
             "open": _f(row.get("open")),
             "high": _f(row.get("high")),
             "low": _f(row.get("low")),
             "close": close,
             "volume": _f(row.get("volume")),
+            "_source": "tiingo",
+            "_grade": "green",
         })
-    weekly = resample_daily_to_weekly(daily)
+    return daily
+
+
+def _tiingo_eod(ticker, start, end):
+    """Tiingo EOD daily RAW bars resampled to Friday weeks (GREEN). Weekly wrapper over the daily fetch."""
+    weekly = resample_daily_to_weekly(_tiingo_daily_bars(ticker, start, end))
     for b in weekly:
         b["_source"] = "tiingo"
         b["_grade"] = "green"
@@ -211,6 +227,13 @@ def _stooq(ticker, start, end):
 # excluded (disabled). Order IS the grade rank: the first provider that has a given week_end is
 # the highest-grade source for that week.
 PRICE_PROVIDERS = [_av_weekly, _tiingo_eod, _yf_weekly, _nasdaq_daily]
+
+# The ONLY daily-capable providers (keyed GREEN Tiingo first, then always-on YELLOW Nasdaq). These
+# return RAW DAILY bars (the pre-resample list) so a T-1->T+2 close-to-close event move is computed
+# at daily granularity. CRITICAL: get_daily_bars must NOT route through PRICE_PROVIDERS — its rank-0
+# `_av_weekly` returns Friday WEEKLY bars and `_yf_weekly` uses interval='1wk', so a move computed
+# off those would be a SILENT weekly-close corruption of the screen's central metric.
+DAILY_PROVIDERS = [_tiingo_daily_bars, _nasdaq_daily_bars]
 
 
 def get_weekly_bars(ticker, start, end, *, providers=PRICE_PROVIDERS, tol_pct=0.5):
@@ -305,6 +328,21 @@ def get_weekly_bars(ticker, start, end, *, providers=PRICE_PROVIDERS, tol_pct=0.
             "agreeing_sources": agreeing_srcs,
         })
     return out
+
+
+def get_daily_bars(ticker, start, end, *, providers=DAILY_PROVIDERS, tol_pct=0.5):
+    """Cross-checked DAILY close-to-close bars for the event window (T-1..T+2 granularity).
+
+    Runs ONLY the daily-capable subset (Tiingo/Nasdaq raw daily) — NOT PRICE_PROVIDERS, whose
+    weekly-native rank-0 sources would silently compute the move off WEEKLY closes. The daily
+    fetchers key each bar on its raw TRADE date, so get_weekly_bars' cross-check/grade machinery
+    (first provider with a given date wins, N-source median triangulation) applies unchanged —
+    it simply groups by trade date instead of Friday week. [] on degrade.
+
+    # ponytail: delegate to get_weekly_bars over the daily subset — the daily providers skip the
+    # resample, so no weekly bucketing runs; do NOT re-fetch or add a source.
+    """
+    return get_weekly_bars(ticker, start, end, providers=providers, tol_pct=tol_pct)
 
 
 # ---- quality detectors (research §2.3) — pure/log-only, consumed by the daemon (Plans 06/07)
