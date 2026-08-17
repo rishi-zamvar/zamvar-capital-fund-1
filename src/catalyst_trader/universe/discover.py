@@ -23,7 +23,9 @@ universe/build) are REUSED unchanged.
 import logging
 import math
 import re
+import statistics
 from collections import defaultdict
+from datetime import date, timedelta
 from pathlib import Path
 
 import edgar
@@ -31,6 +33,17 @@ from edgar import get_company_tickers  # SEC company_tickers.json (bundled offli
 
 from catalyst_trader.csvrows import read_csv_rows
 from catalyst_trader.dates import now_iso
+from catalyst_trader.models import (
+    Catalyst,
+    CatalystSource,
+    CatalystType,
+    DatePrecision,
+    DateType,
+    SourceOrigin,
+    SourceType,
+    Status,
+    Uncertainty,
+)
 from catalyst_trader.providers import clinicaltrials, options_cboe
 from catalyst_trader.providers._http import get_json, get_text
 from catalyst_trader.providers.edgar import _set_identity, fundamentals  # reuse SEC-UA + fundamentals
@@ -40,7 +53,8 @@ from catalyst_trader.providers.pdufa_edgar import (
     _exhibit_url,
     _extract,
 )
-from catalyst_trader.providers.prices import get_weekly_bars
+from catalyst_trader.providers.prices import get_daily_bars, get_weekly_bars
+from catalyst_trader.store import insert_catalyst
 from catalyst_trader.universe.build import SEED_CSV, _add_months, build_snapshot
 
 logger = logging.getLogger(__name__)
@@ -412,6 +426,142 @@ def discover_candidates(
             entry["source_feeds"] |= set(cand["source_feeds"])
             entry["company_name"] = entry["company_name"] or cand.get("company_name")
     return merged
+
+
+# ══════════════════════════════════════════════════════════════════════════════════════════
+# Plan 06 — realized catalyst-move computation + warm-start backfill (UNIV-06)
+# ══════════════════════════════════════════════════════════════════════════════════════════
+
+_MOVE_WINDOW = (-1, 2)  # trading-day offsets around event_date: T-1 (day before) .. T+2 (2 days after)
+
+
+def _move_window_str(window: tuple[int, int] = _MOVE_WINDOW) -> str:
+    return f"({window[0]},{window[1]})"
+
+
+def _realized_catalyst_move(ticker: str, event_date: str, *, window: tuple[int, int] = _MOVE_WINDOW):
+    """Realized % move around a catalyst from DAILY closes: abs(close(T+2)/close(T-1) - 1).
+
+    window=(-1, 2) trading days: T-1 = the trading day before the event, T+2 = the 2nd trading day
+    after. Returns (realized_move, move_window_str, knowable_asof, source_grade) where knowable_asof
+    is the ISO date of the T+2 close — the move is NOT knowable before then (point-in-time, NO
+    look-ahead). None (cite-or-drop, NEVER imputed) when:
+      - event_date has no day precision (YYYY / YYYY-MM) -> can't locate T-1/T+2,
+      - no daily data in the window,
+      - the window is not fully present (e.g. T+2 has not closed yet -> future catalyst).
+
+    Uses get_daily_bars (the daily subset) — NOT weekly bars, which cannot give T-1->T+2 daily
+    close-to-close granularity.
+    """
+    if len(event_date) != 10:  # YYYY or YYYY-MM -> no tradable day to anchor on
+        return None
+    lo, hi = window
+    # buffer wide enough to find T-1 and T+2 trading days across weekends/holidays
+    start = (date.fromisoformat(event_date) - timedelta(days=14)).isoformat()
+    end = (date.fromisoformat(event_date) + timedelta(days=14)).isoformat()
+    bars = get_daily_bars(ticker, start, end)
+    if not bars:
+        return None
+    bars = sorted(bars, key=lambda b: b["week_end"])  # week_end holds the raw trade date for daily bars
+    dates = [b["week_end"] for b in bars]
+    t0 = next((i for i, d in enumerate(dates) if d >= event_date), None)  # event day (or next trade day)
+    if t0 is None:
+        return None
+    i_lo, i_hi = t0 + lo, t0 + hi
+    if i_lo < 0 or i_hi >= len(bars):
+        return None  # window not fully present (insufficient history / T+2 not yet closed)
+    c_lo, c_hi = bars[i_lo].get("close"), bars[i_hi].get("close")
+    if not c_lo or not c_hi:
+        return None
+    move = abs(c_hi / c_lo - 1.0)
+    knowable_asof = bars[i_hi]["week_end"]  # the T+2 close date — when the move became knowable
+    grade = bars[i_hi].get("source_grade") or bars[i_hi].get("_grade")
+    # no look-ahead: the realized move is stamped knowable only as of T+2's close; the walk-forward
+    # filters on knowable_asof so nothing reads this move as-of a date before then.
+    return move, _move_window_str(window), knowable_asof, grade
+
+
+def _name_move_stat(moves: list[float], *, stat: str = "median") -> float | None:
+    """Per-name statistic over its per-catalyst moves (default median). None if no computable move."""
+    if not moves:
+        return None
+    return statistics.median(moves)
+
+
+def _date_precision(event_date: str) -> str:
+    return {10: "day", 7: "month", 4: "year"}.get(len(event_date), "day")
+
+
+def _to_catalyst_model(candidate: dict, c: dict) -> Catalyst:
+    """Map a discovered historical catalyst to a resolved curated_pdufa Catalyst for the backfill.
+
+    source_origin=curated_pdufa (already whitelisted), status=resolved (settled historical), a
+    CatalystSource carrying the discovery provenance (no date without a source), external_ref=the
+    source_url -> idempotent by (ticker, external_ref) via insert_catalyst.
+    """
+    return Catalyst(
+        ticker=candidate["ticker"],
+        company_name=candidate.get("company_name"),
+        catalyst_type=CatalystType(c["type"]),
+        event_date=c["event_date"],
+        date_precision=DatePrecision(_date_precision(c["event_date"])),
+        uncertainty_type=Uncertainty.firm,  # historical, settled
+        status=Status.resolved,
+        source_origin=SourceOrigin.curated_pdufa,
+        external_ref=c.get("source_url"),  # idempotency key with ticker
+        sources=[CatalystSource(
+            source_name=next(iter(candidate.get("source_feeds") or {"edgar"})),
+            source_url=c.get("source_url"),
+            source_type=SourceType.primary,
+            reported_date=c["event_date"],
+            date_type=DateType.actual,  # a settled historical catalyst
+            retrieved_at=c.get("fetch_ts") or now_iso(),
+        )],
+    )
+
+
+def _upsert_move(conn, catalyst_id: int, move: float, move_window: str, knowable_asof: str,
+                 source_grade: str | None) -> None:
+    """Persist/refresh the realized move (UNIQUE(catalyst_id, move_window) -> idempotent recompute)."""
+    conn.execute(
+        "INSERT INTO catalyst_move "
+        "(catalyst_id, realized_move, move_window, knowable_asof, source_grade, computed_at) "
+        "VALUES (?,?,?,?,?,?) "
+        "ON CONFLICT(catalyst_id, move_window) DO UPDATE SET "
+        "realized_move=excluded.realized_move, knowable_asof=excluded.knowable_asof, "
+        "source_grade=excluded.source_grade, computed_at=excluded.computed_at",
+        (catalyst_id, move, move_window, knowable_asof, source_grade, now_iso()),
+    )
+    conn.commit()
+
+
+def _persist_backfill(conn, candidate: dict) -> list[int]:
+    """Persist a candidate's historical catalysts (catalyst table) + their point-in-time realized
+    moves (catalyst_move table) as the warm-start backfill. Idempotent: re-running upserts by
+    (ticker, external_ref) and UNIQUE(catalyst_id, move_window), never duplicating. Attaches the
+    per-name median realized move + n_moves to the candidate (read by the move screen). Returns the
+    persisted catalyst ids. A single catalyst failing to persist degrades (skip), never raises.
+    """
+    ids: list[int] = []
+    moves: list[float] = []
+    for c in candidate.get("catalysts", []):
+        if c["type"] not in LIVE_PARITY_TYPES:
+            continue
+        try:
+            cid = insert_catalyst(conn, _to_catalyst_model(candidate, c))
+        except Exception as e:  # noqa: BLE001 — a bad row degrades, never sinks the backfill
+            logger.warning("discover: backfill persist degraded for %s %s: %s",
+                           candidate.get("ticker"), c.get("event_date"), e)
+            continue
+        ids.append(cid)
+        mv = _realized_catalyst_move(candidate["ticker"], c["event_date"])
+        if mv is not None:
+            move, move_window, knowable_asof, grade = mv
+            _upsert_move(conn, cid, move, move_window, knowable_asof, grade)
+            moves.append(move)
+    candidate["realized_move_median"] = _name_move_stat(moves)
+    candidate["n_moves"] = len(moves)
+    return ids
 
 
 # ══════════════════════════════════════════════════════════════════════════════════════════
