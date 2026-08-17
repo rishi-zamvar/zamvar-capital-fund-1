@@ -105,6 +105,33 @@ def load_snapshot(path) -> object:
     return json.loads(text) if p.suffix == ".json" else text
 
 
+def _read_persistent(key: tuple, source: str, kind: str, ttl_s: int) -> object | None:
+    """Frugality read-through: the newest archived snapshot for THIS exact request within `ttl_s`
+    seconds -> its parsed value, else None. Lets a fresh process (a re-run) reuse data already in
+    the raw lake instead of re-calling the API — 'never re-call what we already have.' Deterministic
+    because _safe_name(key) is a stable stem; picks the most recent file and honors the TTL so live
+    quotes don't serve week-stale. Best-effort: any error -> None (fall through to a real fetch)."""
+    stem = _safe_name(key)
+    root = Path(settings.raw_snapshot_dir) / source
+    if not root.exists():
+        return None
+    ext = "json" if kind == "json" else "txt"
+    newest, newest_m = None, None
+    try:
+        for f in root.rglob(f"{stem}_*.{ext}"):
+            m = f.stat().st_mtime
+            if newest_m is None or m > newest_m:
+                newest, newest_m = f, m
+    except OSError:
+        return None
+    if newest is None or (time.time() - newest_m) > ttl_s:
+        return None
+    try:
+        return load_snapshot(newest)
+    except Exception:  # noqa: BLE001 — a corrupt/unreadable snapshot -> fetch fresh, never crash
+        return None
+
+
 def prune_snapshots(*, max_bytes=None, older_than_days=None, base=None) -> list[str]:
     """Bound the lake: drop files older than `older_than_days`, then evict oldest until the
     total is under `max_bytes`. Returns the removed paths. Oldest-first by mtime."""
@@ -158,6 +185,16 @@ def _fetch(kind, source, url, params, ua, ttl_s, host_key, json_body=None, accep
     hit = _cache.get(key)
     if hit is not None and hit[1] > time.monotonic():
         return hit[0]  # cache path: no re-archive
+
+    # Persistent read-through (frugality): if enabled, reuse an archived response for this exact
+    # request within raw_cache_ttl_s instead of re-calling — 'never re-call data we already have.'
+    # 0 (default) = off, so tests + one-shot paths are unaffected; live runs set a generous TTL.
+    ttl_persist = getattr(settings, "raw_cache_ttl_s", 0) or 0
+    if ttl_persist > 0:
+        cached = _read_persistent(key, source, kind, ttl_persist)
+        if cached is not None:
+            _cache[key] = (cached, time.monotonic() + ttl_s)
+            return cached
 
     headers = {"User-Agent": _resolve_ua(ua)}  # raises on unset SEC UA (config error)
     if accept:  # some hosts content-negotiate (FINRA defaults to CSV; ask for JSON explicitly)

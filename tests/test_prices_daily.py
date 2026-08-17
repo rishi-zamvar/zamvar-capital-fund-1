@@ -77,10 +77,12 @@ def test_get_daily_bars_uses_daily_subset_not_price_providers():
     # DAILY_PROVIDERS must exclude the WEEKLY-native sources (_av_weekly / _yf_weekly)...
     assert prices._av_weekly not in prices.DAILY_PROVIDERS
     assert prices._yf_weekly not in prices.DAILY_PROVIDERS
-    # ...and include only daily-capable fetchers: tiingo daily + yfinance DAILY + nasdaq daily.
+    # ...and be FREE-UNLIMITED ONLY (frugality): yfinance daily + Nasdaq daily. The quota-limited
+    # Tiingo daily is a FALLBACK, never in the routine bulk set.
     assert prices._yf_daily in prices.DAILY_PROVIDERS  # reliable multi-year daily source
-    assert set(prices.DAILY_PROVIDERS) == {
-        prices._tiingo_daily_bars, prices._yf_daily, prices._nasdaq_daily_bars}
+    assert set(prices.DAILY_PROVIDERS) == {prices._yf_daily, prices._nasdaq_daily_bars}
+    assert prices._tiingo_daily_bars not in prices.DAILY_PROVIDERS  # quota source is fallback-only
+    assert prices._tiingo_daily_bars in prices.FALLBACK_DAILY_PROVIDERS
 
 
 def test_get_daily_bars_cross_check_grade(monkeypatch):

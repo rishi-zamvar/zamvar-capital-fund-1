@@ -17,6 +17,9 @@ class Settings(BaseSettings):
     # getattr(settings, "rh_mcp_call", None) — None until the SDK binds it (mirrors the FRED-key gate).
     db_path: str = "catalyst.db"
     raw_snapshot_dir: str = "data/raw"  # env: RAW_SNAPSHOT_DIR — raw-response lake ($0 local disk)
+    raw_cache_ttl_s: int = 0  # env: RAW_CACHE_TTL_S — >0 enables the persistent read-through over the
+    # raw lake: an archived response for the exact request within this many seconds is reused instead
+    # of re-fetched (frugality: never re-call data we already have). 0 = off (default; hermetic tests).
     freshness_near_event_hours: int = 48
     freshness_default_days: int = 7
     ctgov_request_spacing_s: float = 1.5

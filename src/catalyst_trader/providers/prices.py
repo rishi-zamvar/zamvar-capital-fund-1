@@ -265,17 +265,25 @@ def _stooq(ticker, start, end):
 # then always-on YELLOW (yfinance + Nasdaq = the zero-config default cross-check pair). Stooq is
 # excluded (disabled). Order IS the grade rank: the first provider that has a given week_end is
 # the highest-grade source for that week.
-PRICE_PROVIDERS = [_av_weekly, _tiingo_eod, _yf_weekly, _nasdaq_daily]
+# Frugality (CLAUDE.md "API-call frugality"): the routine bulk cascade is FREE-UNLIMITED ONLY —
+# yfinance + Nasdaq give a 2-source cross-check at ZERO quota cost. The quota-limited GREEN sources
+# (_tiingo_eod ~50 sym/hr, _av_weekly 25/DAY) are deliberately NOT here — they'd be called for every
+# ticker for data yfinance already returns. They remain defined + unit-tested as explicit fallbacks
+# (pass providers=[...]) for the rare case a free source genuinely can't supply a datum.
+PRICE_PROVIDERS = [_yf_weekly, _nasdaq_daily]
+FALLBACK_PRICE_PROVIDERS = [_tiingo_eod, _av_weekly]  # quota-limited; call only on a free-source miss
 
 # The ONLY daily-capable providers (keyed GREEN Tiingo first, then always-on YELLOW Nasdaq). These
 # return RAW DAILY bars (the pre-resample list) so a T-1->T+2 close-to-close event move is computed
 # at daily granularity. CRITICAL: get_daily_bars must NOT route through PRICE_PROVIDERS — its rank-0
 # `_av_weekly` returns Friday WEEKLY bars and `_yf_weekly` uses interval='1wk', so a move computed
 # off those would be a SILENT weekly-close corruption of the screen's central metric.
-# Daily-capable subset for get_daily_bars. yfinance daily is the reliable always-on multi-year
-# source (Tiingo keyless-degrades; Nasdaq's free daily doesn't serve historical windows — verified
-# live). Ranked GREEN-first: Tiingo (if keyed) -> yfinance daily -> Nasdaq daily.
-DAILY_PROVIDERS = [_tiingo_daily_bars, _yf_daily, _nasdaq_daily_bars]
+# Daily-capable subset for get_daily_bars. FREE-UNLIMITED ONLY (frugality): yfinance daily is the
+# reliable multi-year source, Nasdaq daily cross-checks recent windows. _tiingo_daily_bars (quota-
+# limited) is NOT here — yfinance already serves the historical daily bars the move screen needs;
+# it stays defined as an explicit fallback for a genuine yfinance miss.
+DAILY_PROVIDERS = [_yf_daily, _nasdaq_daily_bars]
+FALLBACK_DAILY_PROVIDERS = [_tiingo_daily_bars]  # quota-limited; call only on a free-source miss
 
 
 def get_weekly_bars(ticker, start, end, *, providers=PRICE_PROVIDERS, tol_pct=0.5):

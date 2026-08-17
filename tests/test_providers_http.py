@@ -172,3 +172,20 @@ def test_get_text_posts_json_body(httpx_mock):
     req = httpx_mock.get_requests()[0]
     assert req.method == "POST"
     assert json.loads(req.content) == body
+
+
+def test_persistent_read_through_reuses_lake(monkeypatch):
+    """Frugality read-through: an archived response for the exact request is reused within the TTL
+    (no re-call) and ignored once stale — so a re-run never re-fetches data we already have."""
+    from catalyst_trader.providers import _http
+
+    _http._clear_cache()
+    key = _http._key("json", "testsrc", "https://x.test/a", {"q": "1"}, None)
+    _http._write_snapshot(key, "testsrc", "json", '{"v": 42}')
+    # within TTL -> served from the lake (parsed)
+    assert _http._read_persistent(key, "testsrc", "json", 3600) == {"v": 42}
+    # stale (ttl 0) -> None -> caller falls through to a real fetch
+    assert _http._read_persistent(key, "testsrc", "json", 0) is None
+    # a request we never archived -> None
+    other = _http._key("json", "testsrc", "https://x.test/b", None, None)
+    assert _http._read_persistent(other, "testsrc", "json", 3600) is None
