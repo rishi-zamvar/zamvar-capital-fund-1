@@ -1,26 +1,23 @@
-"""PDUFA/AdCom catalyst provider (pdufa.py) — offline.
+"""AdCom catalyst provider (pdufa.py) — Federal Register only, offline.
 
-This suite carries the Blocker-2 fix: for a PDUFA/AdCom event that BOTH feeds report, the
-provider emits ONE Catalyst whose sources list holds BOTH CatalystSources — Federal Register
-(JSON, primary/GREEN) AND RTTNews (HTML, secondary/YELLOW) — sharing one external_ref, so a
-single insert_catalyst writes both source rows and the two-source verify gate
-(len(agreeing) >= 2 and has_primary) can actually fire. A single-feed event stays one-source
-(cite-or-drop, never forced tradeable). The FR source carries its document publication_date for
-point-in-time last_verified_at stamping (Plan 07). The provider NEVER sets last_verified_at and
-NEVER verifies (Pitfall 4); RTTNews is discovery-only (Pitfall 6). ZERO live API here.
+The RTTNews scraper was dropped (operator decision 2026-08-16): the dead scrape half is gone;
+the Federal Register (GREEN, primary) AdCom half stays. FR is authoritative-sufficient, so an
+attributed FR notice emits ONE single-source primary Catalyst that verifies on the single-source
+path (DATA-03 amendment). The FR source carries its document publication_date for point-in-time
+last_verified_at stamping. The provider NEVER sets last_verified_at and NEVER verifies (Pitfall 4).
+Undated / unattributable / uncitable notices are dropped (date-or-drop, cite-or-drop). ZERO live API.
 """
 
 import re
 
 import pytest
 
-from catalyst_trader.models import SourceType, Status
+from catalyst_trader.models import CatalystType, SourceType
 from catalyst_trader.providers import _http, pdufa
 
 _FR = re.compile(r"https://www\.federalregister\.gov.*")
-_RTT = re.compile(r"https://www\.rttnews\.com.*")
 
-_TICKERS = ["KURA", "CDEX", "SOME"]
+_TICKERS = ["KURA", "CDEX"]
 _MAP = {"KURA": ["Ziftomenib", "Kura Oncology"], "CDEX": ["Cardiodex"]}
 
 
@@ -31,77 +28,53 @@ def _isolate():
     _http._clear_cache()
 
 
-def _both(httpx_mock, load_fixture, load_text_fixture):
-    httpx_mock.add_response(url=_FR, json=load_fixture("fedregister"))
-    httpx_mock.add_response(url=_RTT, text=load_text_fixture("rttnews.html"))
-
-
 def _by_ticker(catalysts, ticker):
     return next((c for c in catalysts if c.ticker == ticker), None)
 
 
-def test_pdufa_merges_two_sources_same_event(httpx_mock, load_fixture, load_text_fixture):
-    _both(httpx_mock, load_fixture, load_text_fixture)
+def test_pdufa_emits_single_source_primary(httpx_mock, load_fixture):
+    httpx_mock.add_response(url=_FR, json=load_fixture("fedregister"))
     out = pdufa.fetch(_TICKERS, "2026-08-01", "2026-12-31", company_map=_MAP)
 
     kura = _by_ticker(out, "KURA")
     assert kura is not None
-    # ONE Catalyst carrying BOTH sources under one external_ref
-    types = sorted(s.source_type for s in kura.sources)
-    assert types == [SourceType.primary, SourceType.secondary]
+    # ONE FR primary source — authoritative-sufficient, verifies single-source downstream.
+    assert len(kura.sources) == 1
+    assert kura.sources[0].source_type == SourceType.primary
+    assert kura.sources[0].source_name == "Federal Register"
     assert kura.external_ref and "KURA" in kura.external_ref
-    # both agree + a primary present -> the two-source gate CAN clear post-insert
-    agreeing = [s for s in kura.sources if s.agrees]
-    assert len(agreeing) >= 2 and any(s.source_type == SourceType.primary for s in agreeing)
 
 
-def test_pdufa_fr_source_carries_publication_date(httpx_mock, load_fixture, load_text_fixture):
-    _both(httpx_mock, load_fixture, load_text_fixture)
+def test_pdufa_fr_source_carries_publication_date(httpx_mock, load_fixture):
+    httpx_mock.add_response(url=_FR, json=load_fixture("fedregister"))
     out = pdufa.fetch(_TICKERS, "2026-08-01", "2026-12-31", company_map=_MAP)
 
     kura = _by_ticker(out, "KURA")
-    fr = next(s for s in kura.sources if s.source_type == SourceType.primary)
-    rtt = next(s for s in kura.sources if s.source_type == SourceType.secondary)
+    fr = kura.sources[0]
     # publication_date = the FR document publication_date, DISTINCT from the event date
     assert fr.published_date == "2026-08-10"
     assert fr.reported_date == "2026-11-14"
     assert fr.published_date != fr.reported_date
     assert kura.event_date == "2026-11-14"
-    # RTTNews (discovery) leaves publication_date None
-    assert rtt.published_date is None
 
 
-def test_pdufa_single_source_stays_one_source(httpx_mock, load_fixture, load_text_fixture):
-    _both(httpx_mock, load_fixture, load_text_fixture)
-    out = pdufa.fetch(_TICKERS, "2026-08-01", "2026-12-31", company_map=_MAP)
-
-    cdex = _by_ticker(out, "CDEX")  # FR-only (no RTTNews match)
-    assert cdex is not None
-    assert len(cdex.sources) == 1
-    assert cdex.sources[0].source_type == SourceType.primary
-    assert cdex.status == Status.unverified  # one source -> untradeable, never forced
-
-
-def test_pdufa_does_not_set_last_verified_at(httpx_mock, load_fixture, load_text_fixture):
-    _both(httpx_mock, load_fixture, load_text_fixture)
+def test_pdufa_does_not_set_last_verified_at(httpx_mock, load_fixture):
+    httpx_mock.add_response(url=_FR, json=load_fixture("fedregister"))
     out = pdufa.fetch(_TICKERS, "2026-08-01", "2026-12-31", company_map=_MAP)
     assert out  # non-empty
     assert all(c.last_verified_at is None for c in out)  # verify/ingest owns it (Pitfall 4)
 
 
-def test_pdufa_drops_row_without_source_url(httpx_mock, load_fixture, load_text_fixture):
-    _both(httpx_mock, load_fixture, load_text_fixture)
+def test_pdufa_attributes_multiple_universe_tickers(httpx_mock, load_fixture):
+    httpx_mock.add_response(url=_FR, json=load_fixture("fedregister"))
     out = pdufa.fetch(_TICKERS, "2026-08-01", "2026-12-31", company_map=_MAP)
-    assert _by_ticker(out, "SOME") is None  # URL-less RTTNews row dropped (cite-or-drop)
+    # KURA (Ziftomenib) and CDEX (Cardiodex) both attribute from FR titles.
+    assert _by_ticker(out, "KURA") is not None
+    assert _by_ticker(out, "CDEX") is not None
+    assert all(c.catalyst_type in (CatalystType.adcom, CatalystType.pdufa) for c in out)
 
 
-def test_pdufa_one_source_degrades_other_still_runs(httpx_mock, load_text_fixture):
-    httpx_mock.add_response(url=_FR, status_code=403)  # FR down
-    httpx_mock.add_response(url=_RTT, text=load_text_fixture("rttnews.html"))
+def test_pdufa_degrades_to_empty_when_fr_down(httpx_mock):
+    httpx_mock.add_response(url=_FR, status_code=403)  # FR down -> no raise, empty result
     out = pdufa.fetch(_TICKERS, "2026-08-01", "2026-12-31", company_map=_MAP)
-
-    kura = _by_ticker(out, "KURA")
-    assert kura is not None  # RTTNews-only catalyst still emitted (no raise)
-    assert len(kura.sources) == 1
-    assert kura.sources[0].source_type == SourceType.secondary
-    assert _by_ticker(out, "CDEX") is None  # FR-only event gone when FR degrades
+    assert out == []

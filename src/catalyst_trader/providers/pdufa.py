@@ -1,34 +1,27 @@
-"""PDUFA/AdCom catalyst feed: Federal Register (GREEN) + RTTNews (YELLOW) -> list[Catalyst].
+"""AdCom catalyst feed: Federal Register (GREEN, primary) -> list[Catalyst].
 
-The Blocker-2 fix lives here. For a PDUFA/AdCom event that BOTH feeds report, we emit ONE
-Catalyst whose ``sources`` list carries BOTH CatalystSources — Federal Register (JSON,
-primary) AND RTTNews (HTML, secondary) — under a single shared external_ref. That matters
-because insert_catalyst DELETE+replaces the source rows for a given (ticker, external_ref):
-emitting FR and RTTNews as two separate Catalysts with the same ref would make the second
-overwrite the first's sources, so neither ever reaches the two-source verify gate
-(len(agreeing) >= 2 and has_primary). Merging both sources into one Catalyst means a single
-insert writes both rows and the gate can actually fire. No store.py change needed.
+Federal Register is the government publication of record for FDA advisory-committee (AdCom)
+meetings — a single authoritative primary source. It is listed in
+``verify.AUTHORITATIVE_SUFFICIENT``, so an FR-attributed AdCom notice self-verifies on the
+single-source path (DATA-03 amendment) and becomes tradeable without a second feed.
+
+PDUFA action dates are sourced separately by ``providers/pdufa_edgar`` (the SEC-8K tracker) and
+the hand-curated ``data/pdufa_curated.csv`` review queue — this provider covers the FR AdCom half.
 
 Discipline:
-  - A single-feed event (only FR OR only RTTNews) emits a ONE-source Catalyst — it stays
-    unverified/untradeable downstream (cite-or-drop, never forced tradeable).
-  - The FR source carries its document ``publication_date`` (transport-only) so Plan 07 can
-    stamp last_verified_at point-in-time. This provider does NOT set last_verified_at and does
-    NOT verify (Pitfall 4) — emitted Catalysts flow through the existing insert->verify pipeline.
-  - date_type is ``estimated`` for both sources: a PDUFA/AdCom date is an ANNOUNCED TARGET, not
-    a realized event (mirrors verify.load_curated_pdufa; ``actual`` is reserved for realized).
-    The GREEN/YELLOW authority distinction is source_type (primary vs secondary), which is what
-    the verify gate reads — not date_type.
-  - RTTNews is discovery-only (Pitfall 6): a row alone is never authoritative; any row lacking a
-    citable source_url is DROPPED. Each feed fetches through _http and degrades to [] on
-    403/timeout independently — never raise, never fabricate.
+  - The FR source carries its document ``publication_date`` (transport-only) so the ingest loop
+    can stamp ``last_verified_at`` point-in-time. This provider does NOT set last_verified_at and
+    does NOT verify (Pitfall 4) — emitted Catalysts flow through the existing insert->verify pipeline.
+  - date_type is ``estimated``: a PDUFA/AdCom date is an ANNOUNCED TARGET, not a realized event
+    (mirrors verify.load_curated_pdufa; ``actual`` is reserved for realized). The authority
+    distinction the verify gate reads is source_type (primary), not date_type.
+  - cite-or-drop / date-or-drop: an unattributable, undated, or URL-less notice is DROPPED. The
+    feed fetches through _http and degrades to [] on 403/timeout — never raise, never fabricate.
 """
 
 import logging
 import re
 from datetime import datetime
-
-from bs4 import BeautifulSoup
 
 from catalyst_trader.dates import classify, now_iso, parse_precision
 from catalyst_trader.models import (
@@ -39,21 +32,18 @@ from catalyst_trader.models import (
     SourceOrigin,
     SourceType,
 )
-from catalyst_trader.providers._http import get_json, get_text
+from catalyst_trader.providers._http import get_json
 
 logger = logging.getLogger(__name__)
 
 _FR_URL = "https://www.federalregister.gov/api/v1/documents.json"
-_RTT_URL = "https://www.rttnews.com/corpinfo/fdacalendar.aspx"
 
 # A full-month-name date embedded in FR free text: "November 14, 2026".
 _DATE_RX = re.compile(r"([A-Z][a-z]+\.?\s+\d{1,2},\s+\d{4})")
 
 
-
-
 def _norm_date(raw: str) -> str | None:
-    """Normalize an FR/RTTNews date string to ISO YYYY-MM-DD, or None if unparseable."""
+    """Normalize an FR date string to ISO YYYY-MM-DD, or None if unparseable."""
     s = (raw or "").strip().replace(".", "")
     for fmt in ("%Y-%m-%d", "%B %d, %Y", "%b %d, %Y"):
         try:
@@ -87,8 +77,8 @@ def _attribute(title: str, company_map: dict[str, list[str]]) -> str | None:
     return None
 
 
-def _ctype(fr_title: str, rtt_event: str) -> CatalystType:
-    blob = f"{fr_title} {rtt_event}".lower()
+def _ctype(fr_title: str) -> CatalystType:
+    blob = (fr_title or "").lower()
     if "advisory committee" in blob or "adcom" in blob:
         return CatalystType.adcom
     return CatalystType.pdufa
@@ -111,34 +101,6 @@ def _parse_fr(results, tickers: set[str], company_map: dict[str, list[str]]) -> 
     return out
 
 
-def _parse_rttnews(html: str, tickers: set[str]) -> dict:
-    """RTTNews FDA-calendar HTML -> {(ticker, iso_event_date): row}. Drops out-of-universe,
-    undated, and URL-less rows (cite-or-drop, Pitfall 6)."""
-    out: dict[tuple[str, str], dict] = {}
-    soup = BeautifulSoup(html or "", "lxml")
-    for tr in soup.find_all("tr"):
-        tds = tr.find_all("td")
-        if len(tds) < 6:  # header rows use <th> -> skipped; short/malformed rows ignored
-            continue
-        ticker = tds[1].get_text(strip=True).upper()
-        if ticker not in tickers:
-            continue
-        event_date = _norm_date(tds[3].get_text(strip=True))
-        if not event_date:
-            continue
-        link = tds[5].find("a")
-        url = link.get("href").strip() if (link and link.get("href")) else None
-        if not url:  # cite-or-drop: a discovery row with no citable URL is never emitted
-            continue
-        out[(ticker, event_date)] = {
-            "company": tds[0].get_text(strip=True),
-            "drug": tds[2].get_text(strip=True),
-            "event": tds[4].get_text(strip=True),
-            "url": url,
-        }
-    return out
-
-
 def fetch(
     tickers: list[str],
     date_from: str,
@@ -146,12 +108,12 @@ def fetch(
     *,
     company_map: dict[str, list[str]] | None = None,
 ) -> list[Catalyst]:
-    """PDUFA/AdCom catalysts in [date_from, date_to] for ``tickers`` -> list[Catalyst].
+    """AdCom catalysts in [date_from, date_to] for ``tickers`` -> list[Catalyst].
 
     ``company_map`` (ticker -> [drug/company name strings]) attributes Federal Register notices
-    to a universe ticker; RTTNews rows carry their own ticker symbol. A corroborated event yields
-    ONE 2-source Catalyst; a single-feed event yields a one-source (unverified) Catalyst. Each
-    feed degrades independently; the provider never verifies and never sets last_verified_at.
+    to a universe ticker. Each attributed notice yields ONE single-source primary Catalyst;
+    Federal Register is authoritative-sufficient, so it verifies on the single-source path. The
+    feed degrades to [] on outage; the provider never verifies and never sets last_verified_at.
     """
     tickers_set = {t.upper() for t in tickers}
     company_map = company_map or {}
@@ -168,60 +130,34 @@ def fetch(
     fr_json = get_json("federal_register", _FR_URL, params=fr_params, ua="browser")
     fr_by_key = _parse_fr((fr_json or {}).get("results", []), tickers_set, company_map)
 
-    rtt_html = get_text("rttnews", _RTT_URL, ua="browser")
-    rtt_by_key = _parse_rttnews(rtt_html or "", tickers_set)
-
     out: list[Catalyst] = []
-    for key in fr_by_key.keys() | rtt_by_key.keys():
-        ticker, event_date = key
-        doc = fr_by_key.get(key)
-        row = rtt_by_key.get(key)
-
-        sources: list[CatalystSource] = []
-        if doc is not None:
-            sources.append(
-                CatalystSource(
-                    source_name="Federal Register",
-                    source_url=doc.get("html_url"),
-                    source_type=SourceType.primary,
-                    reported_date=event_date,
-                    date_type=DateType.estimated,  # announced target, not realized
-                    published_date=doc.get("publication_date"),  # transport-only (Plan 07)
-                    retrieved_at=now_iso(),
-                )
-            )
-        if row is not None:
-            sources.append(
-                CatalystSource(
-                    source_name="RTTNews",
-                    source_url=row["url"],
-                    source_type=SourceType.secondary,
-                    reported_date=event_date,
-                    date_type=DateType.estimated,  # discovery — never authoritative alone
-                    retrieved_at=now_iso(),
-                )
-            )
-
-        fr_title = doc.get("title", "") if doc else ""
-        rtt_event = row.get("event", "") if row else ""
-        has_primary = any(s.source_type == SourceType.primary for s in sources)
+    for (ticker, event_date), doc in fr_by_key.items():
+        source = CatalystSource(
+            source_name="Federal Register",
+            source_url=doc.get("html_url"),
+            source_type=SourceType.primary,
+            reported_date=event_date,
+            date_type=DateType.estimated,  # announced target, not realized
+            published_date=doc.get("publication_date"),  # transport-only (point-in-time stamp)
+            retrieved_at=now_iso(),
+        )
         out.append(
             Catalyst(
                 ticker=ticker,
-                company_name=(row or {}).get("company") or None,
-                catalyst_type=_ctype(fr_title, rtt_event),
+                company_name=None,
+                catalyst_type=_ctype(doc.get("title", "")),
                 event_date=event_date,
                 date_precision=parse_precision(event_date),
                 uncertainty_type=classify(
                     event_date,
                     DateType.estimated.value,
-                    source_count=len(sources),
-                    has_primary=has_primary,
+                    source_count=1,
+                    has_primary=True,
                 ),
                 source_origin=SourceOrigin.curated_pdufa,  # the PDUFA/AdCom bucket (DB-constrained)
-                # Deterministic ref so both sources land on ONE catalyst and re-runs are idempotent.
+                # Deterministic ref so re-runs are idempotent.
                 external_ref=f"pdufa:{ticker}:{event_date}",
-                sources=sources,
+                sources=[source],
                 # last_verified_at deliberately unset — the insert->verify pipeline owns it.
             )
         )

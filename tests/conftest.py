@@ -41,16 +41,6 @@ def load_fixture():
 
 
 @pytest.fixture
-def load_text_fixture():
-    """Return a helper: load_text_fixture('rttnews.html') -> raw str from tests/fixtures/<name>."""
-
-    def _load(name: str):
-        return (FIXTURES / name).read_text()
-
-    return _load
-
-
-@pytest.fixture
 def embed():
     """Return the deterministic offline hash embedder shared across KB tests."""
     return _kb.hash_embed
