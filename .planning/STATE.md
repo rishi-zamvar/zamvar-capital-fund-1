@@ -3,8 +3,8 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: verifying
-stopped_at: Completed 06.12-01 + 06.12-02 (offline TDD discovery+screen+size+write); 06.12-03 LIVE run NOT executed — operator-gated
-last_updated: "2026-08-17T20:29:43.306Z"
+stopped_at: Completed 06.12-04-PLAN.md (options_cboe ATM-selection fix)
+last_updated: "2026-08-17T21:54:47.795Z"
 last_activity: 2026-08-16
 progress:
   total_phases: 17
@@ -122,6 +122,7 @@ Note: Phase 6.9/6.10 are retro-inserted sub-phases; the frontmatter project-wide
 | Phase 06.11 P04 | 20m | 1 tasks | 3 files |
 | Phase 06.12 P01 | 20min | 2 tasks | 5 files |
 | Phase 06.12 P02 | 25min | 3 tasks | 3 files |
+| Phase 06.12 P04 | 15m | 2 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -245,6 +246,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-08-17T20:29:43.302Z
-Stopped at: Completed 06.12-01 + 06.12-02 (offline TDD discovery+screen+size+write); 06.12-03 LIVE run NOT executed — operator-gated
+Last session: 2026-08-17T21:54:47.791Z
+Stopped at: Completed 06.12-04-PLAN.md (options_cboe ATM-selection fix)
 Resume file: None
