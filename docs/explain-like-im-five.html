@@ -1,0 +1,196 @@
+<title>How Our Money Robot Works</title>
+<style>
+  :root{
+    --bg:#f6f4ee;--surface:#ffffff;--surface-2:#f0ede4;--ink:#23282e;--muted:#5c6670;--faint:#93a0a8;
+    --border:#e4e0d5;--border-strong:#d3cebf;
+    --primary:#1f8a70;--primary-bg:#e2f2ec;--accent:#d9821a;--accent-bg:#faeccd;
+    --done:#1f8a70;--done-bg:#e2f2ec;--todo:#c98a2e;--todo-bg:#faeccd;
+    --sans:system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",sans-serif;
+    --shadow:0 1px 2px rgba(30,40,35,.05),0 6px 20px rgba(30,40,35,.07);
+  }
+  @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+    --bg:#14181c;--surface:#1c2127;--surface-2:#232a31;--ink:#eef1f3;--muted:#9aa4ad;--faint:#6d7880;
+    --border:#2b333a;--border-strong:#3a444c;
+    --primary:#4fd0b0;--primary-bg:#0f2e28;--accent:#f0b64e;--accent-bg:#33280f;
+    --done:#4fd0b0;--done-bg:#0f2e28;--todo:#f0b64e;--todo-bg:#33280f;
+    --shadow:0 1px 2px rgba(0,0,0,.4),0 8px 24px rgba(0,0,0,.35);
+  }}
+  :root[data-theme="dark"]{
+    --bg:#14181c;--surface:#1c2127;--surface-2:#232a31;--ink:#eef1f3;--muted:#9aa4ad;--faint:#6d7880;
+    --border:#2b333a;--border-strong:#3a444c;
+    --primary:#4fd0b0;--primary-bg:#0f2e28;--accent:#f0b64e;--accent-bg:#33280f;
+    --done:#4fd0b0;--done-bg:#0f2e28;--todo:#f0b64e;--todo-bg:#33280f;
+    --shadow:0 1px 2px rgba(0,0,0,.4),0 8px 24px rgba(0,0,0,.35);
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);line-height:1.65;font-size:17px}
+  .wrap{max-width:760px;margin:0 auto;padding:44px 22px 80px}
+  .hero{text-align:center;padding:16px 0 26px;border-bottom:3px dashed var(--border-strong);margin-bottom:30px}
+  .hero .big{font-size:52px;line-height:1;margin-bottom:10px}
+  h1{font-size:clamp(28px,6vw,40px);margin:6px 0 12px;letter-spacing:-.02em;line-height:1.15;text-wrap:balance}
+  .hero p{font-size:18px;color:var(--muted);max-width:56ch;margin:0 auto}
+  h2{font-size:23px;margin:38px 0 6px;letter-spacing:-.01em;display:flex;align-items:center;gap:12px}
+  h2 .e{font-size:28px;flex:none}
+  .lead{font-size:17px;color:var(--muted);margin:0 0 16px}
+  p{margin:12px 0}
+  .card{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:18px 20px;margin:14px 0;box-shadow:var(--shadow)}
+  .card h3{font-size:18px;margin:0 0 4px;display:flex;align-items:center;gap:10px}
+  .card h3 .e{font-size:22px}
+  .card p{margin:6px 0 0;font-size:16px}
+  .card .like{font-size:15px;color:var(--primary);font-weight:600;margin-top:8px}
+  :root[data-theme="dark"] .card .like,@media (prefers-color-scheme:dark){.card .like{color:var(--primary)}}
+  .flow{background:var(--primary-bg);border:1px solid var(--primary);border-radius:16px;padding:20px 22px;margin:16px 0}
+  .flow ol{margin:0;padding-left:0;list-style:none;counter-reset:s}
+  .flow li{counter-increment:s;position:relative;padding:9px 0 9px 44px;font-size:16.5px}
+  .flow li::before{content:counter(s);position:absolute;left:0;top:8px;width:28px;height:28px;border-radius:50%;background:var(--primary);color:var(--surface);font-weight:800;display:grid;place-items:center;font-size:15px}
+  .now{background:var(--surface);border:2px solid var(--primary);border-radius:16px;padding:18px 20px;margin:16px 0;box-shadow:var(--shadow)}
+  .now ul{margin:8px 0 0;padding-left:0;list-style:none}
+  .now li{padding:6px 0 6px 30px;position:relative;font-size:16.5px}
+  .now li::before{content:"✅";position:absolute;left:0;top:5px;font-size:16px}
+  .steps{display:grid;gap:14px;margin:16px 0}
+  .step{background:var(--surface);border:1px solid var(--border);border-left:6px solid var(--accent);border-radius:14px;padding:16px 18px;box-shadow:var(--shadow)}
+  .step .n{font-size:13px;font-weight:800;color:var(--accent);letter-spacing:.08em;text-transform:uppercase}
+  .step h3{font-size:18px;margin:3px 0 4px}
+  .step p{font-size:16px;margin:4px 0 0;color:var(--muted)}
+  .rail{background:var(--surface-2);border:1px solid var(--border);border-radius:16px;padding:18px 20px;margin:18px 0}
+  .rail .row{display:flex;align-items:center;gap:12px;padding:7px 0;font-size:16px}
+  .rail .dot{width:22px;height:22px;border-radius:50%;flex:none;display:grid;place-items:center;font-size:13px;font-weight:800}
+  .rail .d-done{background:var(--done-bg);color:var(--done);border:2px solid var(--done)}
+  .rail .d-here{background:var(--accent);color:var(--surface);border:2px solid var(--accent)}
+  .rail .d-todo{background:var(--surface);color:var(--faint);border:2px solid var(--border-strong)}
+  .rail .row.here{font-weight:700}
+  .rail .tag{margin-left:auto;font-size:12px;font-weight:700;padding:2px 9px;border-radius:20px}
+  .tag.done{background:var(--done-bg);color:var(--done)} .tag.here{background:var(--accent-bg);color:var(--accent)}
+  .note{background:var(--accent-bg);border:1px solid var(--accent);border-radius:16px;padding:18px 20px;margin:18px 0}
+  .note h3{margin:0 0 6px;font-size:18px;display:flex;align-items:center;gap:10px}
+  .note p{font-size:16px;margin:6px 0 0}
+  footer{margin-top:40px;padding-top:20px;border-top:3px dashed var(--border-strong);text-align:center;font-size:14px;color:var(--faint)}
+  b{font-weight:700}
+</style>
+
+<div class="wrap">
+  <div class="hero">
+    <div class="big">🤖💊📈</div>
+    <h1>How our money robot works</h1>
+    <p>And the simple list of what's left before it can do its big practice run.</p>
+  </div>
+
+  <p class="lead">We're building a careful robot helper. It watches special medicine companies. Every so often a company has a <b>big day</b> — like a doctor saying "yes, your medicine is allowed!" On that day the company can suddenly become worth a lot more, or a lot less. Our robot tries to guess which way <i>before</i> the big day, so we can try to earn a little bit each week. And it writes down what happens every time, so it keeps getting smarter.</p>
+
+  <h2><span class="e">🧩</span> What we've already built</h2>
+  <p class="lead">Think of it as a little town of helpers. Here's who lives there:</p>
+
+  <div class="card">
+    <h3><span class="e">📋</span> The watch-list</h3>
+    <p>A list of companies we keep our eyes on. Right now it's a <b>small</b> list — soon we'll make it bigger so there's a big day to look at almost every week.</p>
+    <div class="like">Like: your list of favorite teams to watch.</div>
+  </div>
+
+  <div class="card">
+    <h3><span class="e">🔍</span> The fact-collecting robots</h3>
+    <p>Little helpers that go to <b>free</b> public places and copy down facts — how much each company is worth, when their big days are, how much money they have left. They <b>never make things up</b>. If they can't find something, they say "I don't know" instead of guessing.</p>
+    <div class="like">Like: helpers who go to the library and carefully copy down real facts.</div>
+  </div>
+
+  <div class="card">
+    <h3><span class="e">👯</span> Two robots check each other</h3>
+    <p>For the important numbers, <b>two different robots</b> go get the same fact. If they agree — great, we trust it. If they disagree, we get a little warning instead of believing a wrong number.</p>
+    <div class="like">Like: asking two friends the same question to be sure.</div>
+  </div>
+
+  <div class="card">
+    <h3><span class="e">📨</span> Our own big-day finder</h3>
+    <p>The cleverest robot reads the companies' <b>own official letters</b> and finds the exact big-day dates — straight from the source, for <b>free</b>. This was a big win: other people <i>charge money</i> for these dates, and we don't have to pay.</p>
+    <div class="like">Like: reading the birthday invitation instead of guessing the date.</div>
+  </div>
+
+  <div class="card">
+    <h3><span class="e">🧑‍🔬</span> The pretend-expert team</h3>
+    <p>A group of make-believe experts studies each company: a science expert, a rules expert, a money expert. Two of them <b>argue</b> — one says "it'll go up!", the other says "it'll go down!" — and a <b>boss</b> listens and decides. Every fact they use has to show where it came from, or it doesn't count.</p>
+    <div class="like">Like: two kids debating, and a grown-up making the final call.</div>
+  </div>
+
+  <div class="card">
+    <h3><span class="e">🛡️</span> The safety grown-up (you!)</h3>
+    <p>Before <b>any</b> real money is ever used, a real person has to say "yes." Always. And we practice with <b>pretend</b> money first.</p>
+    <div class="like">Like: a seatbelt that's always on.</div>
+  </div>
+
+  <div class="card">
+    <h3><span class="e">📓</span> The notebook (the part that gets smarter)</h3>
+    <p>Every time something happens, we write down three things: <b>what we thought before</b>, <b>what actually happened</b>, and <b>why</b>. Next time, the team reads the notebook and does a little better than last time.</p>
+    <div class="like">Like: writing down what worked so you win more next time.</div>
+  </div>
+
+  <h2><span class="e">🚚</span> How the fact-collecting works</h2>
+  <p class="lead">Here's the whole fact-collecting trip, step by step:</p>
+  <div class="flow">
+    <ol>
+      <li>The robots go grab facts from lots of <b>free</b> public places.</li>
+      <li>Two robots <b>double-check</b> the important numbers with each other.</li>
+      <li>All the facts go into <b>one tidy toy box</b>, each with a note saying where it came from.</li>
+      <li>The expert team only reads from that <b>one tidy box</b> — so everyone uses the same clean facts.</li>
+      <li>A <b>timer robot</b> does this again and again, so the box is always fresh. If one robot's place is closed, another covers for it — so it never stops.</li>
+    </ol>
+  </div>
+
+  <h2><span class="e">📍</span> Where we are right now</h2>
+  <div class="now">
+    <p style="margin:0"><b>The machine is built, and we just gave it a good cleaning.</b></p>
+    <ul>
+      <li>All the helpers above are made and working.</li>
+      <li>We just <b>tidied it up</b> — threw out bits we didn't need and made it faster.</li>
+      <li>We checked it <b>more than a thousand times</b>, and every check passes.</li>
+      <li>It can already find <b>real</b> upcoming big days — it found several this week from the companies' own letters.</li>
+      <li>It costs <b>$0</b> to collect all the facts.</li>
+    </ul>
+  </div>
+
+  <h2><span class="e">🎯</span> What's left before the big practice run</h2>
+  <p class="lead">The <b>big practice</b> means going back through <b>last year</b>, one week at a time, and letting the team make a pick each week — like practicing a game by replaying last season. Four things to do first:</p>
+  <div class="steps">
+    <div class="step">
+      <div class="n">Step 1</div>
+      <h3>👀 Watch more companies</h3>
+      <p>Right now there aren't enough big days to practice with. We'll add more companies until there's about <b>one good big day every week</b> — roughly 52 in a year.</p>
+    </div>
+    <div class="step">
+      <div class="n">Step 2</div>
+      <h3>📅 Collect last year's big days</h3>
+      <p>Go back and gather <b>all</b> the big days from the past year — and what actually happened on each one (did the price jump up, or down?).</p>
+    </div>
+    <div class="step">
+      <div class="n">Step 3</div>
+      <h3>📓 Get the notebook ready</h3>
+      <p>Set up the notebook so every practice pick gets written down — the before, the after, and the why — and so each new pick can read all the earlier lessons.</p>
+    </div>
+    <div class="step">
+      <div class="n">Step 4</div>
+      <h3>🔁 Do the practice — 52 times</h3>
+      <p>Go week by week through last year. Each week: the team makes a pick, we see what really happened, write it in the notebook, and the team gets a little smarter. By the end we have a well-worn notebook and finely-tuned tools.</p>
+    </div>
+  </div>
+
+  <h2><span class="e">💡</span> One honest thing to remember</h2>
+  <div class="note">
+    <h3><span>🌱</span> The practice is for <i>learning</i>, not for bragging</h3>
+    <p>The big practice run mostly fills up the notebook and tunes the tools. It's <b>okay</b> if the team peeks a little at old answers while it practices — we're using it to <b>learn</b>, not to show off.</p>
+    <p>The <b>real</b> test comes <b>after</b>: we play the game for real, but with <b>pretend money</b>, for a whole month — going forward, where the team <b>can't peek</b> because it hasn't happened yet. <b>That's</b> when we find out if our robot is actually any good. Only if it passes <i>that</i> do we ever talk about real money — with you saying "yes" first.</p>
+  </div>
+
+  <h2><span class="e">🗺️</span> The whole journey, at a glance</h2>
+  <div class="rail">
+    <div class="row"><span class="dot d-done">✓</span> Build the machine <span class="tag done">done</span></div>
+    <div class="row"><span class="dot d-done">✓</span> Clean it up &amp; make it fast <span class="tag done">done</span></div>
+    <div class="row"><span class="dot d-done">✓</span> Find real upcoming big days <span class="tag done">done</span></div>
+    <div class="row here"><span class="dot d-here">👉</span> Watch more companies <span class="tag here">we are here</span></div>
+    <div class="row"><span class="dot d-todo">4</span> Collect last year's big days</div>
+    <div class="row"><span class="dot d-todo">5</span> Get the notebook ready</div>
+    <div class="row"><span class="dot d-todo">6</span> Do the 52-week practice 🎯</div>
+    <div class="row"><span class="dot d-todo">7</span> Then: a month of pretend-money play (the real test)</div>
+  </div>
+
+  <footer>
+    Zamvar Capital · Fund 1 · explained simply · we never make up a fact · a grown-up always says yes before real money
+  </footer>
+</div>
