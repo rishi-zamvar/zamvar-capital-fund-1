@@ -3,8 +3,8 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: verifying
-stopped_at: Completed 06.12-04-PLAN.md (options_cboe ATM-selection fix)
-last_updated: "2026-08-17T21:54:47.795Z"
+stopped_at: Completed 06.12-05 (multi-year efts + SEC exact-match sponsor resolution); Wave 3, more waves remain
+last_updated: "2026-08-17T22:05:11.469Z"
 last_activity: 2026-08-16
 progress:
   total_phases: 17
@@ -123,6 +123,7 @@ Note: Phase 6.9/6.10 are retro-inserted sub-phases; the frontmatter project-wide
 | Phase 06.12 P01 | 20min | 2 tasks | 5 files |
 | Phase 06.12 P02 | 25min | 3 tasks | 3 files |
 | Phase 06.12 P04 | 15m | 2 tasks | 3 files |
+| Phase 06.12 P05 | 25min | 2 tasks | 6 files |
 
 ## Accumulated Context
 
@@ -233,6 +234,7 @@ Recent decisions affecting current work:
 - [Phase 06.11]: LIVE-proven: IMNM 2027-04-28 + CAPR 2026-08-22 extract from real 8-Ks -> verified + tradeable, single SEC EDGAR primary, point-in-time stamped (PDUFA-EDGAR-04 closed)
 - [Phase 06.12]: Universe discovery build_universe passes min_catalyst_density=0 (Blocker 1: catalyst table vacuous pre-7.5; store-density floor re-engages in 7.5)
 - [Phase 06.12]: N is measured-and-grown as an output (target lambda 1.75 avg/yr), never hard-coded 80; optionability = bid both legs + OI>=100 + spread/mid<0.6
+- [Phase 06.12]: efts default is a 5yr multi-year trailing filing window merged by CIK (breadth + warm-start backfill); unmapped CT.gov sponsors resolve via SEC company_tickers normalized-EXACT only (ambiguous/near->review, CIK-keyed, degrade->review, never fuzzy)
 
 ### Pending Todos
 
@@ -246,6 +248,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-08-17T21:54:47.791Z
-Stopped at: Completed 06.12-04-PLAN.md (options_cboe ATM-selection fix)
+Last session: 2026-08-17T22:05:03.436Z
+Stopped at: Completed 06.12-05 (multi-year efts + SEC exact-match sponsor resolution); Wave 3, more waves remain
 Resume file: None
