@@ -81,6 +81,45 @@ def _yf_weekly(ticker, start, end, *, downloader=yf.download):
     return bars
 
 
+def _yf_daily(ticker, start, end, *, downloader=yf.download):
+    """yfinance 1d RAW bars (YELLOW, always-on) for the event-window move computation.
+
+    The reliable free multi-year DAILY source (Tiingo needs a key; Nasdaq's free daily doesn't
+    serve historical windows — verified live 2026-08-17, both return [] for 2024 dates). auto_adjust
+    =False -> raw Close (never Adj Close, the look-ahead trap). Each bar is keyed on its raw TRADE
+    date in `week_end` (the daily fetchers' convention, so get_daily_bars' per-date cross-check
+    applies unchanged). Empty/None frame -> []; a malformed row is skipped+logged. downloader is
+    injectable so the suite runs fully offline.
+    """
+    df = downloader(
+        ticker, start=start, end=end, interval="1d", auto_adjust=False, progress=False
+    )
+    if df is None or df.empty:
+        return []
+    if isinstance(df.columns, pd.MultiIndex):  # yfinance 1.6.0 MultiIndex, as in _yf_weekly
+        df = df.droplevel(axis=1, level=1)
+    bars = []
+    for idx, row in df.iterrows():
+        try:
+            close = row["Close"]  # RAW — NOT "Adj Close"
+            if close is None or (isinstance(close, float) and close != close):  # NaN guard
+                continue
+            d = idx.date() if hasattr(idx, "date") else idx
+            bars.append({
+                "week_end": d.isoformat() if hasattr(d, "isoformat") else str(d),  # raw trade date
+                "open": _f(row["Open"]),
+                "high": _f(row["High"]),
+                "low": _f(row["Low"]),
+                "close": _f(close),
+                "volume": _f(row["Volume"]),
+                "_source": "yfinance",
+                "_grade": "yellow",
+            })
+        except (KeyError, TypeError, ValueError) as exc:
+            logger.warning("yfinance daily row skipped for %s (%s)", ticker, exc)
+    return bars
+
+
 def _nasdaq_daily_bars(ticker, start, end):
     """Nasdaq historical JSON -> RAW *daily* bars (the pre-resample list), YELLOW, always-on.
 
@@ -233,7 +272,10 @@ PRICE_PROVIDERS = [_av_weekly, _tiingo_eod, _yf_weekly, _nasdaq_daily]
 # at daily granularity. CRITICAL: get_daily_bars must NOT route through PRICE_PROVIDERS — its rank-0
 # `_av_weekly` returns Friday WEEKLY bars and `_yf_weekly` uses interval='1wk', so a move computed
 # off those would be a SILENT weekly-close corruption of the screen's central metric.
-DAILY_PROVIDERS = [_tiingo_daily_bars, _nasdaq_daily_bars]
+# Daily-capable subset for get_daily_bars. yfinance daily is the reliable always-on multi-year
+# source (Tiingo keyless-degrades; Nasdaq's free daily doesn't serve historical windows — verified
+# live). Ranked GREEN-first: Tiingo (if keyed) -> yfinance daily -> Nasdaq daily.
+DAILY_PROVIDERS = [_tiingo_daily_bars, _yf_daily, _nasdaq_daily_bars]
 
 
 def get_weekly_bars(ticker, start, end, *, providers=PRICE_PROVIDERS, tol_pct=0.5):

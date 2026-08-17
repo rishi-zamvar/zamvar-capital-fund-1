@@ -25,6 +25,7 @@ def _wire_nasdaq_only(monkeypatch):
     monkeypatch.setattr(prices.settings, "tiingo_api_key", None)
     monkeypatch.setattr(prices.settings, "alpha_vantage_api_key", None)
     monkeypatch.setattr(prices, "get_json", lambda *a, **k: _nasdaq_window())
+    monkeypatch.setattr(prices, "_yf_daily", lambda *a, **k: [])  # offline: no live yfinance
 
 
 # ── migration 010 ────────────────────────────────────────────────────────────────────────────
@@ -68,14 +69,18 @@ def test_get_daily_bars_degrades_to_empty(monkeypatch):
     monkeypatch.setattr(prices.settings, "tiingo_api_key", None)
     monkeypatch.setattr(prices.settings, "alpha_vantage_api_key", None)
     monkeypatch.setattr(prices, "get_json", lambda *a, **k: None)  # every source degrades
+    monkeypatch.setattr(prices, "_yf_daily", lambda *a, **k: [])  # yfinance degrades too
     assert prices.get_daily_bars("TEST", "2026-09-28", "2026-10-09") == []
 
 
 def test_get_daily_bars_uses_daily_subset_not_price_providers():
-    # DAILY_PROVIDERS must exclude the weekly-native sources (_av_weekly / _yf_weekly).
+    # DAILY_PROVIDERS must exclude the WEEKLY-native sources (_av_weekly / _yf_weekly)...
     assert prices._av_weekly not in prices.DAILY_PROVIDERS
     assert prices._yf_weekly not in prices.DAILY_PROVIDERS
-    assert len(prices.DAILY_PROVIDERS) == 2  # tiingo + nasdaq daily fetchers only
+    # ...and include only daily-capable fetchers: tiingo daily + yfinance DAILY + nasdaq daily.
+    assert prices._yf_daily in prices.DAILY_PROVIDERS  # reliable multi-year daily source
+    assert set(prices.DAILY_PROVIDERS) == {
+        prices._tiingo_daily_bars, prices._yf_daily, prices._nasdaq_daily_bars}
 
 
 def test_get_daily_bars_cross_check_grade(monkeypatch):
