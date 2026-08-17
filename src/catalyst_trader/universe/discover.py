@@ -568,14 +568,16 @@ def _persist_backfill(conn, candidate: dict) -> list[int]:
 # Plan 02 — screen (UNIV-02) + measure-and-grow (UNIV-03) + write (UNIV-04/05)
 # ══════════════════════════════════════════════════════════════════════════════════════════
 
-# Screen thresholds (research §A.2). Tradeable ADV floor $5M; a $2-5M name is KEPT + size_tiny
-# (the IVA/MASH lesson — don't drop a thin-but-real name); cap band $200M-$10B with a hedge-peer
-# exception to ~$16B. Override any per-call via `criteria`.
+# Screen thresholds (research §A.2 + live-close finding 3 / decision C). Tradeable ADV floor $5M; a
+# $2-5M name is KEPT + size_tiny (the IVA/MASH lesson — don't drop a thin-but-real name); a $200M
+# market-cap FLOOR (no CEILING — a large-cap binary-catalyst biotech, BBIO/AXSM/PRAX, must qualify).
+# The screen gates on realized catalyst MOVEMENT instead of size: keep a name only if its per-name
+# median realized catalyst move >= move_threshold (default 0.10, the tuning knob). Override per-call
+# via `criteria`.
 _DEFAULT_MIN_ADV_USD = 5_000_000
 _SIZE_TINY_FLOOR = 2_000_000
 _DEFAULT_MIN_MARKET_CAP = 200_000_000
-_DEFAULT_MAX_MARKET_CAP = 10_000_000_000
-_HEDGE_PEER_MAX_MARKET_CAP = 16_000_000_000
+_DEFAULT_MOVE_THRESHOLD = 0.10
 
 _BASE_RATE_NOTE = (
     "per-name catalyst base rate (~2/yr) is a DERIVED estimate from FORWARD discovered evidence; "
@@ -657,20 +659,22 @@ def _ta_fallback(ticker: str) -> str | None:
 def screen_candidates(
     candidates: dict[int, dict], as_of: str, *, criteria: dict | None = None
 ) -> tuple[list[dict], list[dict]]:
-    """Cull discovered candidates to tradeable + fit-able. Returns (admitted, rejected), each record
-    carrying its screen datums, flags, reasons, and catalyst provenance.
+    """Cull discovered candidates to tradeable + movement-worthy. Returns (admitted, rejected), each
+    record carrying its screen datums, flags, reasons, and catalyst provenance.
 
-    Admit iff ALL of: dollar-ADV >= $5M (or $2-5M -> admit + size_tiny), market-cap in [$200M,$10B]
-    (or a hedge-peer flag to ~$16B), optionable, and a readable cap. A None on ADV/cap/optionability
-    -> DROP with a reason (cite-or-drop, NEVER imputed). Runway is attached (None is legit when a
-    filer isn't burning) and flagged, not a hard drop.
+    Admit iff ALL of: dollar-ADV >= $5M (or $2-5M -> admit + size_tiny), market-cap >= $200M FLOOR
+    (NO ceiling — a large-cap binary-catalyst biotech qualifies), optionable, and a readable cap.
+    THE key screen (decision C): keep a name only if its per-name median realized catalyst move
+    (from _persist_backfill / _realized_catalyst_move) >= move_threshold (default 0.10). A None on
+    ADV/cap/optionability/move -> DROP with a reason (cite-or-drop, NEVER imputed); a move below
+    threshold -> DROP (a name that doesn't MOVE on its catalysts isn't tradeable here). Runway is
+    attached (None is legit when a filer isn't burning) and flagged, not a hard drop.
     """
     criteria = criteria or {}
     min_adv = criteria.get("min_adv_usd", _DEFAULT_MIN_ADV_USD)
     tiny_floor = criteria.get("size_tiny_floor", _SIZE_TINY_FLOOR)
     min_cap = criteria.get("min_market_cap", _DEFAULT_MIN_MARKET_CAP)
-    max_cap = criteria.get("max_market_cap", _DEFAULT_MAX_MARKET_CAP)
-    hedge_cap = criteria.get("hedge_peer_max_market_cap", _HEDGE_PEER_MAX_MARKET_CAP)
+    move_threshold = criteria.get("move_threshold", _DEFAULT_MOVE_THRESHOLD)
 
     admitted: list[dict] = []
     rejected: list[dict] = []
@@ -681,6 +685,7 @@ def screen_candidates(
         opt = _optionable(ticker)
         runway = fund.get("cash_runway_months") if fund else None
         ta = cand.get("therapeutic_area") or _ta_fallback(ticker) or "unknown"
+        move_stat, n_moves = _candidate_move_stat(cand)
 
         flags: dict = {}
         reasons: list[str] = []
@@ -693,22 +698,23 @@ def screen_candidates(
         elif adv < min_adv:
             flags["size_tiny"] = True
 
-        # market-cap band + hedge-peer exception
+        # market-cap FLOOR only (the CEILING is removed — large-cap binary catalysts qualify)
         if cap is None:
             reasons.append("market_cap_unreadable")
         elif cap < min_cap:
             reasons.append(f"market_cap {cap:.0f} < {min_cap:.0f}")
-        elif cap > max_cap:
-            if cand.get("hedge_peer") and cap <= hedge_cap:
-                flags["hedge_peer_band"] = True
-            else:
-                reasons.append(f"market_cap {cap:.0f} > {max_cap:.0f}")
 
         # optionability (money path — bid both legs + OI floor + spread ceiling)
         if opt is None:
             reasons.append("optionability_unreadable")
         elif not opt:
             reasons.append("not_optionable")
+
+        # realized-move screen (replaces the cap ceiling): keep only names that actually MOVE
+        if move_stat is None:
+            reasons.append("move_unknown")  # no computable move -> cite-or-drop, NEVER imputed
+        elif move_stat < move_threshold:
+            reasons.append(f"move_median {move_stat:.4f} < {move_threshold:.4f}")
 
         # cash-runway sanity (informational; None is legit when a filer is not burning)
         if runway is None:
@@ -720,12 +726,30 @@ def screen_candidates(
             "adv_usd": adv,
             "market_cap": cap,
             "cash_runway_months": runway,
+            "realized_move_median": move_stat,
+            "n_moves": n_moves,
             "flags": flags,
             "reasons": reasons,
             "delisted": cand.get("delisted", False),
         }
         (rejected if reasons else admitted).append(rec)
     return admitted, rejected
+
+
+def _candidate_move_stat(cand: dict) -> tuple[float | None, int]:
+    """The candidate's per-name realized-move statistic + count. Prefers the value attached by
+    _persist_backfill (build_universe path); falls back to computing it live from the candidate's
+    live-parity catalysts (standalone screen use / tests)."""
+    if "realized_move_median" in cand:
+        return cand["realized_move_median"], cand.get("n_moves", 0)
+    moves: list[float] = []
+    for c in cand.get("catalysts", []):
+        if c["type"] not in LIVE_PARITY_TYPES:
+            continue
+        mv = _realized_catalyst_move(cand["ticker"], c["event_date"])
+        if mv is not None:
+            moves.append(mv[0])
+    return _name_move_stat(moves), len(moves)
 
 
 def _enforce_diversity(admitted: list[dict], *, max_per_ta: int = 4) -> list[dict]:
@@ -772,7 +796,8 @@ def size_to_density(
     safety_cap: int = 90,
     window_months: int = 12,
 ) -> tuple[list[dict], dict]:
-    """Measure-and-grow: N is an OUTPUT. Rank the screened candidates densest-first, grow the
+    """Measure-and-grow: N is an OUTPUT. Rank the screened candidates by realized catalyst-MOVE
+    magnitude (biggest movers first; live-parity catalyst count is the tiebreaker), grow the
     shortlist one at a time, and STOP when projected weekly lambda >= target_lambda OR the shortlist
     hits safety_cap OR the pool is exhausted (honest under-fill — do NOT over-grow to chase target;
     the defensive/statistical sleeve backstops lean weeks). target_lambda default 1.75 is the
@@ -781,9 +806,14 @@ def size_to_density(
     Returns (shortlist, density_report). N is len(shortlist) — never a hard-coded 80.
     """
     # ponytail: derived base rate, recalibrate from measured store density once Phase 7.5 backfills.
+    # Rank by move magnitude (the screen's central metric); a None move sorts last (shouldn't occur
+    # post-screen, but stays safe). Catalyst count breaks ties among equal movers.
     ranked = sorted(
         screened,
-        key=lambda r: sum(1 for c in r.get("catalysts", []) if c["type"] in LIVE_PARITY_TYPES),
+        key=lambda r: (
+            r["realized_move_median"] if r.get("realized_move_median") is not None else -1.0,
+            sum(1 for c in r.get("catalysts", []) if c["type"] in LIVE_PARITY_TYPES),
+        ),
         reverse=True,
     )
     shortlist: list[dict] = []
@@ -836,14 +866,15 @@ def build_universe(
     conn, as_of: str, *, target_lambda: float = 1.75, criteria: dict | None = None,
     date_from: str | None = None, date_to: str | None = None,
 ) -> dict:
-    """Orchestrate discover -> screen -> diversity -> size -> build_snapshot into a survivorship-free
-    append-only `universe_as_of` cohort, returning a run summary with per-name provenance + the
-    honest breadth/depth tradeoff.
+    """Orchestrate discover -> backfill -> screen -> diversity -> size -> build_snapshot into a
+    survivorship-free append-only `universe_as_of` cohort, returning a run summary with per-name
+    provenance + realized-move stats + the honest breadth/depth tradeoff.
 
     CRITICAL (Blocker 1): build_snapshot re-applies its OWN store-density floor via _catalyst_density
-    over the (vacuous pre-7.5) `catalyst` table, so we pass min_catalyst_density=0 — discovery's
-    size_to_density already enforces density from FORWARD evidence; the store-density floor is not
-    meetable by design this phase and re-engages once 7.5 backfills the trailing history.
+    over the `catalyst` table, so we pass min_catalyst_density=0 — discovery's size_to_density +
+    the move screen are the gates (from FORWARD evidence + realized moves), NOT the store-density
+    floor. The floor stays disabled even though _persist_backfill now makes the catalyst table
+    non-empty, because a partial backfill would otherwise trap the cohort empty.
     """
     date_from = date_from or as_of
     date_to = date_to or _add_months(as_of, 12)
@@ -852,6 +883,13 @@ def build_universe(
     # announcing 8-Ks are filed months before the catalyst — a forward filing window returns 0;
     # the 5yr breadth doubles as the warm-start historical-catalyst backfill). Verified live.
     candidates = discover_candidates(date_from, date_to)
+
+    # Warm-start backfill: persist each candidate's historical catalysts + point-in-time realized
+    # moves BEFORE screening, so the move screen reads real moves and the playbook seed is written.
+    backfilled_ids: list[int] = []
+    for cand in candidates.values():
+        backfilled_ids += _persist_backfill(conn, cand)
+
     admitted, rejected = screen_candidates(candidates, as_of, criteria=criteria)
     kept = _enforce_diversity(admitted)
     demoted = [r for r in admitted if r not in kept]
@@ -883,8 +921,11 @@ def build_universe(
             "grade": prov.get("grade"),
             "flags": r.get("flags", {}),
             "n_catalysts": len(r.get("catalysts", [])),
+            "realized_move_median": r.get("realized_move_median"),
+            "n_moves": r.get("n_moves"),
         })
 
+    move_threshold = (criteria or {}).get("move_threshold", _DEFAULT_MOVE_THRESHOLD)
     return {
         "as_of": as_of,
         "n_candidates": len(candidates),
@@ -899,5 +940,10 @@ def build_universe(
         "density_report": density_report,
         "admissions": admissions,
         "n_rejected": len(rejected),
+        # move-screen + warm-start-backfill stats (this phase)
+        "move_threshold": move_threshold,
+        "n_move_unknown": sum(1 for r in rejected if "move_unknown" in r.get("reasons", [])),
+        "n_backfilled_catalysts": len(backfilled_ids),
+        "n_moves_persisted": sum(c.get("n_moves", 0) for c in candidates.values()),
         "tradeoff": _TRADEOFF_NOTE,
     }

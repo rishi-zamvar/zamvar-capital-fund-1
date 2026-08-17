@@ -41,12 +41,15 @@ def _opt(*, call_bid=4.2, call_ask=4.6, put_bid=3.9, put_ask=4.3, call_oi=850, p
                               "expiry": "2026-10-16"}}
 
 
-def _wire(monkeypatch, *, bars, fund, opt):
+def _wire(monkeypatch, *, bars, fund, opt, move=(0.30, "(-1,2)", "2024-06-03", "green")):
     from catalyst_trader.universe import discover
 
     monkeypatch.setattr(discover, "get_weekly_bars", lambda t, s, e, **k: bars)
     monkeypatch.setattr(discover, "fundamentals", lambda t: fund)
     monkeypatch.setattr(discover.options_cboe, "fetch", lambda t: opt)
+    # Plan 06 added a realized-move gate to screen_candidates; patch it so these size/optionability
+    # tests exercise their own axis (a passing move by default) and NEVER hit the network.
+    monkeypatch.setattr(discover, "_realized_catalyst_move", lambda t, ed, **k: move)
     return discover
 
 
@@ -87,14 +90,16 @@ def test_cap_band_admits_200m_to_10b(monkeypatch):
     assert admitted[0]["market_cap"] == 1_000_000_000
 
 
-def test_cap_above_10b_dropped_unless_hedge_peer_flag(monkeypatch):
-    # cap = 120M shares * 100 = $12B -> above $10B
+def test_cap_ceiling_removed_large_cap_admitted(monkeypatch):
+    # Plan 06 (decision C): the market-cap CEILING is REMOVED. cap = 120M shares * 100 = $12B was
+    # dropped by the old $10B ceiling; it is now ADMITTED (only the $200M floor remains). No hedge-
+    # peer band flag exists anymore, and no cap-over reason is ever emitted.
     d = _wire(monkeypatch, bars=_bars(100, 350_000), fund={"shares_outstanding": 120_000_000, "cash_runway_months": 24}, opt=_opt())
     admitted, rejected = d.screen_candidates({1: _cand(1, "BIG")}, "2026-08-17")
-    assert not admitted and any("market_cap" in r for r in rejected[0]["reasons"])
-
-    admitted2, _ = d.screen_candidates({1: _cand(1, "BIG", hedge_peer=True)}, "2026-08-17")
-    assert admitted2 and admitted2[0]["flags"].get("hedge_peer_band") is True
+    assert [r["ticker"] for r in admitted] == ["BIG"]
+    assert admitted[0]["market_cap"] == 12_000_000_000
+    all_reasons = [rn for r in admitted + rejected for rn in r.get("reasons", [])]
+    assert not any("market_cap" in rn and ">" in rn for rn in all_reasons)
 
 
 def test_optionability_oi_floor(monkeypatch):
@@ -230,6 +235,11 @@ def _wire_build(monkeypatch, admitted):
 
     monkeypatch.setattr(discover, "discover_candidates", lambda *a, **k: {r["cik"]: r for r in admitted})
     monkeypatch.setattr(discover, "screen_candidates", lambda cands, as_of, criteria=None: (list(admitted), []))
+    # Plan 06: build_universe now persists a warm-start backfill (catalysts + realized moves) before
+    # screening. These cohort-write tests mock screen_candidates, so stub the backfill to a no-op
+    # (its own persistence + move computation is covered in test_universe_move_screen.py) — keeps
+    # these tests offline and focused on the append-only cohort.
+    monkeypatch.setattr(discover, "_persist_backfill", lambda conn, cand: [])
     return discover
 
 
