@@ -27,6 +27,7 @@ from collections import defaultdict
 from pathlib import Path
 
 import edgar
+from edgar import get_company_tickers  # SEC company_tickers.json (bundled offline; no new dep)
 
 from catalyst_trader.csvrows import read_csv_rows
 from catalyst_trader.dates import now_iso
@@ -98,6 +99,69 @@ def _ticker_from_display(display_name: str | None) -> str | None:
     return matches[-1] if matches else None  # last (real ticker) paren; CIK paren never matches
 
 
+# ── SEC company_tickers normalized-EXACT sponsor resolution (UNIV-01b) ──────────────────────
+
+# Trailing corporate suffixes stripped before comparison. DISTINCTIVE biotech tokens
+# (therapeutics/pharmaceuticals/bio/sciences/etc.) are DELIBERATELY absent -> kept -> so two
+# different "X Therapeutics" never collapse into a false merge (they stay ambiguous -> review).
+_CORP_SUFFIXES = frozenset({
+    "inc", "incorporated", "corp", "corporation", "ltd", "limited", "co", "company",
+    "plc", "llc", "lp", "llp", "sa", "ag", "nv", "holdings", "group",
+})
+
+
+def _norm_name(s: str | None) -> str:
+    """Normalize a company/sponsor name for EXACT comparison: casefold, drop periods, replace
+    remaining punctuation with spaces, collapse whitespace, and strip TRAILING corporate suffixes.
+    Distinctive tokens (therapeutics/bio/sciences/…) are retained so distinct entities never merge."""
+    if not s:
+        return ""
+    s = s.casefold().replace(".", "")
+    tokens = re.sub(r"[^a-z0-9]+", " ", s).split()
+    while tokens and tokens[-1] in _CORP_SUFFIXES:
+        tokens.pop()
+    return " ".join(tokens)
+
+
+def _load_sec_map() -> dict[str, list[tuple[str, int]]]:
+    """Build {normalized_name -> [(ticker, cik), …]} from SEC company_tickers.json (edgartools,
+    bundled offline). A load failure degrades to {} -> every unmapped sponsor routes to review
+    (no crash, NO fuzzy fallback)."""
+    try:
+        df = get_company_tickers(clean_name=False)  # raw names; OUR _norm_name is the sole authority
+        index: dict[str, list[tuple[str, int]]] = {}
+        for cik, ticker, company in zip(df["cik"], df["ticker"], df["company"], strict=False):
+            key = _norm_name(company)
+            if not key or not ticker:
+                continue
+            index.setdefault(key, []).append((str(ticker), int(cik)))
+        return index
+    except Exception as e:  # noqa: BLE001 — SEC map load degraded -> everything routes to review
+        logger.warning("discover: SEC company_tickers load degraded -> sponsors route to review: %s", e)
+        return {}
+
+
+def _sec_map() -> dict[str, list[tuple[str, int]]]:
+    """Cached SEC normalized-name index (load once)."""
+    global _SEC_MAP
+    if _SEC_MAP is None:
+        _SEC_MAP = _load_sec_map()
+    return _SEC_MAP
+
+
+def _resolve_sponsor_exact(lead: str, sec_map: dict[str, list[tuple[str, int]]]) -> tuple[str, int] | None:
+    """NORMALIZED-EXACT resolution ONLY. Exactly ONE distinct (ticker, cik) hit -> that pair (CIK
+    from the SEC map, recycling-safe). ZERO hits -> None (review). >1 DISTINCT hit -> None (ambiguous
+    -> review, NEVER pick one). Never fuzzy / never string-distance."""
+    hits = sec_map.get(_norm_name(lead))
+    if not hits:
+        return None
+    distinct = set(hits)  # exact-duplicate rows collapse; genuinely different entities stay ambiguous
+    if len(distinct) != 1:
+        return None
+    return next(iter(distinct))
+
+
 # ── CT.gov reverse-sponsor discovery ───────────────────────────────────────────────────────
 
 
@@ -116,7 +180,9 @@ def _queue_sponsor_review(lead: str, nct: str | None) -> None:
         f.write(row + "\n")
 
 
-def _admit_ctgov_study(study: dict, rev: dict[str, str], out: dict[int, dict]) -> None:
+def _admit_ctgov_study(
+    study: dict, rev: dict[str, str], out: dict[int, dict], sec_map: dict[str, list[tuple[str, int]]]
+) -> None:
     """Admit one CT.gov study to the candidate set (or route its unmapped sponsor to review)."""
     ps = study.get("protocolSection", {})
     phases = ps.get("designModule", {}).get("phases") or []
@@ -132,12 +198,19 @@ def _admit_ctgov_study(study: dict, rev: dict[str, str], out: dict[int, dict]) -
     nct = ps.get("identificationModule", {}).get("nctId")
 
     ticker = rev.get(lead.casefold())
-    if not ticker:
-        _queue_sponsor_review(lead, nct)  # cite-or-drop: never fuzzy-match a sponsor to a ticker
-        return
-    cik = _resolve_cik(ticker)
-    if cik is None:
-        return  # cannot key by CIK -> drop (ticker-recycling safety needs the CIK)
+    if ticker:
+        # Curated map wins first (Plan 01) — resolve its CIK via edgartools.
+        cik = _resolve_cik(ticker)
+        if cik is None:
+            return  # cannot key by CIK -> drop (ticker-recycling safety needs the CIK)
+    else:
+        # Gap the curated map leaves: SEC company_tickers normalized-EXACT match ONLY. CIK comes
+        # straight from the SEC map (recycling-safe). Anything less than exact / ambiguous -> review.
+        resolved = _resolve_sponsor_exact(lead, sec_map)
+        if resolved is None:
+            _queue_sponsor_review(lead, nct)  # cite-or-drop: never fuzzy-match a sponsor to a ticker
+            return
+        ticker, cik = resolved
 
     cand = out.setdefault(
         cik,
@@ -169,6 +242,7 @@ def discover_ctgov(
     queue (never fuzzy). Any degrade -> the partial-or-empty dict, never a raise.
     """
     rev = _reverse_sponsor_map(sponsor_map or clinicaltrials.load_sponsor_map())
+    sec_map = _sec_map()  # SEC company_tickers normalized-exact fallback for unmapped sponsors
     out: dict[int, dict] = {}
     page_token: str | None = None
     while True:
@@ -193,7 +267,7 @@ def discover_ctgov(
             )
             break
         for study in data.get("studies", []):
-            _admit_ctgov_study(study, rev, out)
+            _admit_ctgov_study(study, rev, out, sec_map)
         page_token = data.get("nextPageToken")
         if not page_token:
             break
