@@ -27,7 +27,6 @@ from collections import defaultdict
 from pathlib import Path
 
 import edgar
-import httpx
 
 from catalyst_trader.csvrows import read_csv_rows
 from catalyst_trader.dates import now_iso
@@ -59,6 +58,9 @@ _SPONSOR_REVIEW_CSV = Path("data/ctgov_sponsor_review.csv")
 # EVERY hit (zeroing the primary new-name engine). The letter class never matches "CIK 000..."
 # (space + digits), so findall yields only the real (TICKER) paren(s); take the last.
 _TICKER_RX = re.compile(r"\(([A-Z][A-Z.]{0,5})\)")
+
+# Cached SEC company_tickers normalized-name index (Plan 05 Task 2); loaded once, degrades to {}.
+_SEC_MAP: dict[str, list[tuple[str, int]]] | None = None
 
 
 # ── shared helpers ───────────────────────────────────────────────────────────────────────
@@ -156,55 +158,54 @@ def discover_ctgov(
     date_from: str,
     date_to: str,
     *,
-    client: httpx.Client | None = None,
     sponsor_map: dict[str, list[str]] | None = None,
 ) -> dict[int, dict]:
     """UNFILTERED near-term interventional Ph2/Ph3 CT.gov studies -> CIK-keyed candidate dict.
 
-    Runs the shipped provider BACKWARD: no query.spons — query primaryCompletionDate broadly, then
-    reverse-map each study's leadSponsor.name to a ticker. An unmapped sponsor routes to the
-    human-review queue (never fuzzy). CT.gov HTTP error / empty -> {} (degrade, never raise).
+    Runs the shipped provider BACKWARD (no query.spons) over the archiving get_json layer: every page
+    is rate-limited (deep pagination otherwise 429s) and persisted to the raw-snapshot lake, and a
+    mid-pagination degrade returns the pages fetched SO FAR — fetched data is NEVER discarded. Each
+    study's leadSponsor.name reverse-maps to a ticker; an unmapped sponsor routes to the human-review
+    queue (never fuzzy). Any degrade -> the partial-or-empty dict, never a raise.
     """
     rev = _reverse_sponsor_map(sponsor_map or clinicaltrials.load_sponsor_map())
-    own_client = client is None
-    client = client or httpx.Client(transport=httpx.HTTPTransport(retries=2))
     out: dict[int, dict] = {}
-    try:
-        page_token: str | None = None
-        while True:
-            params = {
-                "filter.advanced": (
-                    f"AREA[PrimaryCompletionDate]RANGE[{date_from},{date_to}] "
-                    "AND AREA[Phase]COVER[PHASE2,PHASE3] "
-                    "AND AREA[StudyType]COVER[INTERVENTIONAL]"
-                ),
-                "fields": clinicaltrials.FIELDS,
-                "pageSize": 100,
-                "countTotal": "true",
-            }
-            if page_token:
-                params["pageToken"] = page_token
-            resp = client.get(f"{clinicaltrials.BASE}/studies", params=params)
-            resp.raise_for_status()
-            data = resp.json() or {}
-            for study in data.get("studies", []):
-                _admit_ctgov_study(study, rev, out)
-            page_token = data.get("nextPageToken")
-            if not page_token:
-                break
-    except Exception as e:  # noqa: BLE001 — any CT.gov failure degrades the whole feed to {}
-        logger.warning("discover_ctgov degraded: %s", e)
-        return {}
-    finally:
-        if own_client:
-            client.close()
+    page_token: str | None = None
+    while True:
+        params = {
+            "filter.advanced": (
+                # Essie: enum fields take OR-groups, NOT COVER[...] (COVER[PHASE2,...] -> 400
+                # "Invalid coverage"). Verified live 2026-08-17.
+                f"AREA[PrimaryCompletionDate]RANGE[{date_from},{date_to}] "
+                "AND (AREA[Phase]PHASE2 OR AREA[Phase]PHASE3) "
+                "AND AREA[StudyType]INTERVENTIONAL"
+            ),
+            "fields": clinicaltrials.FIELDS,
+            "pageSize": 100,
+            "countTotal": "true",
+        }
+        if page_token:
+            params["pageToken"] = page_token
+        data = get_json("ctgov_discover", f"{clinicaltrials.BASE}/studies", params=params)
+        if not data:  # 429/5xx/parse degrade -> STOP but KEEP pages already fetched (never discard)
+            logger.warning(
+                "discover_ctgov: page fetch degraded — keeping %d candidates fetched so far", len(out)
+            )
+            break
+        for study in data.get("studies", []):
+            _admit_ctgov_study(study, rev, out)
+        page_token = data.get("nextPageToken")
+        if not page_token:
+            break
     return out
 
 
 # ── EDGAR unfiltered efts PDUFA discovery ──────────────────────────────────────────────────
 
 
-def discover_edgar(date_from: str, date_to: str) -> dict[int, dict]:
+def discover_edgar(
+    date_from: str, date_to: str, *, seen_accessions: set[str] | None = None
+) -> dict[int, dict]:
     """UNFILTERED efts PDUFA/AdCom pass (NO universe-CIK intersection) -> CIK-keyed candidate dict.
 
     The primary new-name engine: efts carries ticker+CIK per hit for free. For each hit resolve the
@@ -212,8 +213,11 @@ def discover_edgar(date_from: str, date_to: str) -> dict[int, dict]:
     exhibit, run the shipped _extract, and admit only HIGH-confidence PDUFA/AdCom extractions. No
     parseable ticker OR no CIK -> drop (cite-or-drop). MEDIUM extractions are handled on the live
     pdufa_edgar path's review CSV — not double-handled here. Any efts/exhibit failure degrades.
+
+    `seen_accessions` may be shared by a multi-year caller so the SAME 8-K re-indexed across window
+    edges counts ONCE across the whole trailing window (defaults to a per-call set).
     """
-    seen_accessions: set[str] = set()
+    seen_accessions = seen_accessions if seen_accessions is not None else set()
     out: dict[int, dict] = {}
     for q in _EFTS_QUERIES:
         params = {"q": q, "forms": "8-K", "startdt": date_from, "enddt": date_to}
@@ -282,20 +286,40 @@ def discover_candidates(
     date_from: str,
     date_to: str,
     *,
-    client: httpx.Client | None = None,
     sponsor_map: dict[str, list[str]] | None = None,
+    edgar_years: int = 5,
+    edgar_window: tuple[str, str] | None = None,
 ) -> dict[int, dict]:
     """Merge CT.gov reverse-sponsor + unfiltered efts PDUFA into ONE CIK-keyed candidate set.
 
-    A CIK found by both feeds accumulates the UNION of its catalysts and both source_feeds — never
-    a duplicate CIK row. Only live-parity types survive into the merged evidence. Either feed
-    failing degrades to its own {}; the merge still returns the other feed's candidates.
+    A CIK found by any feed accumulates the UNION of its catalysts and all its source_feeds — never
+    a duplicate CIK row. Only live-parity types survive into the merged evidence. Any feed failing
+    degrades to its own {}; the merge still returns every other feed's candidates.
+
+    (date_from, date_to) is the CT.gov forward primaryCompletionDate window. efts filters on FILING
+    date, so by default the pass runs a MULTI-YEAR TRAILING window: `edgar_years` (default 5) per-year
+    windows [date_from - (y+1)yr, date_from - y] (PDUFA-announcing 8-Ks were filed months BEFORE the
+    catalyst — the Plan-01 live note). This breadth DOUBLES as the warm-start historical-catalyst
+    backfill: a name recurring across years accumulates its full catalyst history under one CIK,
+    deduped by accession ACROSS years. An explicit `edgar_window` bypasses the loop for a single
+    offline window; a single year's efts page degrading keeps the other years' candidates.
     """
-    ctgov = discover_ctgov(date_from, date_to, client=client, sponsor_map=sponsor_map)
-    edgar_feed = discover_edgar(date_from, date_to)
+    ctgov = discover_ctgov(date_from, date_to, sponsor_map=sponsor_map)
+    if edgar_window:
+        edgar_feeds = [discover_edgar(*edgar_window)]
+    else:
+        seen: set[str] = set()  # shared across years -> cross-window accession dedup
+        edgar_feeds = [
+            discover_edgar(
+                _add_months(date_from, -12 * (y + 1)),
+                _add_months(date_from, -12 * y),
+                seen_accessions=seen,
+            )
+            for y in range(edgar_years)
+        ]
 
     merged: dict[int, dict] = {}
-    for feed in (ctgov, edgar_feed):
+    for feed in (ctgov, *edgar_feeds):
         for cik, cand in feed.items():
             live = [c for c in cand["catalysts"] if c["type"] in LIVE_PARITY_TYPES]
             if not live:
@@ -600,6 +624,9 @@ def build_universe(
     date_from = date_from or as_of
     date_to = date_to or _add_months(as_of, 12)
 
+    # CT.gov = forward completion window; efts = MULTI-YEAR (5yr) TRAILING filing window (PDUFA-
+    # announcing 8-Ks are filed months before the catalyst — a forward filing window returns 0;
+    # the 5yr breadth doubles as the warm-start historical-catalyst backfill). Verified live.
     candidates = discover_candidates(date_from, date_to)
     admitted, rejected = screen_candidates(candidates, as_of, criteria=criteria)
     kept = _enforce_diversity(admitted)
