@@ -137,3 +137,135 @@ def test_persist_backfill_move_unknown(monkeypatch, db):
     assert cand["n_moves"] == 0
     assert db.execute("SELECT COUNT(*) AS n FROM catalyst").fetchone()["n"] == 1
     assert db.execute("SELECT COUNT(*) AS n FROM catalyst_move").fetchone()["n"] == 0
+
+
+# ── Task 3: move screen (cap ceiling removed) + rank-by-move + build_universe ──────────────────
+
+
+def _bars(close=100.0, volume=350_000, n=8):
+    return [{"week_end": f"2026-0{(i % 8) + 1}-01", "close": close, "volume": volume} for i in range(n)]
+
+
+def _opt(*, call_bid=4.2, call_ask=4.6, put_bid=3.9, put_ask=4.3, call_oi=850, put_oi=780):
+    return {"options_quote": {"call_bid": call_bid, "call_ask": call_ask, "put_bid": put_bid,
+                              "put_ask": put_ask, "call_oi": call_oi, "put_oi": put_oi,
+                              "expiry": "2026-10-16"}}
+
+
+def _wire_screen(monkeypatch, *, bars, fund, opt, move=(0.30, "(-1,2)", "2024-06-03", "green")):
+    monkeypatch.setattr(discover, "get_weekly_bars", lambda t, s, e, **k: bars)
+    monkeypatch.setattr(discover, "fundamentals", lambda t: fund)
+    monkeypatch.setattr(discover.options_cboe, "fetch", lambda t: opt)
+    monkeypatch.setattr(discover, "_realized_catalyst_move", lambda t, ed, **k: move)
+
+
+def test_cap_ceiling_removed_large_cap_admitted(monkeypatch):
+    # BBIO-shape: cap = 150M shares * $100 = $15B (would be DROPPED by the old $10B ceiling)
+    _wire_screen(monkeypatch, bars=_bars(100, 350_000),
+                 fund={"shares_outstanding": 150_000_000, "cash_runway_months": 24}, opt=_opt())
+    admitted, rejected = discover.screen_candidates({1: _cand(1, "BBIO")}, "2026-08-17")
+    assert [r["ticker"] for r in admitted] == ["BBIO"]
+    assert admitted[0]["market_cap"] == 15_000_000_000
+    # no cap-over reason anywhere (ceiling fully removed)
+    all_reasons = [rn for r in admitted + rejected for rn in r.get("reasons", [])]
+    assert not any("market_cap" in rn and ">" in rn for rn in all_reasons)
+
+
+def test_move_screen_keeps_mover(monkeypatch):
+    _wire_screen(monkeypatch, bars=_bars(100, 350_000),
+                 fund={"shares_outstanding": 10_000_000, "cash_runway_months": 24}, opt=_opt(),
+                 move=(0.30, "(-1,2)", "2024-06-03", "green"))
+    admitted, _ = discover.screen_candidates({1: _cand(1, "MOVER")}, "2026-08-17",
+                                             criteria={"move_threshold": 0.10})
+    assert admitted and admitted[0]["realized_move_median"] == pytest.approx(0.30)
+
+
+def test_move_screen_drops_sleeper(monkeypatch):
+    _wire_screen(monkeypatch, bars=_bars(100, 350_000),
+                 fund={"shares_outstanding": 10_000_000, "cash_runway_months": 24}, opt=_opt(),
+                 move=(0.03, "(-1,2)", "2024-06-03", "green"))
+    admitted, rejected = discover.screen_candidates({1: _cand(1, "SLEEP")}, "2026-08-17",
+                                                    criteria={"move_threshold": 0.10})
+    assert not admitted
+    assert any("move" in r for r in rejected[0]["reasons"])
+
+
+def test_move_unknown_rejected(monkeypatch):
+    _wire_screen(monkeypatch, bars=_bars(100, 350_000),
+                 fund={"shares_outstanding": 10_000_000, "cash_runway_months": 24}, opt=_opt(),
+                 move=None)  # no computable move
+    admitted, rejected = discover.screen_candidates({1: _cand(1, "UNK")}, "2026-08-17")
+    assert not admitted and "move_unknown" in rejected[0]["reasons"]
+
+
+def test_rank_by_move_magnitude():
+    screened = [
+        {"cik": 1, "ticker": "SML", "catalysts": [_cat()], "realized_move_median": 0.12, "n_moves": 1},
+        {"cik": 2, "ticker": "BIG", "catalysts": [_cat()], "realized_move_median": 0.55, "n_moves": 1},
+        {"cik": 3, "ticker": "MID", "catalysts": [_cat()], "realized_move_median": 0.30, "n_moves": 1},
+    ]
+    shortlist, _ = discover.size_to_density(screened, "2026-08-17", target_lambda=99.0)  # unreachable -> all
+    assert [r["ticker"] for r in shortlist] == ["BIG", "MID", "SML"]  # biggest movers first
+
+
+def _build_cand(cik, ticker, *, ta="oncology"):
+    return _cand(cik, ticker, ta=ta, catalysts=[_cat("2024-05-31", ref=f"{ticker}-A"),
+                                                _cat("2023-02-15", ref=f"{ticker}-B")])
+
+
+def test_build_universe_persists_backfill_and_writes_cohort(monkeypatch, db):
+    from catalyst_trader.universe.build import universe_as_of
+
+    cands = {1: _build_cand(1, "BBIO"), 2: _build_cand(2, "AXSM", ta="cns")}
+    monkeypatch.setattr(discover, "discover_candidates", lambda *a, **k: cands)
+    monkeypatch.setattr(discover, "_realized_catalyst_move",
+                        lambda t, ed, **k: (0.30, "(-1,2)", "2024-06-03", "green"))
+    monkeypatch.setattr(discover, "get_weekly_bars", lambda t, s, e, **k: _bars(100, 350_000))
+    monkeypatch.setattr(discover, "fundamentals",
+                        lambda t: {"shares_outstanding": 150_000_000, "cash_runway_months": 24})
+    monkeypatch.setattr(discover.options_cboe, "fetch", lambda t: _opt())
+
+    assert db.execute("SELECT COUNT(*) AS n FROM catalyst").fetchone()["n"] == 0  # empty store (Blocker-1)
+    summary = discover.build_universe(db, "2026-08-17")
+
+    # warm-start backfill persisted (catalysts + moves)
+    assert db.execute("SELECT COUNT(*) AS n FROM catalyst").fetchone()["n"] == 4  # 2 names x 2 catalysts
+    assert db.execute("SELECT COUNT(*) AS n FROM catalyst_move").fetchone()["n"] == 4
+    # append-only survivorship-free cohort written; Blocker-1: included>0 vs the (pre-backfill) empty store
+    names = {u.ticker for u in universe_as_of(db, "2026-08-17") if u.included}
+    assert {"BBIO", "AXSM"} <= names
+    assert summary["included_count"] > 0
+    # new summary fields
+    assert summary["move_threshold"] == 0.10
+    assert summary["n_move_unknown"] == 0
+    assert summary["n_backfilled_catalysts"] == 4
+    assert summary["n_moves_persisted"] == 4
+    for a in summary["admissions"]:
+        assert a["realized_move_median"] == pytest.approx(0.30)
+
+
+def test_blocker_fixes_preserved(monkeypatch, db):
+    captured = {}
+
+    def _spy_build_snapshot(conn, as_of, seed_rows, *, criteria):
+        captured["criteria"] = criteria
+        captured["n_seed"] = len(seed_rows)
+        return 1  # store writes 1 included row
+
+    cands = {1: _build_cand(1, "BBIO")}
+    monkeypatch.setattr(discover, "discover_candidates", lambda *a, **k: cands)
+    monkeypatch.setattr(discover, "_realized_catalyst_move",
+                        lambda t, ed, **k: (0.30, "(-1,2)", "2024-06-03", "green"))
+    monkeypatch.setattr(discover, "get_weekly_bars", lambda t, s, e, **k: _bars(100, 350_000))
+    monkeypatch.setattr(discover, "fundamentals",
+                        lambda t: {"shares_outstanding": 10_000_000, "cash_runway_months": 24})
+    monkeypatch.setattr(discover.options_cboe, "fetch", lambda t: _opt())
+    monkeypatch.setattr(discover, "build_snapshot", _spy_build_snapshot)
+
+    summary = discover.build_universe(db, "2026-08-17")
+    # Blocker-1: min_catalyst_density passed as 0 (store-density floor stays disabled)
+    assert captured["criteria"]["min_catalyst_density"] == 0
+    # Blocker-2/3: included_count is DISTINCT from n_admitted and reconciles with the store's count
+    assert summary["included_count"] == 1
+    assert summary["n_admitted"] >= 1
+    assert isinstance(summary["included_count"], int)
