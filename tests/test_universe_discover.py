@@ -74,6 +74,7 @@ def test_ctgov_resolves_mapped_sponsor(monkeypatch, tmp_path):
 
     _fake_identity(monkeypatch)
     monkeypatch.setattr(discover, "_SPONSOR_REVIEW_CSV", tmp_path / "review.csv")
+    monkeypatch.setattr(discover, "_SEC_MAP", {})  # hermetic: no SEC exact-match fallback here
     monkeypatch.setattr(discover, "get_json", _fake_get_json(ctgov=_ctgov_fixture()))
     out = discover.discover_ctgov("2026-08-17", "2027-08-17")
 
@@ -95,6 +96,7 @@ def test_ctgov_unknown_sponsor_routes_to_review_not_fuzzy(monkeypatch, tmp_path)
     _fake_identity(monkeypatch)
     review = tmp_path / "review.csv"
     monkeypatch.setattr(discover, "_SPONSOR_REVIEW_CSV", review)
+    monkeypatch.setattr(discover, "_SEC_MAP", {})  # hermetic: Nurix must route to review, not SEC-resolve
     monkeypatch.setattr(discover, "get_json", _fake_get_json(ctgov=_ctgov_fixture()))
     out = discover.discover_ctgov("2026-08-17", "2027-08-17")
 
@@ -116,6 +118,7 @@ def test_ctgov_drops_non_phase23(monkeypatch, tmp_path):
 
     _fake_identity(monkeypatch)
     monkeypatch.setattr(discover, "_SPONSOR_REVIEW_CSV", tmp_path / "review.csv")
+    monkeypatch.setattr(discover, "_SEC_MAP", {})
     monkeypatch.setattr(discover, "get_json", _fake_get_json(ctgov=_ctgov_fixture()))
     out = discover.discover_ctgov("2026-08-17", "2027-08-17")
     # Kura's study is PHASE1 -> not admitted even though the sponsor IS mapped.
@@ -211,6 +214,7 @@ def test_merge_by_cik_unions_catalysts(monkeypatch, tmp_path):
 
     _fake_identity(monkeypatch)
     monkeypatch.setattr(discover, "_SPONSOR_REVIEW_CSV", tmp_path / "review.csv")
+    monkeypatch.setattr(discover, "_SEC_MAP", {})
     monkeypatch.setattr(discover, "get_json", _fake_get_json(ctgov=_ctgov_fixture(), efts=_efts_fixture()))
 
     def _fake_get_text(source, url, **k):
@@ -222,7 +226,7 @@ def test_merge_by_cik_unions_catalysts(monkeypatch, tmp_path):
 
     monkeypatch.setattr(discover, "get_text", _fake_get_text)
 
-    out = discover.discover_candidates("2026-08-17", "2027-08-17")
+    out = discover.discover_candidates("2026-08-17", "2027-08-17", edgar_window=("2026-01-01", "2026-12-31"))
     imnm = out[_CIK["IMNM"]]
     types = {c["type"] for c in imnm["catalysts"]}
     assert "trial_readout" in types and "pdufa" in types
@@ -237,6 +241,7 @@ def test_merge_degrades_one_feed(monkeypatch, tmp_path):
 
     _fake_identity(monkeypatch)
     monkeypatch.setattr(discover, "_SPONSOR_REVIEW_CSV", tmp_path / "review.csv")
+    monkeypatch.setattr(discover, "_SEC_MAP", {})
     monkeypatch.setattr(discover, "get_json", _fake_get_json(ctgov=_ctgov_fixture(), efts=None))  # efts degrades
     monkeypatch.setattr(discover, "get_text", lambda *a, **k: None)
 
@@ -250,6 +255,7 @@ def test_only_live_parity_types(monkeypatch, tmp_path):
 
     _fake_identity(monkeypatch)
     monkeypatch.setattr(discover, "_SPONSOR_REVIEW_CSV", tmp_path / "review.csv")
+    monkeypatch.setattr(discover, "_SEC_MAP", {})
     monkeypatch.setattr(discover, "get_json", _fake_get_json(ctgov=_ctgov_fixture(), efts=_efts_fixture()))
 
     def _fake_get_text(source, url, **k):
@@ -260,7 +266,7 @@ def test_only_live_parity_types(monkeypatch, tmp_path):
         return None
 
     monkeypatch.setattr(discover, "get_text", _fake_get_text)
-    out = discover.discover_candidates("2026-08-17", "2027-08-17")
+    out = discover.discover_candidates("2026-08-17", "2027-08-17", edgar_window=("2026-01-01", "2026-12-31"))
     live_parity = {"pdufa", "adcom", "trial_readout"}
     for cand in out.values():
         for c in cand["catalysts"]:
@@ -400,3 +406,131 @@ def test_edgar_window_override_still_works(monkeypatch):
 
     assert len(calls) == len(_EFTS_QUERIES)
     assert {_CIK["IMNM"], _CIK["CAPR"], _CIK["KURA"]} <= set(out)
+
+
+# ── Plan 05 Task 2: CT.gov exact-match sponsor->ticker via SEC company_tickers ──────────────
+
+
+def _sec_df():
+    """Build a get_company_tickers()-shaped DataFrame from the REAL SEC company_tickers.json shape."""
+    import pandas as pd
+
+    raw = json.loads((FIXTURES / "sec_company_tickers.json").read_text())
+    return pd.DataFrame(
+        [{"cik": r["cik_str"], "ticker": r["ticker"], "company": r["title"]} for r in raw.values()]
+    )
+
+
+def _study(nct, sponsor, *, date="2026-11-30", phase="PHASE3"):
+    return {
+        "protocolSection": {
+            "identificationModule": {"nctId": nct},
+            "sponsorCollaboratorsModule": {"leadSponsor": {"name": sponsor}},
+            "statusModule": {"primaryCompletionDateStruct": {"date": date}},
+            "designModule": {"phases": [phase]},
+        }
+    }
+
+
+def _ctgov_studies(*studies):
+    def _fn(source, *a, **k):
+        return {"studies": list(studies)} if source == "ctgov_discover" else None
+    return _fn
+
+
+def _wire_sec(monkeypatch, tmp_path, *, tickers=None):
+    from catalyst_trader.universe import discover
+
+    _fake_identity(monkeypatch)
+    monkeypatch.setattr(discover, "_SEC_MAP", None)  # force fresh load via the monkeypatched loader
+    monkeypatch.setattr(discover, "get_company_tickers", tickers or (lambda *a, **k: _sec_df()))
+    review = tmp_path / "review.csv"
+    monkeypatch.setattr(discover, "_SPONSOR_REVIEW_CSV", review)
+    return discover, review
+
+
+def test_exact_match_resolves(monkeypatch, tmp_path):
+    """An unmapped CT.gov sponsor that normalizes-exact to a SEC company -> a candidate keyed by the
+    SEC cik_str with a trial_readout catalyst (NOT in the review queue)."""
+    discover, review = _wire_sec(monkeypatch, tmp_path)
+    monkeypatch.setattr(discover, "get_json", _ctgov_studies(_study("NCT1", "Intra-Cellular Therapies, Inc.")))
+
+    out = discover.discover_ctgov("2026-08-17", "2027-08-17", sponsor_map={})
+    assert 1567514 in out  # keyed by the SEC cik_str (recycling-safe)
+    cand = out[1567514]
+    assert cand["ticker"] == "ITCI"
+    assert cand["catalysts"][0]["type"] == "trial_readout"
+    assert not review.exists() or "Intra-Cellular" not in review.read_text()
+
+
+def test_near_but_not_exact_routes_to_review(monkeypatch, tmp_path):
+    """A sponsor close but not normalized-equal -> review, NEVER attributed (no fuzzy)."""
+    discover, review = _wire_sec(monkeypatch, tmp_path)
+    monkeypatch.setattr(discover, "get_json", _ctgov_studies(_study("NCT2", "Intra-Cellular Research LLC")))
+
+    out = discover.discover_ctgov("2026-08-17", "2027-08-17", sponsor_map={})
+    assert 1567514 not in out
+    assert all(c["ticker"] != "ITCI" for c in out.values())
+    assert "Intra-Cellular Research LLC" in review.read_text()
+
+
+def test_ambiguous_routes_to_review(monkeypatch, tmp_path):
+    """A sponsor normalizing to a string matching TWO different SEC companies -> review, never one
+    picked (the false-merge guard)."""
+    discover, review = _wire_sec(monkeypatch, tmp_path)
+    monkeypatch.setattr(discover, "get_json", _ctgov_studies(_study("NCT3", "Beacon Therapeutics")))
+
+    out = discover.discover_ctgov("2026-08-17", "2027-08-17", sponsor_map={})
+    assert 333333 not in out and 444444 not in out
+    assert not any(c["ticker"] in ("BEAA", "BEAB") for c in out.values())
+    assert "Beacon Therapeutics" in review.read_text()
+
+
+def test_normalization_suffix_case_punct(monkeypatch, tmp_path):
+    """Suffix/case/punct normalize to the SAME key; a distinctive token (therapeutics vs bio) is
+    KEPT so it never falsely merges."""
+    from catalyst_trader.universe import discover
+
+    assert discover._norm_name("ACME Therapeutics, Inc.") == discover._norm_name(
+        "Acme Therapeutics Incorporated"
+    )
+    assert discover._norm_name("Acme Bio") != discover._norm_name("Acme Therapeutics Incorporated")
+
+    d, review = _wire_sec(monkeypatch, tmp_path)
+    monkeypatch.setattr(
+        d,
+        "get_json",
+        _ctgov_studies(
+            _study("NCT4", "ACME Therapeutics, Inc."), _study("NCT5", "Acme Bio, Inc.")
+        ),
+    )
+    out = d.discover_ctgov("2026-08-17", "2027-08-17", sponsor_map={})
+    assert out[111111]["ticker"] == "ACMT"  # suffix/case/punct match to Acme Therapeutics
+    assert out[222222]["ticker"] == "ACMB"  # distinctive token keeps Acme Bio separate
+
+
+def test_curated_map_wins_first(monkeypatch, tmp_path):
+    """A sponsor in BOTH the curated map and SEC -> resolved via the curated map (Plan-01 path),
+    no double-count."""
+    discover, review = _wire_sec(monkeypatch, tmp_path)
+    monkeypatch.setattr(discover, "get_json", _ctgov_studies(_study("NCT6", "BioCryst Pharmaceuticals")))
+
+    out = discover.discover_ctgov(
+        "2026-08-17", "2027-08-17", sponsor_map={"BCRX": ["BioCryst Pharmaceuticals"]}
+    )
+    assert _CIK["BCRX"] in out
+    assert out[_CIK["BCRX"]]["source_feeds"] == {"ctgov"}
+    assert len(out[_CIK["BCRX"]]["catalysts"]) == 1  # never double-counted across curated+SEC
+
+
+def test_sec_map_degrade(monkeypatch, tmp_path):
+    """SEC map load fails -> unmapped sponsors route to review (no crash, no fuzzy fallback)."""
+    def _boom(*a, **k):
+        raise RuntimeError("SEC company_tickers unavailable")
+
+    discover, review = _wire_sec(monkeypatch, tmp_path, tickers=_boom)
+    monkeypatch.setattr(discover, "get_json", _ctgov_studies(_study("NCT7", "Intra-Cellular Therapies, Inc.")))
+
+    out = discover.discover_ctgov("2026-08-17", "2027-08-17", sponsor_map={})
+    assert 1567514 not in out  # degraded -> not resolved, not crashed
+    assert "Intra-Cellular Therapies, Inc." in review.read_text()
