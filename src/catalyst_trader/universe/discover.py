@@ -21,22 +21,27 @@ universe/build) are REUSED unchanged.
 """
 
 import logging
+import math
 import re
+from collections import defaultdict
 from pathlib import Path
 
 import edgar
 import httpx
 
+from catalyst_trader.csvrows import read_csv_rows
 from catalyst_trader.dates import now_iso
-from catalyst_trader.providers import clinicaltrials
+from catalyst_trader.providers import clinicaltrials, options_cboe
 from catalyst_trader.providers._http import get_json, get_text
-from catalyst_trader.providers.edgar import _set_identity  # reuse the SEC-UA declaration
+from catalyst_trader.providers.edgar import _set_identity, fundamentals  # reuse SEC-UA + fundamentals
 from catalyst_trader.providers.pdufa_edgar import (
     _EFTS_QUERIES,
     _EFTS_URL,
     _exhibit_url,
     _extract,
 )
+from catalyst_trader.providers.prices import get_weekly_bars
+from catalyst_trader.universe.build import SEED_CSV, _add_months, build_snapshot
 
 logger = logging.getLogger(__name__)
 
@@ -309,3 +314,339 @@ def discover_candidates(
             entry["source_feeds"] |= set(cand["source_feeds"])
             entry["company_name"] = entry["company_name"] or cand.get("company_name")
     return merged
+
+
+# ══════════════════════════════════════════════════════════════════════════════════════════
+# Plan 02 — screen (UNIV-02) + measure-and-grow (UNIV-03) + write (UNIV-04/05)
+# ══════════════════════════════════════════════════════════════════════════════════════════
+
+# Screen thresholds (research §A.2). Tradeable ADV floor $5M; a $2-5M name is KEPT + size_tiny
+# (the IVA/MASH lesson — don't drop a thin-but-real name); cap band $200M-$10B with a hedge-peer
+# exception to ~$16B. Override any per-call via `criteria`.
+_DEFAULT_MIN_ADV_USD = 5_000_000
+_SIZE_TINY_FLOOR = 2_000_000
+_DEFAULT_MIN_MARKET_CAP = 200_000_000
+_DEFAULT_MAX_MARKET_CAP = 10_000_000_000
+_HEDGE_PEER_MAX_MARKET_CAP = 16_000_000_000
+
+_BASE_RATE_NOTE = (
+    "per-name catalyst base rate (~2/yr) is a DERIVED estimate from FORWARD discovered evidence; "
+    "recalibrate from measured trailing store density once Phase 7.5 backfills the historical "
+    "catalyst table."
+)
+
+
+def _dollar_adv(ticker: str, as_of: str, *, window_months: int = 3) -> float | None:
+    """Daily dollar-ADV proxy = mean(close*volume) over a trailing weekly window / 5. [] -> None.
+    # ponytail: weekly->daily is a /5 proxy, not a true daily ADV — flagged, tighten only if a
+    # size decision ever hinges on it (per-trade sizing reads the live desk, not this build gate)."""
+    bars = get_weekly_bars(ticker, _add_months(as_of, -window_months), as_of)
+    vals = [b["close"] * b["volume"] for b in (bars or []) if b.get("close") and b.get("volume")]
+    if not vals:
+        return None
+    return sum(vals) / len(vals) / 5.0
+
+
+def _market_cap(ticker: str, as_of: str) -> tuple[float | None, dict | None]:
+    """(market_cap, fundamentals) = shares_outstanding * latest close from the price cascade.
+    A missing datum (no fundamentals / no shares / no close) -> (None, fundamentals-or-None)."""
+    fund = fundamentals(ticker)
+    if not fund:
+        return None, None
+    shares = fund.get("shares_outstanding")
+    if shares is None:
+        return None, fund
+    bars = get_weekly_bars(ticker, _add_months(as_of, -1), as_of)
+    close = bars[-1]["close"] if bars else None
+    if close is None:
+        return None, fund
+    return shares * close, fund
+
+
+def _optionable(ticker: str) -> bool | None:
+    """True iff a live ATM options pair exists with bid>0 on BOTH legs AND call_oi+put_oi>=100 AND
+    straddle spread/mid < 0.6 (research §A.2 liquidity gate — a loose oi>0 gate would admit OI=5 /
+    90%-wide names as 'optionable' on a money path feeding implied-move + hedge legs). None on
+    degrade (fetch None). # ponytail: expiry-at/after-catalyst is a per-TRADE check (the catalyst
+    date isn't fixed at universe-build time) — deferred to the desk, noted here."""
+    q = options_cboe.fetch(ticker)
+    if q is None:
+        return None
+    oq = q.get("options_quote")
+    if not oq:
+        return False  # no live ATM pair with bid>0 both legs
+    cb, ca, pb, pa = oq["call_bid"], oq["call_ask"], oq["put_bid"], oq["put_ask"]
+    if not (cb > 0 and pb > 0):
+        return False
+    if (oq["call_oi"] + oq["put_oi"]) < 100:
+        return False
+    mid = (cb + ca) / 2 + (pb + pa) / 2
+    spread = (ca - cb) + (pa - pb)
+    if mid <= 0 or spread / mid >= 0.6:
+        return False
+    return True
+
+
+_TA_FALLBACK: dict[str, str] | None = None
+
+
+def _ta_fallback(ticker: str) -> str | None:
+    """Curated therapeutic-area from the shipped seed universe CSV (a fallback for names whose TA
+    the discovery feeds don't carry). Cached; unknown ticker -> None."""
+    global _TA_FALLBACK
+    if _TA_FALLBACK is None:
+        _TA_FALLBACK = {}
+        try:
+            for r in read_csv_rows(SEED_CSV):
+                ta = (r.get("therapeutic_area") or "").strip()
+                if ta:
+                    _TA_FALLBACK[r["ticker"].strip().upper()] = ta
+        except Exception as e:  # noqa: BLE001 — missing/unreadable seed CSV -> empty fallback
+            logger.warning("discover: TA fallback load degraded: %s", e)
+    return _TA_FALLBACK.get(ticker.upper())
+
+
+def screen_candidates(
+    candidates: dict[int, dict], as_of: str, *, criteria: dict | None = None
+) -> tuple[list[dict], list[dict]]:
+    """Cull discovered candidates to tradeable + fit-able. Returns (admitted, rejected), each record
+    carrying its screen datums, flags, reasons, and catalyst provenance.
+
+    Admit iff ALL of: dollar-ADV >= $5M (or $2-5M -> admit + size_tiny), market-cap in [$200M,$10B]
+    (or a hedge-peer flag to ~$16B), optionable, and a readable cap. A None on ADV/cap/optionability
+    -> DROP with a reason (cite-or-drop, NEVER imputed). Runway is attached (None is legit when a
+    filer isn't burning) and flagged, not a hard drop.
+    """
+    criteria = criteria or {}
+    min_adv = criteria.get("min_adv_usd", _DEFAULT_MIN_ADV_USD)
+    tiny_floor = criteria.get("size_tiny_floor", _SIZE_TINY_FLOOR)
+    min_cap = criteria.get("min_market_cap", _DEFAULT_MIN_MARKET_CAP)
+    max_cap = criteria.get("max_market_cap", _DEFAULT_MAX_MARKET_CAP)
+    hedge_cap = criteria.get("hedge_peer_max_market_cap", _HEDGE_PEER_MAX_MARKET_CAP)
+
+    admitted: list[dict] = []
+    rejected: list[dict] = []
+    for cand in candidates.values():
+        ticker = cand["ticker"]
+        adv = _dollar_adv(ticker, as_of)
+        cap, fund = _market_cap(ticker, as_of)
+        opt = _optionable(ticker)
+        runway = fund.get("cash_runway_months") if fund else None
+        ta = cand.get("therapeutic_area") or _ta_fallback(ticker) or "unknown"
+
+        flags: dict = {}
+        reasons: list[str] = []
+
+        # ADV floor + size-tiny tier
+        if adv is None:
+            reasons.append("adv_unreadable")
+        elif adv < tiny_floor:
+            reasons.append(f"adv_usd {adv:.0f} < {tiny_floor:.0f}")
+        elif adv < min_adv:
+            flags["size_tiny"] = True
+
+        # market-cap band + hedge-peer exception
+        if cap is None:
+            reasons.append("market_cap_unreadable")
+        elif cap < min_cap:
+            reasons.append(f"market_cap {cap:.0f} < {min_cap:.0f}")
+        elif cap > max_cap:
+            if cand.get("hedge_peer") and cap <= hedge_cap:
+                flags["hedge_peer_band"] = True
+            else:
+                reasons.append(f"market_cap {cap:.0f} > {max_cap:.0f}")
+
+        # optionability (money path — bid both legs + OI floor + spread ceiling)
+        if opt is None:
+            reasons.append("optionability_unreadable")
+        elif not opt:
+            reasons.append("not_optionable")
+
+        # cash-runway sanity (informational; None is legit when a filer is not burning)
+        if runway is None:
+            flags["runway_unknown"] = True
+
+        rec = {
+            **cand,
+            "therapeutic_area": ta,
+            "adv_usd": adv,
+            "market_cap": cap,
+            "cash_runway_months": runway,
+            "flags": flags,
+            "reasons": reasons,
+            "delisted": cand.get("delisted", False),
+        }
+        (rejected if reasons else admitted).append(rec)
+    return admitted, rejected
+
+
+def _enforce_diversity(admitted: list[dict], *, max_per_ta: int = 4) -> list[dict]:
+    """Cap any single therapeutic-area cluster at `max_per_ta`, keeping the densest-catalyst names;
+    demote the rest (append 'ta_cluster_full' to their reasons). Dataset-quality gate so cohort
+    cells (catalyst_type x TA x drop_regime) later populate — not just risk. Returns the kept list."""
+    by_ta: dict[str, list[dict]] = defaultdict(list)
+    for r in admitted:
+        by_ta[r.get("therapeutic_area") or "unknown"].append(r)
+    kept: list[dict] = []
+    for recs in by_ta.values():
+        ranked = sorted(recs, key=lambda r: len(r.get("catalysts", [])), reverse=True)
+        kept.extend(ranked[:max_per_ta])
+        for demoted in ranked[max_per_ta:]:
+            demoted.setdefault("reasons", []).append("ta_cluster_full")
+    return kept
+
+
+def _count_tradeable_catalysts(shortlist: list[dict], window: tuple[str, str] | None = None) -> int:
+    """Count live-parity tradeable catalysts (pdufa|adcom|trial_readout — earnings NEVER) across the
+    shortlist, optionally restricted to `window` = (date_from, date_to)."""
+    n = 0
+    for r in shortlist:
+        for c in r.get("catalysts", []):
+            if c["type"] not in LIVE_PARITY_TYPES:
+                continue
+            if window and not (window[0] <= c["event_date"] <= window[1]):
+                continue
+            n += 1
+    return n
+
+
+def _weekly_lambda(shortlist: list[dict], window_months: int) -> float:
+    """Projected weekly catalyst rate = annualized live-parity count / 52."""
+    n = _count_tradeable_catalysts(shortlist)
+    return (n * (12.0 / window_months)) / 52.0
+
+
+def size_to_density(
+    screened: list[dict],
+    as_of: str,
+    *,
+    target_lambda: float = 1.75,
+    safety_cap: int = 90,
+    window_months: int = 12,
+) -> tuple[list[dict], dict]:
+    """Measure-and-grow: N is an OUTPUT. Rank the screened candidates densest-first, grow the
+    shortlist one at a time, and STOP when projected weekly lambda >= target_lambda OR the shortlist
+    hits safety_cap OR the pool is exhausted (honest under-fill — do NOT over-grow to chase target;
+    the defensive/statistical sleeve backstops lean weeks). target_lambda default 1.75 is the
+    average across the year (locked decision), NOT >=1 every single week.
+
+    Returns (shortlist, density_report). N is len(shortlist) — never a hard-coded 80.
+    """
+    # ponytail: derived base rate, recalibrate from measured store density once Phase 7.5 backfills.
+    ranked = sorted(
+        screened,
+        key=lambda r: sum(1 for c in r.get("catalysts", []) if c["type"] in LIVE_PARITY_TYPES),
+        reverse=True,
+    )
+    shortlist: list[dict] = []
+    for cand in ranked:
+        if len(shortlist) >= safety_cap:
+            break
+        shortlist.append(cand)
+        if _weekly_lambda(shortlist, window_months) >= target_lambda:
+            break
+
+    measured = _weekly_lambda(shortlist, window_months)
+    n_cats = _count_tradeable_catalysts(shortlist)
+    report = {
+        "measured_lambda": round(measured, 4),
+        "n_admitted": len(shortlist),
+        "target_lambda": target_lambda,
+        "target_reached": measured >= target_lambda,
+        "per_name_rate_used": round(n_cats / len(shortlist), 3) if shortlist else 0.0,
+        "base_rate_recalibration_note": _BASE_RATE_NOTE,
+        "lean_week_estimate": round(52 * math.exp(-measured)) if measured > 0 else 52,
+        "safety_cap": safety_cap,
+        "window_months": window_months,
+        "pool_size": len(screened),
+    }
+    return shortlist, report
+
+
+def _to_seed_row(rec: dict) -> dict:
+    """Map a screened/admitted record to a build_snapshot seed_row (keyed by ticker downstream; the
+    CIK stays in the admission audit trail as the recycling-safe source of truth)."""
+    return {
+        "ticker": rec["ticker"],
+        "company_name": rec.get("company_name"),
+        "market_cap": rec.get("market_cap"),
+        "adv_usd": rec.get("adv_usd"),
+        "therapeutic_area": rec.get("therapeutic_area"),
+        "delisted": "true" if rec.get("delisted") else "false",
+    }
+
+
+_TRADEOFF_NOTE = (
+    "UNIV-05: >=1 tradeable catalyst/week is about SELECTION, not throughput — a broader universe "
+    "gives the weekly desk more to CHOOSE from, it does not mean trade-all. The per-catalyst "
+    "diligence + verify + human gate still gate every trade; automated screening + per-name "
+    "provenance compensate for the lost per-name eyeballing that a hand-picked list allowed."
+)
+
+
+def build_universe(
+    conn, as_of: str, *, target_lambda: float = 1.75, criteria: dict | None = None,
+    date_from: str | None = None, date_to: str | None = None,
+) -> dict:
+    """Orchestrate discover -> screen -> diversity -> size -> build_snapshot into a survivorship-free
+    append-only `universe_as_of` cohort, returning a run summary with per-name provenance + the
+    honest breadth/depth tradeoff.
+
+    CRITICAL (Blocker 1): build_snapshot re-applies its OWN store-density floor via _catalyst_density
+    over the (vacuous pre-7.5) `catalyst` table, so we pass min_catalyst_density=0 — discovery's
+    size_to_density already enforces density from FORWARD evidence; the store-density floor is not
+    meetable by design this phase and re-engages once 7.5 backfills the trailing history.
+    """
+    date_from = date_from or as_of
+    date_to = date_to or _add_months(as_of, 12)
+
+    candidates = discover_candidates(date_from, date_to)
+    admitted, rejected = screen_candidates(candidates, as_of, criteria=criteria)
+    kept = _enforce_diversity(admitted)
+    demoted = [r for r in admitted if r not in kept]
+    rejected = rejected + demoted
+
+    shortlist, density_report = size_to_density(kept, as_of, target_lambda=target_lambda)
+
+    seed_rows = [_to_seed_row(r) for r in shortlist]
+    # ponytail: min_catalyst_density=0 here because the catalyst table is empty pre-7.5; the
+    # store-density floor re-engages once 7.5 backfills the trailing history.
+    build_criteria = {
+        "min_catalyst_density": 0,
+        "min_adv_usd": _DEFAULT_MIN_ADV_USD,
+        "min_market_cap": _DEFAULT_MIN_MARKET_CAP,
+        **(criteria or {}),
+    }
+    included_count = build_snapshot(conn, as_of, seed_rows, criteria=build_criteria)
+
+    admissions = []
+    for r in shortlist:
+        prov = (r.get("catalysts") or [{}])[0]
+        admissions.append({
+            "ticker": r["ticker"],
+            "cik": r.get("cik"),
+            "therapeutic_area": r.get("therapeutic_area"),
+            "source_feeds": sorted(r.get("source_feeds", [])),
+            "source_url": prov.get("source_url"),
+            "fetch_ts": prov.get("fetch_ts"),
+            "grade": prov.get("grade"),
+            "flags": r.get("flags", {}),
+            "n_catalysts": len(r.get("catalysts", [])),
+        })
+
+    return {
+        "as_of": as_of,
+        "n_candidates": len(candidates),
+        "n_screened": len(kept),
+        "n_admitted": density_report["n_admitted"],
+        # included_count is build_snapshot's RETURNED count of rows written included=1 — a DISTINCT
+        # field from n_admitted so the two reconcile; a large gap means the store-density trap
+        # (Blocker 1) re-appeared, or size_tiny names fell under the snapshot's $5M floor.
+        "included_count": included_count,
+        "measured_lambda": density_report["measured_lambda"],
+        "target_reached": density_report["target_reached"],
+        "density_report": density_report,
+        "admissions": admissions,
+        "n_rejected": len(rejected),
+        "tradeoff": _TRADEOFF_NOTE,
+    }
