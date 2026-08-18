@@ -143,3 +143,65 @@ def test_screen_still_tradeability(monkeypatch):
     admitted3, rejected3 = discover.screen_candidates({1: _cand(1, "DEGR")}, "2026-08-17")
     assert not admitted3
     assert rejected3[0]["adv_usd"] is None and "adv_unreadable" in rejected3[0]["reasons"]
+
+
+# ══════════════════════════════════════════════════════════════════════════════════════════
+# Task 2 — backward per-name volatility score from the store + n>=2 + insufficient-history list
+# ══════════════════════════════════════════════════════════════════════════════════════════
+
+
+def test_registry_moves_grouped_by_ticker(db):
+    # two PDUFA moves for BBIO -> one entry with 2 moves; an adcom row is EXCLUDED under the default
+    # catalyst_types=("pdufa",).
+    _seed_name(db, "BBIO", [0.20, 0.35])
+    aid = _seed_catalyst(db, "BBIO", "2022-03-01", "BBIO-adcom", ctype="adcom")
+    _seed_move(db, aid, 0.99)
+    reg = discover._registry_moves(db)
+    assert set(reg) == {"BBIO"}
+    assert sorted(reg["BBIO"]["moves"]) == [0.20, 0.35]  # adcom 0.99 excluded
+    assert reg["BBIO"]["ticker"] == "BBIO"
+    assert reg["BBIO"]["company_name"] == "BBIO Inc."
+
+
+def test_name_volatility_score():
+    v = discover._name_volatility([0.10, 0.30, 0.20])
+    assert v["median_move"] == pytest.approx(0.20)
+    assert v["big_move_frac"] == pytest.approx(2 / 3)  # 0.30 and 0.20 >= 0.15; 0.10 is not
+    assert v["vol_score"] == pytest.approx(0.20 * (1 + 2 / 3))
+    assert v["n_moves"] == 3
+
+
+def test_min_events_gate():
+    assert discover._name_volatility([0.40]) is None  # 1 event < min_events=2 -> not scorable
+    assert discover._name_volatility([0.40, 0.10]) is not None  # 2 events -> scorable
+
+
+def test_insufficient_history_list(db):
+    _seed_name(db, "GOODVOL", [0.30, 0.40])   # 2 events -> scorable
+    _seed_name(db, "ONESHOT", [0.55])          # 1 event -> insufficient (never fabricate a score)
+    scorable, insufficient = discover.score_registry(db)
+    assert {r["ticker"] for r in scorable} == {"GOODVOL"}
+    assert {r["ticker"] for r in insufficient} == {"ONESHOT"}
+    one = next(r for r in insufficient if r["ticker"] == "ONESHOT")
+    assert one["n_moves"] == 1  # honest watch list carries the count, no vol_score
+    assert "vol_score" not in one
+    good = next(r for r in scorable if r["ticker"] == "GOODVOL")
+    assert good["vol_score"] > 0 and good["n_moves"] == 2
+
+
+def test_score_reads_only_catalyst_move(db, monkeypatch):
+    # zero API: scoring must NOT touch any provider (prices/options/fundamentals). If it does, boom.
+    def _boom(*a, **k):
+        raise AssertionError("score_registry must be ZERO API (store-read only)")
+
+    monkeypatch.setattr(discover, "get_weekly_bars", _boom)
+    monkeypatch.setattr(discover, "get_daily_bars", _boom)
+    monkeypatch.setattr(discover, "fundamentals", _boom)
+    monkeypatch.setattr(discover.options_cboe, "fetch", _boom)
+    _seed_name(db, "ZERO", [0.20, 0.30])
+    scorable, _ = discover.score_registry(db)
+    assert {r["ticker"] for r in scorable} == {"ZERO"}
+
+
+def test_empty_registry_degrades(db):
+    assert discover.score_registry(db) == ([], [])
