@@ -3,9 +3,9 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: verifying
-stopped_at: "Completed 06.12-07-PLAN.md (backward proven-PDUFA-volatility membership: relaxed optionability + vol_score percentile-cut + build_universe rewire); full suite 1191 green; Plan 03 live run remains operator-gated"
-last_updated: "2026-08-18T01:47:43.152Z"
-last_activity: 2026-08-17
+stopped_at: Completed 06.12-08-PLAN.md
+last_updated: "2026-08-18T02:59:58.518Z"
+last_activity: 2026-08-18
 progress:
   total_phases: 17
   completed_phases: 11
@@ -27,7 +27,7 @@ See: .planning/PROJECT.md (updated 2026-08-14)
 Phase: 06.9
 Plan: 8 of 8
 Status: Phase complete — ready for verification
-Last activity: 2026-08-17
+Last activity: 2026-08-18
 
 Progress: [██████░░░░] 5/8 plans
 
@@ -126,6 +126,7 @@ Note: Phase 6.9/6.10 are retro-inserted sub-phases; the frontmatter project-wide
 | Phase 06.12 P05 | 25min | 2 tasks | 6 files |
 | Phase 06.12 P06 | 80min | 3 tasks | 7 files |
 | Phase 06.12 P07 | 22min | 3 tasks tasks | 4 files files |
+| Phase 06.12 P08 | 20min | 3 tasks | 5 files |
 
 ## Accumulated Context
 
@@ -241,6 +242,8 @@ Recent decisions affecting current work:
 - [Phase 06.12]: Membership pivoted FORWARD->BACKWARD: names admitted from proven past PDUFA volatility (vol_score = median|move|*(1+big_move_frac), n>=2), percentile-cut to target 80, N an OUTPUT + cut_percentile reported; no fixed move_threshold gate
 - [Phase 06.12]: Universe optionability relaxed to 'has options at all' (bid>0 both legs); strict OI>=100+spread/mid<0.6 relocated to per-trade desk/diligence.options_liquid (no guard deleted)
 - [Phase 06.12]: Backward scorer is ZERO-API (reads persisted catalyst_move JOIN catalyst); tradeability API hits only the ranked top slice; Blocker-1(min_catalyst_density=0)/Blocker-3(included_count distinct from N) preserved
+- [Phase 06.12]: Readout capture (UNIV-08): trial-RESULT 8-Ks -> day-precision trial_readout catalysts as the RESIDUAL branch of _extract (PDUFA/AdCom precedence), event_date = filing_date
+- [Phase 06.12]: Scorer widened to pdufa+trial_readout+adcom (UNIV-09) + absolute min_median_move floor 0.10 (UNIV-10) applied before the percentile-cut
 
 ### Pending Todos
 
@@ -254,6 +257,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-08-18T01:47:43.100Z
-Stopped at: Completed 06.12-07-PLAN.md (backward proven-PDUFA-volatility membership: relaxed optionability + vol_score percentile-cut + build_universe rewire); full suite 1191 green; Plan 03 live run remains operator-gated
+Last session: 2026-08-18T02:59:52.358Z
+Stopped at: Completed 06.12-08-PLAN.md
 Resume file: None
