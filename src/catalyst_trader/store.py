@@ -64,12 +64,48 @@ def _insert_sources(conn: sqlite3.Connection, catalyst_id: int, sources: list[Ca
         )
 
 
+def _latest_version(conn: sqlite3.Connection, catalyst_id: int) -> sqlite3.Row | None:
+    return conn.execute(
+        "SELECT event_date, event_date_end FROM catalyst_version WHERE catalyst_id=? "
+        "ORDER BY recorded_at DESC, id DESC LIMIT 1",
+        (catalyst_id,),
+    ).fetchone()
+
+
+def _append_version(conn: sqlite3.Connection, catalyst_id: int, catalyst: Catalyst, now: str) -> None:
+    conn.execute(
+        "INSERT INTO catalyst_version (catalyst_id, event_date, event_date_end, recorded_at) "
+        "VALUES (?,?,?,?)",
+        (catalyst_id, _v(catalyst.event_date), _v(catalyst.event_date_end), now),
+    )
+
+
+def catalyst_version_asof(conn: sqlite3.Connection, catalyst_id: int, cutoff: str) -> dict | None:
+    """The event_date/event_date_end knowable at `cutoff`: the LATEST catalyst_version row with
+    recorded_at <= cutoff, or None if no version was recorded yet at that cutoff.
+
+    Append-never-overwrite as-of: a replay before an amendment returns the OLD date, after the
+    amendment returns the NEW one. The gateway (serving.py) reads this instead of the raw
+    event_date column so an amended PDUFA date never leaks into a pre-amendment backtest week.
+    """
+    row = conn.execute(
+        "SELECT event_date, event_date_end, recorded_at FROM catalyst_version "
+        "WHERE catalyst_id=? AND recorded_at <= ? ORDER BY recorded_at DESC, id DESC LIMIT 1",
+        (catalyst_id, cutoff),
+    ).fetchone()
+    return dict(row) if row is not None else None
+
+
 def insert_catalyst(conn: sqlite3.Connection, catalyst: Catalyst) -> int:
     """Insert a catalyst + its source rows atomically; return the catalyst id.
 
-    Rejects a catalyst with zero sources (no date without provenance). If a row
-    with the same (ticker, external_ref) already exists, updates it in place and
-    replaces its source rows (idempotent re-fetch) rather than duplicating.
+    Rejects a catalyst with zero sources (no date without provenance). If a row with the same
+    (ticker, external_ref) already exists, updates the materialized row in place and replaces its
+    source rows (idempotent re-fetch). An amended event_date/event_date_end additionally APPENDS a
+    catalyst_version row (append-never-overwrite); an unchanged re-fetch appends no version.
+
+    # ponytail: the main catalyst row is the LATEST-version live-view cache (existing readers
+    # unaffected); catalyst_version is the append-only replay source of truth for the gateway.
     """
     if not catalyst.sources:
         raise ValueError("cannot persist a catalyst without a source row (no LLM-sourced dates)")
@@ -104,6 +140,15 @@ def insert_catalyst(conn: sqlite3.Connection, catalyst: Catalyst) -> int:
                     cid,
                 ),
             )
+            # append-never-overwrite: only a CHANGED (event_date, event_date_end) appends a
+            # version (idempotent on an unchanged re-fetch — the main-row refresh still runs).
+            prev = _latest_version(conn, cid)
+            changed = prev is None or (
+                prev["event_date"] != _v(catalyst.event_date)
+                or prev["event_date_end"] != _v(catalyst.event_date_end)
+            )
+            if changed:
+                _append_version(conn, cid, catalyst, now)
             # ponytail: replace sources on re-fetch; corroborating sources are added
             # via a separate path (Plan 05 refresh), not by re-inserting the same ref.
             conn.execute("DELETE FROM catalyst_source WHERE catalyst_id=?", (cid,))
@@ -115,6 +160,7 @@ def insert_catalyst(conn: sqlite3.Connection, catalyst: Catalyst) -> int:
                 tuple(_v(getattr(catalyst, c)) for c in _CAT_COLS) + (now, now),
             )
             cid = cur.lastrowid
+            _append_version(conn, cid, catalyst, now)  # version-1 for a brand-new catalyst
             _insert_sources(conn, cid, catalyst.sources)
 
         conn.commit()
@@ -357,6 +403,7 @@ def write_scan_flag(
     its row id. Idempotent on (ticker, week_end) (mirrors write_card). `routed` is stored 1/0."""
     blob = json.dumps(payload)
     r = 1 if routed else 0
+    now = now_iso()  # transaction-time stamp the gateway gates on (scan_flag knowable=recorded_at)
     try:
         existing = conn.execute(
             "SELECT id FROM scan_flag WHERE ticker=? AND week_end=?",
@@ -364,14 +411,15 @@ def write_scan_flag(
         ).fetchone()
         if existing is not None:
             conn.execute(
-                "UPDATE scan_flag SET payload=?, routed=? WHERE id=?",
-                (blob, r, existing["id"]),
+                "UPDATE scan_flag SET payload=?, routed=?, recorded_at=? WHERE id=?",
+                (blob, r, now, existing["id"]),
             )
             row_id = existing["id"]
         else:
             cur = conn.execute(
-                "INSERT INTO scan_flag (ticker, week_end, payload, routed) VALUES (?,?,?,?)",
-                (ticker, week_end, blob, r),
+                "INSERT INTO scan_flag (ticker, week_end, payload, routed, recorded_at) "
+                "VALUES (?,?,?,?,?)",
+                (ticker, week_end, blob, r, now),
             )
             row_id = cur.lastrowid
         conn.commit()

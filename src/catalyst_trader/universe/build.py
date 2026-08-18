@@ -17,6 +17,7 @@ from calendar import monthrange
 from pathlib import Path
 
 from catalyst_trader.csvrows import read_csv_rows
+from catalyst_trader.dates import now_iso
 from catalyst_trader.models import UniverseSnapshot
 
 SEED_CSV = Path(__file__).resolve().parents[3] / "data" / "seed_universe.csv"
@@ -87,6 +88,7 @@ def build_snapshot(
         seed_rows = _load_seed()
 
     window_end = _add_months(as_of_date, density_months)
+    now = now_iso()  # transaction-time stamp the gateway gates on (universe knowable=recorded_at)
     included_count = 0
 
     for r in seed_rows:
@@ -118,9 +120,10 @@ def build_snapshot(
         )
         conn.execute(
             "INSERT INTO universe_snapshot "
-            "(as_of_date, ticker, included, delisted, criteria_json, reason) VALUES (?,?,?,?,?,?)",
+            "(as_of_date, ticker, included, delisted, criteria_json, reason, recorded_at) "
+            "VALUES (?,?,?,?,?,?,?)",
             (as_of_date, ticker, included, 1 if delisted else 0, criteria_json,
-             "; ".join(reasons) if reasons else None),
+             "; ".join(reasons) if reasons else None, now),
         )
         included_count += included
 
