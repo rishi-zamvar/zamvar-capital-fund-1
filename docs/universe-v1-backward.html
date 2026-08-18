@@ -1,0 +1,137 @@
+<title>Universe v1 — Backward Scan</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+:root{
+  --bg:#f6f3ec;--panel:#fffdf8;--panel2:#faf6ec;--line:#e5dfce;--ink:#211d17;--muted:#6d6656;
+  --brass:#9a7a2e;--brass-deep:#7a5f1f;--green:#2f7d4f;--amber:#a9711a;--red:#b23b2e;
+  --bar:#c8a24b;--bar-weak:#c9c0ab;--shadow:0 1px 0 rgba(0,0,0,.02),0 10px 30px -22px rgba(0,0,0,.35);
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#14120f;--panel:#1d1a15;--panel2:#221e18;--line:#332d22;--ink:#ece6da;--muted:#9a917f;
+  --brass:#d9b96a;--brass-deep:#e6cd8f;--green:#6fd39a;--amber:#f0c060;--red:#ff8272;
+  --bar:#d9b96a;--bar-weak:#4a4437;--shadow:0 1px 0 rgba(255,255,255,.02),0 14px 34px -22px rgba(0,0,0,.7);
+}}
+:root[data-theme="dark"]{
+  --bg:#14120f;--panel:#1d1a15;--panel2:#221e18;--line:#332d22;--ink:#ece6da;--muted:#9a917f;
+  --brass:#d9b96a;--brass-deep:#e6cd8f;--green:#6fd39a;--amber:#f0c060;--red:#ff8272;
+  --bar:#d9b96a;--bar-weak:#4a4437;--shadow:0 1px 0 rgba(255,255,255,.02),0 14px 34px -22px rgba(0,0,0,.7);
+}
+*{box-sizing:border-box}html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--ink);
+  font:17px/1.6 Georgia,"Iowan Old Style",serif;padding:clamp(20px,5vw,60px)}
+.wrap{max-width:46rem;margin:0 auto}
+.sans{font-family:system-ui,-apple-system,sans-serif}
+.mono{font-family:ui-monospace,SFMono-Regular,Menlo,monospace}
+.eyebrow{font-family:ui-monospace,monospace;font-size:12px;letter-spacing:.2em;text-transform:uppercase;color:var(--brass-deep);margin:0 0 10px}
+h1{font-family:system-ui,sans-serif;font-size:clamp(30px,5.5vw,46px);line-height:1.03;margin:0 0 12px;letter-spacing:-.02em;font-weight:800}
+.lede{font-size:clamp(17px,2.3vw,20px);color:var(--muted);margin:0}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:12px;margin:26px 0}
+.stat{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:14px 16px;box-shadow:var(--shadow)}
+.stat .n{font-family:ui-monospace,monospace;font-size:26px;font-weight:700;font-variant-numeric:tabular-nums;letter-spacing:-.02em}
+.stat .l{font-size:11px;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);margin-top:5px}
+hr{height:1px;background:var(--line);border:0;margin:38px 0}
+h2{font-family:system-ui,sans-serif;font-size:clamp(20px,3.2vw,26px);margin:0 0 6px;font-weight:750;letter-spacing:-.01em}
+.sectlede{color:var(--muted);font-size:15px;margin:0 0 18px}
+p{margin:0 0 15px}
+.finding{background:var(--panel);border:1px solid var(--line);border-left:4px solid var(--amber);border-radius:12px;padding:18px 22px;margin:22px 0;box-shadow:var(--shadow)}
+.finding b{color:var(--amber)}
+/* member table */
+.tbl{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:8px 4px;margin:16px 0;box-shadow:var(--shadow);overflow-x:auto}
+.rowh{display:grid;grid-template-columns:2.2rem 4rem 1fr 3rem;gap:10px;align-items:center;padding:6px 16px;
+  font-family:ui-monospace,monospace;font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.r{display:grid;grid-template-columns:2.2rem 4rem 1fr 3rem;gap:10px;align-items:center;padding:7px 16px;border-top:1px solid var(--line)}
+.r .rk{font-family:ui-monospace,monospace;color:var(--muted);font-size:13px;text-align:right}
+.r .tk{font-family:ui-monospace,monospace;font-weight:700;font-size:15px}
+.r .barwrap{background:color-mix(in srgb,var(--line) 60%,transparent);border-radius:4px;height:16px;position:relative;overflow:hidden}
+.r .bar{position:absolute;left:0;top:0;bottom:0;background:var(--bar);border-radius:4px}
+.r .n{font-family:ui-monospace,monospace;font-size:13px;text-align:right;font-variant-numeric:tabular-nums}
+.r small{color:var(--muted);font-size:11px}
+.r.weak .bar{background:var(--bar-weak)} .r.weak .tk{color:var(--muted)}
+.divlbl{padding:10px 16px 4px;font-family:ui-monospace,monospace;font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--amber)}
+.divlbl.core{color:var(--green)}
+.chips{display:flex;flex-wrap:wrap;gap:7px;margin:6px 0 0}
+.chip{font-family:ui-monospace,monospace;font-size:12px;background:var(--panel2);border:1px solid var(--line);border-radius:6px;padding:3px 8px;color:var(--muted)}
+.lever{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:15px 18px;margin:11px 0;box-shadow:var(--shadow)}
+.lever h3{font-family:system-ui,sans-serif;margin:0 0 5px;font-size:16px;font-weight:700}
+.lever.rec{border-left:4px solid var(--green)} .lever.rec h3::after{content:" · recommended";color:var(--green);font-size:12px;font-weight:600}
+.lever p{margin:0;font-size:14.5px;color:var(--muted)}
+.foot{font-family:system-ui,sans-serif;color:var(--muted);font-size:12.5px;margin-top:36px;padding-top:16px;border-top:1px solid var(--line)}
+</style>
+
+<div class="wrap">
+  <p class="eyebrow">Zamvar Capital · Fund 1 · universe v1 (backward scan, 2026-08-17)</p>
+  <h1>17 names, not 80 — and the honest why</h1>
+  <p class="lede">The universe was built <b>backward</b>: search every biotech, measure how far each one's stock actually moved on its <em>past</em> FDA decisions, keep the proven movers. Here's what real history gave us — and why it came in thin.</p>
+
+  <div class="stats">
+    <div class="stat"><div class="n">256</div><div class="l">candidates searched</div></div>
+    <div class="stat"><div class="n">26</div><div class="l">had ≥2 measurable PDUFAs</div></div>
+    <div class="stat"><div class="n">17</div><div class="l">in the universe</div></div>
+    <div class="stat"><div class="n">21</div><div class="l">on the watch list</div></div>
+  </div>
+
+  <div class="finding">
+    <b>The finding (why 17, not 80).</b> Only <b>26 of 256</b> companies had at least <em>two measurable</em> past FDA decisions in 5 years — because PDUFAs are rare per company. Since 26 is far below the target of 80, the "cut the weakest names" step <b>never engaged</b>: it kept <em>every</em> tradeable name with ≥2 past decisions — the strong movers <em>and</em> some non-movers. The engine works and is honest; the <b>data pool is too thin for the cut to bite.</b> The fix is to grow the pool (below), not to trust the weak tail.
+  </div>
+
+  <hr>
+
+  <h2>The universe, ranked by proven catalyst move</h2>
+  <p class="sectlede">Median % the stock moved (T-1 → T+2) across its past FDA decisions. Bar = that median move.</p>
+  <div class="tbl">
+    <div class="rowh"><span>#</span><span>Ticker</span><span>Median move on its FDA decisions</span><span>Events</span></div>
+    <div class="divlbl core">The real movers — trustworthy core</div>
+    <div class="r"><span class="rk">1</span><span class="tk">AQST</span><div class="barwrap"><div class="bar" style="width:100%"></div></div><span class="n">26%<br><small>6</small></span></div>
+    <div class="r"><span class="rk">2</span><span class="tk">CRNX</span><div class="barwrap"><div class="bar" style="width:92%"></div></div><span class="n">24%<br><small>2</small></span></div>
+    <div class="r"><span class="rk">3</span><span class="tk">URGN</span><div class="barwrap"><div class="bar" style="width:73%"></div></div><span class="n">19%<br><small>3</small></span></div>
+    <div class="r"><span class="rk">4</span><span class="tk">CRSP</span><div class="barwrap"><div class="bar" style="width:65%"></div></div><span class="n">17%<br><small>2</small></span></div>
+    <div class="r"><span class="rk">5</span><span class="tk">VNDA</span><div class="barwrap"><div class="bar" style="width:58%"></div></div><span class="n">15%<br><small>6</small></span></div>
+    <div class="r"><span class="rk">6</span><span class="tk">INSM</span><div class="barwrap"><div class="bar" style="width:50%"></div></div><span class="n">13%<br><small>5</small></span></div>
+    <div class="divlbl">Weak tail — admitted only because the cut never engaged</div>
+    <div class="r weak"><span class="rk">7</span><span class="tk">AUTL</span><div class="barwrap"><div class="bar" style="width:35%"></div></div><span class="n">9%<br><small>6</small></span></div>
+    <div class="r weak"><span class="rk">8</span><span class="tk">PHAT</span><div class="barwrap"><div class="bar" style="width:31%"></div></div><span class="n">8%<br><small>2</small></span></div>
+    <div class="r weak"><span class="rk">9</span><span class="tk">VERA</span><div class="barwrap"><div class="bar" style="width:23%"></div></div><span class="n">6%<br><small>2</small></span></div>
+    <div class="r weak"><span class="rk">10</span><span class="tk">KRYS</span><div class="barwrap"><div class="bar" style="width:19%"></div></div><span class="n">5%<br><small>2</small></span></div>
+    <div class="r weak"><span class="rk">11</span><span class="tk">CAPR</span><div class="barwrap"><div class="bar" style="width:19%"></div></div><span class="n">5%<br><small>2</small></span></div>
+    <div class="r weak"><span class="rk">12</span><span class="tk">TVTX</span><div class="barwrap"><div class="bar" style="width:15%"></div></div><span class="n">4%<br><small>10</small></span></div>
+    <div class="r weak"><span class="rk">13</span><span class="tk">DNLI</span><div class="barwrap"><div class="bar" style="width:15%"></div></div><span class="n">4%<br><small>2</small></span></div>
+    <div class="r weak"><span class="rk">14</span><span class="tk">SUPN</span><div class="barwrap"><div class="bar" style="width:15%"></div></div><span class="n">4%<br><small>2</small></span></div>
+    <div class="r weak"><span class="rk">15</span><span class="tk">VRDN</span><div class="barwrap"><div class="bar" style="width:12%"></div></div><span class="n">3%<br><small>4</small></span></div>
+    <div class="r weak"><span class="rk">16</span><span class="tk">BCRX</span><div class="barwrap"><div class="bar" style="width:12%"></div></div><span class="n">3%<br><small>2</small></span></div>
+    <div class="r weak"><span class="rk">17</span><span class="tk">BMRN</span><div class="barwrap"><div class="bar" style="width:5%"></div></div><span class="n">1%<br><small>4</small></span></div>
+  </div>
+  <p class="sectlede">The top 6 are exactly the kind of names this fund exists to trade — double-digit, repeatable reactions. Below ~10% the "moves" are too small to build a one-week catalyst trade around; they're only here because there weren't enough names to cut them.</p>
+
+  <hr>
+
+  <h2>The watch list — 21 names parked (not rejected)</h2>
+  <p class="sectlede">Real biotechs with an upcoming or single past FDA decision — but fewer than 2 <em>measurable</em> ones, so we can't yet judge how they move. They wait here until history gives us enough to score them.</p>
+  <div class="chips">
+    <span class="chip">AGIO</span><span class="chip">ARQT</span><span class="chip">ATRA</span><span class="chip">AXSM</span><span class="chip">CRMD</span><span class="chip">DARE</span><span class="chip">ETON</span><span class="chip">EXEL</span><span class="chip">INCY</span><span class="chip">INVA</span><span class="chip">JAZZ</span><span class="chip">KURA</span><span class="chip">LPCN</span><span class="chip">LXRX</span><span class="chip">MNKD</span><span class="chip">OTLK</span><span class="chip">PGEN</span><span class="chip">RPRX</span><span class="chip">SNDX</span><span class="chip">SPRY</span><span class="chip">TNXP</span>
+  </div>
+
+  <hr>
+
+  <h2>How we grow it into a real universe of movers</h2>
+  <p class="sectlede">The engine is sound; it just needs a deeper pool so the "keep only the movers" cut actually bites. Three levers:</p>
+  <div class="lever rec">
+    <h3>Measure moves on trial readouts + advisory-committee votes too — not only PDUFAs</h3>
+    <p>Big biotech stock moves come from clinical-trial results and FDA advisory votes just as much as from approval dates. We already have that data. Counting those as "measurable events" multiplies the history per company — far more names reach ≥2 measurable moves, so the pool clears the target and the cut keeps only genuine movers. (Note: this widens what we consider a "catalyst move" beyond your original PDUFA-only spec — your call.)</p>
+  </div>
+  <div class="lever rec">
+    <h3>Add a hard floor: a name must move ≥ ~10% to qualify</h3>
+    <p>Independent of pool size, refuse to admit a name whose typical catalyst move is below a floor (say 10%). This alone drops the weak tail (BMRN, BCRX, VRDN…) tonight and guarantees the universe is only real movers — even before the pool grows.</p>
+  </div>
+  <div class="lever">
+    <h3>Extend the lookback beyond 5 years</h3>
+    <p>Going to ~8–10 years gives each company more past decisions to measure. Helps, but slower to add than the two above, and older reactions are less representative of today.</p>
+  </div>
+
+  <hr>
+
+  <h2>What's trustworthy right now</h2>
+  <p>The <b>top 6 (AQST, CRNX, URGN, CRSP, VNDA, INSM)</b> are a real, high-conviction core — proven double-digit movers, measured from actual past price reactions, computed for free from data we already had (no API calls). The machinery — search, measure, rank, screen, write — ran clean and reconciles exactly with the stored universe. What's thin is the <em>pool</em>, and the two recommended levers fix that directly.</p>
+  <p><b>Recommendation:</b> add the ≥10% floor now (kills the weak tail immediately) and widen measurable events to readouts + AdComs (grows the pool toward 80 real movers), then re-run — it's cheap and cached.</p>
+
+  <p class="foot">Zamvar Capital — Fund 1 · universe v1, backward proven-PDUFA-volatility membership · 256 candidates → 26 scorable (≥2 measurable moves) → 17 written, 21 watch-listed · median move = T-1→T+2 close-to-close around each past FDA decision · measured from stored history, zero live API calls · reconciles with universe_as_of.</p>
+</div>

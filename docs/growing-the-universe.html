@@ -1,0 +1,152 @@
+<title>Growing the Universe</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+:root{
+  --bg:#f6f3ec;--panel:#fffdf8;--panel2:#faf6ec;--line:#e5dfce;--ink:#211d17;--muted:#6d6656;
+  --brass:#9a7a2e;--brass-deep:#7a5f1f;--green:#2f7d4f;--red:#b23b2e;
+  --shadow:0 1px 0 rgba(0,0,0,.02),0 10px 30px -22px rgba(0,0,0,.35);
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#14120f;--panel:#1d1a15;--panel2:#221e18;--line:#332d22;--ink:#ece6da;--muted:#9a917f;
+  --brass:#d9b96a;--brass-deep:#e6cd8f;--green:#6fd39a;--red:#ff8272;
+  --shadow:0 1px 0 rgba(255,255,255,.02),0 14px 34px -22px rgba(0,0,0,.7);
+}}
+:root[data-theme="dark"]{
+  --bg:#14120f;--panel:#1d1a15;--panel2:#221e18;--line:#332d22;--ink:#ece6da;--muted:#9a917f;
+  --brass:#d9b96a;--brass-deep:#e6cd8f;--green:#6fd39a;--red:#ff8272;
+  --shadow:0 1px 0 rgba(255,255,255,.02),0 14px 34px -22px rgba(0,0,0,.7);
+}
+*{box-sizing:border-box}html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font:18px/1.68 Georgia,"Iowan Old Style",serif;padding:clamp(20px,5vw,60px)}
+.wrap{max-width:44rem;margin:0 auto}
+.eyebrow{font-family:ui-monospace,monospace;font-size:12px;letter-spacing:.2em;text-transform:uppercase;color:var(--brass-deep);margin:0 0 10px}
+h1{font-family:system-ui,-apple-system,sans-serif;font-size:clamp(30px,5.5vw,48px);line-height:1.03;margin:0 0 12px;letter-spacing:-.02em;font-weight:800}
+.lede{font-size:clamp(18px,2.4vw,21px);color:var(--muted);margin:0}
+.bigidea{background:var(--panel);border:1px solid var(--line);border-left:4px solid var(--brass);border-radius:12px;padding:18px 22px;margin:26px 0;box-shadow:var(--shadow)}
+.bigidea b{color:var(--brass-deep)}
+hr{height:1px;background:var(--line);border:0;margin:42px 0}
+h2{font-family:system-ui,sans-serif;font-size:clamp(21px,3.3vw,27px);margin:0 0 6px;font-weight:750;letter-spacing:-.01em}
+.sectlede{color:var(--muted);font-size:16px;margin:0 0 18px}
+p{margin:0 0 16px}
+strong{font-weight:700}
+.plain{background:var(--panel2);border:1px solid var(--line);border-left:4px solid var(--brass);border-radius:10px;padding:14px 18px;margin:15px 0;font-size:16px;line-height:1.6}
+.plain .tag{font-family:ui-monospace,monospace;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--brass-deep);display:block;margin-bottom:5px}
+.term{font-family:ui-monospace,monospace;font-size:.85em;background:color-mix(in srgb,var(--brass) 15%,transparent);color:var(--brass-deep);padding:1px 6px;border-radius:5px}
+.evt{display:grid;grid-template-columns:auto 1fr;gap:14px;align-items:start;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:15px 18px;margin:11px 0;box-shadow:var(--shadow)}
+.evt .ico{font-size:22px;line-height:1.2}
+.evt h3{font-family:system-ui,sans-serif;margin:0 0 4px;font-size:16.5px;font-weight:700}
+.evt h3 .j{font-family:ui-monospace,monospace;font-size:12px;color:var(--brass-deep);font-weight:600}
+.evt p{margin:0;font-size:15px;color:var(--muted)}
+.evt.have{border-left:4px solid var(--green)} .evt.new{border-left:4px solid var(--brass)}
+.tag2{font-family:ui-monospace,monospace;font-size:10.5px;letter-spacing:.05em;text-transform:uppercase;padding:2px 7px;border-radius:5px;white-space:nowrap}
+.tag2.have{background:color-mix(in srgb,var(--green) 16%,transparent);color:var(--green)}
+.tag2.new{background:color-mix(in srgb,var(--brass) 16%,transparent);color:var(--brass-deep)}
+.compare{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:18px 0}
+.compare .box{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:16px;box-shadow:var(--shadow)}
+.compare .box.now{border-top:3px solid var(--red)} .compare .box.after{border-top:3px solid var(--green)}
+.compare .h{font-family:ui-monospace,monospace;font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin-bottom:8px}
+.compare .big{font-family:ui-monospace,monospace;font-size:28px;font-weight:700}
+.compare small{color:var(--muted);font-size:13px;display:block;margin-top:6px;font-family:Georgia,serif}
+.lever{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:15px 18px;margin:11px 0;box-shadow:var(--shadow)}
+.lever h3{font-family:system-ui,sans-serif;margin:0 0 5px;font-size:16px;font-weight:700}
+.lever.rec{border-left:4px solid var(--green)} .lever.rec h3::after{content:" · recommended";color:var(--green);font-size:12px;font-weight:600}
+.lever p{margin:0;font-size:14.5px;color:var(--muted)}
+.foot{font-family:system-ui,sans-serif;color:var(--muted);font-size:13px;margin-top:38px;padding-top:16px;border-top:1px solid var(--line)}
+</style>
+
+<div class="wrap">
+  <p class="eyebrow">Zamvar Capital · Fund 1 · plain-language briefing</p>
+  <h1>Growing the Universe</h1>
+  <p class="lede">Why our list of tradeable biotechs came out small, and the two plain moves that grow it into a real set of movers — jargon explained first, then used.</p>
+
+  <div class="bigidea">
+    <b>The one idea.</b> We pick which biotechs to trade by looking at how hard their stock has <em>moved</em> on big past moments. We only counted <em>one kind</em> of big moment (FDA approval days), and those are rare — so most companies didn't have enough history to judge, and the list came out to 17 with a weak tail. Count the <em>other</em> kinds of big moments too, and the list grows into real movers.
+  </div>
+
+  <hr>
+
+  <h2>First: what's a "big moment" for a biotech?</h2>
+  <p>A biotech stock mostly sits still, then lurches on a handful of make-or-break days a year. Those days are what we trade around.</p>
+  <div class="plain"><span class="tag">Plain words</span>
+    <b>Catalyst / event</b> = one of those make-or-break days — a piece of news that can send the stock up or down 20–50% in a day. We'll call it an <span class="term">event</span>. There are four main kinds:
+  </div>
+
+  <div class="evt have"><div class="ico">✅</div><div>
+    <h3>FDA decision day <span class="j">jargon: "PDUFA date"</span> <span class="tag2 have">we count this</span></h3>
+    <p>The scheduled day the FDA says <em>yes</em> or <em>no</em> to approving a drug. The biggest, cleanest binary moment. <b>This is the only kind we've been counting so far.</b> They're rare — a company gets one maybe once every year or two.</p>
+  </div></div>
+
+  <div class="evt new"><div class="ico">🧪</div><div>
+    <h3>Trial results day <span class="j">jargon: "readout"</span> <span class="tag2 new">not counted yet</span></h3>
+    <p>The day a company reveals whether its drug actually <em>worked</em> in a study. Moves the stock just as violently as an approval day — often more. Companies have these more often than FDA decisions. <b>We already collect these; we just aren't using them to score companies.</b></p>
+  </div></div>
+
+  <div class="evt new"><div class="ico">🗳️</div><div>
+    <h3>Expert panel vote <span class="j">jargon: "AdCom"</span> <span class="tag2 new">not counted yet</span></h3>
+    <p>Before some FDA decisions, a panel of outside experts publicly votes on whether the drug should be approved. That vote is a preview that itself swings the stock — a real moment in its own right.</p>
+  </div></div>
+
+  <div class="evt new"><div class="ico">📊</div><div>
+    <h3>Conference presentation <span class="j">jargon: "conference data"</span> <span class="tag2 new">not counted yet</span></h3>
+    <p>Companies unveil results on stage at big medical conferences (cancer, heart, etc.). Those reveals move stocks too. Hardest of the four to collect reliably for free.</p>
+  </div></div>
+
+  <hr>
+
+  <h2>What "measurable" means, and why we need two</h2>
+  <div class="plain"><span class="tag">Plain words</span>
+    <b>Measurable event</b> = an event that (a) already happened, (b) on a specific known day, so (c) we can look up exactly how far the stock jumped or fell around it. An <em>upcoming</em> event isn't measurable yet — it hasn't happened. A vaguely-dated one ("sometime in Q2") can't be pinned to a day.
+  </div>
+  <p>To decide "does this company reliably move on its events?", one data point isn't enough — a single big jump could be luck. So we require <strong>at least two measurable past events</strong> before a company can join. That's the bar that protects us from being fooled by one fluke.</p>
+
+  <hr>
+
+  <h2>So why did the list come out small?</h2>
+  <p class="sectlede">Because we only counted the <em>rarest</em> kind of event.</p>
+  <p>FDA decision days happen maybe once every year or two per company. Requiring <em>two</em> of them, in just five years of history, most companies simply couldn't clear — so we couldn't score them, and they fell out. Out of 256 biotechs, only 26 had two measurable FDA decisions. That left 17 in the list, several of them barely moving.</p>
+  <div class="compare">
+    <div class="box now"><div class="h">Counting FDA days only</div><div class="big">17</div><small>names — with a weak tail that barely moves, because there weren't enough companies to be choosy</small></div>
+    <div class="box after"><div class="h">Counting all four event types</div><div class="big">many&nbsp;more</div><small>companies clear the "two measurable events" bar — enough to keep only the genuine movers</small></div>
+  </div>
+  <p>It's not that these companies are quiet. It's that we were looking at one narrow slice of their activity.</p>
+
+  <hr>
+
+  <h2>How we GROW it</h2>
+  <p class="sectlede">Give the system more of the history that's already out there.</p>
+  <div class="lever rec">
+    <h3>Count trial-results days and panel votes too, not just FDA decisions</h3>
+    <p>The single biggest lever. Trial results and expert-panel votes are just as violent as approval days, and companies have far more of them. Counting them means most companies now have two-plus measurable events — so the pool grows past our target, and we can afford to keep only the real movers. We already collect trial results; panel votes we can add.</p>
+  </div>
+  <div class="lever">
+    <h3>Look back further than five years</h3>
+    <p>More years = more past events per company. Helps, but older reactions are less like today's, and it's slower to add than the lever above.</p>
+  </div>
+
+  <h2 style="margin-top:34px">How we HARDEN it</h2>
+  <p class="sectlede">Make sure the bigger list is only <em>trustworthy</em> movers — not padded.</p>
+  <div class="lever rec">
+    <h3>Set a floor: a company must typically move ≥10% on its events, or it's out</h3>
+    <p>This deletes the weak tail immediately — names like the one that moved just 1% don't belong in a fund that trades big swings. With a bigger pool behind it, the floor leaves only companies whose events genuinely move the stock.</p>
+  </div>
+  <div class="lever">
+    <h3>Keep the two-events-minimum rule</h3>
+    <p>Already in place. It stops one lucky jump from earning a company a spot — every member is proven across multiple events.</p>
+  </div>
+  <div class="lever">
+    <h3>Re-scan on a schedule so the list stays current</h3>
+    <p>As new events happen, companies on the "waiting" list earn enough history to join, and any name that's gone quiet can drop out. The universe stays a living, earned list — never a frozen guess.</p>
+  </div>
+
+  <div class="plain" style="margin-top:22px"><span class="tag">Plain words</span>
+    <b>The waiting list</b> (we've been calling it the "watch list") = 21 real biotechs that have an upcoming or a single past event, but not yet two <em>measurable</em> ones. They're parked, not rejected — they join automatically once history gives us enough to judge them.
+  </div>
+
+  <hr>
+
+  <h2>Bottom line, and the one decision</h2>
+  <p>The machine that picks the universe works and is honest — it just fed on too narrow a diet (FDA days only). <strong>Feed it the other big-moment types (trial results + panel votes) and add a 10%-move floor,</strong> and the same top movers stay, the weak tail drops, and the list grows toward a real ~80-name set of proven movers — enough to give the desk something worth trading most weeks.</p>
+  <p><strong>Your one call:</strong> say the word and I widen "measurable events" to include trial results + panel votes, add the 10% floor, and re-run the scan (cheap — it reuses data we already have). You'll get a fresh universe artifact to review.</p>
+
+  <p class="foot">Zamvar Capital — Fund 1 · plain-language briefing on growing + hardening the tradeable universe · event types: FDA decision (PDUFA), trial results (readout), expert-panel vote (AdCom), conference data · membership = proven movement across ≥2 measurable past events.</p>
+</div>
