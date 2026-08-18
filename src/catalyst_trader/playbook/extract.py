@@ -182,6 +182,28 @@ _TAXONOMY = (
     "salience, vote split. Cite EVERY driver with a verbatim quote + source_url or DROP it."
 )
 
+# Standards that make INDEPENDENT extractions converge (reproducibility): fixed label enums + rules,
+# a fixed reference_class shape, stale-profile self-correction, an honesty rule, and altitude/length.
+_LABEL_RUBRIC = (
+    "OUTCOME_LABEL enum BY TYPE — PDUFA: approve|crl|delay (a large NEGATIVE signed move => crl even "
+    "when the only exhibit is the earlier acceptance PR; large POSITIVE => approve). READOUT: "
+    "hit|miss|mixed — judge by whether the PRIMARY endpoint was met AND the market verdict: a "
+    "statistically-significant result that missed the approved-competitor benchmark, or whose key "
+    "dose/arm failed, is a MISS (cite the effect size vs precedent), not a hit. ADCOM: favorable|unfavorable."
+)
+_STANDARDS = (
+    "STANDARDS (follow exactly for reproducibility): "
+    "(1) reference_class MUST name a specific precedent GROUP + a rough BASE RATE + directional tendency "
+    "(e.g. 'CMC/PAI CRLs for CDMO-dependent small pharma: usually curable, high eventual-approval, 6-12mo delay'). "
+    "(2) If the given INDICATION/MODALITY conflicts with the exhibit's actual lead asset (a stale profile after a "
+    "pivot/acquisition), set the corrected `indication` and `modality` at the TOP LEVEL of your JSON and explain in "
+    "causal_setup; otherwise omit them. "
+    "(3) If the exhibit does NOT state the outcome REASON, SAY SO in why_narrative and reason from the reference "
+    "class + the signed move — NEVER fabricate a specific reason. "
+    "(4) Each narrative field = 2-4 specific sentences, concrete, no boilerplate. "
+    "(5) lesson_rule = one reusable IF-<condition>-THEN-<implication> generalization."
+)
+
 
 def build_prompt(bundle: dict) -> str:
     """The extraction system+user prompt: driver taxonomy + narrative spec + strict JSON schema.
@@ -192,7 +214,8 @@ def build_prompt(bundle: dict) -> str:
         "narrative_before:{thesis,causal_setup,reference_class,variant_why,what_to_watch[],"
         "what_would_change_our_mind[]}, narrative_after:{what_happened,why_narrative,"
         "surprise_vs_prior,which_disconfirmer_fired,lesson_rule,process_grade,second_order}, "
-        "citations:[{url,quote,snippet_hash}]}.\n" + _TAXONOMY + "\n\n"
+        "citations:[{url,quote,snippet_hash}]}.\n"
+        + _TAXONOMY + "\n" + _LABEL_RUBRIC + "\n" + _STANDARDS + "\n\n"
         f"TICKER: {bundle.get('ticker')}  TYPE: {bundle.get('catalyst_type')}  "
         f"INDICATION: {bundle.get('indication')}  MODALITY: {bundle.get('modality')}\n"
         f"EVENT_DATE: {bundle.get('event_date')}  SIGNED_MOVE: {bundle.get('signed_move')}\n\n"
@@ -243,8 +266,10 @@ def extract_record(bundle: dict, complete_fn) -> CatalystRecord | None:
         catalyst_id=bundle["catalyst_id"],        # deterministic facts: from the bundle, not the LLM
         ticker=bundle["ticker"],
         catalyst_type=bundle["catalyst_type"],
-        indication=bundle.get("indication", ""),
-        modality=bundle.get("modality", ""),
+        # stale-profile self-correct: use the LLM's exhibit-derived indication/modality when it
+        # overrides a stale stored profile (QNCX-style pivot), else the bundle's.
+        indication=(data.get("indication") or bundle.get("indication") or ""),
+        modality=(data.get("modality") or bundle.get("modality") or ""),
         event_date=bundle["event_date"],
         knowable_asof=bundle.get("knowable_asof") or bundle["event_date"],
         outcome_label=label,

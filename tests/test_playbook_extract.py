@@ -248,3 +248,33 @@ def test_extract_module_imports_no_llm_sdk():
            / "extract.py").read_text()
     assert "claude_agent_sdk" not in src
     assert "import httpx" not in src  # complete_fn is the only model seam; no network here
+
+
+# format-hardening for reproducibility (locked spec)
+
+def test_prompt_carries_label_rubric_and_standards():
+    from catalyst_trader.playbook.extract import build_prompt
+    p = build_prompt({"ticker": "X", "catalyst_type": "pdufa", "indication": "i", "modality": "m",
+                      "event_date": "2025-01-01", "signed_move": -0.4, "exhibit_text": "t"})
+    assert "OUTCOME_LABEL enum" in p and "reference_class MUST name" in p
+    assert "stale profile" in p.lower() and "NEVER fabricate" in p
+
+
+def test_extract_uses_llm_indication_override_when_stale_profile():
+    from catalyst_trader.playbook.extract import extract_record
+    bundle = {"catalyst_id": 1, "ticker": "QNCX", "catalyst_type": "trial_readout",
+              "indication": "Ataxia-Telangiectasia", "modality": "RBC encapsulation",  # STALE
+              "event_date": "2026-07-30", "knowable_asof": "2026-07-30", "signed_move": 0.13,
+              "move_window": "T-1..T+2", "exhibit_text": "LAM-001 inhaled rapamycin PH-ILD positive",
+              "ctgov": None}
+    nb = {"thesis": "t", "causal_setup": "post-pivot to LAM-001", "reference_class": "r",
+          "variant_why": "v", "what_to_watch": ["a"], "what_would_change_our_mind": ["b"]}
+    na = {"what_happened": "w", "why_narrative": "y", "surprise_vs_prior": "s",
+          "which_disconfirmer_fired": "d", "lesson_rule": "l", "process_grade": "B", "second_order": None}
+    import json
+    payload = json.dumps({"outcome_label": "hit", "confidence": 0.6, "drivers": [],
+                          "indication": "PH-ILD", "modality": "inhaled rapamycin",  # OVERRIDE
+                          "narrative_before": nb, "narrative_after": na,
+                          "citations": [{"url": "http://x", "quote": "LAM-001", "snippet_hash": "h"}]})
+    rec = extract_record(bundle, lambda _p: payload)
+    assert rec.indication == "PH-ILD" and rec.modality == "inhaled rapamycin"  # corrected, not stale
