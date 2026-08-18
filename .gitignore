@@ -27,3 +27,7 @@ data/raw/
 .planning/*-result.json
 # CT.gov unmapped-sponsor review queue (regenerable scan output)
 data/ctgov_sponsor_review.csv
+
+# overnight-run runtime signals (regenerable)
+scripts/.*.done
+scripts/.*.log
