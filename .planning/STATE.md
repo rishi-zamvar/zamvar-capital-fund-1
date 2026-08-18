@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: verifying
-stopped_at: Completed 07.5-04-PLAN.md
-last_updated: "2026-08-18T19:34:06.648Z"
+stopped_at: Completed 07.5-05-PLAN.md
+last_updated: "2026-08-18T19:43:00.274Z"
 last_activity: 2026-08-18
 progress:
   total_phases: 19
-  completed_phases: 11
+  completed_phases: 12
   total_plans: 77
-  completed_plans: 72
+  completed_plans: 73
 ---
 
 # Project State
@@ -130,6 +130,7 @@ Note: Phase 6.9/6.10 are retro-inserted sub-phases; the frontmatter project-wide
 | Phase 07.7 P02 | 10m | 2 tasks | 3 files |
 | Phase 07.5 P02 | 10min | 3 tasks | 4 files |
 | Phase 07.5 P04 | 6m | 3 tasks | 3 files |
+| Phase 07.5-warm-playbook P05 | 4min | 3 tasks | 6 files |
 
 ## Accumulated Context
 
@@ -250,6 +251,7 @@ Recent decisions affecting current work:
 - [Phase 07.5]: as_of gate is the SINGLE no-look-ahead guarantee: knowable_asof is the T+2 date, so gating the catalyst also gates its realized move
 - [Phase 07.5]: PLAY-06 writer lives in playbook/store.py routing through kb.insert_claim (no raw kb_node SQL); kb.py stays leak-gate-owned
 - [Phase 07.5]: Embedder identity stamped on catalyst nodes; assert_embedder_consistency guards both write + Plan-05 query paths (NIT 2)
+- [Phase 07.5-warm-playbook]: Generalization writes free-form {type}:{slug} scenario playbooks with a runtime assert they never hit the reserved fitted_params: namespace (load_params seam untouched)
 
 ### Pending Todos
 
@@ -263,6 +265,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-08-18T19:33:58.655Z
-Stopped at: Completed 07.5-04-PLAN.md
+Last session: 2026-08-18T19:42:49.751Z
+Stopped at: Completed 07.5-05-PLAN.md
 Resume file: None
