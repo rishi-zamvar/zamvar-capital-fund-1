@@ -239,10 +239,17 @@ def collect() -> dict:
     catalysts, moves, snap = db["catalyst"], db["catalyst_move"], db["snapshot_today"]
     phase, tone = _phase(snap, moves, catalysts, done)
     # progress-based liveness: counts rising = working, even when cache-served (no new fetch).
+    # progressing = any DB/archive count rose in the last 120s. Cache-served compute writes NO new
+    # archive files, so the fetch-heartbeat goes stale while work continues — track a rolling
+    # last-progress timestamp off the DB counts so we don't false-report "paused".
     arch_total = sum(arch.values())
-    progressing = (not _PREV) or (moves or 0) > _PREV.get("moves", -1) \
-        or (catalysts or 0) > _PREV.get("catalysts", -1) or arch_total > _PREV.get("arch", -1)
-    _PREV.update({"moves": moves or 0, "catalysts": catalysts or 0, "arch": arch_total})
+    now_ts = time.time()
+    counts = (catalysts or 0) + (moves or 0) + arch_total
+    if (not _PREV) or counts > _PREV.get("counts", -1):
+        _PREV["last_progress"] = now_ts
+    _PREV["counts"] = counts
+    since_progress = now_ts - _PREV.get("last_progress", now_ts)
+    progressing = since_progress < 120
     done_txt = ""
     if done:
         try:

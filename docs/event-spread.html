@@ -1,0 +1,135 @@
+<title>Event Spread</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+:root{
+  --bg:#f6f3ec;--panel:#fffdf8;--panel2:#faf6ec;--line:#e5dfce;--ink:#211d17;--muted:#6d6656;
+  --brass:#9a7a2e;--brass-deep:#7a5f1f;--green:#2f7d4f;--amber:#a9711a;--blue:#2f6f8f;
+  --c1:#9a7a2e;--c2:#2f6f8f;--c3:#a9711a;--c4:#7d7466;
+  --shadow:0 1px 0 rgba(0,0,0,.02),0 10px 30px -22px rgba(0,0,0,.35);
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#14120f;--panel:#1d1a15;--panel2:#221e18;--line:#332d22;--ink:#ece6da;--muted:#9a917f;
+  --brass:#d9b96a;--brass-deep:#e6cd8f;--green:#6fd39a;--amber:#f0c060;--blue:#7fbcd8;
+  --c1:#d9b96a;--c2:#7fbcd8;--c3:#f0c060;--c4:#8a8172;
+  --shadow:0 1px 0 rgba(255,255,255,.02),0 14px 34px -22px rgba(0,0,0,.7);
+}}
+:root[data-theme="dark"]{
+  --bg:#14120f;--panel:#1d1a15;--panel2:#221e18;--line:#332d22;--ink:#ece6da;--muted:#9a917f;
+  --brass:#d9b96a;--brass-deep:#e6cd8f;--green:#6fd39a;--amber:#f0c060;--blue:#7fbcd8;
+  --c1:#d9b96a;--c2:#7fbcd8;--c3:#f0c060;--c4:#8a8172;
+  --shadow:0 1px 0 rgba(255,255,255,.02),0 14px 34px -22px rgba(0,0,0,.7);
+}
+*{box-sizing:border-box}html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font:17px/1.6 Georgia,"Iowan Old Style",serif;padding:clamp(20px,5vw,60px)}
+.wrap{max-width:46rem;margin:0 auto}
+.eyebrow{font-family:ui-monospace,monospace;font-size:12px;letter-spacing:.2em;text-transform:uppercase;color:var(--brass-deep);margin:0 0 10px}
+h1{font-family:system-ui,-apple-system,sans-serif;font-size:clamp(30px,5.5vw,46px);line-height:1.03;margin:0 0 12px;letter-spacing:-.02em;font-weight:800}
+.lede{font-size:clamp(17px,2.3vw,20px);color:var(--muted);margin:0}
+.snap{font-family:ui-monospace,monospace;font-size:12px;color:var(--amber);margin-top:12px;display:flex;align-items:center;gap:7px}
+.snap .dot{width:8px;height:8px;border-radius:50%;background:var(--amber);animation:p 1.6s ease-in-out infinite}
+@keyframes p{0%,100%{opacity:1}50%{opacity:.35}}
+@media (prefers-reduced-motion:reduce){.snap .dot{animation:none}}
+hr{height:1px;background:var(--line);border:0;margin:38px 0}
+h2{font-family:system-ui,sans-serif;font-size:clamp(20px,3.2vw,26px);margin:0 0 6px;font-weight:750;letter-spacing:-.01em}
+.sectlede{color:var(--muted);font-size:15px;margin:0 0 18px}
+p{margin:0 0 15px}
+strong{font-weight:700}
+/* stacked bar */
+.stack{display:flex;height:40px;border-radius:8px;overflow:hidden;border:1px solid var(--line);margin:18px 0 8px;box-shadow:var(--shadow)}
+.stack span{display:flex;align-items:center;justify-content:center;color:#fff;font-family:ui-monospace,monospace;font-size:12px;font-weight:700}
+.legend{display:flex;flex-wrap:wrap;gap:14px;font-family:system-ui,sans-serif;font-size:13px;color:var(--muted);margin-bottom:8px}
+.legend b{color:var(--ink)}
+.sw{display:inline-block;width:11px;height:11px;border-radius:3px;margin-right:6px;vertical-align:baseline}
+/* rows */
+.rows{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:6px 4px;margin:16px 0;box-shadow:var(--shadow);overflow-x:auto}
+.rh,.r{display:grid;grid-template-columns:9.5rem 1fr 3.2rem;gap:12px;align-items:center;padding:9px 16px}
+.rh{font-family:ui-monospace,monospace;font-size:10.5px;letter-spacing:.05em;text-transform:uppercase;color:var(--muted)}
+.r{border-top:1px solid var(--line)}
+.r .name{font-family:system-ui,sans-serif;font-weight:700;font-size:14.5px}
+.r .name small{display:block;color:var(--muted);font-weight:400;font-size:12px;font-family:Georgia,serif}
+.r .barwrap{background:color-mix(in srgb,var(--line) 55%,transparent);border-radius:5px;height:20px;position:relative;overflow:hidden}
+.r .bar{position:absolute;left:0;top:0;bottom:0;border-radius:5px}
+.r .n{font-family:ui-monospace,monospace;font-size:14px;text-align:right;font-variant-numeric:tabular-nums;font-weight:700}
+.usable{background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:16px 18px;margin:16px 0;box-shadow:var(--shadow)}
+.usable table{width:100%;border-collapse:collapse;font-size:14px}
+.usable th,.usable td{text-align:right;padding:7px 8px;font-family:ui-monospace,monospace;font-variant-numeric:tabular-nums}
+.usable th:first-child,.usable td:first-child{text-align:left;font-family:system-ui,sans-serif}
+.usable th{color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.05em;border-bottom:1px solid var(--line)}
+.usable td{border-bottom:1px solid var(--line)}
+.note{background:var(--panel);border:1px solid var(--line);border-left:4px solid var(--brass);border-radius:10px;padding:14px 18px;margin:15px 0;font-size:15px;box-shadow:var(--shadow)}
+.note .tag{font-family:ui-monospace,monospace;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--brass-deep);display:block;margin-bottom:5px}
+.soon{border:1px dashed var(--line);border-radius:12px;padding:18px 20px;margin:16px 0;background:color-mix(in srgb,var(--blue) 6%,var(--panel))}
+.soon h3{font-family:system-ui,sans-serif;margin:0 0 6px;font-size:16px;font-weight:700;color:var(--blue)}
+.foot{font-family:system-ui,sans-serif;color:var(--muted);font-size:12.5px;margin-top:36px;padding-top:16px;border-top:1px solid var(--line)}
+</style>
+
+<div class="wrap">
+  <p class="eyebrow">Zamvar Capital · Fund 1 · event data</p>
+  <h1>Event Spread</h1>
+  <p class="lede">What kinds of make-or-break events we're collecting for the biotech universe, and which are most common. Movement-per-type is wired in as the next enrichment.</p>
+  <p class="snap"><span class="dot"></span>Live snapshot taken mid-scan — readout counts are still climbing as trial-result filings are pulled.</p>
+
+  <hr>
+
+  <h2>The mix — trial results dominate</h2>
+  <p class="sectlede">813 events collected so far, across four types.</p>
+  <div class="stack">
+    <span style="width:75.6%;background:var(--c1)">Trial readouts 76%</span>
+    <span style="width:21.8%;background:var(--c2)">PDUFA 22%</span>
+    <span style="width:2.3%;background:var(--c3)"></span>
+    <span style="width:0.3%;background:var(--c4)"></span>
+  </div>
+  <div class="legend">
+    <span><span class="sw" style="background:var(--c1)"></span><b>Trial readouts</b> — 615</span>
+    <span><span class="sw" style="background:var(--c2)"></span><b>PDUFA (FDA decisions)</b> — 177</span>
+    <span><span class="sw" style="background:var(--c3)"></span><b>Earnings</b> — 19</span>
+    <span><span class="sw" style="background:var(--c4)"></span><b>AdCom (panel votes)</b> — 2</span>
+  </div>
+  <p><strong>Trial-results days are by far the most common event</strong> — roughly 3-to-1 over FDA decision days. That's exactly why counting only PDUFAs gave us too small a universe: we were ignoring the biggest, most frequent source of biotech stock moves.</p>
+
+  <hr>
+
+  <h2>But "collected" ≠ "usable" — the precision gap</h2>
+  <p class="sectlede">To measure how a stock moved, an event needs (a) to have already happened and (b) a specific known day. Many don't yet.</p>
+  <div class="rows">
+    <div class="rh"><span>Event type</span><span>collected → how much is measurable</span><span>Total</span></div>
+    <div class="r"><div class="name">Trial readouts<small>from trials registry + result filings</small></div>
+      <div class="barwrap"><div class="bar" style="width:100%;background:var(--c1);opacity:.35"></div><div class="bar" style="width:54%;background:var(--c1)"></div></div>
+      <div class="n">615</div></div>
+    <div class="r"><div class="name">PDUFA decisions<small>from FDA-decision filings</small></div>
+      <div class="barwrap"><div class="bar" style="width:100%;background:var(--c2);opacity:.35"></div><div class="bar" style="width:100%;background:var(--c2)"></div></div>
+      <div class="n">177</div></div>
+    <div class="r"><div class="name">Earnings<small>earnings calendar</small></div>
+      <div class="barwrap"><div class="bar" style="width:100%;background:var(--c3);opacity:.35"></div><div class="bar" style="width:100%;background:var(--c3)"></div></div>
+      <div class="n">19</div></div>
+    <div class="r"><div class="name">AdCom votes<small>advisory-committee</small></div>
+      <div class="barwrap"><div class="bar" style="width:100%;background:var(--c4);opacity:.35"></div><div class="bar" style="width:100%;background:var(--c4)"></div></div>
+      <div class="n">2</div></div>
+  </div>
+  <p class="sectlede" style="margin-top:0">Solid bar = has a specific day we can measure · faded bar = collected but not-yet-measurable (a vague date, or the event is still in the future).</p>
+  <div class="note"><span class="tag">The key nuance</span>
+    <b>PDUFA dates are almost all pin-down-able</b> (every one carries a filing day), so they're cleanly measurable. <b>Trial readouts are trickier:</b> ~half come from the trials registry with only a rough month ("Q2 2026") or are still upcoming — those can't be measured. That's why we added a second source for readouts — the <b>result announcement filings</b>, which carry a real day — to turn more of that 615 into measurable events. That conversion is what the running scan is doing right now.
+  </div>
+
+  <hr>
+
+  <h2>Coming next: typical movement per event type</h2>
+  <p class="sectlede">This is the enrichment you asked for — how big a move each event type typically causes. Early numbers below; they firm up as the scan finishes measuring.</p>
+  <div class="usable">
+    <table>
+      <tr><th>Event type</th><th>measured</th><th>typical move</th><th>biggest</th></tr>
+      <tr><td>PDUFA decision</td><td>115</td><td>~9%</td><td>66%</td></tr>
+      <tr><td>AdCom vote</td><td>2</td><td>~36%</td><td>36%</td></tr>
+      <tr><td>Trial readout</td><td>32 &amp; rising</td><td>~5% *</td><td>17% *</td></tr>
+    </table>
+  </div>
+  <div class="note"><span class="tag">Read these as provisional</span>
+    <b>* The readout number is understated and will rise.</b> Most readout moves measured so far were dated at the trial's <em>expected completion</em> (a planning date), not the <em>announcement</em> day when the stock actually reacted — so they capture a quiet day and look small. The result-announcement filings now being pulled carry the <em>real</em> reaction day; once those dominate, the readout figure should climb toward the double-digit range these events are known for. AdCom is only 2 samples — directionally huge, statistically thin.
+  </div>
+  <div class="soon">
+    <h3>What the full enrichment will add</h3>
+    <p style="margin:0;color:var(--muted);font-size:14.5px">Per event type: typical move, the spread (how reliable), up-vs-down skew, and how the move differs by trial phase and by whether the news was a hit or a miss. That per-type movement profile is what lets the desk size a trade to the event it's actually facing — and it feeds directly into the playbook.</p>
+  </div>
+
+  <p class="foot">Zamvar Capital — Fund 1 · event-type spread, live snapshot during the grow scan (counts still rising) · 813 events: 615 trial readouts, 177 PDUFA, 19 earnings, 2 AdCom · "measurable" = has a specific past day · movement figures provisional, measured T-1→T+2 around each dated event.</p>
+</div>
