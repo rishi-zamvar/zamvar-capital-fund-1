@@ -278,3 +278,11 @@ def test_extract_uses_llm_indication_override_when_stale_profile():
                           "citations": [{"url": "http://x", "quote": "LAM-001", "snippet_hash": "h"}]})
     rec = extract_record(bundle, lambda _p: payload)
     assert rec.indication == "PH-ILD" and rec.modality == "inhaled rapamycin"  # corrected, not stale
+
+
+def test_earnings_label_move_anchored_reproducible():
+    from catalyst_trader.playbook.extract import _anchor_label
+    assert _anchor_label("earnings", "whatever", -0.10) == "miss"   # 349-style: big down -> miss
+    assert _anchor_label("earnings", "whatever", 0.08) == "beat"
+    assert _anchor_label("earnings", "whatever", 0.01) == "inline"  # muted -> inline
+    assert _anchor_label("earnings", "x", None) == "x"              # no move -> fall back to llm

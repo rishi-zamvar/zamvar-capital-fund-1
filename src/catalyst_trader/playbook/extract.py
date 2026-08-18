@@ -40,6 +40,7 @@ from catalyst_trader.providers._http import _key, _safe_name, load_snapshot
 _CIK_RE = re.compile(r"/data/(\d+)/")
 _DISAGREE_PENALTY = 0.5       # move/text sign disagreement -> halve confidence (research B §3.4)
 _MONTH_PRECISION_PENALTY = 0.7  # no move to corroborate against -> reduce confidence (research B §4)
+_EARNINGS_INLINE_BAND = 0.03    # |move| <= 3% => earnings reaction is "inline" (else beat/miss)
 _REPO_ROOT = Path(__file__).resolve().parents[3]
 
 
@@ -189,7 +190,10 @@ _LABEL_RUBRIC = (
     "when the only exhibit is the earlier acceptance PR; large POSITIVE => approve). READOUT: "
     "hit|miss|mixed — judge by whether the PRIMARY endpoint was met AND the market verdict: a "
     "statistically-significant result that missed the approved-competitor benchmark, or whose key "
-    "dose/arm failed, is a MISS (cite the effect size vs precedent), not a hit. ADCOM: favorable|unfavorable."
+    "dose/arm failed, is a MISS (cite the effect size vs precedent), not a hit. ADCOM: favorable|unfavorable. "
+    "EARNINGS: beat|miss|inline, ANCHORED TO THE SIGNED MOVE (clearly positive reaction => beat, clearly "
+    "negative => miss, muted => inline); capture the two-sided detail (e.g. telegraphed milestone vs widening "
+    "loss) in the narrative, not the label."
 )
 _STANDARDS = (
     "STANDARDS (follow exactly for reproducibility): "
@@ -231,6 +235,13 @@ def _anchor_label(catalyst_type: str, llm_label: str, signed_move) -> str:
     (the PR is often the outcome itself), the move only cross-checks."""
     if catalyst_type == "pdufa" and signed_move is not None:
         return "approve" if signed_move > 0 else "crl"
+    if catalyst_type == "earnings" and signed_move is not None:
+        # move-anchored earnings label (reproducible; the two-sided detail lives in the narrative)
+        if signed_move > _EARNINGS_INLINE_BAND:
+            return "beat"
+        if signed_move < -_EARNINGS_INLINE_BAND:
+            return "miss"
+        return "inline"
     return llm_label
 
 
