@@ -1,0 +1,686 @@
+[
+ {
+  "query_cid": 855,
+  "ticker": "SRRK",
+  "type": "trial_readout",
+  "indication": "Spinal muscular atrophy (Types 2/3, nonambulatory, on standard-of-care nusinersen or risdiplam)",
+  "query_setups": [
+   "single-asset-microcap-binary"
+  ],
+  "filter_used": [
+   "type",
+   "setups"
+  ],
+  "actual": {
+   "label": "hit",
+   "move": 2.743
+  },
+  "analogs": [
+   {
+    "ticker": "PTCT",
+    "indication": "Phenylketonuria; Huntington's disease; Friedreich ataxia",
+    "setups": [
+     "single-asset-microcap-binary",
+     "financing-overhang-going-concern",
+     "first-in-class-no-approved-therapy-whitespace",
+     "trial-graveyard-high-placebo-indication",
+     "contested-efficacy-adcom-risk",
+     "primary-miss-subgroup-salvage"
+    ],
+    "shared_setups": [
+     "single-asset-microcap-binary"
+    ],
+    "label": "miss",
+    "move": -0.265,
+    "distance": 0.3147
+   },
+   {
+    "ticker": "ANAB",
+    "indication": "Generalized Pustular Psoriasis (GPP)",
+    "setups": [
+     "priced-in-derisked-readout",
+     "single-asset-microcap-binary",
+     "contested-efficacy-adcom-risk",
+     "no-new-information-nonevent"
+    ],
+    "shared_setups": [
+     "single-asset-microcap-binary"
+    ],
+    "label": "mixed",
+    "move": -0.013,
+    "distance": 0.3175
+   },
+   {
+    "ticker": "VRDN",
+    "indication": "active thyroid eye disease (TED)",
+    "setups": [
+     "priced-in-derisked-readout",
+     "single-asset-microcap-binary"
+    ],
+    "shared_setups": [
+     "single-asset-microcap-binary"
+    ],
+    "label": "hit",
+    "move": 0.459,
+    "distance": 0.3175
+   },
+   {
+    "ticker": "SVRA",
+    "indication": "Autoimmune pulmonary alveolar proteinosis (aPAP), pivotal Ph",
+    "setups": [
+     "single-asset-microcap-binary",
+     "financing-overhang-going-concern",
+     "first-in-class-no-approved-therapy-whitespace",
+     "no-new-information-nonevent"
+    ],
+    "shared_setups": [
+     "single-asset-microcap-binary"
+    ],
+    "label": "mixed",
+    "move": 0.027,
+    "distance": 0.3237
+   },
+   {
+    "ticker": "BBIO",
+    "indication": "ATTR cardiomyopathy; achondroplasia; ADH1 hypoparathyroidism",
+    "setups": [
+     "priced-for-perfection-crowded-benchmark",
+     "single-asset-microcap-binary",
+     "validated-mechanism-derisked"
+    ],
+    "shared_setups": [
+     "single-asset-microcap-binary"
+    ],
+    "label": "hit",
+    "move": 0.891,
+    "distance": 0.3267
+   },
+   {
+    "ticker": "ACRS",
+    "indication": "Moderate-to-severe rheumatoid arthritis (MTX-inadequate resp",
+    "setups": [
+     "priced-for-perfection-crowded-benchmark",
+     "single-asset-microcap-binary",
+     "financing-overhang-going-concern",
+     "first-in-class-no-approved-therapy-whitespace"
+    ],
+    "shared_setups": [
+     "single-asset-microcap-binary"
+    ],
+    "label": "miss",
+    "move": -0.831,
+    "distance": 0.3288
+   },
+   {
+    "ticker": "ALNY",
+    "indication": "Cardiomyopathy of ATTR amyloidosis (patisiran sNDA expansion",
+    "setups": [
+     "priced-in-derisked-readout",
+     "single-asset-microcap-binary",
+     "cmc-manufacturing-regulatory-risk",
+     "contested-efficacy-adcom-risk"
+    ],
+    "shared_setups": [
+     "single-asset-microcap-binary"
+    ],
+    "label": "mixed",
+    "move": -0.018,
+    "distance": 0.3308
+   },
+   {
+    "ticker": "TVTX",
+    "indication": "IgA nephropathy (FDA accelerated approval)",
+    "setups": [
+     "priced-in-derisked-readout",
+     "single-asset-microcap-binary",
+     "first-in-class-no-approved-therapy-whitespace"
+    ],
+    "shared_setups": [
+     "single-asset-microcap-binary"
+    ],
+    "label": "hit",
+    "move": 0.028,
+    "distance": 0.3357
+   }
+  ]
+ },
+ {
+  "query_cid": 706,
+  "ticker": "VERA",
+  "type": "trial_readout",
+  "indication": "IgA nephropathy (also lupus nephritis)",
+  "query_setups": [
+   "trial-graveyard-high-placebo-indication"
+  ],
+  "filter_used": [
+   "type",
+   "setups"
+  ],
+  "actual": {
+   "label": "hit",
+   "move": -0.711
+  },
+  "analogs": [
+   {
+    "ticker": "LONA",
+    "indication": "Mild-to-moderate Alzheimer's disease (fosgonimeton)",
+    "setups": [
+     "financing-overhang-going-concern",
+     "trial-graveyard-high-placebo-indication",
+     "primary-miss-subgroup-salvage"
+    ],
+    "shared_setups": [
+     "trial-graveyard-high-placebo-indication"
+    ],
+    "label": "miss",
+    "move": -0.676,
+    "distance": 0.3307
+   },
+   {
+    "ticker": "IONS",
+    "indication": "SOD1-amyotrophic lateral sclerosis (SOD1-ALS)",
+    "setups": [
+     "trial-graveyard-high-placebo-indication",
+     "primary-miss-subgroup-salvage"
+    ],
+    "shared_setups": [
+     "trial-graveyard-high-placebo-indication"
+    ],
+    "label": "miss",
+    "move": -0.13,
+    "distance": 0.3314
+   },
+   {
+    "ticker": "BIVI",
+    "indication": "Alzheimer's disease (mild-to-moderate) / neuroinflammation (",
+    "setups": [
+     "financing-overhang-going-concern",
+     "trial-graveyard-high-placebo-indication"
+    ],
+    "shared_setups": [
+     "trial-graveyard-high-placebo-indication"
+    ],
+    "label": "mixed",
+    "move": 0.019,
+    "distance": 0.3336
+   },
+   {
+    "ticker": "RYTM",
+    "indication": "Rare genetic obesity \u2014 MC4R-pathway variants (heterozygous P",
+    "setups": [
+     "single-asset-microcap-binary",
+     "financing-overhang-going-concern",
+     "trial-graveyard-high-placebo-indication"
+    ],
+    "shared_setups": [
+     "trial-graveyard-high-placebo-indication"
+    ],
+    "label": "miss",
+    "move": -0.215,
+    "distance": 0.3441
+   },
+   {
+    "ticker": "BMRA",
+    "indication": "Irritable bowel syndrome (all subtypes: IBS-Constipation, IB",
+    "setups": [
+     "single-asset-microcap-binary",
+     "financing-overhang-going-concern",
+     "trial-graveyard-high-placebo-indication"
+    ],
+    "shared_setups": [
+     "trial-graveyard-high-placebo-indication"
+    ],
+    "label": "mixed",
+    "move": -0.009,
+    "distance": 0.3528
+   },
+   {
+    "ticker": "XENE",
+    "indication": "Focal (partial-onset) epilepsy, adjunctive treatment in adul",
+    "setups": [
+     "single-asset-microcap-binary",
+     "trial-graveyard-high-placebo-indication"
+    ],
+    "shared_setups": [
+     "trial-graveyard-high-placebo-indication"
+    ],
+    "label": "hit",
+    "move": 1.053,
+    "distance": 0.3556
+   },
+   {
+    "ticker": "TBPH",
+    "indication": "Maintenance treatment of COPD (YUPELRI); symptomatic neuroge",
+    "setups": [
+     "priced-in-derisked-readout",
+     "single-asset-microcap-binary",
+     "financing-overhang-going-concern",
+     "first-in-class-no-approved-therapy-whitespace",
+     "trial-graveyard-high-placebo-indication",
+     "primary-miss-subgroup-salvage"
+    ],
+    "shared_setups": [
+     "trial-graveyard-high-placebo-indication"
+    ],
+    "label": "miss",
+    "move": -0.116,
+    "distance": 0.3593
+   },
+   {
+    "ticker": "AXSM",
+    "indication": "Alzheimer's disease agitation (AXS-05)",
+    "setups": [
+     "priced-in-derisked-readout",
+     "first-in-class-no-approved-therapy-whitespace",
+     "trial-graveyard-high-placebo-indication"
+    ],
+    "shared_setups": [
+     "trial-graveyard-high-placebo-indication"
+    ],
+    "label": "hit",
+    "move": 0.272,
+    "distance": 0.3629
+   }
+  ]
+ },
+ {
+  "query_cid": 793,
+  "ticker": "GOSS",
+  "type": "earnings",
+  "indication": "Pulmonary arterial hypertension (PAH); PH-ILD",
+  "query_setups": [],
+  "filter_used": [
+   "type"
+  ],
+  "actual": {
+   "label": "inline",
+   "move": -0.009
+  },
+  "analogs": [
+   {
+    "ticker": "INSM",
+    "indication": "bronchiectasis",
+    "setups": [
+     "priced-in-derisked-readout",
+     "single-asset-microcap-binary",
+     "no-new-information-nonevent",
+     "commercial-single-product-quality"
+    ],
+    "shared_setups": [],
+    "label": "inline",
+    "move": -0.008,
+    "distance": 0.3461
+   },
+   {
+    "ticker": "INSM",
+    "indication": "Bronchiectasis (brensocatib, imminent launch) + MAC lung dis",
+    "setups": [
+     "priced-in-derisked-readout",
+     "single-asset-microcap-binary",
+     "first-in-class-no-approved-therapy-whitespace"
+    ],
+    "shared_setups": [],
+    "label": "inline",
+    "move": 0.015,
+    "distance": 0.3488
+   },
+   {
+    "ticker": "VTGN",
+    "indication": "Social anxiety disorder (acute); vasomotor symptoms of menop",
+    "setups": [
+     "priced-in-derisked-readout",
+     "single-asset-microcap-binary",
+     "financing-overhang-going-concern",
+     "trial-graveyard-high-placebo-indication",
+     "primary-miss-subgroup-salvage"
+    ],
+    "shared_setups": [],
+    "label": "miss",
+    "move": -0.07,
+    "distance": 0.3514
+   },
+   {
+    "ticker": "SPRY",
+    "indication": "Type I severe allergic reactions including anaphylaxis",
+    "setups": [
+     "single-asset-microcap-binary",
+     "contested-efficacy-adcom-risk",
+     "strategic-transaction-capital-injection"
+    ],
+    "shared_setups": [],
+    "label": "miss",
+    "move": -0.166,
+    "distance": 0.3521
+   },
+   {
+    "ticker": "SPRY",
+    "indication": "Type I severe allergic reactions including anaphylaxis (neff",
+    "setups": [
+     "priced-in-derisked-readout",
+     "single-asset-microcap-binary",
+     "financing-overhang-going-concern",
+     "first-in-class-no-approved-therapy-whitespace",
+     "contested-efficacy-adcom-risk"
+    ],
+    "shared_setups": [],
+    "label": "inline",
+    "move": 0.004,
+    "distance": 0.3587
+   },
+   {
+    "ticker": "PTGX",
+    "indication": "Polycythemia vera (rusfertide); moderate-to-severe plaque ps",
+    "setups": [
+     "financing-overhang-going-concern",
+     "first-in-class-no-approved-therapy-whitespace",
+     "validated-mechanism-derisked",
+     "no-new-information-nonevent",
+     "strategic-transaction-capital-injection"
+    ],
+    "shared_setups": [],
+    "label": "inline",
+    "move": 0.02,
+    "distance": 0.3588
+   },
+   {
+    "ticker": "BHVN",
+    "indication": "diversified: neuroscience (SCA, OCD, epilepsy, MDD, migraine",
+    "setups": [
+     "financing-overhang-going-concern",
+     "first-in-class-no-approved-therapy-whitespace",
+     "trial-graveyard-high-placebo-indication"
+    ],
+    "shared_setups": [],
+    "label": "miss",
+    "move": -0.167,
+    "distance": 0.3591
+   },
+   {
+    "ticker": "KOD",
+    "indication": "wet age-related macular degeneration (wet AMD)",
+    "setups": [
+     "priced-in-derisked-readout",
+     "validated-mechanism-derisked",
+     "no-new-information-nonevent"
+    ],
+    "shared_setups": [],
+    "label": "inline",
+    "move": 0.001,
+    "distance": 0.3606
+   }
+  ]
+ },
+ {
+  "query_cid": 476,
+  "ticker": "INSM",
+  "type": "pdufa",
+  "indication": "Bronchiectasis (brensocatib); refractory MAC lung disease (Arikayce)",
+  "query_setups": [
+   "first-in-class-no-approved-therapy-whitespace"
+  ],
+  "filter_used": [
+   "type",
+   "setups"
+  ],
+  "actual": {
+   "label": "approve",
+   "move": 0.132
+  },
+  "analogs": [
+   {
+    "ticker": "KRYS",
+    "indication": "Dystrophic epidermolysis bullosa (DEB)",
+    "setups": [
+     "single-asset-microcap-binary",
+     "first-in-class-no-approved-therapy-whitespace",
+     "cmc-manufacturing-regulatory-risk",
+     "contested-efficacy-adcom-risk"
+    ],
+    "shared_setups": [
+     "first-in-class-no-approved-therapy-whitespace"
+    ],
+    "label": "approve",
+    "move": 0.052,
+    "distance": 0.2949
+   },
+   {
+    "ticker": "CRSP",
+    "indication": "Severe sickle cell disease (SCD); also transfusion-dependent",
+    "setups": [
+     "priced-in-derisked-readout",
+     "first-in-class-no-approved-therapy-whitespace",
+     "cmc-manufacturing-regulatory-risk",
+     "good-news-faded"
+    ],
+    "shared_setups": [
+     "first-in-class-no-approved-therapy-whitespace"
+    ],
+    "label": "crl",
+    "move": -0.172,
+    "distance": 0.3438
+   },
+   {
+    "ticker": "ETON",
+    "indication": "Adrenal insufficiency / cortisol replacement",
+    "setups": [
+     "priced-in-derisked-readout",
+     "single-asset-microcap-binary",
+     "first-in-class-no-approved-therapy-whitespace",
+     "cmc-manufacturing-regulatory-risk",
+     "no-new-information-nonevent",
+     "good-news-faded"
+    ],
+    "shared_setups": [
+     "first-in-class-no-approved-therapy-whitespace"
+    ],
+    "label": "crl",
+    "move": -0.017,
+    "distance": 0.3528
+   },
+   {
+    "ticker": "ALDX",
+    "indication": "Dry eye disease",
+    "setups": [
+     "first-in-class-no-approved-therapy-whitespace",
+     "cmc-manufacturing-regulatory-risk"
+    ],
+    "shared_setups": [
+     "first-in-class-no-approved-therapy-whitespace"
+    ],
+    "label": "approve",
+    "move": 0.067,
+    "distance": 0.3575
+   },
+   {
+    "ticker": "MCRB",
+    "indication": "Recurrent Clostridioides difficile infection (rCDI)",
+    "setups": [
+     "priced-in-derisked-readout",
+     "single-asset-microcap-binary",
+     "financing-overhang-going-concern",
+     "first-in-class-no-approved-therapy-whitespace",
+     "validated-mechanism-derisked",
+     "no-new-information-nonevent",
+     "good-news-faded"
+    ],
+    "shared_setups": [
+     "first-in-class-no-approved-therapy-whitespace"
+    ],
+    "label": "crl",
+    "move": -0.209,
+    "distance": 0.3594
+   },
+   {
+    "ticker": "CYTK",
+    "indication": "Heart failure with reduced ejection fraction (omecamtiv meca",
+    "setups": [
+     "single-asset-microcap-binary",
+     "first-in-class-no-approved-therapy-whitespace",
+     "contested-efficacy-adcom-risk"
+    ],
+    "shared_setups": [
+     "first-in-class-no-approved-therapy-whitespace"
+    ],
+    "label": "crl",
+    "move": -0.079,
+    "distance": 0.3616
+   },
+   {
+    "ticker": "FENC",
+    "indication": "Prevention of cisplatin-induced ototoxicity in pediatric pat",
+    "setups": [
+     "single-asset-microcap-binary",
+     "financing-overhang-going-concern",
+     "first-in-class-no-approved-therapy-whitespace",
+     "cmc-manufacturing-regulatory-risk"
+    ],
+    "shared_setups": [
+     "first-in-class-no-approved-therapy-whitespace"
+    ],
+    "label": "crl",
+    "move": -0.596,
+    "distance": 0.3731
+   },
+   {
+    "ticker": "ABEO",
+    "indication": "Recessive dystrophic epidermolysis bullosa (RDEB)",
+    "setups": [
+     "single-asset-microcap-binary",
+     "first-in-class-no-approved-therapy-whitespace",
+     "cmc-manufacturing-regulatory-risk",
+     "contested-efficacy-adcom-risk"
+    ],
+    "shared_setups": [
+     "first-in-class-no-approved-therapy-whitespace"
+    ],
+    "label": "approve",
+    "move": 0.284,
+    "distance": 0.3912
+   }
+  ]
+ },
+ {
+  "query_cid": 347,
+  "ticker": "DNLI",
+  "type": "earnings",
+  "indication": "Hunter syndrome (MPS II) and other CNS/lysosomal disorders",
+  "query_setups": [],
+  "filter_used": [
+   "type"
+  ],
+  "actual": {
+   "label": "beat",
+   "move": 0.061
+  },
+  "analogs": [
+   {
+    "ticker": "DNLI",
+    "indication": "MPS II (Hunter syndrome) and other CNS/lysosomal storage dis",
+    "setups": [
+     "trial-graveyard-high-placebo-indication",
+     "strategic-transaction-capital-injection"
+    ],
+    "shared_setups": [],
+    "label": "beat",
+    "move": 0.089,
+    "distance": 0.1923
+   },
+   {
+    "ticker": "DNLI",
+    "indication": "Hunter syndrome (MPS II); plus TransportVehicle pipeline in ",
+    "setups": [
+     "priced-in-derisked-readout",
+     "single-asset-microcap-binary",
+     "first-in-class-no-approved-therapy-whitespace",
+     "trial-graveyard-high-placebo-indication",
+     "commercial-single-product-quality",
+     "good-news-faded"
+    ],
+    "shared_setups": [],
+    "label": "miss",
+    "move": -0.098,
+    "distance": 0.2212
+   },
+   {
+    "ticker": "DNLI",
+    "indication": "Hunter syndrome (MPS II) and other CNS/lysosomal disorders",
+    "setups": [
+     "financing-overhang-going-concern",
+     "trial-graveyard-high-placebo-indication",
+     "commercial-single-product-quality",
+     "strategic-transaction-capital-injection"
+    ],
+    "shared_setups": [],
+    "label": "beat",
+    "move": 0.171,
+    "distance": 0.2861
+   },
+   {
+    "ticker": "RANI",
+    "indication": "Oral delivery of biologics (osteoporosis/RT-102, psoriasis/R",
+    "setups": [
+     "financing-overhang-going-concern",
+     "strategic-transaction-capital-injection"
+    ],
+    "shared_setups": [],
+    "label": "inline",
+    "move": 0.0,
+    "distance": 0.3379
+   },
+   {
+    "ticker": "AUTL",
+    "indication": "relapsed/refractory adult B-cell acute lymphoblastic leukemi",
+    "setups": [
+     "single-asset-microcap-binary",
+     "trial-graveyard-high-placebo-indication",
+     "strategic-transaction-capital-injection"
+    ],
+    "shared_setups": [],
+    "label": "beat",
+    "move": 0.088,
+    "distance": 0.344
+   },
+   {
+    "ticker": "AUTL",
+    "indication": "Relapsed/refractory adult B-cell acute lymphoblastic leukemi",
+    "setups": [
+     "priced-in-derisked-readout",
+     "trial-graveyard-high-placebo-indication",
+     "commercial-single-product-quality"
+    ],
+    "shared_setups": [],
+    "label": "miss",
+    "move": -0.085,
+    "distance": 0.3473
+   },
+   {
+    "ticker": "SNDX",
+    "indication": "R/R KMT2Ar and mNPM1 acute leukemia (AML/ALL); chronic graft",
+    "setups": [
+     "priced-in-derisked-readout",
+     "single-asset-microcap-binary",
+     "financing-overhang-going-concern",
+     "no-new-information-nonevent"
+    ],
+    "shared_setups": [],
+    "label": "miss",
+    "move": -0.062,
+    "distance": 0.3519
+   },
+   {
+    "ticker": "AUTL",
+    "indication": "relapsed/refractory adult B-cell acute lymphoblastic leukemi",
+    "setups": [
+     "financing-overhang-going-concern",
+     "trial-graveyard-high-placebo-indication",
+     "cmc-manufacturing-regulatory-risk",
+     "strategic-transaction-capital-injection"
+    ],
+    "shared_setups": [],
+    "label": "beat",
+    "move": 0.132,
+    "distance": 0.3562
+   }
+  ]
+ }
+]

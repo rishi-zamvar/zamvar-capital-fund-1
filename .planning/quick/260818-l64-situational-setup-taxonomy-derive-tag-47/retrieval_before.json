@@ -1,0 +1,315 @@
+[
+ {
+  "query_cid": 855,
+  "ticker": "SRRK",
+  "type": "trial_readout",
+  "indication": "Spinal muscular atrophy (Types 2/3, nonambulatory, on standard-of-care nusinersen or risdiplam)",
+  "reference_class": "Pivotal readouts of novel add-on mechanisms in SMA measured by HFMSE (the field's accepted motor endpoint) after prior myostatin-pathway disappointments in other neuromuscular diseases: base rate of a clean statistically-significant HFMSE win is moderate; a prespecified-primary hit with a clear responder separation is a strong, re-rating positive, while a borderline/dose-inconsistent result risks a mixed read.",
+  "thesis": "Scholar Rock's apitegromab is a muscle-targeted anti-myostatin antibody designed to improve motor function ON TOP of SMN-directed standard of care (nusinersen/risdiplam) in SMA \u2014 addressing residual m",
+  "as_of": "2024-10-08",
+  "actual_outcome": {
+   "label": "hit",
+   "move": 2.743
+  },
+  "analogs": [
+   {
+    "ticker": "MLTX",
+    "indication": "Active psoriatic arthritis (also hidradenitis suppurativa)",
+    "label": "mixed",
+    "move": -0.216,
+    "distance": 0.2761
+   },
+   {
+    "ticker": "LONA",
+    "indication": "Mild-to-moderate Alzheimer's disease (fosgonimeton)",
+    "label": "miss",
+    "move": -0.818,
+    "distance": 0.3003
+   },
+   {
+    "ticker": "DNLI",
+    "indication": "Amyotrophic lateral sclerosis (ALS)",
+    "label": "miss",
+    "move": -0.1,
+    "distance": 0.3062
+   },
+   {
+    "ticker": "PTCT",
+    "indication": "Phenylketonuria; Huntington's disease; Friedreich ataxia",
+    "label": "miss",
+    "move": -0.265,
+    "distance": 0.3112
+   },
+   {
+    "ticker": "ANAB",
+    "indication": "Generalized Pustular Psoriasis (GPP)",
+    "label": "mixed",
+    "move": -0.013,
+    "distance": 0.3123
+   },
+   {
+    "ticker": "VRDN",
+    "indication": "active thyroid eye disease (TED)",
+    "label": "hit",
+    "move": 0.459,
+    "distance": 0.3152
+   },
+   {
+    "ticker": "LONA",
+    "indication": "Mild-to-moderate Alzheimer's disease (fosgonimeton)",
+    "label": "miss",
+    "move": -0.676,
+    "distance": 0.3156
+   },
+   {
+    "ticker": "SYRE",
+    "indication": "Arginase 1 Deficiency (ARG1-D), pivotal Phase 3 PEACE",
+    "label": "miss",
+    "move": -0.417,
+    "distance": 0.3189
+   }
+  ]
+ },
+ {
+  "query_cid": 706,
+  "ticker": "VERA",
+  "type": "trial_readout",
+  "indication": "IgA nephropathy (also lupus nephritis)",
+  "reference_class": "Phase 2b proteinuria proof-of-concept readouts for APRIL/BLyS agents in IgAN: a dose reaching a clinically meaningful (~30%+) significant proteinuria reduction with supportive Gd-IgA1 and stable eGFR is a de-risking, dose-selecting result that normally drives a positive move and supports advancing to Phase 3.",
+  "thesis": "Vera reports Week 24 results from its Phase 2b of atacicept, a dual APRIL/BLyS inhibitor, in IgA nephropathy. The bull case is proof-of-concept proteinuria reduction that de-risks a move to Phase 3 in",
+  "as_of": "2023-01-04",
+  "actual_outcome": {
+   "label": "hit",
+   "move": -0.711
+  },
+  "analogs": [
+   {
+    "ticker": "TBPH",
+    "indication": "Maintenance treatment of COPD (YUPELRI); symptomatic neurogenic orthos",
+    "label": "miss",
+    "move": -0.381,
+    "distance": 0.2949
+   },
+   {
+    "ticker": "SYRE",
+    "indication": "Arginase 1 Deficiency (ARG1-D), pivotal Phase 3 PEACE",
+    "label": "miss",
+    "move": -0.417,
+    "distance": 0.3054
+   },
+   {
+    "ticker": "ALDX",
+    "indication": "Proliferative vitreoretinopathy (PVR), Phase 3 GUARD Part 1",
+    "label": "mixed",
+    "move": -0.088,
+    "distance": 0.307
+   },
+   {
+    "ticker": "ANAB",
+    "indication": "Generalized Pustular Psoriasis (GPP)",
+    "label": "mixed",
+    "move": -0.013,
+    "distance": 0.3201
+   },
+   {
+    "ticker": "VSTM",
+    "indication": "Low-grade serous ovarian cancer (LGSOC) and KRAS-mutant NSCLC",
+    "label": "mixed",
+    "move": -0.069,
+    "distance": 0.3207
+   },
+   {
+    "ticker": "IONS",
+    "indication": "Dyslipidemia / cardiovascular risk reduction (elevated non-HDL-C and t",
+    "label": "miss",
+    "move": -0.095,
+    "distance": 0.3222
+   }
+  ]
+ },
+ {
+  "query_cid": 793,
+  "ticker": "GOSS",
+  "type": "earnings",
+  "indication": "Pulmonary arterial hypertension (PAH); PH-ILD",
+  "reference_class": "Post-ambiguous-readout clinical names in strategic review: earnings prints after the pivotal news are muted (~+/-3%) because the catalyst already fired; cash runway is the main incremental datum.",
+  "thesis": "Gossamer Bio is a PAH/PH-ILD developer (seralutinib, inhaled kinase inhibitor) whose value at this print is overshadowed by the already-released PROSERA topline and the resulting strategic uncertainty",
+  "as_of": "2026-03-18",
+  "actual_outcome": {
+   "label": "inline",
+   "move": -0.009
+  },
+  "analogs": [
+   {
+    "ticker": "SPRY",
+    "indication": "Type I severe allergic reactions including anaphylaxis",
+    "label": "miss",
+    "move": -0.166,
+    "distance": 0.3319
+   },
+   {
+    "ticker": "INSM",
+    "indication": "bronchiectasis",
+    "label": "inline",
+    "move": -0.008,
+    "distance": 0.3376
+   },
+   {
+    "ticker": "VTGN",
+    "indication": "Social anxiety disorder (acute); vasomotor symptoms of menopause; majo",
+    "label": "miss",
+    "move": -0.07,
+    "distance": 0.3381
+   },
+   {
+    "ticker": "SPRY",
+    "indication": "Type I severe allergic reactions including anaphylaxis (neffy); Phase ",
+    "label": "inline",
+    "move": 0.004,
+    "distance": 0.3404
+   },
+   {
+    "ticker": "MCRB",
+    "indication": "recurrent C. difficile infection (rCDI)",
+    "label": "miss",
+    "move": -0.101,
+    "distance": 0.3418
+   },
+   {
+    "ticker": "INSM",
+    "indication": "Bronchiectasis (brensocatib, imminent launch) + MAC lung disease (ARIK",
+    "label": "inline",
+    "move": 0.015,
+    "distance": 0.3436
+   },
+   {
+    "ticker": "LPCN",
+    "indication": "Postpartum depression (1154); decompensated cirrhosis/sarcopenia (1148",
+    "label": "inline",
+    "move": 0.008,
+    "distance": 0.344
+   },
+   {
+    "ticker": "BHVN",
+    "indication": "diversified: neuroscience (SCA, OCD, epilepsy, MDD, migraine), immunol",
+    "label": "miss",
+    "move": -0.167,
+    "distance": 0.3511
+   }
+  ]
+ },
+ {
+  "query_cid": 476,
+  "ticker": "INSM",
+  "type": "pdufa",
+  "indication": "Bronchiectasis (brensocatib); refractory MAC lung disease (Arikayce)",
+  "reference_class": "First-in-class drugs for serious diseases with NO approved therapy, carrying Priority Review + Breakthrough and a positive Phase 3 that met its primary at multiple doses: very high approval rate (~90%+) and a strong tendency to clear on or near the PDUFA date.",
+  "thesis": "Brensocatib is a first-in-class oral DPP1 inhibitor positioned to become the first and only approved therapy for non-CF bronchiectasis, a serious chronic lung disease with roughly 500,000 diagnosed U.",
+  "as_of": "2025-08-13",
+  "actual_outcome": {
+   "label": "approve",
+   "move": 0.132
+  },
+  "analogs": [
+   {
+    "ticker": "KRYS",
+    "indication": "Dystrophic epidermolysis bullosa (DEB)",
+    "label": "approve",
+    "move": 0.052,
+    "distance": 0.2932
+   },
+   {
+    "ticker": "CTXR",
+    "indication": "Relapsed or refractory cutaneous T-cell lymphoma (CTCL), after >=1 pri",
+    "label": "crl",
+    "move": -0.152,
+    "distance": 0.3191
+   },
+   {
+    "ticker": "CTXR",
+    "indication": "persistent or recurrent cutaneous T-cell lymphoma (CTCL)",
+    "label": "crl",
+    "move": -0.036,
+    "distance": 0.3322
+   },
+   {
+    "ticker": "CRSP",
+    "indication": "Severe sickle cell disease (SCD); also transfusion-dependent beta thal",
+    "label": "crl",
+    "move": -0.172,
+    "distance": 0.3378
+   }
+  ]
+ },
+ {
+  "query_cid": 347,
+  "ticker": "DNLI",
+  "type": "earnings",
+  "indication": "Hunter syndrome (MPS II) and other CNS/lysosomal disorders",
+  "reference_class": "Quarterly prints for pre-revenue biotech carrying an accepted BLA/Priority Review: the stock trades on regulatory de-risking and cash runway, not EPS; positive reactions cluster when a PDUFA date is freshly confirmed.",
+  "thesis": "Denali is a pre-commercial, brain-penetrant biologics platform (TransportVehicle) whose near-term value is gated by the tividenofusp alfa (Hunter syndrome) BLA rather than by any P&L line.",
+  "as_of": "2025-08-12",
+  "actual_outcome": {
+   "label": "beat",
+   "move": 0.061
+  },
+  "analogs": [
+   {
+    "ticker": "DNLI",
+    "indication": "MPS II (Hunter syndrome) and other CNS/lysosomal storage disorders",
+    "label": "beat",
+    "move": 0.089,
+    "distance": 0.1958
+   },
+   {
+    "ticker": "DNLI",
+    "indication": "Hunter syndrome (MPS II); plus TransportVehicle pipeline in Sanfilippo",
+    "label": "miss",
+    "move": -0.098,
+    "distance": 0.2192
+   },
+   {
+    "ticker": "DNLI",
+    "indication": "Hunter syndrome (MPS II) and other CNS/lysosomal disorders",
+    "label": "beat",
+    "move": 0.171,
+    "distance": 0.237
+   },
+   {
+    "ticker": "RANI",
+    "indication": "Oral delivery of biologics (osteoporosis/RT-102, psoriasis/RT-111 uste",
+    "label": "inline",
+    "move": 0.0,
+    "distance": 0.3401
+   },
+   {
+    "ticker": "AUTL",
+    "indication": "Relapsed/refractory adult B-cell acute lymphoblastic leukemia (B-ALL)",
+    "label": "miss",
+    "move": -0.085,
+    "distance": 0.3438
+   },
+   {
+    "ticker": "AUTL",
+    "indication": "relapsed/refractory adult B-cell acute lymphoblastic leukemia (B-ALL);",
+    "label": "beat",
+    "move": 0.088,
+    "distance": 0.3492
+   },
+   {
+    "ticker": "AUTL",
+    "indication": "relapsed/refractory adult B-cell acute lymphoblastic leukemia (ALL); a",
+    "label": "beat",
+    "move": 0.132,
+    "distance": 0.3557
+   },
+   {
+    "ticker": "SNDX",
+    "indication": "R/R KMT2Ar and mNPM1 acute leukemia; chronic graft-versus-host disease",
+    "label": "beat",
+    "move": 0.034,
+    "distance": 0.3579
+   }
+  ]
+ }
+]

@@ -1,0 +1,2678 @@
+{
+  "aggregate": {
+    "mean_overlap_before": 1.834782608695652,
+    "mean_overlap_after": 2.034782608695652,
+    "n": 23
+  },
+  "missing_cids": [
+    121
+  ],
+  "per_cid": [
+    {
+      "cid": 357,
+      "query_setups": [
+        "priced-in-derisked-readout",
+        "financing-overhang-going-concern",
+        "good-news-faded"
+      ],
+      "before": [
+        {
+          "node_id": 947,
+          "ticker": "ACHV",
+          "indication": "Smoking cessation / nicotine dependence",
+          "setups": [
+            "priced-in-derisked-readout",
+            "financing-overhang-going-concern",
+            "good-news-faded"
+          ]
+        },
+        {
+          "node_id": 157,
+          "ticker": "INSM",
+          "indication": "Bronchiectasis (brensocatib); refractory MAC lung disease (Arikayce)",
+          "setups": [
+            "priced-in-derisked-readout",
+            "single-asset-microcap-binary",
+            "financing-overhang-going-concern",
+            "first-in-class-no-approved-therapy-whitespace",
+            "trial-graveyard-high-placebo-indication"
+          ]
+        },
+        {
+          "node_id": 383,
+          "ticker": "TRVI",
+          "indication": "Refractory chronic cough (RCC)",
+          "setups": [
+            "priced-for-perfection-crowded-benchmark",
+            "single-asset-microcap-binary",
+            "os-miss-despite-soft-endpoint-hit"
+          ]
+        },
+        {
+          "node_id": 333,
+          "ticker": "TRVI",
+          "indication": "Chronic cough (IPF-associated and refractory chronic cough)",
+          "setups": [
+            "single-asset-microcap-binary",
+            "financing-overhang-going-concern",
+            "no-new-information-nonevent"
+          ]
+        },
+        {
+          "node_id": 1115,
+          "ticker": "PTGX",
+          "indication": "Moderate-to-severe plaque psoriasis (ages 12+)",
+          "setups": [
+            "priced-in-derisked-readout",
+            "priced-for-perfection-crowded-benchmark",
+            "first-in-class-no-approved-therapy-whitespace",
+            "validated-mechanism-derisked"
+          ]
+        }
+      ],
+      "after": [
+        {
+          "node_id": 947,
+          "ticker": "ACHV",
+          "indication": "Smoking cessation / nicotine dependence",
+          "setups": [
+            "priced-in-derisked-readout",
+            "financing-overhang-going-concern",
+            "good-news-faded"
+          ]
+        },
+        {
+          "node_id": 157,
+          "ticker": "INSM",
+          "indication": "Bronchiectasis (brensocatib); refractory MAC lung disease (Arikayce)",
+          "setups": [
+            "priced-in-derisked-readout",
+            "single-asset-microcap-binary",
+            "financing-overhang-going-concern",
+            "first-in-class-no-approved-therapy-whitespace",
+            "trial-graveyard-high-placebo-indication"
+          ]
+        },
+        {
+          "node_id": 333,
+          "ticker": "TRVI",
+          "indication": "Chronic cough (IPF-associated and refractory chronic cough)",
+          "setups": [
+            "single-asset-microcap-binary",
+            "financing-overhang-going-concern",
+            "no-new-information-nonevent"
+          ]
+        },
+        {
+          "node_id": 1115,
+          "ticker": "PTGX",
+          "indication": "Moderate-to-severe plaque psoriasis (ages 12+)",
+          "setups": [
+            "priced-in-derisked-readout",
+            "priced-for-perfection-crowded-benchmark",
+            "first-in-class-no-approved-therapy-whitespace",
+            "validated-mechanism-derisked"
+          ]
+        },
+        {
+          "node_id": 433,
+          "ticker": "ORKA",
+          "indication": "Moderate-to-severe plaque psoriasis (and other dermatologic)",
+          "setups": [
+            "priced-in-derisked-readout",
+            "priced-for-perfection-crowded-benchmark",
+            "validated-mechanism-derisked"
+          ]
+        }
+      ]
+    },
+    {
+      "cid": 214,
+      "query_setups": [
+        "priced-for-perfection-crowded-benchmark",
+        "trial-graveyard-high-placebo-indication",
+        "no-new-information-nonevent",
+        "good-news-faded",
+        "stat-hit-magnitude-or-benchmark-miss"
+      ],
+      "before": [
+        {
+          "node_id": 787,
+          "ticker": "ALKS",
+          "indication": "Narcolepsy type 1 (NT1)",
+          "setups": [
+            "priced-for-perfection-crowded-benchmark",
+            "trial-graveyard-high-placebo-indication",
+            "no-new-information-nonevent",
+            "good-news-faded",
+            "stat-hit-magnitude-or-benchmark-miss"
+          ]
+        },
+        {
+          "node_id": 725,
+          "ticker": "ALKS",
+          "indication": "Narcolepsy type 1 (NT1)",
+          "setups": [
+            "priced-in-derisked-readout",
+            "first-in-class-no-approved-therapy-whitespace"
+          ]
+        },
+        {
+          "node_id": 676,
+          "ticker": "ALKS",
+          "indication": "Narcolepsy type 2 (NT2)",
+          "setups": [
+            "priced-for-perfection-crowded-benchmark"
+          ]
+        },
+        {
+          "node_id": 834,
+          "ticker": "ALKS",
+          "indication": "Narcolepsy type 1 (NT1)",
+          "setups": [
+            "priced-for-perfection-crowded-benchmark",
+            "first-in-class-no-approved-therapy-whitespace",
+            "good-news-faded"
+          ]
+        },
+        {
+          "node_id": 889,
+          "ticker": "ALKS",
+          "indication": "Narcolepsy type 2 (NT2) and idiopathic hypersomnia (IH)",
+          "setups": [
+            "priced-in-derisked-readout",
+            "good-news-faded",
+            "os-miss-despite-soft-endpoint-hit"
+          ]
+        }
+      ],
+      "after": [
+        {
+          "node_id": 787,
+          "ticker": "ALKS",
+          "indication": "Narcolepsy type 1 (NT1)",
+          "setups": [
+            "priced-for-perfection-crowded-benchmark",
+            "trial-graveyard-high-placebo-indication",
+            "no-new-information-nonevent",
+            "good-news-faded",
+            "stat-hit-magnitude-or-benchmark-miss"
+          ]
+        },
+        {
+          "node_id": 676,
+          "ticker": "ALKS",
+          "indication": "Narcolepsy type 2 (NT2)",
+          "setups": [
+            "priced-for-perfection-crowded-benchmark"
+          ]
+        },
+        {
+          "node_id": 834,
+          "ticker": "ALKS",
+          "indication": "Narcolepsy type 1 (NT1)",
+          "setups": [
+            "priced-for-perfection-crowded-benchmark",
+            "first-in-class-no-approved-therapy-whitespace",
+            "good-news-faded"
+          ]
+        },
+        {
+          "node_id": 889,
+          "ticker": "ALKS",
+          "indication": "Narcolepsy type 2 (NT2) and idiopathic hypersomnia (IH)",
+          "setups": [
+            "priced-in-derisked-readout",
+            "good-news-faded",
+            "os-miss-despite-soft-endpoint-hit"
+          ]
+        },
+        {
+          "node_id": 178,
+          "ticker": "XENE",
+          "indication": "Focal (partial-onset) epilepsy, adjunctive treatment in adults",
+          "setups": [
+            "single-asset-microcap-binary",
+            "trial-graveyard-high-placebo-indication"
+          ]
+        }
+      ]
+    },
+    {
+      "cid": 254,
+      "query_setups": [
+        "priced-in-derisked-readout",
+        "priced-for-perfection-crowded-benchmark",
+        "trial-graveyard-high-placebo-indication",
+        "good-news-faded"
+      ],
+      "before": [
+        {
+          "node_id": 1111,
+          "ticker": "APGE",
+          "indication": "Atopic dermatitis (AD)",
+          "setups": [
+            "priced-in-derisked-readout",
+            "priced-for-perfection-crowded-benchmark",
+            "trial-graveyard-high-placebo-indication",
+            "good-news-faded"
+          ]
+        },
+        {
+          "node_id": 1005,
+          "ticker": "QTTB",
+          "indication": "Alopecia areata (lead focus); atopic dermatitis (missed)",
+          "setups": [
+            "single-asset-microcap-binary",
+            "trial-graveyard-high-placebo-indication",
+            "primary-miss-subgroup-salvage"
+          ]
+        },
+        {
+          "node_id": 193,
+          "ticker": "AVTX",
+          "indication": "Poorly controlled non-eosinophilic asthma (NEA)",
+          "setups": [
+            "single-asset-microcap-binary",
+            "financing-overhang-going-concern",
+            "first-in-class-no-approved-therapy-whitespace",
+            "primary-miss-subgroup-salvage"
+          ]
+        },
+        {
+          "node_id": 266,
+          "ticker": "EVMN",
+          "indication": "Chronic spontaneous/inducible urticaria; atopic dermatitis",
+          "setups": [
+            "priced-for-perfection-crowded-benchmark",
+            "single-asset-microcap-binary",
+            "financing-overhang-going-concern",
+            "first-in-class-no-approved-therapy-whitespace",
+            "trial-graveyard-high-placebo-indication"
+          ]
+        },
+        {
+          "node_id": 475,
+          "ticker": "SVRA",
+          "indication": "Autoimmune pulmonary alveolar proteinosis (aPAP), pivotal Phase 3 IMPALA-2",
+          "setups": [
+            "single-asset-microcap-binary",
+            "financing-overhang-going-concern",
+            "first-in-class-no-approved-therapy-whitespace",
+            "no-new-information-nonevent"
+          ]
+        }
+      ],
+      "after": [
+        {
+          "node_id": 1111,
+          "ticker": "APGE",
+          "indication": "Atopic dermatitis (AD)",
+          "setups": [
+            "priced-in-derisked-readout",
+            "priced-for-perfection-crowded-benchmark",
+            "trial-graveyard-high-placebo-indication",
+            "good-news-faded"
+          ]
+        },
+        {
+          "node_id": 1005,
+          "ticker": "QTTB",
+          "indication": "Alopecia areata (lead focus); atopic dermatitis (missed)",
+          "setups": [
+            "single-asset-microcap-binary",
+            "trial-graveyard-high-placebo-indication",
+            "primary-miss-subgroup-salvage"
+          ]
+        },
+        {
+          "node_id": 266,
+          "ticker": "EVMN",
+          "indication": "Chronic spontaneous/inducible urticaria; atopic dermatitis",
+          "setups": [
+            "priced-for-perfection-crowded-benchmark",
+            "single-asset-microcap-binary",
+            "financing-overhang-going-concern",
+            "first-in-class-no-approved-therapy-whitespace",
+            "trial-graveyard-high-placebo-indication"
+          ]
+        },
+        {
+          "node_id": 27,
+          "ticker": "UPB",
+          "indication": "Severe asthma; chronic rhinosinusitis with nasal polyps; COPD",
+          "setups": [
+            "priced-for-perfection-crowded-benchmark",
+            "strategic-transaction-capital-injection"
+          ]
+        },
+        {
+          "node_id": 569,
+          "ticker": "ANAB",
+          "indication": "Generalized Pustular Psoriasis (GPP)",
+          "setups": [
+            "priced-in-derisked-readout",
+            "single-asset-microcap-binary",
+            "contested-efficacy-adcom-risk",
+            "no-new-information-nonevent"
+          ]
+        }
+      ]
+    },
+    {
+      "cid": 500,
+      "query_setups": [
+        "priced-for-perfection-crowded-benchmark",
+        "good-news-faded"
+      ],
+      "before": [
+        {
+          "node_id": 371,
+          "ticker": "MLTX",
+          "indication": "Active psoriatic arthritis (also hidradenitis suppurativa)",
+          "setups": [
+            "priced-for-perfection-crowded-benchmark",
+            "good-news-faded"
+          ]
+        },
+        {
+          "node_id": 952,
+          "ticker": "SRRK",
+          "indication": "Spinal muscular atrophy (Types 2/3, nonambulatory, on standard-of-care nusinersen or risdiplam)",
+          "setups": [
+            "single-asset-microcap-binary"
+          ]
+        },
+        {
+          "node_id": 407,
+          "ticker": "IONS",
+          "indication": "Hereditary angioedema (HAE) \u2014 donidalorsen",
+          "setups": []
+        },
+        {
+          "node_id": 897,
+          "ticker": "SYRE",
+          "indication": "Arginase 1 Deficiency (ARG1-D), pivotal Phase 3 PEACE",
+          "setups": [
+            "first-in-class-no-approved-therapy-whitespace"
+          ]
+        },
+        {
+          "node_id": 526,
+          "ticker": "PVLA",
+          "indication": "Microcystic lymphatic malformations (also cutaneous venous malformations, angiokeratomas)",
+          "setups": [
+            "priced-for-perfection-crowded-benchmark",
+            "first-in-class-no-approved-therapy-whitespace",
+            "contested-efficacy-adcom-risk"
+          ]
+        }
+      ],
+      "after": [
+        {
+          "node_id": 371,
+          "ticker": "MLTX",
+          "indication": "Active psoriatic arthritis (also hidradenitis suppurativa)",
+          "setups": [
+            "priced-for-perfection-crowded-benchmark",
+            "good-news-faded"
+          ]
+        },
+        {
+          "node_id": 526,
+          "ticker": "PVLA",
+          "indication": "Microcystic lymphatic malformations (also cutaneous venous malformations, angiokeratomas)",
+          "setups": [
+            "priced-for-perfection-crowded-benchmark",
+            "first-in-class-no-approved-therapy-whitespace",
+            "contested-efficacy-adcom-risk"
+          ]
+        },
+        {
+          "node_id": 667,
+          "ticker": "MAIA",
+          "indication": "Advanced non-small cell lung cancer (NSCLC), 2L+ checkpoint-inhibitor-resistant",
+          "setups": [
+            "priced-for-perfection-crowded-benchmark",
+            "single-asset-microcap-binary"
+          ]
+        },
+        {
+          "node_id": 683,
+          "ticker": "ACRS",
+          "indication": "Moderate-to-severe rheumatoid arthritis (MTX-inadequate responders)",
+          "setups": [
+            "priced-for-perfection-crowded-benchmark",
+            "single-asset-microcap-binary",
+            "financing-overhang-going-concern",
+            "first-in-class-no-approved-therapy-whitespace"
+          ]
+        },
+        {
+          "node_id": 1132,
+          "ticker": "PTGX",
+          "indication": "Moderately-to-severely active ulcerative colitis",
+          "setups": [
+            "priced-in-derisked-readout",
+            "priced-for-perfection-crowded-benchmark",
+            "first-in-class-no-approved-therapy-whitespace",
+            "validated-mechanism-derisked"
+          ]
+        }
+      ]
+    },
+    {
+      "cid": 221,
+      "query_setups": [
+        "priced-in-derisked-readout",
+        "financing-overhang-going-concern"
+      ],
+      "before": [
+        {
+          "node_id": 935,
+          "ticker": "KPTI",
+          "indication": "TP53 wild-type advanced/recurrent endometrial cancer (selinexor maintenance)",
+          "setups": [
+            "priced-in-derisked-readout",
+            "financing-overhang-going-concern"
+          ]
+        },
+        {
+          "node_id": 535,
+          "ticker": "KROS",
+          "indication": "Pulmonary arterial hypertension (PAH); also bone-loss disorders (osteoporosis, osteogenesis imperfecta)",
+          "setups": [
+            "good-news-faded"
+          ]
+        },
+        {
+          "node_id": 304,
+          "ticker": "LIANY",
+          "indication": "Demodex blepharitis (China registrational)",
+          "setups": [
+            "strategic-transaction-capital-injection"
+          ]
+        },
+        {
+          "node_id": 737,
+          "ticker": "CGEM",
+          "indication": "EGFR exon20 insertion NSCLC (2L+)",
+          "setups": [
+            "priced-for-perfection-crowded-benchmark",
+            "first-in-class-no-approved-therapy-whitespace",
+            "trial-graveyard-high-placebo-indication",
+            "contested-efficacy-adcom-risk"
+          ]
+        },
+        {
+          "node_id": 733,
+          "ticker": "CELC",
+          "indication": "HR+/HER2-, PIK3CA wild-type, locally advanced or metastatic breast cancer (post CDK4/6 inhibitor + AI)",
+          "setups": [
+            "priced-for-perfection-crowded-benchmark",
+            "os-miss-despite-soft-endpoint-hit"
+          ]
+        }
+      ],
+      "after": [
+        {
+          "node_id": 935,
+          "ticker": "KPTI",
+          "indication": "TP53 wild-type advanced/recurrent endometrial cancer (selinexor maintenance)",
+          "setups": [
+            "priced-in-derisked-readout",
+            "financing-overhang-going-concern"
+          ]
+        },
+        {
+          "node_id": 956,
+          "ticker": "AMLX",
+          "indication": "amyotrophic lateral sclerosis (ALS)",
+          "setups": [
+            "priced-in-derisked-readout",
+            "priced-for-perfection-crowded-benchmark",
+            "single-asset-microcap-binary",
+            "trial-graveyard-high-placebo-indication"
+          ]
+        },
+        {
+          "node_id": 93,
+          "ticker": "AMLX",
+          "indication": "Progressive supranuclear palsy (PSP) / neurodegeneration (AMX0035 pipeline)",
+          "setups": [
+            "priced-in-derisked-readout",
+            "priced-for-perfection-crowded-benchmark",
+            "financing-overhang-going-concern",
+            "trial-graveyard-high-placebo-indication",
+            "contested-efficacy-adcom-risk",
+            "strategic-transaction-capital-injection"
+          ]
+        },
+        {
+          "node_id": 60,
+          "ticker": "PTCT",
+          "indication": "Phenylketonuria; Huntington's disease; Friedreich ataxia",
+          "setups": [
+            "priced-in-derisked-readout",
+            "priced-for-perfection-crowded-benchmark",
+            "trial-graveyard-high-placebo-indication",
+            "contested-efficacy-adcom-risk",
+            "strategic-transaction-capital-injection",
+            "good-news-faded"
+          ]
+        },
+        {
+          "node_id": 106,
+          "ticker": "TNXP",
+          "indication": "chronic migraine prevention",
+          "setups": [
+            "financing-overhang-going-concern",
+            "trial-graveyard-high-placebo-indication",
+            "cmc-manufacturing-regulatory-risk",
+            "no-new-information-nonevent"
+          ]
+        }
+      ]
+    },
+    {
+      "cid": 828,
+      "query_setups": [
+        "single-asset-microcap-binary",
+        "financing-overhang-going-concern",
+        "first-in-class-no-approved-therapy-whitespace",
+        "strategic-transaction-capital-injection"
+      ],
+      "before": [
+        {
+          "node_id": 391,
+          "ticker": "KALA",
+          "indication": "Persistent corneal epithelial defect (PCED)",
+          "setups": [
+            "single-asset-microcap-binary",
+            "financing-overhang-going-concern",
+            "first-in-class-no-approved-therapy-whitespace",
+            "strategic-transaction-capital-injection"
+          ]
+        },
+        {
+          "node_id": 329,
+          "ticker": "HURA",
+          "indication": "Glioblastoma (GBM AGILE adaptive Phase 2/3)",
+          "setups": [
+            "single-asset-microcap-binary",
+            "financing-overhang-going-concern",
+            "trial-graveyard-high-placebo-indication"
+          ]
+        },
+        {
+          "node_id": 462,
+          "ticker": "ZURA",
+          "indication": "Hidradenitis suppurativa and systemic sclerosis (autoimmune/inflammatory)",
+          "setups": [
+            "single-asset-microcap-binary",
+            "no-new-information-nonevent",
+            "strategic-transaction-capital-injection"
+          ]
+        },
+        {
+          "node_id": 258,
+          "ticker": "ZURA",
+          "indication": "Hidradenitis suppurativa and systemic sclerosis (autoimmune/inflammatory)",
+          "setups": [
+            "single-asset-microcap-binary",
+            "financing-overhang-going-concern"
+          ]
+        },
+        {
+          "node_id": 153,
+          "ticker": "LBRX",
+          "indication": "Schizophrenia",
+          "setups": [
+            "single-asset-microcap-binary",
+            "financing-overhang-going-concern"
+          ]
+        }
+      ],
+      "after": [
+        {
+          "node_id": 391,
+          "ticker": "KALA",
+          "indication": "Persistent corneal epithelial defect (PCED)",
+          "setups": [
+            "single-asset-microcap-binary",
+            "financing-overhang-going-concern",
+            "first-in-class-no-approved-therapy-whitespace",
+            "strategic-transaction-capital-injection"
+          ]
+        },
+        {
+          "node_id": 329,
+          "ticker": "HURA",
+          "indication": "Glioblastoma (GBM AGILE adaptive Phase 2/3)",
+          "setups": [
+            "single-asset-microcap-binary",
+            "financing-overhang-going-concern",
+            "trial-graveyard-high-placebo-indication"
+          ]
+        },
+        {
+          "node_id": 462,
+          "ticker": "ZURA",
+          "indication": "Hidradenitis suppurativa and systemic sclerosis (autoimmune/inflammatory)",
+          "setups": [
+            "single-asset-microcap-binary",
+            "no-new-information-nonevent",
+            "strategic-transaction-capital-injection"
+          ]
+        },
+        {
+          "node_id": 258,
+          "ticker": "ZURA",
+          "indication": "Hidradenitis suppurativa and systemic sclerosis (autoimmune/inflammatory)",
+          "setups": [
+            "single-asset-microcap-binary",
+            "financing-overhang-going-concern"
+          ]
+        },
+        {
+          "node_id": 153,
+          "ticker": "LBRX",
+          "indication": "Schizophrenia",
+          "setups": [
+            "single-asset-microcap-binary",
+            "financing-overhang-going-concern"
+          ]
+        }
+      ]
+    },
+    {
+      "cid": 587,
+      "query_setups": [
+        "financing-overhang-going-concern",
+        "no-new-information-nonevent",
+        "strategic-transaction-capital-injection"
+      ],
+      "before": [
+        {
+          "node_id": 1955,
+          "ticker": "AZTR",
+          "indication": "Netherton syndrome; EGFR-inhibitor-associated rash (dermatology)",
+          "setups": [
+            "financing-overhang-going-concern",
+            "no-new-information-nonevent",
+            "strategic-transaction-capital-injection"
+          ]
+        },
+        {
+          "node_id": 1892,
+          "ticker": "HURA",
+          "indication": "Cutaneous metastatic breast cancer (CMBC) via REM-001; formerly glioblastoma via VAL-083 (terminated)",
+          "setups": [
+            "financing-overhang-going-concern",
+            "trial-graveyard-high-placebo-indication",
+            "strategic-transaction-capital-injection"
+          ]
+        },
+        {
+          "node_id": 1243,
+          "ticker": "ELOX",
+          "indication": "Class 1 (nonsense-mutation) cystic fibrosis; also Alport syndrome, RDEB, FAP",
+          "setups": [
+            "single-asset-microcap-binary",
+            "financing-overhang-going-concern",
+            "strategic-transaction-capital-injection"
+          ]
+        },
+        {
+          "node_id": 2183,
+          "ticker": "RZLT",
+          "indication": "Congenital hyperinsulinism; tumor hyperinsulinism",
+          "setups": [
+            "financing-overhang-going-concern",
+            "contested-efficacy-adcom-risk"
+          ]
+        },
+        {
+          "node_id": 1295,
+          "ticker": "RAPP",
+          "indication": "Focal onset seizures (also bipolar mania, PGTC seizures)",
+          "setups": [
+            "priced-in-derisked-readout",
+            "priced-for-perfection-crowded-benchmark",
+            "financing-overhang-going-concern"
+          ]
+        }
+      ],
+      "after": [
+        {
+          "node_id": 1955,
+          "ticker": "AZTR",
+          "indication": "Netherton syndrome; EGFR-inhibitor-associated rash (dermatology)",
+          "setups": [
+            "financing-overhang-going-concern",
+            "no-new-information-nonevent",
+            "strategic-transaction-capital-injection"
+          ]
+        },
+        {
+          "node_id": 1892,
+          "ticker": "HURA",
+          "indication": "Cutaneous metastatic breast cancer (CMBC) via REM-001; formerly glioblastoma via VAL-083 (terminated)",
+          "setups": [
+            "financing-overhang-going-concern",
+            "trial-graveyard-high-placebo-indication",
+            "strategic-transaction-capital-injection"
+          ]
+        },
+        {
+          "node_id": 1243,
+          "ticker": "ELOX",
+          "indication": "Class 1 (nonsense-mutation) cystic fibrosis; also Alport syndrome, RDEB, FAP",
+          "setups": [
+            "single-asset-microcap-binary",
+            "financing-overhang-going-concern",
+            "strategic-transaction-capital-injection"
+          ]
+        },
+        {
+          "node_id": 2183,
+          "ticker": "RZLT",
+          "indication": "Congenital hyperinsulinism; tumor hyperinsulinism",
+          "setups": [
+            "financing-overhang-going-concern",
+            "contested-efficacy-adcom-risk"
+          ]
+        },
+        {
+          "node_id": 1295,
+          "ticker": "RAPP",
+          "indication": "Focal onset seizures (also bipolar mania, PGTC seizures)",
+          "setups": [
+            "priced-in-derisked-readout",
+            "priced-for-perfection-crowded-benchmark",
+            "financing-overhang-going-concern"
+          ]
+        }
+      ]
+    },
+    {
+      "cid": 861,
+      "query_setups": [
+        "financing-overhang-going-concern",
+        "cmc-manufacturing-regulatory-risk"
+      ],
+      "before": [
+        {
+          "node_id": 2148,
+          "ticker": "PHGE",
+          "indication": "Diabetic foot osteomyelitis (S. aureus); cystic fibrosis pulmonary infection (P. aeruginosa)",
+          "setups": [
+            "financing-overhang-going-concern",
+            "cmc-manufacturing-regulatory-risk"
+          ]
+        },
+        {
+          "node_id": 1407,
+          "ticker": "PHGE",
+          "indication": "Diabetic foot osteomyelitis (S. aureus, BX211) and cystic fibrosis chronic P. aeruginosa lung infection (BX004)",
+          "setups": [
+            "priced-in-derisked-readout",
+            "single-asset-microcap-binary",
+            "financing-overhang-going-concern",
+            "first-in-class-no-approved-therapy-whitespace",
+            "strategic-transaction-capital-injection"
+          ]
+        },
+        {
+          "node_id": 1430,
+          "ticker": "PHGE",
+          "indication": "Diabetic foot osteomyelitis (BX211) and chronic P. aeruginosa in cystic fibrosis (BX004)",
+          "setups": [
+            "priced-in-derisked-readout",
+            "financing-overhang-going-concern"
+          ]
+        },
+        {
+          "node_id": 1912,
+          "ticker": "PHGE",
+          "indication": "Diabetic foot osteomyelitis (S. aureus); cystic fibrosis with chronic P. aeruginosa pulmonary infection",
+          "setups": [
+            "single-asset-microcap-binary",
+            "financing-overhang-going-concern",
+            "cmc-manufacturing-regulatory-risk",
+            "strategic-transaction-capital-injection"
+          ]
+        },
+        {
+          "node_id": 2002,
+          "ticker": "PHGE",
+          "indication": "cystic fibrosis chronic P. aeruginosa pulmonary infection (BX004); diabetic foot osteomyelitis (BX211)",
+          "setups": [
+            "financing-overhang-going-concern",
+            "first-in-class-no-approved-therapy-whitespace",
+            "strategic-transaction-capital-injection"
+          ]
+        }
+      ],
+      "after": [
+        {
+          "node_id": 2148,
+          "ticker": "PHGE",
+          "indication": "Diabetic foot osteomyelitis (S. aureus); cystic fibrosis pulmonary infection (P. aeruginosa)",
+          "setups": [
+            "financing-overhang-going-concern",
+            "cmc-manufacturing-regulatory-risk"
+          ]
+        },
+        {
+          "node_id": 1407,
+          "ticker": "PHGE",
+          "indication": "Diabetic foot osteomyelitis (S. aureus, BX211) and cystic fibrosis chronic P. aeruginosa lung infection (BX004)",
+          "setups": [
+            "priced-in-derisked-readout",
+            "single-asset-microcap-binary",
+            "financing-overhang-going-concern",
+            "first-in-class-no-approved-therapy-whitespace",
+            "strategic-transaction-capital-injection"
+          ]
+        },
+        {
+          "node_id": 1430,
+          "ticker": "PHGE",
+          "indication": "Diabetic foot osteomyelitis (BX211) and chronic P. aeruginosa in cystic fibrosis (BX004)",
+          "setups": [
+            "priced-in-derisked-readout",
+            "financing-overhang-going-concern"
+          ]
+        },
+        {
+          "node_id": 1912,
+          "ticker": "PHGE",
+          "indication": "Diabetic foot osteomyelitis (S. aureus); cystic fibrosis with chronic P. aeruginosa pulmonary infection",
+          "setups": [
+            "single-asset-microcap-binary",
+            "financing-overhang-going-concern",
+            "cmc-manufacturing-regulatory-risk",
+            "strategic-transaction-capital-injection"
+          ]
+        },
+        {
+          "node_id": 2002,
+          "ticker": "PHGE",
+          "indication": "cystic fibrosis chronic P. aeruginosa pulmonary infection (BX004); diabetic foot osteomyelitis (BX211)",
+          "setups": [
+            "financing-overhang-going-concern",
+            "first-in-class-no-approved-therapy-whitespace",
+            "strategic-transaction-capital-injection"
+          ]
+        }
+      ]
+    },
+    {
+      "cid": 201,
+      "query_setups": [
+        "single-asset-microcap-binary",
+        "trial-graveyard-high-placebo-indication",
+        "stat-hit-magnitude-or-benchmark-miss",
+        "primary-miss-subgroup-salvage"
+      ],
+      "before": [
+        {
+          "node_id": 555,
+          "ticker": "ANNX",
+          "indication": "Guillain-Barr\u00e9 Syndrome (GBS)",
+          "setups": [
+            "single-asset-microcap-binary",
+            "trial-graveyard-high-placebo-indication",
+            "stat-hit-magnitude-or-benchmark-miss",
+            "primary-miss-subgroup-salvage"
+          ]
+        },
+        {
+          "node_id": 509,
+          "ticker": "ANNX",
+          "indication": "Guillain-Barr\u00e9 Syndrome (GBS)",
+          "setups": [
+            "priced-for-perfection-crowded-benchmark",
+            "stat-hit-magnitude-or-benchmark-miss"
+          ]
+        },
+        {
+          "node_id": 127,
+          "ticker": "ADCT",
+          "indication": "2L+ diffuse large B-cell lymphoma (confirmatory combination with rituximab)",
+          "setups": [
+            "priced-in-derisked-readout",
+            "single-asset-microcap-binary",
+            "os-miss-despite-soft-endpoint-hit"
+          ]
+        },
+        {
+          "node_id": 420,
+          "ticker": "PLX",
+          "indication": "Fabry disease (adult patients with deteriorating renal function; ERT-experienced switch population)",
+          "setups": [
+            "priced-for-perfection-crowded-benchmark",
+            "single-asset-microcap-binary",
+            "cmc-manufacturing-regulatory-risk",
+            "contested-efficacy-adcom-risk"
+          ]
+        },
+        {
+          "node_id": 1154,
+          "ticker": "BXRXQ",
+          "indication": "Acute pain (legacy) / procedural neuromuscular blockade",
+          "setups": [
+            "single-asset-microcap-binary",
+            "financing-overhang-going-concern",
+            "strategic-transaction-capital-injection"
+          ]
+        }
+      ],
+      "after": [
+        {
+          "node_id": 555,
+          "ticker": "ANNX",
+          "indication": "Guillain-Barr\u00e9 Syndrome (GBS)",
+          "setups": [
+            "single-asset-microcap-binary",
+            "trial-graveyard-high-placebo-indication",
+            "stat-hit-magnitude-or-benchmark-miss",
+            "primary-miss-subgroup-salvage"
+          ]
+        },
+        {
+          "node_id": 509,
+          "ticker": "ANNX",
+          "indication": "Guillain-Barr\u00e9 Syndrome (GBS)",
+          "setups": [
+            "priced-for-perfection-crowded-benchmark",
+            "stat-hit-magnitude-or-benchmark-miss"
+          ]
+        },
+        {
+          "node_id": 127,
+          "ticker": "ADCT",
+          "indication": "2L+ diffuse large B-cell lymphoma (confirmatory combination with rituximab)",
+          "setups": [
+            "priced-in-derisked-readout",
+            "single-asset-microcap-binary",
+            "os-miss-despite-soft-endpoint-hit"
+          ]
+        },
+        {
+          "node_id": 420,
+          "ticker": "PLX",
+          "indication": "Fabry disease (adult patients with deteriorating renal function; ERT-experienced switch population)",
+          "setups": [
+            "priced-for-perfection-crowded-benchmark",
+            "single-asset-microcap-binary",
+            "cmc-manufacturing-regulatory-risk",
+            "contested-efficacy-adcom-risk"
+          ]
+        },
+        {
+          "node_id": 1154,
+          "ticker": "BXRXQ",
+          "indication": "Acute pain (legacy) / procedural neuromuscular blockade",
+          "setups": [
+            "single-asset-microcap-binary",
+            "financing-overhang-going-concern",
+            "strategic-transaction-capital-injection"
+          ]
+        }
+      ]
+    },
+    {
+      "cid": 476,
+      "query_setups": [
+        "priced-in-derisked-readout",
+        "first-in-class-no-approved-therapy-whitespace",
+        "cmc-manufacturing-regulatory-risk",
+        "contested-efficacy-adcom-risk"
+      ],
+      "before": [
+        {
+          "node_id": 72,
+          "ticker": "INSM",
+          "indication": "Bronchiectasis (brensocatib); refractory MAC lung disease (Arikayce)",
+          "setups": [
+            "priced-in-derisked-readout",
+            "first-in-class-no-approved-therapy-whitespace",
+            "cmc-manufacturing-regulatory-risk",
+            "contested-efficacy-adcom-risk"
+          ]
+        },
+        {
+          "node_id": 84,
+          "ticker": "KRYS",
+          "indication": "Dystrophic epidermolysis bullosa (DEB)",
+          "setups": [
+            "single-asset-microcap-binary",
+            "first-in-class-no-approved-therapy-whitespace",
+            "cmc-manufacturing-regulatory-risk",
+            "contested-efficacy-adcom-risk"
+          ]
+        },
+        {
+          "node_id": 539,
+          "ticker": "VRDN",
+          "indication": "thyroid eye disease (TED)",
+          "setups": [
+            "priced-in-derisked-readout",
+            "single-asset-microcap-binary",
+            "first-in-class-no-approved-therapy-whitespace",
+            "cmc-manufacturing-regulatory-risk"
+          ]
+        },
+        {
+          "node_id": 712,
+          "ticker": "DNLI",
+          "indication": "Hunter syndrome (mucopolysaccharidosis type II, MPS II)",
+          "setups": [
+            "priced-in-derisked-readout",
+            "first-in-class-no-approved-therapy-whitespace",
+            "cmc-manufacturing-regulatory-risk",
+            "contested-efficacy-adcom-risk"
+          ]
+        },
+        {
+          "node_id": 1145,
+          "ticker": "CTXR",
+          "indication": "Relapsed or refractory cutaneous T-cell lymphoma (CTCL), after >=1 prior systemic therapy",
+          "setups": [
+            "single-asset-microcap-binary",
+            "financing-overhang-going-concern",
+            "cmc-manufacturing-regulatory-risk",
+            "contested-efficacy-adcom-risk",
+            "good-news-faded"
+          ]
+        }
+      ],
+      "after": [
+        {
+          "node_id": 72,
+          "ticker": "INSM",
+          "indication": "Bronchiectasis (brensocatib); refractory MAC lung disease (Arikayce)",
+          "setups": [
+            "priced-in-derisked-readout",
+            "first-in-class-no-approved-therapy-whitespace",
+            "cmc-manufacturing-regulatory-risk",
+            "contested-efficacy-adcom-risk"
+          ]
+        },
+        {
+          "node_id": 84,
+          "ticker": "KRYS",
+          "indication": "Dystrophic epidermolysis bullosa (DEB)",
+          "setups": [
+            "single-asset-microcap-binary",
+            "first-in-class-no-approved-therapy-whitespace",
+            "cmc-manufacturing-regulatory-risk",
+            "contested-efficacy-adcom-risk"
+          ]
+        },
+        {
+          "node_id": 539,
+          "ticker": "VRDN",
+          "indication": "thyroid eye disease (TED)",
+          "setups": [
+            "priced-in-derisked-readout",
+            "single-asset-microcap-binary",
+            "first-in-class-no-approved-therapy-whitespace",
+            "cmc-manufacturing-regulatory-risk"
+          ]
+        },
+        {
+          "node_id": 712,
+          "ticker": "DNLI",
+          "indication": "Hunter syndrome (mucopolysaccharidosis type II, MPS II)",
+          "setups": [
+            "priced-in-derisked-readout",
+            "first-in-class-no-approved-therapy-whitespace",
+            "cmc-manufacturing-regulatory-risk",
+            "contested-efficacy-adcom-risk"
+          ]
+        },
+        {
+          "node_id": 1145,
+          "ticker": "CTXR",
+          "indication": "Relapsed or refractory cutaneous T-cell lymphoma (CTCL), after >=1 prior systemic therapy",
+          "setups": [
+            "single-asset-microcap-binary",
+            "financing-overhang-going-concern",
+            "cmc-manufacturing-regulatory-risk",
+            "contested-efficacy-adcom-risk",
+            "good-news-faded"
+          ]
+        }
+      ]
+    },
+    {
+      "cid": 263,
+      "query_setups": [
+        "priced-for-perfection-crowded-benchmark",
+        "single-asset-microcap-binary",
+        "validated-mechanism-derisked"
+      ],
+      "before": [
+        {
+          "node_id": 21,
+          "ticker": "BBIO",
+          "indication": "ATTR cardiomyopathy; achondroplasia; ADH1 hypoparathyroidism",
+          "setups": [
+            "priced-for-perfection-crowded-benchmark",
+            "single-asset-microcap-binary",
+            "validated-mechanism-derisked"
+          ]
+        },
+        {
+          "node_id": 300,
+          "ticker": "IONS",
+          "indication": "Transthyretin-mediated amyloid cardiomyopathy (ATTR-CM)",
+          "setups": [
+            "priced-for-perfection-crowded-benchmark",
+            "financing-overhang-going-concern",
+            "validated-mechanism-derisked",
+            "strategic-transaction-capital-injection"
+          ]
+        },
+        {
+          "node_id": 1141,
+          "ticker": "BBIO",
+          "indication": "Achondroplasia (pediatric)",
+          "setups": [
+            "priced-for-perfection-crowded-benchmark"
+          ]
+        },
+        {
+          "node_id": 35,
+          "ticker": "CRNX",
+          "indication": "Acromegaly",
+          "setups": [
+            "priced-in-derisked-readout",
+            "single-asset-microcap-binary",
+            "trial-graveyard-high-placebo-indication",
+            "no-new-information-nonevent"
+          ]
+        },
+        {
+          "node_id": 604,
+          "ticker": "IONS",
+          "indication": "Dyslipidemia / cardiovascular risk reduction (elevated non-HDL-C and triglycerides)",
+          "setups": [
+            "priced-for-perfection-crowded-benchmark",
+            "stat-hit-magnitude-or-benchmark-miss"
+          ]
+        }
+      ],
+      "after": [
+        {
+          "node_id": 21,
+          "ticker": "BBIO",
+          "indication": "ATTR cardiomyopathy; achondroplasia; ADH1 hypoparathyroidism",
+          "setups": [
+            "priced-for-perfection-crowded-benchmark",
+            "single-asset-microcap-binary",
+            "validated-mechanism-derisked"
+          ]
+        },
+        {
+          "node_id": 300,
+          "ticker": "IONS",
+          "indication": "Transthyretin-mediated amyloid cardiomyopathy (ATTR-CM)",
+          "setups": [
+            "priced-for-perfection-crowded-benchmark",
+            "financing-overhang-going-concern",
+            "validated-mechanism-derisked",
+            "strategic-transaction-capital-injection"
+          ]
+        },
+        {
+          "node_id": 1141,
+          "ticker": "BBIO",
+          "indication": "Achondroplasia (pediatric)",
+          "setups": [
+            "priced-for-perfection-crowded-benchmark"
+          ]
+        },
+        {
+          "node_id": 35,
+          "ticker": "CRNX",
+          "indication": "Acromegaly",
+          "setups": [
+            "priced-in-derisked-readout",
+            "single-asset-microcap-binary",
+            "trial-graveyard-high-placebo-indication",
+            "no-new-information-nonevent"
+          ]
+        },
+        {
+          "node_id": 604,
+          "ticker": "IONS",
+          "indication": "Dyslipidemia / cardiovascular risk reduction (elevated non-HDL-C and triglycerides)",
+          "setups": [
+            "priced-for-perfection-crowded-benchmark",
+            "stat-hit-magnitude-or-benchmark-miss"
+          ]
+        }
+      ]
+    },
+    {
+      "cid": 318,
+      "query_setups": [
+        "single-asset-microcap-binary",
+        "validated-mechanism-derisked",
+        "os-miss-despite-soft-endpoint-hit"
+      ],
+      "before": [
+        {
+          "node_id": 366,
+          "ticker": "MBX",
+          "indication": "Chronic hypoparathyroidism",
+          "setups": [
+            "single-asset-microcap-binary",
+            "validated-mechanism-derisked",
+            "os-miss-despite-soft-endpoint-hit"
+          ]
+        },
+        {
+          "node_id": 551,
+          "ticker": "RANI",
+          "indication": "osteoporosis",
+          "setups": [
+            "stat-hit-magnitude-or-benchmark-miss"
+          ]
+        },
+        {
+          "node_id": 93,
+          "ticker": "AMLX",
+          "indication": "Progressive supranuclear palsy (PSP) / neurodegeneration (AMX0035 pipeline)",
+          "setups": [
+            "priced-in-derisked-readout",
+            "priced-for-perfection-crowded-benchmark",
+            "financing-overhang-going-concern",
+            "trial-graveyard-high-placebo-indication",
+            "contested-efficacy-adcom-risk",
+            "strategic-transaction-capital-injection"
+          ]
+        },
+        {
+          "node_id": 60,
+          "ticker": "PTCT",
+          "indication": "Phenylketonuria; Huntington's disease; Friedreich ataxia",
+          "setups": [
+            "priced-in-derisked-readout",
+            "priced-for-perfection-crowded-benchmark",
+            "trial-graveyard-high-placebo-indication",
+            "contested-efficacy-adcom-risk",
+            "strategic-transaction-capital-injection",
+            "good-news-faded"
+          ]
+        },
+        {
+          "node_id": 543,
+          "ticker": "ALNY",
+          "indication": "Cardiomyopathy of ATTR amyloidosis (patisiran sNDA expansion)",
+          "setups": [
+            "priced-in-derisked-readout",
+            "single-asset-microcap-binary",
+            "cmc-manufacturing-regulatory-risk",
+            "contested-efficacy-adcom-risk"
+          ]
+        }
+      ],
+      "after": [
+        {
+          "node_id": 366,
+          "ticker": "MBX",
+          "indication": "Chronic hypoparathyroidism",
+          "setups": [
+            "single-asset-microcap-binary",
+            "validated-mechanism-derisked",
+            "os-miss-despite-soft-endpoint-hit"
+          ]
+        },
+        {
+          "node_id": 543,
+          "ticker": "ALNY",
+          "indication": "Cardiomyopathy of ATTR amyloidosis (patisiran sNDA expansion)",
+          "setups": [
+            "priced-in-derisked-readout",
+            "single-asset-microcap-binary",
+            "cmc-manufacturing-regulatory-risk",
+            "contested-efficacy-adcom-risk"
+          ]
+        },
+        {
+          "node_id": 608,
+          "ticker": "VRDN",
+          "indication": "active thyroid eye disease (TED)",
+          "setups": [
+            "priced-in-derisked-readout",
+            "single-asset-microcap-binary"
+          ]
+        },
+        {
+          "node_id": 35,
+          "ticker": "CRNX",
+          "indication": "Acromegaly",
+          "setups": [
+            "priced-in-derisked-readout",
+            "single-asset-microcap-binary",
+            "trial-graveyard-high-placebo-indication",
+            "no-new-information-nonevent"
+          ]
+        },
+        {
+          "node_id": 596,
+          "ticker": "ALNY",
+          "indication": "Polyneuropathy of hereditary ATTR amyloidosis (vutrisiran / AMVUTTRA)",
+          "setups": [
+            "single-asset-microcap-binary"
+          ]
+        }
+      ]
+    },
+    {
+      "cid": 351,
+      "query_setups": [
+        "single-asset-microcap-binary",
+        "trial-graveyard-high-placebo-indication"
+      ],
+      "before": [
+        {
+          "node_id": 825,
+          "ticker": "DNLI",
+          "indication": "Amyotrophic lateral sclerosis (ALS)",
+          "setups": [
+            "single-asset-microcap-binary",
+            "trial-graveyard-high-placebo-indication"
+          ]
+        },
+        {
+          "node_id": 778,
+          "ticker": "DNLI",
+          "indication": "Amyotrophic lateral sclerosis (ALS)",
+          "setups": [
+            "priced-in-derisked-readout",
+            "single-asset-microcap-binary",
+            "trial-graveyard-high-placebo-indication",
+            "primary-miss-subgroup-salvage"
+          ]
+        },
+        {
+          "node_id": 884,
+          "ticker": "DNLI",
+          "indication": "Amyotrophic lateral sclerosis (ALS)",
+          "setups": [
+            "trial-graveyard-high-placebo-indication",
+            "strategic-transaction-capital-injection"
+          ]
+        },
+        {
+          "node_id": 547,
+          "ticker": "IONS",
+          "indication": "SOD1-amyotrophic lateral sclerosis (SOD1-ALS)",
+          "setups": [
+            "trial-graveyard-high-placebo-indication",
+            "primary-miss-subgroup-salvage"
+          ]
+        },
+        {
+          "node_id": 337,
+          "ticker": "CAPR",
+          "indication": "Duchenne muscular dystrophy (DMD)",
+          "setups": [
+            "priced-in-derisked-readout",
+            "single-asset-microcap-binary",
+            "cmc-manufacturing-regulatory-risk",
+            "contested-efficacy-adcom-risk",
+            "strategic-transaction-capital-injection"
+          ]
+        }
+      ],
+      "after": [
+        {
+          "node_id": 825,
+          "ticker": "DNLI",
+          "indication": "Amyotrophic lateral sclerosis (ALS)",
+          "setups": [
+            "single-asset-microcap-binary",
+            "trial-graveyard-high-placebo-indication"
+          ]
+        },
+        {
+          "node_id": 778,
+          "ticker": "DNLI",
+          "indication": "Amyotrophic lateral sclerosis (ALS)",
+          "setups": [
+            "priced-in-derisked-readout",
+            "single-asset-microcap-binary",
+            "trial-graveyard-high-placebo-indication",
+            "primary-miss-subgroup-salvage"
+          ]
+        },
+        {
+          "node_id": 884,
+          "ticker": "DNLI",
+          "indication": "Amyotrophic lateral sclerosis (ALS)",
+          "setups": [
+            "trial-graveyard-high-placebo-indication",
+            "strategic-transaction-capital-injection"
+          ]
+        },
+        {
+          "node_id": 547,
+          "ticker": "IONS",
+          "indication": "SOD1-amyotrophic lateral sclerosis (SOD1-ALS)",
+          "setups": [
+            "trial-graveyard-high-placebo-indication",
+            "primary-miss-subgroup-salvage"
+          ]
+        },
+        {
+          "node_id": 337,
+          "ticker": "CAPR",
+          "indication": "Duchenne muscular dystrophy (DMD)",
+          "setups": [
+            "priced-in-derisked-readout",
+            "single-asset-microcap-binary",
+            "cmc-manufacturing-regulatory-risk",
+            "contested-efficacy-adcom-risk",
+            "strategic-transaction-capital-injection"
+          ]
+        }
+      ]
+    },
+    {
+      "cid": 407,
+      "query_setups": [
+        "trial-graveyard-high-placebo-indication",
+        "primary-miss-subgroup-salvage"
+      ],
+      "before": [
+        {
+          "node_id": 547,
+          "ticker": "IONS",
+          "indication": "SOD1-amyotrophic lateral sclerosis (SOD1-ALS)",
+          "setups": [
+            "trial-graveyard-high-placebo-indication",
+            "primary-miss-subgroup-salvage"
+          ]
+        },
+        {
+          "node_id": 604,
+          "ticker": "IONS",
+          "indication": "Dyslipidemia / cardiovascular risk reduction (elevated non-HDL-C and triglycerides)",
+          "setups": [
+            "priced-for-perfection-crowded-benchmark",
+            "stat-hit-magnitude-or-benchmark-miss"
+          ]
+        },
+        {
+          "node_id": 450,
+          "ticker": "IONS",
+          "indication": "Familial chylomicronemia syndrome (FCS) \u2014 olezarsen",
+          "setups": [
+            "first-in-class-no-approved-therapy-whitespace"
+          ]
+        },
+        {
+          "node_id": 345,
+          "ticker": "IONS",
+          "indication": "Moderate hypertriglyceridemia (olezarsen Essence-TIMI 73b)",
+          "setups": [
+            "priced-in-derisked-readout",
+            "first-in-class-no-approved-therapy-whitespace"
+          ]
+        },
+        {
+          "node_id": 209,
+          "ticker": "IONS",
+          "indication": "Alexander disease (AxD)",
+          "setups": [
+            "priced-in-derisked-readout",
+            "first-in-class-no-approved-therapy-whitespace",
+            "trial-graveyard-high-placebo-indication"
+          ]
+        }
+      ],
+      "after": [
+        {
+          "node_id": 547,
+          "ticker": "IONS",
+          "indication": "SOD1-amyotrophic lateral sclerosis (SOD1-ALS)",
+          "setups": [
+            "trial-graveyard-high-placebo-indication",
+            "primary-miss-subgroup-salvage"
+          ]
+        },
+        {
+          "node_id": 209,
+          "ticker": "IONS",
+          "indication": "Alexander disease (AxD)",
+          "setups": [
+            "priced-in-derisked-readout",
+            "first-in-class-no-approved-therapy-whitespace",
+            "trial-graveyard-high-placebo-indication"
+          ]
+        },
+        {
+          "node_id": 825,
+          "ticker": "DNLI",
+          "indication": "Amyotrophic lateral sclerosis (ALS)",
+          "setups": [
+            "single-asset-microcap-binary",
+            "trial-graveyard-high-placebo-indication"
+          ]
+        },
+        {
+          "node_id": 884,
+          "ticker": "DNLI",
+          "indication": "Amyotrophic lateral sclerosis (ALS)",
+          "setups": [
+            "trial-graveyard-high-placebo-indication",
+            "strategic-transaction-capital-injection"
+          ]
+        },
+        {
+          "node_id": 956,
+          "ticker": "AMLX",
+          "indication": "amyotrophic lateral sclerosis (ALS)",
+          "setups": [
+            "priced-in-derisked-readout",
+            "priced-for-perfection-crowded-benchmark",
+            "single-asset-microcap-binary",
+            "trial-graveyard-high-placebo-indication"
+          ]
+        }
+      ]
+    },
+    {
+      "cid": 832,
+      "query_setups": [
+        "single-asset-microcap-binary",
+        "first-in-class-no-approved-therapy-whitespace",
+        "cmc-manufacturing-regulatory-risk",
+        "contested-efficacy-adcom-risk"
+      ],
+      "before": [
+        {
+          "node_id": 691,
+          "ticker": "ABEO",
+          "indication": "Recessive dystrophic epidermolysis bullosa (RDEB)",
+          "setups": [
+            "single-asset-microcap-binary",
+            "first-in-class-no-approved-therapy-whitespace",
+            "cmc-manufacturing-regulatory-risk",
+            "contested-efficacy-adcom-risk"
+          ]
+        },
+        {
+          "node_id": 695,
+          "ticker": "ABEO",
+          "indication": "Recessive dystrophic epidermolysis bullosa (RDEB)",
+          "setups": [
+            "single-asset-microcap-binary",
+            "first-in-class-no-approved-therapy-whitespace",
+            "cmc-manufacturing-regulatory-risk",
+            "contested-efficacy-adcom-risk"
+          ]
+        },
+        {
+          "node_id": 84,
+          "ticker": "KRYS",
+          "indication": "Dystrophic epidermolysis bullosa (DEB)",
+          "setups": [
+            "single-asset-microcap-binary",
+            "first-in-class-no-approved-therapy-whitespace",
+            "cmc-manufacturing-regulatory-risk",
+            "contested-efficacy-adcom-risk"
+          ]
+        },
+        {
+          "node_id": 893,
+          "ticker": "CRSP",
+          "indication": "Severe sickle cell disease (SCD); also transfusion-dependent beta thalassemia (TDT)",
+          "setups": [
+            "priced-in-derisked-readout",
+            "first-in-class-no-approved-therapy-whitespace",
+            "cmc-manufacturing-regulatory-risk",
+            "good-news-faded"
+          ]
+        },
+        {
+          "node_id": 901,
+          "ticker": "AUTL",
+          "indication": "Relapsed/refractory adult B-cell acute lymphoblastic leukemia (r/r B-ALL)",
+          "setups": [
+            "priced-in-derisked-readout",
+            "priced-for-perfection-crowded-benchmark",
+            "single-asset-microcap-binary",
+            "cmc-manufacturing-regulatory-risk",
+            "contested-efficacy-adcom-risk",
+            "good-news-faded"
+          ]
+        }
+      ],
+      "after": [
+        {
+          "node_id": 691,
+          "ticker": "ABEO",
+          "indication": "Recessive dystrophic epidermolysis bullosa (RDEB)",
+          "setups": [
+            "single-asset-microcap-binary",
+            "first-in-class-no-approved-therapy-whitespace",
+            "cmc-manufacturing-regulatory-risk",
+            "contested-efficacy-adcom-risk"
+          ]
+        },
+        {
+          "node_id": 695,
+          "ticker": "ABEO",
+          "indication": "Recessive dystrophic epidermolysis bullosa (RDEB)",
+          "setups": [
+            "single-asset-microcap-binary",
+            "first-in-class-no-approved-therapy-whitespace",
+            "cmc-manufacturing-regulatory-risk",
+            "contested-efficacy-adcom-risk"
+          ]
+        },
+        {
+          "node_id": 84,
+          "ticker": "KRYS",
+          "indication": "Dystrophic epidermolysis bullosa (DEB)",
+          "setups": [
+            "single-asset-microcap-binary",
+            "first-in-class-no-approved-therapy-whitespace",
+            "cmc-manufacturing-regulatory-risk",
+            "contested-efficacy-adcom-risk"
+          ]
+        },
+        {
+          "node_id": 893,
+          "ticker": "CRSP",
+          "indication": "Severe sickle cell disease (SCD); also transfusion-dependent beta thalassemia (TDT)",
+          "setups": [
+            "priced-in-derisked-readout",
+            "first-in-class-no-approved-therapy-whitespace",
+            "cmc-manufacturing-regulatory-risk",
+            "good-news-faded"
+          ]
+        },
+        {
+          "node_id": 901,
+          "ticker": "AUTL",
+          "indication": "Relapsed/refractory adult B-cell acute lymphoblastic leukemia (r/r B-ALL)",
+          "setups": [
+            "priced-in-derisked-readout",
+            "priced-for-perfection-crowded-benchmark",
+            "single-asset-microcap-binary",
+            "cmc-manufacturing-regulatory-risk",
+            "contested-efficacy-adcom-risk",
+            "good-news-faded"
+          ]
+        }
+      ]
+    },
+    {
+      "cid": 923,
+      "query_setups": [
+        "single-asset-microcap-binary",
+        "financing-overhang-going-concern",
+        "cmc-manufacturing-regulatory-risk",
+        "contested-efficacy-adcom-risk",
+        "good-news-faded"
+      ],
+      "before": [
+        {
+          "node_id": 1145,
+          "ticker": "CTXR",
+          "indication": "Relapsed or refractory cutaneous T-cell lymphoma (CTCL), after >=1 prior systemic therapy",
+          "setups": [
+            "single-asset-microcap-binary",
+            "financing-overhang-going-concern",
+            "cmc-manufacturing-regulatory-risk",
+            "contested-efficacy-adcom-risk",
+            "good-news-faded"
+          ]
+        },
+        {
+          "node_id": 56,
+          "ticker": "CTXR",
+          "indication": "persistent or recurrent cutaneous T-cell lymphoma (CTCL)",
+          "setups": [
+            "financing-overhang-going-concern",
+            "cmc-manufacturing-regulatory-risk",
+            "contested-efficacy-adcom-risk"
+          ]
+        },
+        {
+          "node_id": 539,
+          "ticker": "VRDN",
+          "indication": "thyroid eye disease (TED)",
+          "setups": [
+            "priced-in-derisked-readout",
+            "single-asset-microcap-binary",
+            "first-in-class-no-approved-therapy-whitespace",
+            "cmc-manufacturing-regulatory-risk"
+          ]
+        },
+        {
+          "node_id": 838,
+          "ticker": "MCRB",
+          "indication": "Recurrent Clostridioides difficile infection (rCDI)",
+          "setups": [
+            "priced-in-derisked-readout",
+            "single-asset-microcap-binary",
+            "financing-overhang-going-concern",
+            "first-in-class-no-approved-therapy-whitespace",
+            "validated-mechanism-derisked",
+            "no-new-information-nonevent",
+            "good-news-faded"
+          ]
+        },
+        {
+          "node_id": 712,
+          "ticker": "DNLI",
+          "indication": "Hunter syndrome (mucopolysaccharidosis type II, MPS II)",
+          "setups": [
+            "priced-in-derisked-readout",
+            "first-in-class-no-approved-therapy-whitespace",
+            "cmc-manufacturing-regulatory-risk",
+            "contested-efficacy-adcom-risk"
+          ]
+        }
+      ],
+      "after": [
+        {
+          "node_id": 1145,
+          "ticker": "CTXR",
+          "indication": "Relapsed or refractory cutaneous T-cell lymphoma (CTCL), after >=1 prior systemic therapy",
+          "setups": [
+            "single-asset-microcap-binary",
+            "financing-overhang-going-concern",
+            "cmc-manufacturing-regulatory-risk",
+            "contested-efficacy-adcom-risk",
+            "good-news-faded"
+          ]
+        },
+        {
+          "node_id": 56,
+          "ticker": "CTXR",
+          "indication": "persistent or recurrent cutaneous T-cell lymphoma (CTCL)",
+          "setups": [
+            "financing-overhang-going-concern",
+            "cmc-manufacturing-regulatory-risk",
+            "contested-efficacy-adcom-risk"
+          ]
+        },
+        {
+          "node_id": 539,
+          "ticker": "VRDN",
+          "indication": "thyroid eye disease (TED)",
+          "setups": [
+            "priced-in-derisked-readout",
+            "single-asset-microcap-binary",
+            "first-in-class-no-approved-therapy-whitespace",
+            "cmc-manufacturing-regulatory-risk"
+          ]
+        },
+        {
+          "node_id": 838,
+          "ticker": "MCRB",
+          "indication": "Recurrent Clostridioides difficile infection (rCDI)",
+          "setups": [
+            "priced-in-derisked-readout",
+            "single-asset-microcap-binary",
+            "financing-overhang-going-concern",
+            "first-in-class-no-approved-therapy-whitespace",
+            "validated-mechanism-derisked",
+            "no-new-information-nonevent",
+            "good-news-faded"
+          ]
+        },
+        {
+          "node_id": 712,
+          "ticker": "DNLI",
+          "indication": "Hunter syndrome (mucopolysaccharidosis type II, MPS II)",
+          "setups": [
+            "priced-in-derisked-readout",
+            "first-in-class-no-approved-therapy-whitespace",
+            "cmc-manufacturing-regulatory-risk",
+            "contested-efficacy-adcom-risk"
+          ]
+        }
+      ]
+    },
+    {
+      "cid": 506,
+      "query_setups": [
+        "single-asset-microcap-binary",
+        "financing-overhang-going-concern",
+        "trial-graveyard-high-placebo-indication",
+        "contested-efficacy-adcom-risk",
+        "commercial-single-product-quality"
+      ],
+      "before": [
+        {
+          "node_id": 1810,
+          "ticker": "CYTK",
+          "indication": "Obstructive/non-obstructive hypertrophic cardiomyopathy; heart failure; ALS",
+          "setups": [
+            "single-asset-microcap-binary",
+            "financing-overhang-going-concern",
+            "trial-graveyard-high-placebo-indication",
+            "contested-efficacy-adcom-risk",
+            "commercial-single-product-quality"
+          ]
+        },
+        {
+          "node_id": 2114,
+          "ticker": "CYTK",
+          "indication": "obstructive & non-obstructive hypertrophic cardiomyopathy (HCM); heart failure",
+          "setups": [
+            "single-asset-microcap-binary",
+            "financing-overhang-going-concern",
+            "trial-graveyard-high-placebo-indication",
+            "no-new-information-nonevent",
+            "strategic-transaction-capital-injection"
+          ]
+        },
+        {
+          "node_id": 1264,
+          "ticker": "CRNX",
+          "indication": "Acromegaly (approved) and carcinoid syndrome; congenital adrenal hyperplasia and ACTH-dependent Cushing's syndrome (atumelnant)",
+          "setups": [
+            "financing-overhang-going-concern"
+          ]
+        },
+        {
+          "node_id": 1369,
+          "ticker": "CRNX",
+          "indication": "Acromegaly; congenital adrenal hyperplasia (endocrine diseases)",
+          "setups": [
+            "single-asset-microcap-binary",
+            "financing-overhang-going-concern",
+            "first-in-class-no-approved-therapy-whitespace",
+            "commercial-single-product-quality"
+          ]
+        },
+        {
+          "node_id": 1257,
+          "ticker": "MPLT",
+          "indication": "Schizophrenia (also Alzheimer's disease psychosis)",
+          "setups": [
+            "priced-for-perfection-crowded-benchmark",
+            "single-asset-microcap-binary",
+            "trial-graveyard-high-placebo-indication",
+            "no-new-information-nonevent"
+          ]
+        }
+      ],
+      "after": [
+        {
+          "node_id": 1810,
+          "ticker": "CYTK",
+          "indication": "Obstructive/non-obstructive hypertrophic cardiomyopathy; heart failure; ALS",
+          "setups": [
+            "single-asset-microcap-binary",
+            "financing-overhang-going-concern",
+            "trial-graveyard-high-placebo-indication",
+            "contested-efficacy-adcom-risk",
+            "commercial-single-product-quality"
+          ]
+        },
+        {
+          "node_id": 2114,
+          "ticker": "CYTK",
+          "indication": "obstructive & non-obstructive hypertrophic cardiomyopathy (HCM); heart failure",
+          "setups": [
+            "single-asset-microcap-binary",
+            "financing-overhang-going-concern",
+            "trial-graveyard-high-placebo-indication",
+            "no-new-information-nonevent",
+            "strategic-transaction-capital-injection"
+          ]
+        },
+        {
+          "node_id": 1264,
+          "ticker": "CRNX",
+          "indication": "Acromegaly (approved) and carcinoid syndrome; congenital adrenal hyperplasia and ACTH-dependent Cushing's syndrome (atumelnant)",
+          "setups": [
+            "financing-overhang-going-concern"
+          ]
+        },
+        {
+          "node_id": 1369,
+          "ticker": "CRNX",
+          "indication": "Acromegaly; congenital adrenal hyperplasia (endocrine diseases)",
+          "setups": [
+            "single-asset-microcap-binary",
+            "financing-overhang-going-concern",
+            "first-in-class-no-approved-therapy-whitespace",
+            "commercial-single-product-quality"
+          ]
+        },
+        {
+          "node_id": 1257,
+          "ticker": "MPLT",
+          "indication": "Schizophrenia (also Alzheimer's disease psychosis)",
+          "setups": [
+            "priced-for-perfection-crowded-benchmark",
+            "single-asset-microcap-binary",
+            "trial-graveyard-high-placebo-indication",
+            "no-new-information-nonevent"
+          ]
+        }
+      ]
+    },
+    {
+      "cid": 691,
+      "query_setups": [
+        "contested-efficacy-adcom-risk"
+      ],
+      "before": [
+        {
+          "node_id": 981,
+          "ticker": "SPRY",
+          "indication": "Anaphylaxis / severe allergic reactions (neffy, ARS-1), NDA 214697 \u2014 FDA AdCom briefing",
+          "setups": [
+            "contested-efficacy-adcom-risk"
+          ]
+        },
+        {
+          "node_id": 1005,
+          "ticker": "QTTB",
+          "indication": "Alopecia areata (lead focus); atopic dermatitis (missed)",
+          "setups": [
+            "single-asset-microcap-binary",
+            "trial-graveyard-high-placebo-indication",
+            "primary-miss-subgroup-salvage"
+          ]
+        },
+        {
+          "node_id": 270,
+          "ticker": "TVTX",
+          "indication": "IgA nephropathy (FDA accelerated approval)",
+          "setups": [
+            "priced-in-derisked-readout",
+            "single-asset-microcap-binary",
+            "first-in-class-no-approved-therapy-whitespace"
+          ]
+        },
+        {
+          "node_id": 1185,
+          "ticker": "VERA",
+          "indication": "IgA nephropathy (also lupus nephritis)",
+          "setups": [
+            "priced-in-derisked-readout",
+            "priced-for-perfection-crowded-benchmark",
+            "trial-graveyard-high-placebo-indication"
+          ]
+        },
+        {
+          "node_id": 407,
+          "ticker": "IONS",
+          "indication": "Hereditary angioedema (HAE) \u2014 donidalorsen",
+          "setups": []
+        }
+      ],
+      "after": [
+        {
+          "node_id": 981,
+          "ticker": "SPRY",
+          "indication": "Anaphylaxis / severe allergic reactions (neffy, ARS-1), NDA 214697 \u2014 FDA AdCom briefing",
+          "setups": [
+            "contested-efficacy-adcom-risk"
+          ]
+        },
+        {
+          "node_id": 569,
+          "ticker": "ANAB",
+          "indication": "Generalized Pustular Psoriasis (GPP)",
+          "setups": [
+            "priced-in-derisked-readout",
+            "single-asset-microcap-binary",
+            "contested-efficacy-adcom-risk",
+            "no-new-information-nonevent"
+          ]
+        },
+        {
+          "node_id": 93,
+          "ticker": "AMLX",
+          "indication": "Progressive supranuclear palsy (PSP) / neurodegeneration (AMX0035 pipeline)",
+          "setups": [
+            "priced-in-derisked-readout",
+            "priced-for-perfection-crowded-benchmark",
+            "financing-overhang-going-concern",
+            "trial-graveyard-high-placebo-indication",
+            "contested-efficacy-adcom-risk",
+            "strategic-transaction-capital-injection"
+          ]
+        },
+        {
+          "node_id": 943,
+          "ticker": "MBRX",
+          "indication": "Relapsed/refractory acute myeloid leukemia (AML)",
+          "setups": [
+            "single-asset-microcap-binary",
+            "financing-overhang-going-concern",
+            "first-in-class-no-approved-therapy-whitespace",
+            "contested-efficacy-adcom-risk",
+            "os-miss-despite-soft-endpoint-hit"
+          ]
+        },
+        {
+          "node_id": 526,
+          "ticker": "PVLA",
+          "indication": "Microcystic lymphatic malformations (also cutaneous venous malformations, angiokeratomas)",
+          "setups": [
+            "priced-for-perfection-crowded-benchmark",
+            "first-in-class-no-approved-therapy-whitespace",
+            "contested-efficacy-adcom-risk"
+          ]
+        }
+      ]
+    },
+    {
+      "cid": 482,
+      "query_setups": [
+        "priced-in-derisked-readout",
+        "single-asset-microcap-binary",
+        "financing-overhang-going-concern",
+        "first-in-class-no-approved-therapy-whitespace",
+        "contested-efficacy-adcom-risk",
+        "no-new-information-nonevent",
+        "commercial-single-product-quality"
+      ],
+      "before": [
+        {
+          "node_id": 1602,
+          "ticker": "MDGL",
+          "indication": "Nonalcoholic steatohepatitis (NASH/MASH) with liver fibrosis",
+          "setups": [
+            "priced-in-derisked-readout",
+            "single-asset-microcap-binary",
+            "financing-overhang-going-concern",
+            "first-in-class-no-approved-therapy-whitespace",
+            "contested-efficacy-adcom-risk",
+            "no-new-information-nonevent",
+            "commercial-single-product-quality"
+          ]
+        },
+        {
+          "node_id": 1514,
+          "ticker": "KRYS",
+          "indication": "Dystrophic epidermolysis bullosa (DEB)",
+          "setups": [
+            "priced-in-derisked-readout",
+            "single-asset-microcap-binary",
+            "financing-overhang-going-concern",
+            "first-in-class-no-approved-therapy-whitespace",
+            "contested-efficacy-adcom-risk",
+            "commercial-single-product-quality"
+          ]
+        },
+        {
+          "node_id": 1623,
+          "ticker": "CAPR",
+          "indication": "Duchenne muscular dystrophy cardiomyopathy (DMD)",
+          "setups": [
+            "single-asset-microcap-binary",
+            "financing-overhang-going-concern",
+            "first-in-class-no-approved-therapy-whitespace",
+            "contested-efficacy-adcom-risk"
+          ]
+        },
+        {
+          "node_id": 1810,
+          "ticker": "CYTK",
+          "indication": "Obstructive/non-obstructive hypertrophic cardiomyopathy; heart failure; ALS",
+          "setups": [
+            "single-asset-microcap-binary",
+            "financing-overhang-going-concern",
+            "trial-graveyard-high-placebo-indication",
+            "contested-efficacy-adcom-risk",
+            "commercial-single-product-quality"
+          ]
+        },
+        {
+          "node_id": 2072,
+          "ticker": "RZLT",
+          "indication": "Congenital hyperinsulinism; diabetic macular edema (metabolic diseases)",
+          "setups": [
+            "single-asset-microcap-binary",
+            "first-in-class-no-approved-therapy-whitespace"
+          ]
+        }
+      ],
+      "after": [
+        {
+          "node_id": 1602,
+          "ticker": "MDGL",
+          "indication": "Nonalcoholic steatohepatitis (NASH/MASH) with liver fibrosis",
+          "setups": [
+            "priced-in-derisked-readout",
+            "single-asset-microcap-binary",
+            "financing-overhang-going-concern",
+            "first-in-class-no-approved-therapy-whitespace",
+            "contested-efficacy-adcom-risk",
+            "no-new-information-nonevent",
+            "commercial-single-product-quality"
+          ]
+        },
+        {
+          "node_id": 1514,
+          "ticker": "KRYS",
+          "indication": "Dystrophic epidermolysis bullosa (DEB)",
+          "setups": [
+            "priced-in-derisked-readout",
+            "single-asset-microcap-binary",
+            "financing-overhang-going-concern",
+            "first-in-class-no-approved-therapy-whitespace",
+            "contested-efficacy-adcom-risk",
+            "commercial-single-product-quality"
+          ]
+        },
+        {
+          "node_id": 1623,
+          "ticker": "CAPR",
+          "indication": "Duchenne muscular dystrophy cardiomyopathy (DMD)",
+          "setups": [
+            "single-asset-microcap-binary",
+            "financing-overhang-going-concern",
+            "first-in-class-no-approved-therapy-whitespace",
+            "contested-efficacy-adcom-risk"
+          ]
+        },
+        {
+          "node_id": 1810,
+          "ticker": "CYTK",
+          "indication": "Obstructive/non-obstructive hypertrophic cardiomyopathy; heart failure; ALS",
+          "setups": [
+            "single-asset-microcap-binary",
+            "financing-overhang-going-concern",
+            "trial-graveyard-high-placebo-indication",
+            "contested-efficacy-adcom-risk",
+            "commercial-single-product-quality"
+          ]
+        },
+        {
+          "node_id": 2072,
+          "ticker": "RZLT",
+          "indication": "Congenital hyperinsulinism; diabetic macular edema (metabolic diseases)",
+          "setups": [
+            "single-asset-microcap-binary",
+            "first-in-class-no-approved-therapy-whitespace"
+          ]
+        }
+      ]
+    },
+    {
+      "cid": 54,
+      "query_setups": [
+        "single-asset-microcap-binary",
+        "trial-graveyard-high-placebo-indication",
+        "commercial-single-product-quality"
+      ],
+      "before": [
+        {
+          "node_id": 1462,
+          "ticker": "NBIX",
+          "indication": "Tardive dyskinesia; chorea in Huntington's disease; classic congenital adrenal hyperplasia",
+          "setups": [
+            "single-asset-microcap-binary",
+            "trial-graveyard-high-placebo-indication",
+            "commercial-single-product-quality"
+          ]
+        },
+        {
+          "node_id": 1414,
+          "ticker": "HRMY",
+          "indication": "Excessive daytime sleepiness and cataplexy in narcolepsy (WAKIX / pitolisant)",
+          "setups": [
+            "financing-overhang-going-concern",
+            "no-new-information-nonevent",
+            "commercial-single-product-quality"
+          ]
+        },
+        {
+          "node_id": 1849,
+          "ticker": "RZLT",
+          "indication": "congenital hyperinsulinism (cHI) and tumor-associated hyperinsulinism (taHI); diabetic macular edema (RZ402)",
+          "setups": [
+            "single-asset-microcap-binary",
+            "financing-overhang-going-concern",
+            "validated-mechanism-derisked"
+          ]
+        },
+        {
+          "node_id": 1706,
+          "ticker": "RZLT",
+          "indication": "Congenital hyperinsulinism; tumor hyperinsulinism",
+          "setups": [
+            "single-asset-microcap-binary",
+            "financing-overhang-going-concern",
+            "no-new-information-nonevent"
+          ]
+        },
+        {
+          "node_id": 1476,
+          "ticker": "TNXP",
+          "indication": "fibromyalgia",
+          "setups": [
+            "single-asset-microcap-binary",
+            "financing-overhang-going-concern"
+          ]
+        }
+      ],
+      "after": [
+        {
+          "node_id": 1462,
+          "ticker": "NBIX",
+          "indication": "Tardive dyskinesia; chorea in Huntington's disease; classic congenital adrenal hyperplasia",
+          "setups": [
+            "single-asset-microcap-binary",
+            "trial-graveyard-high-placebo-indication",
+            "commercial-single-product-quality"
+          ]
+        },
+        {
+          "node_id": 1414,
+          "ticker": "HRMY",
+          "indication": "Excessive daytime sleepiness and cataplexy in narcolepsy (WAKIX / pitolisant)",
+          "setups": [
+            "financing-overhang-going-concern",
+            "no-new-information-nonevent",
+            "commercial-single-product-quality"
+          ]
+        },
+        {
+          "node_id": 1849,
+          "ticker": "RZLT",
+          "indication": "congenital hyperinsulinism (cHI) and tumor-associated hyperinsulinism (taHI); diabetic macular edema (RZ402)",
+          "setups": [
+            "single-asset-microcap-binary",
+            "financing-overhang-going-concern",
+            "validated-mechanism-derisked"
+          ]
+        },
+        {
+          "node_id": 1706,
+          "ticker": "RZLT",
+          "indication": "Congenital hyperinsulinism; tumor hyperinsulinism",
+          "setups": [
+            "single-asset-microcap-binary",
+            "financing-overhang-going-concern",
+            "no-new-information-nonevent"
+          ]
+        },
+        {
+          "node_id": 1476,
+          "ticker": "TNXP",
+          "indication": "fibromyalgia",
+          "setups": [
+            "single-asset-microcap-binary",
+            "financing-overhang-going-concern"
+          ]
+        }
+      ]
+    },
+    {
+      "cid": 294,
+      "query_setups": [
+        "financing-overhang-going-concern",
+        "commercial-single-product-quality"
+      ],
+      "before": [
+        {
+          "node_id": 1774,
+          "ticker": "VNDA",
+          "indication": "Schizophrenia, bipolar, sleep/circadian disorders, motion sickness",
+          "setups": [
+            "financing-overhang-going-concern",
+            "commercial-single-product-quality"
+          ]
+        },
+        {
+          "node_id": 1313,
+          "ticker": "VNDA",
+          "indication": "Schizophrenia; bipolar I disorder (psychiatry franchise)",
+          "setups": [
+            "priced-in-derisked-readout",
+            "single-asset-microcap-binary",
+            "financing-overhang-going-concern",
+            "commercial-single-product-quality"
+          ]
+        },
+        {
+          "node_id": 1317,
+          "ticker": "VNDA",
+          "indication": "Schizophrenia, bipolar, sleep/circadian disorders, motion sickness",
+          "setups": [
+            "financing-overhang-going-concern",
+            "commercial-single-product-quality"
+          ]
+        },
+        {
+          "node_id": 1433,
+          "ticker": "VNDA",
+          "indication": "Schizophrenia & bipolar I (Fanapt/BYSANTI), circadian sleep (HETLIOZ), motion-induced vomiting (NEREUS/tradipitant), GPP (imsidolimab)",
+          "setups": [
+            "financing-overhang-going-concern",
+            "commercial-single-product-quality"
+          ]
+        },
+        {
+          "node_id": 1737,
+          "ticker": "PHAT",
+          "indication": "Erosive GERD; Non-Erosive GERD; H. pylori infection",
+          "setups": [
+            "priced-in-derisked-readout",
+            "single-asset-microcap-binary",
+            "financing-overhang-going-concern",
+            "first-in-class-no-approved-therapy-whitespace",
+            "commercial-single-product-quality"
+          ]
+        }
+      ],
+      "after": [
+        {
+          "node_id": 1774,
+          "ticker": "VNDA",
+          "indication": "Schizophrenia, bipolar, sleep/circadian disorders, motion sickness",
+          "setups": [
+            "financing-overhang-going-concern",
+            "commercial-single-product-quality"
+          ]
+        },
+        {
+          "node_id": 1313,
+          "ticker": "VNDA",
+          "indication": "Schizophrenia; bipolar I disorder (psychiatry franchise)",
+          "setups": [
+            "priced-in-derisked-readout",
+            "single-asset-microcap-binary",
+            "financing-overhang-going-concern",
+            "commercial-single-product-quality"
+          ]
+        },
+        {
+          "node_id": 1317,
+          "ticker": "VNDA",
+          "indication": "Schizophrenia, bipolar, sleep/circadian disorders, motion sickness",
+          "setups": [
+            "financing-overhang-going-concern",
+            "commercial-single-product-quality"
+          ]
+        },
+        {
+          "node_id": 1433,
+          "ticker": "VNDA",
+          "indication": "Schizophrenia & bipolar I (Fanapt/BYSANTI), circadian sleep (HETLIOZ), motion-induced vomiting (NEREUS/tradipitant), GPP (imsidolimab)",
+          "setups": [
+            "financing-overhang-going-concern",
+            "commercial-single-product-quality"
+          ]
+        },
+        {
+          "node_id": 1737,
+          "ticker": "PHAT",
+          "indication": "Erosive GERD; Non-Erosive GERD; H. pylori infection",
+          "setups": [
+            "priced-in-derisked-readout",
+            "single-asset-microcap-binary",
+            "financing-overhang-going-concern",
+            "first-in-class-no-approved-therapy-whitespace",
+            "commercial-single-product-quality"
+          ]
+        }
+      ]
+    },
+    {
+      "cid": 746,
+      "query_setups": [
+        "single-asset-microcap-binary",
+        "financing-overhang-going-concern",
+        "trial-graveyard-high-placebo-indication",
+        "strategic-transaction-capital-injection"
+      ],
+      "before": [
+        {
+          "node_id": 2034,
+          "ticker": "ZBIO",
+          "indication": "immunology & inflammation (IgG4-RD, relapsing & progressive multiple sclerosis, SLE)",
+          "setups": [
+            "single-asset-microcap-binary",
+            "financing-overhang-going-concern",
+            "trial-graveyard-high-placebo-indication",
+            "strategic-transaction-capital-injection"
+          ]
+        },
+        {
+          "node_id": 1844,
+          "ticker": "ZBIO",
+          "indication": "IgG4-related disease (BLA filed); SLE; multiple sclerosis",
+          "setups": [
+            "priced-in-derisked-readout",
+            "priced-for-perfection-crowded-benchmark",
+            "single-asset-microcap-binary",
+            "trial-graveyard-high-placebo-indication"
+          ]
+        },
+        {
+          "node_id": 1678,
+          "ticker": "ZBIO",
+          "indication": "IgG4-related disease (BLA filed); SLE; multiple sclerosis",
+          "setups": [
+            "single-asset-microcap-binary",
+            "trial-graveyard-high-placebo-indication",
+            "no-new-information-nonevent",
+            "strategic-transaction-capital-injection"
+          ]
+        },
+        {
+          "node_id": 1998,
+          "ticker": "ZBIO",
+          "indication": "IgG4-related disease; systemic lupus erythematosus; autoimmune diseases",
+          "setups": [
+            "priced-in-derisked-readout",
+            "financing-overhang-going-concern",
+            "trial-graveyard-high-placebo-indication",
+            "no-new-information-nonevent",
+            "good-news-faded"
+          ]
+        },
+        {
+          "node_id": 1839,
+          "ticker": "ZBIO",
+          "indication": "Immunoglobulin G4-Related Disease (IgG4-RD); broader autoimmune (RMS, SLE)",
+          "setups": [
+            "priced-in-derisked-readout",
+            "single-asset-microcap-binary",
+            "financing-overhang-going-concern",
+            "trial-graveyard-high-placebo-indication",
+            "good-news-faded"
+          ]
+        }
+      ],
+      "after": [
+        {
+          "node_id": 2034,
+          "ticker": "ZBIO",
+          "indication": "immunology & inflammation (IgG4-RD, relapsing & progressive multiple sclerosis, SLE)",
+          "setups": [
+            "single-asset-microcap-binary",
+            "financing-overhang-going-concern",
+            "trial-graveyard-high-placebo-indication",
+            "strategic-transaction-capital-injection"
+          ]
+        },
+        {
+          "node_id": 1844,
+          "ticker": "ZBIO",
+          "indication": "IgG4-related disease (BLA filed); SLE; multiple sclerosis",
+          "setups": [
+            "priced-in-derisked-readout",
+            "priced-for-perfection-crowded-benchmark",
+            "single-asset-microcap-binary",
+            "trial-graveyard-high-placebo-indication"
+          ]
+        },
+        {
+          "node_id": 1678,
+          "ticker": "ZBIO",
+          "indication": "IgG4-related disease (BLA filed); SLE; multiple sclerosis",
+          "setups": [
+            "single-asset-microcap-binary",
+            "trial-graveyard-high-placebo-indication",
+            "no-new-information-nonevent",
+            "strategic-transaction-capital-injection"
+          ]
+        },
+        {
+          "node_id": 1998,
+          "ticker": "ZBIO",
+          "indication": "IgG4-related disease; systemic lupus erythematosus; autoimmune diseases",
+          "setups": [
+            "priced-in-derisked-readout",
+            "financing-overhang-going-concern",
+            "trial-graveyard-high-placebo-indication",
+            "no-new-information-nonevent",
+            "good-news-faded"
+          ]
+        },
+        {
+          "node_id": 1839,
+          "ticker": "ZBIO",
+          "indication": "Immunoglobulin G4-Related Disease (IgG4-RD); broader autoimmune (RMS, SLE)",
+          "setups": [
+            "priced-in-derisked-readout",
+            "single-asset-microcap-binary",
+            "financing-overhang-going-concern",
+            "trial-graveyard-high-placebo-indication",
+            "good-news-faded"
+          ]
+        }
+      ]
+    },
+    {
+      "cid": 976,
+      "query_setups": [
+        "single-asset-microcap-binary",
+        "financing-overhang-going-concern",
+        "strategic-transaction-capital-injection"
+      ],
+      "before": [
+        {
+          "node_id": 145,
+          "ticker": "AVTX",
+          "indication": "Hidradenitis suppurativa",
+          "setups": [
+            "single-asset-microcap-binary",
+            "financing-overhang-going-concern",
+            "strategic-transaction-capital-injection"
+          ]
+        },
+        {
+          "node_id": 193,
+          "ticker": "AVTX",
+          "indication": "Poorly controlled non-eosinophilic asthma (NEA)",
+          "setups": [
+            "single-asset-microcap-binary",
+            "financing-overhang-going-concern",
+            "first-in-class-no-approved-therapy-whitespace",
+            "primary-miss-subgroup-salvage"
+          ]
+        },
+        {
+          "node_id": 127,
+          "ticker": "ADCT",
+          "indication": "2L+ diffuse large B-cell lymphoma (confirmatory combination with rituximab)",
+          "setups": [
+            "priced-in-derisked-readout",
+            "single-asset-microcap-binary",
+            "os-miss-despite-soft-endpoint-hit"
+          ]
+        },
+        {
+          "node_id": 1172,
+          "ticker": "ALDX",
+          "indication": "Proliferative vitreoretinopathy (PVR), Phase 3 GUARD Part 1",
+          "setups": [
+            "first-in-class-no-approved-therapy-whitespace"
+          ]
+        },
+        {
+          "node_id": 266,
+          "ticker": "EVMN",
+          "indication": "Chronic spontaneous/inducible urticaria; atopic dermatitis",
+          "setups": [
+            "priced-for-perfection-crowded-benchmark",
+            "single-asset-microcap-binary",
+            "financing-overhang-going-concern",
+            "first-in-class-no-approved-therapy-whitespace",
+            "trial-graveyard-high-placebo-indication"
+          ]
+        }
+      ],
+      "after": [
+        {
+          "node_id": 145,
+          "ticker": "AVTX",
+          "indication": "Hidradenitis suppurativa",
+          "setups": [
+            "single-asset-microcap-binary",
+            "financing-overhang-going-concern",
+            "strategic-transaction-capital-injection"
+          ]
+        },
+        {
+          "node_id": 193,
+          "ticker": "AVTX",
+          "indication": "Poorly controlled non-eosinophilic asthma (NEA)",
+          "setups": [
+            "single-asset-microcap-binary",
+            "financing-overhang-going-concern",
+            "first-in-class-no-approved-therapy-whitespace",
+            "primary-miss-subgroup-salvage"
+          ]
+        },
+        {
+          "node_id": 127,
+          "ticker": "ADCT",
+          "indication": "2L+ diffuse large B-cell lymphoma (confirmatory combination with rituximab)",
+          "setups": [
+            "priced-in-derisked-readout",
+            "single-asset-microcap-binary",
+            "os-miss-despite-soft-endpoint-hit"
+          ]
+        },
+        {
+          "node_id": 266,
+          "ticker": "EVMN",
+          "indication": "Chronic spontaneous/inducible urticaria; atopic dermatitis",
+          "setups": [
+            "priced-for-perfection-crowded-benchmark",
+            "single-asset-microcap-binary",
+            "financing-overhang-going-concern",
+            "first-in-class-no-approved-therapy-whitespace",
+            "trial-graveyard-high-placebo-indication"
+          ]
+        },
+        {
+          "node_id": 205,
+          "ticker": "ZURA",
+          "indication": "Hidradenitis suppurativa and systemic sclerosis (autoimmune/inflammatory)",
+          "setups": [
+            "single-asset-microcap-binary",
+            "first-in-class-no-approved-therapy-whitespace",
+            "no-new-information-nonevent"
+          ]
+        }
+      ]
+    }
+  ]
+}

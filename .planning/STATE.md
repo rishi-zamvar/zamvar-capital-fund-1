@@ -257,6 +257,12 @@ Recent decisions affecting current work:
 
 None yet.
 
+### Quick Tasks Completed
+
+| # | Description | Date | Commit | Status | Directory |
+|---|-------------|------|--------|--------|-----------|
+| 260818-l64 | Situational-setup taxonomy: derive, tag 470 nodes, wire into analog retrieval, re-run stress test | 2026-08-18 | ef796ef | Verified (v1 held all 5 desk grades — foundation, not yet a win; see FINDINGS) | [260818-l64](./quick/260818-l64-situational-setup-taxonomy-derive-tag-47/) |
+
 ### Blockers/Concerns
 
 - Phase 1: No clean free PDUFA/AdCom API — needs a spike (pure hand-curation vs a paid tracker like BPIQ). Research flag.

@@ -1,0 +1,185 @@
+{
+  "version": "1.0",
+  "n_catalysts": 470,
+  "design_notes": "Multi-label controlled vocabulary of SITUATIONAL SETUPS for case-based precedent retrieval. Derived by clustering reference_class / lesson_rule / thesis / why / second_order across all 470 nodes. Two groups: EX-ANTE-RECOGNIZABLE (matchable to a fresh event from pre-catalyst info — the retrieval-useful group) and OUTCOME-DESCRIPTIVE (only knowable after the move — for labeling precedents, each paired with its ex-ante proxy). Tags are intentionally overlapping: mean 2.5 ex-ante tags/node, up to 6. The two biggest reasoning axes — POSITIONING (priced-in vs priced-for-perfection) and STRUCTURE (single-asset-microcap / financing-overhang) — are separate tags precisely because they co-occur and interact.",
+  "tags": [
+    {
+      "name": "priced-in-derisked-readout",
+      "group": "ex-ante",
+      "definition": "A catalyst whose outcome is largely known or expected before the event — confirmatory/second pivotal, label expansion of a validated asset, topline already public and being re-presented, or a de-risked PDUFA on already-published data. The information has mostly traded; the event confirms rather than reveals.",
+      "ex_ante_cues": ["prior positive pivotal on the same asset", "second/confirmatory Phase 3 or randomized-withdrawal design", "topline already disclosed and this is a conference/NEJM re-presentation", "sNDA/label-expansion of an approved drug", "accepted BLA + firm PDUFA where pivotal is already public", "meaningful pre-event run-up"],
+      "ex_ante_taggable": true,
+      "typical_outcome": "High probability of a scientific/regulatory 'hit', but muted-to-negative price reaction ('sell-the-news'); down-lean sharpens when a dilutive financing, partner-economics split, or complex launch rides alongside.",
+      "example_cids": [357, 214, 398, 406, 837, 894, 1036, 583],
+      "approx_frequency": 171,
+      "tradeable_relevance": "Do not chase; fade or exit longs into the print, or harvest pre-event run-up. Long only survives if you can show the outcome is NOT yet priced."
+    },
+    {
+      "name": "priced-for-perfection-crowded-benchmark",
+      "group": "ex-ante",
+      "definition": "A richly valued or heavily run-up name reading out into a crowded indication with approved competitors, where the market judges the result against a cross-trial class benchmark rather than the endpoint bar. A clean statistical hit can still disappoint if magnitude only meets, not beats, the incumbent.",
+      "ex_ante_cues": ["approved competitors already in the indication", "no head-to-head; result will be compared cross-trial to a named benchmark (e.g. dupilumab, GLP-1, amivantamab, tafamidis)", "big pre-event run-up / high multiple / 'best-in-class' expectation", "hyped Phase 2 with high placebo response"],
+      "ex_ante_taggable": true,
+      "typical_outcome": "Expectations-miss selloff a majority of the time even on a met primary; upside requires a magnitude that visibly clears the benchmark.",
+      "example_cids": [254, 500, 739, 778, 876, 244, 402, 133],
+      "approx_frequency": 135,
+      "tradeable_relevance": "Fade or hedge into the readout; size down longs. Reserve conviction longs for cases where the pre-run is absent OR the drug can plausibly beat (not match) the class benchmark."
+    },
+    {
+      "name": "single-asset-microcap-binary",
+      "group": "ex-ante",
+      "definition": "A small/microcap whose entire value rests on one lead asset facing a single company-defining pivotal or PDUFA. Thin float amplifies the move in both directions; the clinical result and the corporate survival question resolve together.",
+      "ex_ante_cues": ["one lead/single asset carries the valuation", "microcap or nanocap, thin float/liquidity", "single company-defining Phase 2b/3 or PDUFA as the key catalyst", "sole-remaining pivotal after a prior trial"],
+      "ex_ante_taggable": true,
+      "typical_outcome": "Extreme bimodal outcome — catastrophic (-50% to -95%) on a miss, multi-bagger on a clean hit; muted process news in between often drifts down as holders de-risk.",
+      "example_cids": [221, 828, 977, 809, 615, 466, 887, 892],
+      "approx_frequency": 149,
+      "tradeable_relevance": "Avoid naked directional exposure; if played, use defined-risk options for the asymmetry or a tiny position. This is the desk's core 'binary' bucket."
+    },
+    {
+      "name": "financing-overhang-going-concern",
+      "group": "ex-ante",
+      "definition": "A name whose tape is dominated by dilution/solvency rather than fundamentals — short runway, going-concern language, imminent or fresh punitive raise, warrants, reverse split, or Q-suffix ticker. Even good clinical or regulatory news gets faded because a raise is a near-certainty.",
+      "ex_ante_cues": ["cash runway under ~12–18 months", "going-concern paragraph / strategic-alternatives review", "recent or telegraphed dilutive raise, warrants, ATM, registered-direct", "recent reverse split, sub-$1 or Q-suffix ticker", "raise must precede next catalyst"],
+      "ex_ante_taggable": true,
+      "typical_outcome": "Negative-to-flat lean; sharp drops on financing/reverse-split mechanics regardless of pipeline; positive data routinely muted until the raise clears. Relief bounces possible when a large well-structured raise removes the overhang.",
+      "example_cids": [587, 861, 862, 1025, 875, 930, 616, 322],
+      "approx_frequency": 180,
+      "tradeable_relevance": "Avoid longs into an unfunded catalyst; consider shorting into a forced raise. If financing is being solved by a credible syndicate, see strategic-transaction-capital-injection."
+    },
+    {
+      "name": "first-in-class-no-approved-therapy-whitespace",
+      "group": "ex-ante",
+      "definition": "A pivotal in an indication with no approved therapy / high unmet need, typically first-in-class with expedited designations and an objective or biomarker endpoint. Success de-risks efficacy AND a near-term filing at once.",
+      "ex_ante_cues": ["no approved therapy / no standard of care", "first-in-class mechanism", "objective, biomarker, or intra-patient-controlled primary", "orphan + Breakthrough/RMAT + Priority Review", "FDA-pre-agreed endpoint or path"],
+      "ex_ante_taggable": true,
+      "typical_outcome": "Positive lean and large moves on a clean hit; high eventual-approval rate. Residual risk is single-arm/external-control regulatory acceptability at NDA.",
+      "example_cids": [201, 476, 405, 634, 784, 273, 818, 991],
+      "approx_frequency": 102,
+      "tradeable_relevance": "Best long-into-readout bucket, especially with a credible objective endpoint. Pair with single-asset-microcap-binary to size the asymmetry."
+    },
+    {
+      "name": "validated-mechanism-derisked",
+      "group": "ex-ante",
+      "definition": "The target mechanism is already clinically/regulatorily validated by an approved same-class drug, so the primary-hit probability is structurally high. This is a base-rate (science) trait, distinct from positioning.",
+      "ex_ante_cues": ["approved same-class/same-mechanism precedent exists (e.g. TTR stabilizer, IL-23, anti-VEGF NI, PTH replacement, SST analog)", "robust prior Phase 2 on the same asset", "endpoint is an accepted surrogate for the class", "China/regional bridging of an already-approved global drug"],
+      "ex_ante_taggable": true,
+      "typical_outcome": "High hit rate; direction of the MOVE depends on positioning — pops when under-owned, fades when priced-in (co-tag priced-in-derisked-readout).",
+      "example_cids": [263, 318, 340, 435, 731, 866, 814, 988],
+      "approx_frequency": 59,
+      "tradeable_relevance": "High-confidence hit odds, but the trade is a positioning call: long only if not already priced; otherwise expect sell-the-news."
+    },
+    {
+      "name": "trial-graveyard-high-placebo-indication",
+      "group": "ex-ante",
+      "definition": "A readout in an indication/endpoint with a historically very low success base rate driven by high, variable placebo response or a poor mechanistic track record — ALS, GBM, Alzheimer's cognition, MDD/anxiety monotherapy, migraine prevention, Fragile X, essential tremor, Long COVID, SLE (SRI-4), obesity vs GLP-1.",
+      "ex_ante_cues": ["known graveyard indication", "subjective / functional-rating-scale / patient-reported composite primary", "parallel-group design in a high-placebo setting (vs randomized-withdrawal)", "novel/unvalidated target against a demanding benchmark"],
+      "ex_ante_taggable": true,
+      "typical_outcome": "Miss-lean with large downside; frequent biomarker-positive/clinical-negative splits and subgroup-salvage narratives that the FDA/market discount.",
+      "example_cids": [351, 407, 615, 489, 826, 466, 934, 994],
+      "approx_frequency": 85,
+      "tradeable_relevance": "Fade / avoid longs / buy protection pre-readout. Highest-value 'stay-away or short' filter in the vocabulary."
+    },
+    {
+      "name": "cmc-manufacturing-regulatory-risk",
+      "group": "ex-ante",
+      "definition": "Approval or launch gated by chemistry/manufacturing/controls — facility inspection (483/PAI), fill-finish, nitrosamine impurity, single-site cell/gene manufacturing, or a 505(b)(2)/device-combo CMC item — rather than efficacy. Such CRLs/delays are usually curable.",
+      "ex_ante_cues": ["cell/gene therapy manufactured at a single sponsor site", "resubmission after a prior CMC-only CRL", "nitrosamine / impurity / facility finding disclosed", "drug-device combination or 505(b)(2) reformulation", "Class 1 resubmission or major-amendment PDUFA extension"],
+      "ex_ante_taggable": true,
+      "typical_outcome": "Elevated first-cycle CRL/delay risk with a sharp initial drop, but high eventual-approval rate and a tendency to recover on resubmission; approvals often sell-the-news for microcaps.",
+      "example_cids": [832, 923, 1033, 645, 647, 752, 426, 925],
+      "approx_frequency": 51,
+      "tradeable_relevance": "Buy the CMC-CRL dip / play the resubmission-approval; treat as a timing (not thesis) risk unless efficacy is also in question."
+    },
+    {
+      "name": "contested-efficacy-adcom-risk",
+      "group": "ex-ante",
+      "definition": "A regulatory catalyst where efficacy or benefit-risk is genuinely contested — marginal effect size, single-arm/natural-history-only package, adversarial FDA history, a scheduled AdCom, or an FDA signal (briefing doc, mid-cycle minutes, endpoint re-derivation, goalpost move) foreshadowing a CRL.",
+      "ex_ante_cues": ["AdCom scheduled on a marginal-efficacy drug", "prior CRL over clinical-meaningfulness (not CMC)", "single-arm/natural-history efficacy vs no randomized pivotal", "FDA flags efficacy/PK-bridging concern or re-derives the analysis population", "documented adversarial FDA relationship"],
+      "ex_ante_taggable": true,
+      "typical_outcome": "High CRL/negative-vote rate; sharp negative moves on the FDA-signal event itself (briefing doc / minutes), which often front-runs the action date.",
+      "example_cids": [506, 691, 900, 990, 386, 756, 727, 899],
+      "approx_frequency": 44,
+      "tradeable_relevance": "Fade or hedge into the AdCom/briefing-doc window; avoid holding a contested filing through the decision. The disclosure, not the PDUFA date, is often the real event."
+    },
+    {
+      "name": "no-new-information-nonevent",
+      "group": "ex-ante",
+      "definition": "A dated event that carries no fresh endpoint/regulatory information — pre-revenue or pre-PDUFA earnings that recap known milestones, JPM/conference decks, enrollment/dosing-completion, IND clearance, patent/branding PRs. Value discovery waits for the real binary.",
+      "ex_ante_cues": ["earnings/update with the next binary still ahead and no new data", "conference/JPM overview deck", "operational milestone: enrollment complete, last-patient-dosed, IND cleared", "patent/rebranding/IP press release", "single-asset name in the quiet window before a pivotal"],
+      "ex_ante_taggable": true,
+      "typical_outcome": "Muted/inline moves dominated by positioning and sector beta; mild negative drift from burn or pre-readout de-risking; occasional mean-reverting noise pops.",
+      "example_cids": [121, 482, 737, 877, 871, 795, 1020, 367],
+      "approx_frequency": 124,
+      "tradeable_relevance": "Do-nothing / fade-the-noise filter. Don't hold through these expecting a move; if a binary is within a quarter, expect de-risking drift-down."
+    },
+    {
+      "name": "commercial-single-product-quality",
+      "group": "ex-ante",
+      "definition": "A commercial-stage, single/lead-product (often high-multiple) biotech where the print's quality — guidance top-end, net price, gross-to-net, opex/burn, sequential script trend — matters more than the headline revenue number.",
+      "ex_ante_cues": ["revenue concentrated in one product / early launch", "high growth multiple that embeds continued acceleration", "launch-spend ramp / widening loss by design", "net-price erosion or gross-to-net drag on early sales", "first full quarter/year of a launch"],
+      "ex_ante_taggable": true,
+      "typical_outcome": "Fades a headline beat ~50–65% of the time when guidance top-end is cut, net price erodes, scripts decelerate, or opex outruns the top line; early-launch prints disappoint on reported (gross-to-net-suppressed) revenue.",
+      "example_cids": [54, 294, 544, 669, 639, 261, 298, 554],
+      "approx_frequency": 46,
+      "tradeable_relevance": "Fade headline beats that carry a quality flag; size down commercial longs into prints. The main earnings-driven setup that is not a pure non-event."
+    },
+    {
+      "name": "strategic-transaction-capital-injection",
+      "group": "ex-ante",
+      "definition": "An event that adds a de-risked asset or removes the funding overhang — in-licensing/M&A, a large PIPE or milestone-structured placement, a reverse-merger/pivot into a validated target, or a big-pharma alliance, often with specialist-insider backing.",
+      "ex_ante_cues": ["in-licensing or acquisition of a clinically de-risked asset", "large concurrent PIPE / private placement / insider syndicate (e.g. Baker Bros)", "reverse-merger or pivot re-capitalizing a dead shell around a new asset", "validating big-pharma partnership plus a filed BLA"],
+      "ex_ante_taggable": true,
+      "typical_outcome": "Positive lean on the announcement (capital + optionality + endorsement), sometimes +100–300% for micro-cap reverse-pivots; durability hinges on the eventual readout — gains fade if the acquired data is only early/open-label.",
+      "example_cids": [746, 976, 914, 764, 842, 845, 73, 596],
+      "approx_frequency": 33,
+      "tradeable_relevance": "Go long on credible, well-financed pivots/deals; fade if the underlying data is thin or open-label. Distinguish from financing-overhang (punitive survival raise)."
+    },
+    {
+      "name": "good-news-faded",
+      "group": "outcome",
+      "definition": "OUTCOME LABEL: a positive scientific or regulatory result (met primary, clean approval) that produced a negative price move. Not matchable pre-event on its own — its ex-ante proxies are priced-in-derisked-readout and priced-for-perfection-crowded-benchmark (plus a coincident financing).",
+      "ex_ante_cues": ["(post-hoc only) positive data label + negative move", "ex-ante proxy: run-up + validated/expected outcome, or a dilutive financing landing with the data"],
+      "ex_ante_taggable": false,
+      "typical_outcome": "Negative move despite positive data; useful for building a precedent shelf of 'when did good news fade and why'.",
+      "example_cids": [357, 214, 254, 379, 594, 706, 750, 1036],
+      "approx_frequency": 39,
+      "tradeable_relevance": "Precedent-labeling only. At the desk, act via its ex-ante proxies (fade priced-in / priced-for-perfection setups)."
+    },
+    {
+      "name": "stat-hit-magnitude-or-benchmark-miss",
+      "group": "outcome",
+      "definition": "OUTCOME LABEL: the primary was met statistically but the effect magnitude underwhelmed versus a benchmark or the priced bar ('hit on paper, miss on magnitude') — incl. non-monotonic/single-dose-only hits. Ex-ante proxy: priced-for-perfection-crowded-benchmark.",
+      "ex_ante_cues": ["(post-hoc) stat-sig primary with sub-benchmark or modest absolute effect", "ex-ante proxy: a named class benchmark exists and the market prices differentiation not significance"],
+      "ex_ante_taggable": false,
+      "typical_outcome": "Negative-to-mixed move despite a technical hit; magnitude is learned only at the readout.",
+      "example_cids": [53, 244, 876, 720, 778, 739, 96, 361],
+      "approx_frequency": 45,
+      "tradeable_relevance": "Precedent-labeling only; anticipate via crowded-benchmark tagging pre-event."
+    },
+    {
+      "name": "os-miss-despite-soft-endpoint-hit",
+      "group": "outcome",
+      "definition": "OUTCOME LABEL (oncology): a soft endpoint (PFS/ORR) hit but overall survival missed, was immature, or was confounded by heavy crossover, and the market treated OS as the headline. Ex-ante proxy: oncology readout with OS pending + high-crossover/single-arm design.",
+      "ex_ante_cues": ["(post-hoc) PFS/ORR win with OS miss/immature", "ex-ante proxy: oncology label-expansion/confirmatory with OS as a co-endpoint and >50% crossover or single-arm data"],
+      "ex_ante_taggable": false,
+      "typical_outcome": "Sharp sell-off despite a soft-endpoint win ~2/3 of the time; regulatory path often survivable but survival ambiguity is punished.",
+      "example_cids": [590, 771, 244, 992, 589, 583, 402],
+      "approx_frequency": 8,
+      "tradeable_relevance": "Precedent-labeling only; pre-event, flag oncology PFS/ORR reads with unproven OS as size-down."
+    },
+    {
+      "name": "primary-miss-subgroup-salvage",
+      "group": "outcome",
+      "definition": "OUTCOME LABEL: the pre-specified primary missed but the sponsor salvages a prespecified/post-hoc subgroup, completer, or subscale. Ex-ante proxies: trial-graveyard-high-placebo-indication and broad all-comers / replicate-a-prior-subgroup designs.",
+      "ex_ante_cues": ["(post-hoc) missed primary + subgroup/subscale rescue narrative", "ex-ante proxy: overly broad all-comers primary, or a confirmatory trial designed to replicate a prior subgroup signal"],
+      "ex_ante_taggable": false,
+      "typical_outcome": "Low eventual-approval odds (usually needs a fresh prospective pivotal); moves range from washout to muted-relief when a credible path is announced.",
+      "example_cids": [794, 817, 918, 997, 1030, 1052, 712, 777],
+      "approx_frequency": 32,
+      "tradeable_relevance": "Precedent-labeling only; ex-ante, the graveyard + broad-design cues carry the tradeable signal."
+    }
+  ],
+  "tagging_rubric": "Assign EVERY applicable ex-ante tag (multi-label; mean ~2.5, up to 6), then any outcome label. Decision cues, in order:\n1. STRUCTURE first: Is value concentrated in one asset AND cap is small/thin? -> single-asset-microcap-binary. Is runway <~18mo / going-concern / raise-warrants-reverse-split/Q-ticker imminent? -> financing-overhang-going-concern (these two usually co-fire on distressed names).\n2. CATALYST TYPE: No new endpoint/regulatory data (earnings-recap, JPM deck, enrollment/IND/patent/dosing PR)? -> no-new-information-nonevent (and stop for clinical tags). Commercial print where guidance/net-price/gross-to-net/opex/script-trend is the story? -> commercial-single-product-quality. Deal/PIPE/in-licensing/reverse-pivot? -> strategic-transaction-capital-injection.\n3. SCIENCE BASE RATE: Approved same-class precedent / accepted surrogate / robust prior Ph2 / regional bridge? -> validated-mechanism-derisked. Indication is a known graveyard or high-placebo (ALS/GBM/AD-cognition/MDD/anxiety/migraine/FragileX/ET/LongCOVID/SLE/obesity-vs-GLP1) with a subjective/functional primary? -> trial-graveyard-high-placebo-indication. No approved therapy + first-in-class + objective endpoint + expedited designation? -> first-in-class-no-approved-therapy-whitespace.\n4. POSITIONING: Topline already public / confirmatory / label-expansion / de-risked PDUFA / big run-up? -> priced-in-derisked-readout. Rich valuation or run-up INTO a crowded indication judged vs a cross-trial benchmark? -> priced-for-perfection-crowded-benchmark. (These two are the positioning axis and frequently co-fire with validated-mechanism.)\n5. REGULATORY RISK: Gated by CMC/facility/nitrosamine/single-site/505(b)(2)/device-combo? -> cmc-manufacturing-regulatory-risk. Contested efficacy / AdCom scheduled / FDA signals concern / single-arm-natural-history package / goalpost move? -> contested-efficacy-adcom-risk.\n6. OUTCOME LABELS (after the move is known, for the precedent shelf): positive data + negative move -> good-news-faded; stat-sig but sub-benchmark/non-monotonic magnitude -> stat-hit-magnitude-or-benchmark-miss; oncology soft-endpoint hit + OS miss/immature/crossover -> os-miss-despite-soft-endpoint-hit; missed primary + subgroup rescue -> primary-miss-subgroup-salvage. Always record the ex-ante proxy alongside an outcome label so a fresh event can be matched.",
+  "coverage_note": "~96% of the 470 receive at least one EX-ANTE tag under a sharpened (deliberately conservative) tagger; broader matching reaches ~99%. Mean 2.5 ex-ante tags per node (max 6), confirming the vocabulary is genuinely multi-label. The ~4% residual is not a missing cluster — it is well-differentiated large/diversified-pharma readouts where a single trial is immaterial to the parent (e.g. 244 GILD, 397/408 IONS, 529/531 ALNY, 868 PTGX, 1032 TBPH): these ARE coverable by validated-mechanism / priced-in but fall just under the keyword threshold, and their defining trait is 'diversified-parent-single-trial-immaterial'. If a 13th ex-ante tag were added, 'diversified-multi-asset-single-readout-immaterial' (large-cap, many shots on goal, one trial is a small share of value; muted moves, ~+/-3%) is the candidate — it would absorb the residual and a chunk of currently no-new-information large-cap earnings. It was left out to keep the vocabulary focused on the single-asset / microcap situations where setup-similarity is most tradeable."
+}
