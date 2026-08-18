@@ -1,0 +1,310 @@
+<title>The Warm Playbook</title>
+<style>
+  :root{
+    --bg:#100f0c; --panel:#17150f; --panel2:#1d1a12; --panel3:#221e15; --line:#2c2820; --line2:#3a3527;
+    --ink:#ece4d2; --mut:#a89e86; --faint:#7c745f;
+    --brass:#d4af6a; --brass2:#e6c584; --brass-dim:#9c854e;
+    --pos:#6ec28a; --posbg:#14231a; --warn:#e0b24a; --warnbg:#241f12; --neg:#e0736b; --negbg:#241412; --info:#7fb0c9;
+    --mono:"SF Mono",ui-monospace,Menlo,"Cascadia Code",monospace;
+    --sans:system-ui,-apple-system,"Segoe UI",Helvetica,Arial,sans-serif;
+    --serif:"Iowan Old Style","Palatino Linotype",Palatino,Georgia,serif;
+  }
+  :root[data-theme="light"]{
+    --bg:#f4efe3; --panel:#fbf7ec; --panel2:#f2ebd9; --panel3:#ede4cd; --line:#e2d8c1; --line2:#d4c8ac;
+    --ink:#2a2519; --mut:#665c43; --faint:#8f8568;
+    --brass:#8f6d1f; --brass2:#7a5d18; --brass-dim:#b08e3f;
+    --pos:#2f7d4d; --posbg:#e6f0e4; --warn:#9a7118; --warnbg:#f2e9cf; --neg:#a83f36; --negbg:#f3e0dc; --info:#356f8a;
+  }
+  @media (prefers-color-scheme:light){:root:not([data-theme="dark"]){
+    --bg:#f4efe3; --panel:#fbf7ec; --panel2:#f2ebd9; --panel3:#ede4cd; --line:#e2d8c1; --line2:#d4c8ac;
+    --ink:#2a2519; --mut:#665c43; --faint:#8f8568;
+    --brass:#8f6d1f; --brass2:#7a5d18; --brass-dim:#b08e3f;
+    --pos:#2f7d4d; --posbg:#e6f0e4; --warn:#9a7118; --warnbg:#f2e9cf; --neg:#a83f36; --negbg:#f3e0dc; --info:#356f8a;
+  }}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);line-height:1.62;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:940px;margin:0 auto;padding:0 24px 110px}
+  .rule{max-width:940px;margin:0 auto}
+  /* hero */
+  header{padding:64px 24px 30px;max-width:940px;margin:0 auto}
+  .eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.3em;text-transform:uppercase;color:var(--brass);margin:0 0 18px}
+  h1{font-family:var(--serif);font-size:clamp(38px,7vw,68px);line-height:1.02;margin:0 0 20px;font-weight:600;letter-spacing:-.015em;text-wrap:balance}
+  h1 em{font-style:italic;color:var(--brass)}
+  .deck{font-size:20px;color:var(--mut);margin:0;max-width:60ch;line-height:1.5}
+  .deck b{color:var(--ink);font-weight:600}
+  /* spine stat row */
+  .spine{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--line);border:1px solid var(--line);border-radius:14px;overflow:hidden;margin:38px 0 8px}
+  @media(max-width:640px){.spine{grid-template-columns:repeat(2,1fr)}}
+  .spine .cell{background:var(--panel);padding:18px 18px 16px}
+  .spine .v{font-family:var(--mono);font-size:30px;color:var(--brass2);font-variant-numeric:tabular-nums;line-height:1}
+  .spine .l{font-size:12.5px;color:var(--mut);margin-top:7px;line-height:1.35}
+  /* distribution */
+  .dist{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:22px 22px 16px;margin:26px 0}
+  .dist h3{margin:0 0 3px;font-size:15px;font-family:var(--mono);letter-spacing:.05em}
+  .dist .sub{color:var(--faint);font-size:12.5px;margin:0 0 20px}
+  .bars{display:flex;align-items:flex-end;gap:5px;height:170px}
+  .bars .b{flex:1;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;gap:6px;height:100%}
+  .bars .bar{width:100%;border-radius:4px 4px 0 0;min-height:3px}
+  .bars .cnt{font-family:var(--mono);font-size:11px;color:var(--mut)}
+  .bars .lab{font-family:var(--mono);font-size:9.5px;color:var(--faint);writing-mode:vertical-rl;transform:rotate(180deg);white-space:nowrap;margin-top:4px;height:52px}
+  .dist .legend{display:flex;gap:18px;flex-wrap:wrap;margin-top:16px;font-size:12px;color:var(--mut)}
+  .dist .legend i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:6px;vertical-align:middle}
+  /* sections */
+  h2{font-family:var(--mono);font-size:13px;letter-spacing:.18em;text-transform:uppercase;color:var(--brass);margin:64px 0 4px;display:flex;align-items:baseline;gap:14px}
+  h2 .idx{color:var(--faint);font-size:12px}
+  .lead{font-size:17px;color:var(--mut);margin:6px 0 26px;max-width:68ch}
+  /* edges */
+  .edge{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:20px 22px;margin:14px 0;border-left:4px solid var(--line2)}
+  .edge.long{border-left-color:var(--pos)} .edge.fade{border-left-color:var(--warn)} .edge.avoid{border-left-color:var(--neg)}
+  .edge .top{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap}
+  .edge h3{margin:0;font-size:20px;font-family:var(--serif);font-weight:600;letter-spacing:-.01em}
+  .edge .act{font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;padding:4px 10px;border-radius:20px;white-space:nowrap;border:1px solid}
+  .act.long{color:var(--pos);border-color:color-mix(in srgb,var(--pos) 45%,transparent);background:var(--posbg)}
+  .act.fade{color:var(--warn);border-color:color-mix(in srgb,var(--warn) 45%,transparent);background:var(--warnbg)}
+  .act.avoid{color:var(--neg);border-color:color-mix(in srgb,var(--neg) 45%,transparent);background:var(--negbg)}
+  .edge .stmt{font-size:16.5px;color:var(--ink);margin:11px 0 0;font-weight:500;line-height:1.5}
+  .edge .mech{font-size:14.5px;color:var(--mut);margin:9px 0 0}
+  .edge .foot{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:15px;padding-top:14px;border-top:1px solid var(--line)}
+  .edge .freq{font-family:var(--mono);font-size:12px;color:var(--brass);white-space:nowrap}
+  .ex{font-family:var(--mono);font-size:11.5px;padding:3px 8px;border-radius:6px;background:var(--panel2);border:1px solid var(--line);color:var(--mut)}
+  .ex b{color:var(--ink)} .ex .up{color:var(--pos)} .ex .dn{color:var(--neg)}
+  .edge .do{font-size:14.5px;margin:13px 0 0;color:var(--ink)}
+  .edge .do b{color:var(--brass);font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;display:block;margin-bottom:2px}
+  /* setup map */
+  .setup{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:8px}
+  @media(max-width:760px){.setup{grid-template-columns:1fr}}
+  .col{border:1px solid var(--line);border-radius:14px;padding:18px;background:var(--panel)}
+  .col.g{border-top:3px solid var(--pos)} .col.a{border-top:3px solid var(--warn)} .col.r{border-top:3px solid var(--neg)}
+  .col .h{font-family:var(--mono);font-size:12px;letter-spacing:.1em;text-transform:uppercase;margin-bottom:12px;display:flex;justify-content:space-between}
+  .col.g .h{color:var(--pos)} .col.a .h{color:var(--warn)} .col.r .h{color:var(--neg)}
+  .col ul{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:11px}
+  .col li{font-size:13.5px;color:var(--mut);line-height:1.45;padding-left:15px;position:relative}
+  .col li::before{content:"";position:absolute;left:0;top:8px;width:6px;height:6px;border-radius:50%}
+  .col.g li::before{background:var(--pos)} .col.a li::before{background:var(--warn)} .col.r li::before{background:var(--neg)}
+  .col li b{color:var(--ink);font-weight:600}
+  /* exemplars */
+  .cases{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  @media(max-width:680px){.cases{grid-template-columns:1fr}}
+  .case{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:15px 17px;display:grid;grid-template-columns:auto 1fr;gap:14px;align-items:center}
+  .case .m{font-family:var(--mono);font-size:19px;font-variant-numeric:tabular-nums;text-align:right;white-space:nowrap}
+  .case .m.up{color:var(--pos)} .case .m.dn{color:var(--neg)}
+  .case .tk{font-family:var(--mono);font-size:13px;color:var(--ink);font-weight:600}
+  .case .t{font-size:13.5px;color:var(--mut);margin-top:2px;line-height:1.4}
+  /* flow */
+  .flow{display:flex;align-items:stretch;gap:0;margin:8px 0;flex-wrap:wrap}
+  .flow .st{flex:1;min-width:150px;background:var(--panel);border:1px solid var(--line);padding:16px;position:relative}
+  .flow .st:first-child{border-radius:12px 0 0 12px} .flow .st:last-child{border-radius:0 12px 12px 0}
+  @media(max-width:720px){.flow .st{border-radius:12px!important;min-width:100%;margin-bottom:8px}}
+  .flow .n{font-family:var(--mono);font-size:11px;color:var(--brass);letter-spacing:.08em}
+  .flow .st h4{margin:6px 0 4px;font-size:15px}
+  .flow .st p{margin:0;font-size:13px;color:var(--mut);line-height:1.45}
+  /* ideas */
+  .ideas{display:grid;grid-template-columns:1fr 1fr;gap:13px}
+  @media(max-width:680px){.ideas{grid-template-columns:1fr}}
+  .idea{background:linear-gradient(180deg,var(--panel3),var(--panel));border:1px solid var(--line);border-radius:12px;padding:17px 18px}
+  .idea .t{font-family:var(--serif);font-size:17px;font-weight:600;margin-bottom:5px;color:var(--ink)}
+  .idea p{margin:0;font-size:13.5px;color:var(--mut);line-height:1.5}
+  /* caveats */
+  .caveat{background:var(--panel);border:1px solid var(--line);border-left:3px solid var(--info);border-radius:10px;padding:16px 20px;margin-top:8px}
+  .caveat ul{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:9px}
+  .caveat li{font-size:13.5px;color:var(--mut);line-height:1.5}
+  .caveat li b{color:var(--ink)}
+  .foot-note{margin-top:56px;padding-top:22px;border-top:1px solid var(--line);font-family:var(--mono);font-size:11.5px;color:var(--faint);letter-spacing:.03em;line-height:1.7}
+  .pull{font-family:var(--serif);font-size:23px;line-height:1.4;color:var(--ink);border-left:3px solid var(--brass);padding:4px 0 4px 22px;margin:30px 0;font-style:italic}
+</style>
+
+<header>
+  <p class="eyebrow">🧬 Zamvar Capital · Fund 1 · Strategy Briefing</p>
+  <h1>What the <em>warm playbook</em> now knows</h1>
+  <p class="deck">We turned <b>268 historical biotech catalysts</b> — every FDA trial readout and approval decision in our universe — into a memory of what happened and <b>why</b>. This is what that memory tells us about how these events actually pay off, the edges hiding inside them, and the ideas they open up.</p>
+
+  <div class="spine">
+    <div class="cell"><div class="v">268</div><div class="l">catalysts, each with the full story — thesis, drivers, outcome, lesson</div></div>
+    <div class="cell"><div class="v">54%</div><div class="l">resolve <b>DOWN</b> — blindly going long is a losing bet before you start</div></div>
+    <div class="cell"><div class="v">71%</div><div class="l">the 90th-percentile move — these are fat-tailed, all-or-nothing events</div></div>
+    <div class="cell"><div class="v">49</div><div class="l">events moved <b>±50% or more</b> — the tails, not the middle, are the game</div></div>
+  </div>
+
+  <div class="dist">
+    <h3>The shape of a biotech catalyst</h3>
+    <p class="sub">Distribution of the one-week move across all 268 events. The center is a coin-flip; the money is in the tails.</p>
+    <div class="bars">
+      <div class="b"><div class="bar" style="height:36%;background:var(--neg)"></div><div class="cnt">27</div><div class="lab">&lt;−50%</div></div>
+      <div class="b"><div class="bar" style="height:12%;background:var(--neg)"></div><div class="cnt">9</div><div class="lab">−50/−30</div></div>
+      <div class="b"><div class="bar" style="height:29%;background:var(--neg)"></div><div class="cnt">22</div><div class="lab">−30/−15</div></div>
+      <div class="b"><div class="bar" style="height:52%;background:color-mix(in srgb,var(--neg) 70%,var(--warn))"></div><div class="cnt">40</div><div class="lab">−15/−5</div></div>
+      <div class="b"><div class="bar" style="height:100%;background:var(--warn)"></div><div class="cnt">89</div><div class="lab">−5/+5</div></div>
+      <div class="b"><div class="bar" style="height:40%;background:color-mix(in srgb,var(--pos) 70%,var(--warn))"></div><div class="cnt">31</div><div class="lab">+5/+15</div></div>
+      <div class="b"><div class="bar" style="height:23%;background:var(--pos)"></div><div class="cnt">17</div><div class="lab">+15/+30</div></div>
+      <div class="b"><div class="bar" style="height:15%;background:var(--pos)"></div><div class="cnt">11</div><div class="lab">+30/+50</div></div>
+      <div class="b"><div class="bar" style="height:14%;background:var(--pos)"></div><div class="cnt">10</div><div class="lab">+50/+100</div></div>
+      <div class="b"><div class="bar" style="height:16%;background:var(--brass2)"></div><div class="cnt">12</div><div class="lab">&gt;+100%</div></div>
+    </div>
+    <div class="legend">
+      <span><i style="background:var(--neg)"></i>down (54%)</span>
+      <span><i style="background:var(--warn)"></i>±5% coin-flip center (89 events)</span>
+      <span><i style="background:var(--pos)"></i>up (46%)</span>
+      <span><i style="background:var(--brass2)"></i>moonshots &gt;+100% (12 events, up to +753%)</span>
+    </div>
+  </div>
+</header>
+
+<div class="wrap">
+  <p class="pull">A clean win averages +46%. A miss averages −41%. But more of them miss — so the edge is never “which stock,” it’s “which direction, and is it already in the price.”</p>
+
+  <h2><span class="idx">01</span> The edges we distilled</h2>
+  <p class="lead">Eight patterns recur across the corpus often enough to trade around. Each names what happens, why, how common it is, real examples, and what the desk should actually do.</p>
+
+  <div class="edge fade">
+    <div class="top"><h3>Sell-the-News on De-Risked Data</h3><span class="act fade">Fade the pop</span></div>
+    <p class="stmt">When the market already expects good data, a clean win falls flat — or drops.</p>
+    <p class="mech">The information is in the price before the print. “Met primary” only re-rates a stock when it resolves real doubt; once de-risked, the readout removes a catalyst (positioning unwinds) instead of adding value.</p>
+    <div class="foot"><span class="freq">≈32% of events</span>
+      <span class="ex"><b>VERA</b> <span class="dn">−71%</span> · clean win, huge run-up</span>
+      <span class="ex"><b>IDYA</b> <span class="dn">−4%</span></span>
+      <span class="ex"><b>SUPN</b> <span class="dn">−2%</span> · known since 2020</span></div>
+    <p class="do"><b>Play</b> Buy the uncertainty pre-catalyst, sell into strength. Fade the pop on confirmatory readouts and commoditized approvals — the tradeable catalyst is the <em>first</em> pivotal or the partner decision, not the confirmation.</p>
+  </div>
+
+  <div class="edge avoid">
+    <div class="top"><h3>The Single-Asset Falling Knife</h3><span class="act avoid">Avoid / define risk</span></div>
+    <p class="stmt">A microcap that is one drug on an unproven target misses, collapses 70–90%, and keeps falling.</p>
+    <p class="mech">No pipeline to cushion the miss; distress forces a dilutive raise straight into the crater, so the equity re-rates to option value with no floor.</p>
+    <div class="foot"><span class="freq">14 of the 26 worst misses</span>
+      <span class="ex"><b>KALA</b> <span class="dn">−93%</span></span>
+      <span class="ex"><b>AVTX</b> <span class="dn">−90%</span></span>
+      <span class="ex"><b>HURA</b> <span class="dn">−89%</span></span>
+      <span class="ex"><b>ACRS</b> <span class="dn">−83%</span></span></div>
+    <p class="do"><b>Play</b> Never a core long into a single-asset unvalidated binary. If you must, express it with defined-risk options only — and never buy the post-miss “bounce.”</p>
+  </div>
+
+  <div class="edge fade">
+    <div class="top"><h3>The Benchmark-Gap Miss</h3><span class="act fade">Fade “primary met”</span></div>
+    <p class="stmt">A drug can hit its endpoint with p&lt;0.05 and still crater — because the effect size landed below the class bar the market was pricing.</p>
+    <p class="mech">The market prices the competitive magnitude (class hazard ratio / % reduction), not the binary p-value. Statistical significance is necessary, not sufficient; magnitude-vs-class is the real verdict.</p>
+    <div class="foot"><span class="freq">≈19% of events</span>
+      <span class="ex"><b>GOSS</b> <span class="dn">−77%</span> · hit, below class</span>
+      <span class="ex"><b>ALKS</b> <span class="dn">−10%</span></span>
+      <span class="ex"><b>APGE</b> <span class="dn">−22%</span></span></div>
+    <p class="do"><b>Play</b> Know the indication’s class effect-size bar <em>before</em> the readout. Fade a “primary met” release whenever the disclosed magnitude undershoots it — treat it as a miss regardless of the p-value.</p>
+  </div>
+
+  <div class="edge long">
+    <div class="top"><h3>The Addressable Rerun / Second Pivotal</h3><span class="act long">Go long</span></div>
+    <p class="stmt">A well-powered confirmatory or a rerun of a trial whose prior failure was specific and fixable is the corpus’s most reliable big winner.</p>
+    <p class="mech">Prior de-risking shifts the true odds sharply positive while the market still prices residual failure risk — so the gap closes violently on a clean hit.</p>
+    <div class="foot"><span class="freq">the right tail of 97 hits (avg +46%)</span>
+      <span class="ex"><b>LYRA</b> <span class="up">+363%</span> · 2nd pivotal</span>
+      <span class="ex"><b>SPRO</b> <span class="up">+267%</span> · rerun post-CRL</span>
+      <span class="ex"><b>CAPR</b> <span class="up">+323%</span></span></div>
+    <p class="do"><b>Play</b> The cleanest positive-EV long in the book: the well-powered rerun where the prior failure cause was addressed and the market still discounts it.</p>
+  </div>
+
+  <div class="edge long">
+    <div class="top"><h3>Distressed Convexity (the Near-Zero Lottery)</h3><span class="act long">Defined-risk basket</span></div>
+    <p class="stmt">Beaten-down near-zero microcaps that actually hit go parabolic — the mirror image of the falling knife.</p>
+    <p class="mech">When the equity already prices failure, a hit is pure optionality re-rate plus a short squeeze. The downside was already realized, so the payoff is wildly asymmetric.</p>
+    <div class="foot"><span class="freq">small cohort, extreme right tail</span>
+      <span class="ex"><b>PROK</b> <span class="up">+753%</span></span>
+      <span class="ex"><b>SRRK</b> <span class="up">+274%</span></span>
+      <span class="ex"><b>NKTR</b> <span class="up">+211%</span></span></div>
+    <p class="do"><b>Play</b> A small, equal-weight, defined-risk call basket on distressed names with a genuinely addressable thesis — sized for total loss each. The tail winners pay for the basket.</p>
+  </div>
+
+  <div class="edge avoid">
+    <div class="top"><h3>The PDUFA Anchor Artifact</h3><span class="act avoid">Trust the outcome, not the label</span></div>
+    <p class="stmt">Several “rejection” records in our data were actually FDA <em>approvals</em> that sold off — the label was stamped from the price move, not the real decision.</p>
+    <p class="mech">A mechanical rule labels any negative-move approval decision a “CRL.” But approvals routinely sell off when priced-in or commoditized — so a real approval can print red and get mislabeled a rejection.</p>
+    <div class="foot"><span class="freq">all 16 “crl” labels; ≥4 were real approvals</span>
+      <span class="ex"><b>CRSP</b> <span class="dn">−17%</span> · CASGEVY approved</span>
+      <span class="ex"><b>MCRB</b> <span class="dn">−21%</span></span>
+      <span class="ex"><b>LPCN</b> <span class="dn">−28%</span></span></div>
+    <p class="do"><b>Play</b> Approval is not an automatic long — in crowded markets, sell the approval. And this is a data-quality fix on our list: replace move-anchored labels with the scraped FDA decision (see caveats).</p>
+  </div>
+
+  <div class="edge fade">
+    <div class="top"><h3>The Broken Dose-Response</h3><span class="act fade">Fade non-monotonic curves</span></div>
+    <p class="stmt">When the market expects a clean “more dose, more effect” curve and gets a jagged or inverted one, the stock sells off even if the primary was met.</p>
+    <p class="mech">A monotonic curve is the market’s causality test. Non-monotonicity reads as noise or placebo artifact and undermines belief in the mechanism — overriding a nominal hit.</p>
+    <div class="foot"><span class="freq">≈4% — thin but sharp &amp; pre-identifiable</span>
+      <span class="ex"><b>NBIX</b> <span class="dn">−17%</span></span>
+      <span class="ex"><b>PRAX</b> <span class="dn">−65%</span></span>
+      <span class="ex"><b>OCGN</b> <span class="dn">−7%</span></span></div>
+    <p class="do"><b>Play</b> Pre-register the expected dose-response as a watch item. Fade on a broken curve even if the headline says “primary met” — the market will.</p>
+  </div>
+
+  <div class="edge fade">
+    <div class="top"><h3>Pre-Priced Run-Up</h3><span class="act fade">Don’t chase strength</span></div>
+    <p class="stmt">Readouts whose topline was effectively pre-announced — or names that ran up hard into the event — disappoint on the actual print regardless of quality.</p>
+    <p class="mech">The datum is already in the tape, so the event resolves nothing new; the run-up itself becomes the risk as positioning unwinds.</p>
+    <div class="foot"><span class="freq">≈8%, overlaps sell-the-news</span>
+      <span class="ex"><b>SUPN</b> <span class="dn">−2%</span></span>
+      <span class="ex"><b>VERA</b> <span class="dn">−71%</span></span></div>
+    <p class="do"><b>Play</b> Score the pre-catalyst run-up. Don’t initiate longs into names already up big, and prefer the fade if the topline was previously disclosed.</p>
+  </div>
+
+  <h2><span class="idx">02</span> Which setups have the odds</h2>
+  <p class="lead">The same reference classes recur. Grouped by how the odds — and the trade — actually look going in.</p>
+  <div class="setup">
+    <div class="col g"><div class="h"><span>Green · favorable</span></div><ul>
+      <li><b>Confirmatory Phase 3 in a validated mechanism</b> (prior positive Ph2, known target) — high hit rate. <em>CELC, CAPR, SRRK.</em></li>
+      <li><b>Well-powered rerun</b> of a trial whose prior CRL/failure was specific &amp; addressed — the re-rate is large. <em>LYRA, SPRO.</em></li>
+      <li><b>Clean resubmissions / already-approved-ex-US</b> — high approval odds (but watch the trade: may still sell off if priced-in).</li>
+    </ul></div>
+    <div class="col a"><div class="h"><span>Amber · it depends</span></div><ul>
+      <li><b>Competitive indications</b> where effect-size-vs-class is the crux (IgAN, obesity, dry eye) — resolves on magnitude, easily “mixed.”</li>
+      <li><b>Subgroup- or composite-driven</b> pivotals with placebo exposure — foreseeable splits; down-weight subgroup-only wins.</li>
+      <li><b>De-risked confirmatory &amp; priced-in approvals</b> — good science, poor trade; expect flat-to-negative even on a hit.</li>
+      <li><b>Biomarker-primary</b> where the real bar is a downstream clinical endpoint — a surrogate win can still miss the decisive variable.</li>
+    </ul></div>
+    <div class="col r"><div class="h"><span>Red · ugly odds</span></div><ul>
+      <li><b>Single-asset microcap, first-in-class, unvalidated target, cash-stressed</b> — the worst blowups. <em>KALA, ACRS, AVTX, QTTB.</em></li>
+      <li><b>Low-base-rate neuro/onc</b> (GBM, ALS, Alzheimer’s) on a single asset — the class base rate is the risk. <em>HURA, LONA, AMLX.</em></li>
+      <li><b>Efficacy carried by subgroups</b> while the overall primary is modest — reads as a miss. <em>GOSS.</em></li>
+      <li><b>Commoditized-market approvals</b> — approval is expected and sells off.</li>
+    </ul></div>
+  </div>
+
+  <h2><span class="idx">03</span> Six cases worth studying</h2>
+  <p class="lead">The teaching set — one of each archetype, a big win and a big blowup among them.</p>
+  <div class="cases">
+    <div class="case"><div class="m up">+753%</div><div><div class="tk">PROK</div><div class="t">Near-zero distressed microcap that hit — extreme convexity, the case for a defined-risk lottery basket.</div></div></div>
+    <div class="case"><div class="m dn">−93%</div><div><div class="tk">KALA</div><div class="t">The archetype falling knife: single platform, no placebo separation, no cash — a total-loss binary.</div></div></div>
+    <div class="case"><div class="m up">+267%</div><div><div class="tk">SPRO</div><div class="t">The cleanest long: a well-powered rerun after an <em>addressable</em> CRL, still discounted, re-rates hard on the hit.</div></div></div>
+    <div class="case"><div class="m dn">−77%</div><div><div class="tk">GOSS</div><div class="t">Stat-sig is not enough: hitting below the class magnitude bar trades as a miss.</div></div></div>
+    <div class="case"><div class="m dn">−71%</div><div><div class="tk">VERA <span style="color:var(--faint)">· “hit”</span></div><div class="t">Positive data + big run-up = sell-the-news. A clean win can still crater when it’s already priced.</div></div></div>
+    <div class="case"><div class="m dn">−17%</div><div><div class="tk">CRSP <span style="color:var(--faint)">· “crl”</span></div><div class="t">A landmark <em>real</em> approval (CASGEVY) that sold off and got mislabeled — priced-in approvals fade.</div></div></div>
+  </div>
+
+  <h2><span class="idx">04</span> How the desk actually uses this</h2>
+  <p class="lead">The playbook isn’t a report we read — it’s memory the trading agents reason from, live, every week.</p>
+  <div class="flow">
+    <div class="st"><div class="n">RETRIEVE</div><h4>Find the analogs</h4><p>A new catalyst pulls its nearest past events from this memory — same type, same kind of setup — each with its real outcome.</p></div>
+    <div class="st"><div class="n">ASSEMBLE</div><h4>Build the field</h4><p>Those analogs become one column of the “football field” of expected move — alongside hard valuations (rNPV, price targets) once wired.</p></div>
+    <div class="st"><div class="n">JUDGE</div><h4>Apply the edge</h4><p>The lessons here — priced-in? benchmark gap? falling knife? — adjust the direction and the size before anything is traded.</p></div>
+    <div class="st"><div class="n">LEARN</div><h4>Write it back</h4><p>Every new week’s outcome becomes another node — the memory compounds, and the base rates sharpen.</p></div>
+  </div>
+
+  <h2><span class="idx">05</span> Ideas this opens</h2>
+  <p class="lead">The patterns above aren’t just filters — each is a screen or signal we could build next.</p>
+  <div class="ideas">
+    <div class="idea"><div class="t">A “priced-in” score</div><p>Combine pre-event run-up with de-risking flags (prior Ph2 win, ex-US approval, disclosed topline) into one number that flags names likely to sell the news — the fade screen.</p></div>
+    <div class="idea"><div class="t">A benchmark-gap detector</div><p>Keep a per-indication class effect-size table; at readout, auto-compare the disclosed magnitude to the bar and flag “met-primary-but-below-class” as a fade even when the PR is glowing.</p></div>
+    <div class="idea"><div class="t">A falling-knife filter</div><p>Tag single-asset + microcap + short-runway + unvalidated-target names as “avoid / defined-risk-only,” and suppress every post-miss bounce-buy signal on them.</p></div>
+    <div class="idea"><div class="t">A convexity lottery basket</div><p>The inverse screen: distressed near-zero names with a specific addressable thesis get a small equal-weight call basket, sized for total loss each — the tails fund it.</p></div>
+    <div class="idea"><div class="t">PDUFA de-anchoring</div><p>Replace move-stamped labels with the scraped real FDA decision, then build an “approval-that-sells-off” sub-model to fade priced-in or commoditized approvals.</p></div>
+    <div class="idea"><div class="t">A rerun green-screen</div><p>Auto-flag well-powered reruns where a prior failure cause was specific and addressed and the market still discounts it — paired with a dose-response watch that fades broken curves.</p></div>
+  </div>
+
+  <h2><span class="idx">06</span> What to keep in mind (honesty)</h2>
+  <p class="lead">The playbook is powerful but not infallible. The things you should not over-trust:</p>
+  <div class="caveat"><ul>
+    <li><b>The “rejection” label is not ground truth.</b> All 16 “crl” labels are stamped from a negative price move, not the FDA’s decision — several were real approvals that sold off. We know the fix (scrape the actual decision) and it’s queued.</li>
+    <li><b>The label is outcome-vs-expectation, not the direction of the move.</b> 21 of 97 “hits” actually fell; some “misses” rose. Never read profit-and-loss from the label alone.</li>
+    <li><b>A few records aren’t really trial readouts</b> — some are acquisitions, financings, or content-free conference decks that happened to sit near the date. Their move isn’t about the drug.</li>
+    <li><b>Small samples are directional only.</b> Approvals (29), the dose-response cohort (~10) — treat their base rates as hints, not laws.</li>
+    <li><b>This is a hindsight library by design.</b> The base rates are backward-selected (biased-OK for finding patterns). Only forward paper-trading proves an edge actually persists.</li>
+  </ul></div>
+
+  <p class="foot-note">Zamvar Capital — Fund 1 · warm playbook: 268 catalysts (239 trial readouts + 29 PDUFAs) · 1 node : 1 catalyst, fully cited, semantically searchable · earnings catalysts extracting now · next: wire the multi-method football field (hard valuations + analogs) before the production-replica backtest.</p>
+</div>
