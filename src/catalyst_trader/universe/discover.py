@@ -614,27 +614,25 @@ def _market_cap(ticker: str, as_of: str) -> tuple[float | None, dict | None]:
 
 
 def _optionable(ticker: str) -> bool | None:
-    """True iff a live ATM options pair exists with bid>0 on BOTH legs AND call_oi+put_oi>=100 AND
-    straddle spread/mid < 0.6 (research §A.2 liquidity gate — a loose oi>0 gate would admit OI=5 /
-    90%-wide names as 'optionable' on a money path feeding implied-move + hedge legs). None on
-    degrade (fetch None). # ponytail: expiry-at/after-catalyst is a per-TRADE check (the catalyst
-    date isn't fixed at universe-build time) — deferred to the desk, noted here."""
+    """UNIV-02c (relaxed): True iff a live ATM options pair exists with bid>0 on BOTH legs — i.e.
+    the name "has listed options at all". None on degrade (fetch None).
+
+    # ponytail: universe layer = 'has options at all' (bid>0 both legs); the STRICT OI>=100 +
+    # spread/mid<0.6 liquidity gate is a PER-TRADE check on FRESH quotes in
+    # desk/diligence.options_liquid + zero_liquidity — delayed build-time EOD quotes make per-strike
+    # spread unreliable (INSM: OI 996 but delayed spread/mid 1.18 -> the old gate false-rejected an
+    # obviously-liquid name), so it is DELIBERATELY not a membership gate. This reverses the
+    # Blocker-2 tightening for the universe layer ONLY — no guard deleted, relocated in intent.
+    # expiry-at/after-catalyst is likewise a per-TRADE check (the catalyst date isn't fixed at
+    # universe-build time) — deferred to the desk.
+    """
     q = options_cboe.fetch(ticker)
     if q is None:
         return None
     oq = q.get("options_quote")
     if not oq:
-        return False  # no live ATM pair with bid>0 both legs
-    cb, ca, pb, pa = oq["call_bid"], oq["call_ask"], oq["put_bid"], oq["put_ask"]
-    if not (cb > 0 and pb > 0):
-        return False
-    if (oq["call_oi"] + oq["put_oi"]) < 100:
-        return False
-    mid = (cb + ca) / 2 + (pb + pa) / 2
-    spread = (ca - cb) + (pa - pb)
-    if mid <= 0 or spread / mid >= 0.6:
-        return False
-    return True
+        return False  # no live ATM pair
+    return oq["call_bid"] > 0 and oq["put_bid"] > 0
 
 
 _TA_FALLBACK: dict[str, str] | None = None
@@ -659,22 +657,21 @@ def _ta_fallback(ticker: str) -> str | None:
 def screen_candidates(
     candidates: dict[int, dict], as_of: str, *, criteria: dict | None = None
 ) -> tuple[list[dict], list[dict]]:
-    """Cull discovered candidates to tradeable + movement-worthy. Returns (admitted, rejected), each
-    record carrying its screen datums, flags, reasons, and catalyst provenance.
+    """TRADEABILITY-ONLY screen (Plan 07 pivot). Returns (admitted, rejected) = (tradeable,
+    not-tradeable), each record carrying its screen datums, flags, reasons, and catalyst provenance.
 
     Admit iff ALL of: dollar-ADV >= $5M (or $2-5M -> admit + size_tiny), market-cap >= $200M FLOOR
-    (NO ceiling — a large-cap binary-catalyst biotech qualifies), optionable, and a readable cap.
-    THE key screen (decision C): keep a name only if its per-name median realized catalyst move
-    (from _persist_backfill / _realized_catalyst_move) >= move_threshold (default 0.10). A None on
-    ADV/cap/optionability/move -> DROP with a reason (cite-or-drop, NEVER imputed); a move below
-    threshold -> DROP (a name that doesn't MOVE on its catalysts isn't tradeable here). Runway is
-    attached (None is legit when a filer isn't burning) and flagged, not a hard drop.
+    (NO ceiling — a large-cap binary-catalyst biotech qualifies), optionable (relaxed: bid>0 both
+    legs), and a readable cap. A None on ADV/cap/optionability -> DROP with a reason (cite-or-drop,
+    NEVER imputed). Runway is attached (None is legit when a filer isn't burning) and flagged, not a
+    hard drop. The per-name realized_move_median/n_moves are ATTACHED for ranking/report but are NO
+    LONGER a gate — the fixed move_threshold gate is retired; the BACKWARD volatility judgement lives
+    in select_members' vol_score percentile-cut.
     """
     criteria = criteria or {}
     min_adv = criteria.get("min_adv_usd", _DEFAULT_MIN_ADV_USD)
     tiny_floor = criteria.get("size_tiny_floor", _SIZE_TINY_FLOOR)
     min_cap = criteria.get("min_market_cap", _DEFAULT_MIN_MARKET_CAP)
-    move_threshold = criteria.get("move_threshold", _DEFAULT_MOVE_THRESHOLD)
 
     admitted: list[dict] = []
     rejected: list[dict] = []
@@ -704,17 +701,13 @@ def screen_candidates(
         elif cap < min_cap:
             reasons.append(f"market_cap {cap:.0f} < {min_cap:.0f}")
 
-        # optionability (money path — bid both legs + OI floor + spread ceiling)
+        # optionability (relaxed universe gate — bid both legs; strict OI/spread is per-trade)
         if opt is None:
             reasons.append("optionability_unreadable")
         elif not opt:
             reasons.append("not_optionable")
 
-        # realized-move screen (replaces the cap ceiling): keep only names that actually MOVE
-        if move_stat is None:
-            reasons.append("move_unknown")  # no computable move -> cite-or-drop, NEVER imputed
-        elif move_stat < move_threshold:
-            reasons.append(f"move_median {move_stat:.4f} < {move_threshold:.4f}")
+        # realized-move is ATTACHED (below) for ranking/report — NOT a gate (move_threshold retired)
 
         # cash-runway sanity (informational; None is legit when a filer is not burning)
         if runway is None:
