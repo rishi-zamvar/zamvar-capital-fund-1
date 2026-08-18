@@ -555,6 +555,28 @@ def _dedup_catalysts(catalysts: list[dict]) -> list[dict]:
     return list(best.values())
 
 
+def dedupe_persisted_catalysts(conn) -> int:
+    """E7: collapse cross-source duplicates in the STORE — same (ticker, event_date, type) persisted
+    via different paths (e.g. nasdaq-earnings seed + a reclassified 8-K) that `_dedup_catalysts`
+    (in-memory, per-candidate) never sees together. Keeps the EARLIEST-created id (earliest-filed
+    provenance), cascade-deletes the redundant rows' moves/versions/sources. Returns rows deleted.
+    Idempotent — re-running finds nothing. Call after the backfill/ingest writes."""
+    groups = conn.execute(
+        "SELECT group_concat(id) ids FROM catalyst GROUP BY ticker, event_date, catalyst_type "
+        "HAVING COUNT(*) > 1"
+    ).fetchall()
+    deleted = 0
+    for g in groups:
+        ids = sorted(int(x) for x in (g["ids"] if isinstance(g, dict) else g[0]).split(","))
+        for d in ids[1:]:  # keep ids[0] (earliest), drop the rest
+            for t in ("catalyst_move", "catalyst_version", "catalyst_source"):
+                conn.execute(f"DELETE FROM {t} WHERE catalyst_id=?", (d,))
+            conn.execute("DELETE FROM catalyst WHERE id=?", (d,))
+            deleted += 1
+    conn.commit()
+    return deleted
+
+
 def _persist_backfill(conn, candidate: dict) -> list[int]:
     """Persist a candidate's historical catalysts (catalyst table) + their point-in-time realized
     moves (catalyst_move table) as the warm-start backfill. Idempotent: re-running upserts by
@@ -1071,6 +1093,8 @@ def build_universe(
     backfilled_ids: list[int] = []
     for cand in candidates.values():
         backfilled_ids += _persist_backfill(conn, cand)
+    # E7: collapse any cross-source (ticker,event_date,type) dupes the per-candidate dedup can't see
+    dedupe_persisted_catalysts(conn)
 
     target_size = (criteria or {}).get("target_universe_size", _DEFAULT_TARGET_UNIVERSE_SIZE)
     members, rejected, select_report = select_members(
