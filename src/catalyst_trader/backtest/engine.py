@@ -35,7 +35,7 @@ from ..quant.performance import (
     win_rate,
 )
 from .events import build_event_set
-from .fill import fill_price
+from .fill import fill_price, half_spread_pct
 
 # validate_hedge needs analog gaps + prices; the synthetic fixture seeds no hedge peers, so the
 # call returns None before it ever reads these (honest single-leg fallback, HEDGE-04). Kept as an
@@ -162,7 +162,7 @@ def _base_rate_ev(ticker, as_of, conn, params, default, store_view=None):
         return default
 
 
-def _fill_leg(conn, ticker, as_of, exit_by, *, held_through, slippage):
+def _fill_leg(conn, ticker, as_of, exit_by, *, held_through, slippage, apply_costs=True):
     """Enter at the decision-week close, exit via the pessimistic fill (07-02). Returns
     (entry, fill, realized_ret) or None when the leg cannot be entered/exited honestly.
 
@@ -182,6 +182,12 @@ def _fill_leg(conn, ticker, as_of, exit_by, *, held_through, slippage):
     fill = fill_price(exit_bars, side="long", held_through=held_through, slippage=slippage)
     if fill is None:
         return None  # halted / delisted / zero-vol / zero-quote action bar
+    if apply_costs:
+        # E8: pay the half-spread on BOTH sides (buy up at entry, sell down at exit); RH = $0 commission
+        hs = half_spread_pct(entry)
+        eff_entry = entry * (1 + hs)
+        eff_fill = fill * (1 - hs)
+        return entry, fill, eff_fill / eff_entry - 1.0
     return entry, fill, fill / entry - 1.0
 
 

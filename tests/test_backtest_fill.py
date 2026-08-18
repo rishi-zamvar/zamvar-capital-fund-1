@@ -70,3 +70,28 @@ def test_volume_cap_ignored():
 def test_empty_bars_raises():
     with pytest.raises(ValueError):
         fill_price([], side="long", held_through=True, slippage=0.01)
+
+
+# E8 — price-tiered half-spread cost (Robinhood commission-free)
+
+def test_half_spread_wider_for_cheaper_names():
+    from catalyst_trader.backtest.fill import half_spread_pct
+    assert half_spread_pct(0.5) > half_spread_pct(3) > half_spread_pct(10) > half_spread_pct(50) > half_spread_pct(200)
+    assert half_spread_pct(0) == half_spread_pct(-5) == 0.010  # bad price -> widest
+
+
+def test_fill_leg_cost_reduces_return_both_sides():
+    # a flat entry->exit (no move) should be NEGATIVE after paying half-spread on both sides.
+    import sqlite3
+    from catalyst_trader import db as _db, store
+    from catalyst_trader.backtest.engine import _fill_leg
+    c = _db.connect(":memory:"); _db.migrate(c)
+    store.upsert_bars(c, "AAAA", [
+        {"week_end": "2026-01-05", "open": 10, "high": 10, "low": 10, "close": 10, "volume": 100},
+        {"week_end": "2026-01-12", "open": 10, "high": 10, "low": 10, "close": 10, "volume": 100},
+    ])
+    with_cost = _fill_leg(c, "AAAA", "2026-01-05", "2026-01-12", held_through=True, slippage=0.0, apply_costs=True)
+    no_cost = _fill_leg(c, "AAAA", "2026-01-05", "2026-01-12", held_through=True, slippage=0.0, apply_costs=False)
+    assert no_cost[2] == 0.0            # flat, no cost -> zero
+    assert with_cost[2] < 0.0           # flat, with cost -> loses the round-trip spread
+    assert with_cost[2] == pytest.approx(-2 * 0.0025, abs=1e-4)  # $10 tier hs=0.0025, both sides

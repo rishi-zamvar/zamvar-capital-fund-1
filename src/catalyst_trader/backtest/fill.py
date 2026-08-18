@@ -38,6 +38,22 @@ def _worsen(price: float, side: str, slippage: float) -> float:
     return price * (1 - slippage) if side == "long" else price * (1 + slippage)
 
 
+# E8: Robinhood is commission-free, so the round-trip cost is the bid/ask HALF-SPREAD, paid on both
+# entry and exit. We have no stored historical quotes, so estimate the half-spread from price — a
+# proxy for liquidity (thin, low-priced biotech names quote much wider than large-caps).
+# ponytail: price-tiered heuristic, known ceiling — real spreads need quote/price-book data.
+# Upgrade path: capture RH get_equity_price_book depth and replace this with the measured half-spread.
+def half_spread_pct(price: float) -> float:
+    """Estimated one-side (half) bid/ask spread as a fraction of price, by price tier."""
+    if price is None or price <= 0:
+        return 0.010
+    if price < 1:    return 0.010    # sub-$1: ~2% spread
+    if price < 5:    return 0.005
+    if price < 20:   return 0.0025
+    if price < 100:  return 0.0012
+    return 0.0006                    # large-cap: ~0.12% spread
+
+
 def fill_price(
     bars: list[dict],
     *,
