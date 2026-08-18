@@ -18,7 +18,9 @@ from .pairs import cointegration, conditional_payoff, correlation_beta
 from .performance import (
     attribution,
     avg_win_loss,
+    benchmark_relative,
     cumulative_return,
+    deflated_sharpe,
     hedge_effectiveness,
     max_drawdown,
     sharpe,
@@ -62,6 +64,8 @@ __all__ = [
     # performance
     "sharpe",
     "sortino",
+    "deflated_sharpe",
+    "benchmark_relative",
     "cumulative_return",
     "attribution",
     "max_drawdown",

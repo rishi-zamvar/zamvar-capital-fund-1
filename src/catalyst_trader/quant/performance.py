@@ -222,3 +222,83 @@ def attribution(components: dict[str, float], total: float) -> ToolResult:
         value=float(total),
         detail={"components": dict(components), "residual": residual},
     )
+
+
+# ── E9: multiple-testing-honest skill + benchmark-relative (edge vs beta) ──────────────────────
+
+def _skew_kurt(r: "np.ndarray") -> tuple[float, float]:
+    """Population skewness (g3) and NON-excess kurtosis (g4). Used by the deflated Sharpe."""
+    mu = r.mean(); sd = r.std(ddof=0)
+    if sd == 0:
+        raise ValueError("zero volatility — higher moments undefined")
+    z = (r - mu) / sd
+    return float((z ** 3).mean()), float((z ** 4).mean())
+
+
+def deflated_sharpe(returns: list[float], *, n_trials: int, periods_per_year: int) -> ToolResult:
+    """Deflated Sharpe Ratio (Bailey & López de Prado 2014) — the probability the strategy's TRUE
+    Sharpe beats the threshold you'd expect from the BEST of `n_trials` random strategies, corrected
+    for skew/kurtosis and sample length. value in [0,1]; >0.95 = skill survives multiple testing.
+
+    Uses the per-period Sharpe (annualization cancels in the ratio). n_trials>=1; T>=2.
+    """
+    from statistics import NormalDist
+    r = _to_array(returns, min_len=2)
+    if n_trials < 1:
+        raise ValueError("n_trials must be >= 1")
+    T = len(r)
+    sd = r.std(ddof=1)
+    if sd == 0:
+        raise ValueError("zero volatility — deflated Sharpe undefined")
+    sr = float(r.mean() / sd)                      # per-period Sharpe
+    g3, g4 = _skew_kurt(r)
+    denom = 1.0 - g3 * sr + ((g4 - 1.0) / 4.0) * sr ** 2
+    if denom <= 0:
+        raise ValueError("non-positive variance term — deflated Sharpe undefined")
+    N = NormalDist()
+    gamma = 0.5772156649015329                     # Euler–Mascheroni
+    # expected max Sharpe under n_trials i.i.d. null strategies (LdP), scaled by the SR estimation SE
+    se_sr = math.sqrt(denom / (T - 1))
+    if n_trials == 1:
+        sr0 = 0.0  # single trial: no multiple-testing inflation, threshold is just SR>0 (=PSR)
+    else:
+        z1 = N.inv_cdf(1.0 - 1.0 / n_trials)
+        z2 = N.inv_cdf(1.0 - 1.0 / (n_trials * math.e))
+        sr0 = se_sr * ((1.0 - gamma) * z1 + gamma * z2)
+    dsr = N.cdf((sr - sr0) * math.sqrt(T - 1) / math.sqrt(denom))
+    return ToolResult(
+        tool="deflated_sharpe", tool_version=_VERSION,
+        inputs={"returns": list(returns), "n_trials": n_trials, "periods_per_year": periods_per_year},
+        value=float(dsr),
+        detail={"sr_per_period": sr, "sr_annualized": sr * math.sqrt(periods_per_year),
+                "sr0_threshold": float(sr0), "skew": g3, "kurtosis": g4, "n_obs": T},
+    )
+
+
+def benchmark_relative(returns: list[float], benchmark: list[float], *, periods_per_year: int) -> ToolResult:
+    """CAPM decomposition vs a benchmark (rf=0): is the return EDGE (alpha) or just BETA?
+
+    value = annualized alpha. detail carries beta, correlation, annualized excess return, tracking
+    error, and information ratio. Equal-length series, >=2 points.
+    """
+    r = _to_array(returns, min_len=2)
+    b = _to_array(benchmark, min_len=2)
+    if len(r) != len(b):
+        raise ValueError(f"length mismatch: {len(r)} vs {len(b)}")
+    var_b = b.var(ddof=1)
+    if var_b == 0:
+        raise ValueError("benchmark has zero variance — beta undefined")
+    beta = float(np.cov(r, b, ddof=1)[0, 1] / var_b)
+    alpha_pp = float(r.mean() - beta * b.mean())
+    diff = r - b
+    te = float(diff.std(ddof=1) * math.sqrt(periods_per_year))
+    corr = float(np.corrcoef(r, b)[0, 1])
+    excess_ann = float(diff.mean() * periods_per_year)
+    ir = excess_ann / te if te else 0.0
+    return ToolResult(
+        tool="benchmark_relative", tool_version=_VERSION,
+        inputs={"returns": list(returns), "benchmark": list(benchmark), "periods_per_year": periods_per_year},
+        value=float(alpha_pp * periods_per_year),   # annualized alpha
+        detail={"beta": beta, "correlation": corr, "alpha_annual": float(alpha_pp * periods_per_year),
+                "excess_return_annual": excess_ann, "tracking_error": te, "information_ratio": ir},
+    )
