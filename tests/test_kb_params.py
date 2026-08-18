@@ -184,3 +184,54 @@ def test_weekly_params_are_a_deep_copy(db):
     got = load_params(db, "weekly")
     got["weekly"]["shortlist_k"] = 999
     assert BOOTSTRAP_DEFAULT["weekly"]["shortlist_k"] != 999
+
+
+# --- 07.7-02: "field" params group (FF-06) ----------------------------------------------------
+# The football-field aggregator / builder / DD / cross_check read their thresholds+weights from
+# params["field"] — never a literal. Homed in the KB fitted-params seam (BOOTSTRAP_DEFAULT + the
+# cited bootstrap CSV), DELIBERATELY DECOUPLED from diligence.DILIGENCE_PARAMS (PITFALL #6).
+
+_FIELD_SCALARS = ("min_methods", "trim_frac", "dispersion_wide", "move_discrepancy_tol")
+_FIELD_WEIGHT_KEYS = (
+    "analog_cold", "analog_warm", "implied_liquid", "base_rate_thin",
+    "base_rate_ample", "rnpv_scenario", "analyst_pt",
+)
+
+
+def test_given_no_seed_when_load_params_then_field_group_present(db):
+    field = load_params(db, "pdufa")["field"]
+    for k in (*_FIELD_SCALARS, "weights"):
+        assert k in field, f"field group must expose {k} (no literal fallback in consumers)"
+    assert isinstance(field["min_methods"], int)
+    for k in ("trim_frac", "dispersion_wide", "move_discrepancy_tol"):
+        assert isinstance(field[k], float)
+    assert isinstance(field["weights"], dict) and field["weights"], "weights must be a non-empty dict"
+    for wk in _FIELD_WEIGHT_KEYS:
+        assert wk in field["weights"], f"weight table must carry {wk}"
+        assert isinstance(field["weights"][wk], float)
+
+
+def test_given_seeded_csv_when_load_params_then_field_group_round_trips(db):
+    import csv as _csv
+    import json as _json
+    from pathlib import Path as _Path
+
+    from catalyst_trader import kb as _kb
+
+    row = next(
+        r for r in _csv.DictReader(_kb._BOOTSTRAP_CSV.open(newline=""))
+        if r["catalyst_type"] == "pdufa"
+    )
+    seed_fitted_params(db)
+    field = load_params(db, "pdufa")["field"]
+    assert field["move_discrepancy_tol"] == float(row["move_discrepancy_tol"])
+    assert field["min_methods"] == int(row["min_methods"])
+    assert field["weights"] == _json.loads(row["field_weights_json"])
+    _ = _Path  # silence unused-import guard if any
+
+
+def test_field_group_absent_from_diligence_params(db):
+    # the decoupling invariant (PITFALL #6): field knobs must NOT leak into the DD threshold source.
+    from catalyst_trader.desk import diligence
+
+    assert "field" not in diligence.DILIGENCE_PARAMS["diligence"]
