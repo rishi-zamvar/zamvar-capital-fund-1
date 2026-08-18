@@ -180,22 +180,28 @@ def test_move_screen_keeps_mover(monkeypatch):
     assert admitted and admitted[0]["realized_move_median"] == pytest.approx(0.30)
 
 
-def test_move_screen_drops_sleeper(monkeypatch):
+def test_move_screen_no_longer_drops_sleeper(monkeypatch):
+    # PIVOT-CORRECTION (Plan 07): the fixed move_threshold gate is RETIRED from screen_candidates
+    # (tradeability-only). A below-old-threshold mover (0.03) that passes ADV/cap/optionable is now
+    # ADMITTED; the volatility judgement moved to the BACKWARD score in select_members.
     _wire_screen(monkeypatch, bars=_bars(100, 350_000),
                  fund={"shares_outstanding": 10_000_000, "cash_runway_months": 24}, opt=_opt(),
                  move=(0.03, "(-1,2)", "2024-06-03", "green"))
-    admitted, rejected = discover.screen_candidates({1: _cand(1, "SLEEP")}, "2026-08-17",
-                                                    criteria={"move_threshold": 0.10})
-    assert not admitted
-    assert any("move" in r for r in rejected[0]["reasons"])
+    admitted, rejected = discover.screen_candidates({1: _cand(1, "SLEEP")}, "2026-08-17")
+    assert [r["ticker"] for r in admitted] == ["SLEEP"]
+    all_reasons = [rn for r in admitted + rejected for rn in r.get("reasons", [])]
+    assert not any("move" in rn for rn in all_reasons)
 
 
-def test_move_unknown_rejected(monkeypatch):
+def test_move_unknown_no_longer_rejected(monkeypatch):
+    # PIVOT-CORRECTION (Plan 07): a name with no computable move is no longer dropped by the screen
+    # (no move gate). Its realized_move_median is simply None; the n>=2 score gate handles history.
     _wire_screen(monkeypatch, bars=_bars(100, 350_000),
                  fund={"shares_outstanding": 10_000_000, "cash_runway_months": 24}, opt=_opt(),
                  move=None)  # no computable move
     admitted, rejected = discover.screen_candidates({1: _cand(1, "UNK")}, "2026-08-17")
-    assert not admitted and "move_unknown" in rejected[0]["reasons"]
+    assert [r["ticker"] for r in admitted] == ["UNK"]
+    assert "move_unknown" not in [rn for r in admitted + rejected for rn in r.get("reasons", [])]
 
 
 def test_rank_by_move_magnitude():

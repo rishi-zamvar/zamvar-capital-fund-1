@@ -102,19 +102,23 @@ def test_cap_ceiling_removed_large_cap_admitted(monkeypatch):
     assert not any("market_cap" in rn and ">" in rn for rn in all_reasons)
 
 
-def test_optionability_oi_floor(monkeypatch):
+def test_optionability_oi_floor_relaxed_admits(monkeypatch):
+    # PIVOT-CORRECTION (Plan 07, UNIV-02c): the universe layer no longer gates on OI>=100. A liquid
+    # name with bid>0 both legs but low combined OI (INSM shape on delayed EOD quotes) is ADMITTED;
+    # the strict OI floor now lives at the per-trade layer (desk/diligence.options_liquid).
     d = _wire(monkeypatch, bars=_bars(100, 350_000), fund={"shares_outstanding": 10_000_000, "cash_runway_months": 24},
-              opt=_opt(call_oi=30, put_oi=40))  # 70 < 100
+              opt=_opt(call_oi=30, put_oi=40))  # 70 < old-100 gate — now irrelevant to membership
     admitted, rejected = d.screen_candidates({1: _cand(1, "AAA")}, "2026-08-17")
-    assert not admitted and "not_optionable" in rejected[0]["reasons"]
+    assert [r["ticker"] for r in admitted] == ["AAA"]
 
 
-def test_optionability_spread_ceiling(monkeypatch):
-    # wide spread: mid=(0.55+0.55)=1.1 spread=(0.9+0.9)=1.8 -> 1.8/1.1 >= 0.6 -> not optionable
+def test_optionability_spread_ceiling_relaxed_admits(monkeypatch):
+    # PIVOT-CORRECTION (Plan 07, UNIV-02c): the wide-spread rejection is removed from the universe
+    # layer (delayed build-time per-strike spread is unreliable). bid>0 both legs -> optionable.
     d = _wire(monkeypatch, bars=_bars(100, 350_000), fund={"shares_outstanding": 10_000_000, "cash_runway_months": 24},
               opt=_opt(call_bid=0.1, call_ask=1.0, put_bid=0.1, put_ask=1.0))
     admitted, rejected = d.screen_candidates({1: _cand(1, "AAA")}, "2026-08-17")
-    assert not admitted and "not_optionable" in rejected[0]["reasons"]
+    assert [r["ticker"] for r in admitted] == ["AAA"]
 
 
 def test_optionability_bid_both_legs(monkeypatch):
