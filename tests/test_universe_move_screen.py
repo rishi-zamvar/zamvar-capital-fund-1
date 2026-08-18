@@ -213,65 +213,8 @@ def test_rank_by_move_magnitude():
     shortlist, _ = discover.size_to_density(screened, "2026-08-17", target_lambda=99.0)  # unreachable -> all
     assert [r["ticker"] for r in shortlist] == ["BIG", "MID", "SML"]  # biggest movers first
 
-
-def _build_cand(cik, ticker, *, ta="oncology"):
-    return _cand(cik, ticker, ta=ta, catalysts=[_cat("2024-05-31", ref=f"{ticker}-A"),
-                                                _cat("2023-02-15", ref=f"{ticker}-B")])
-
-
-def test_build_universe_persists_backfill_and_writes_cohort(monkeypatch, db):
-    from catalyst_trader.universe.build import universe_as_of
-
-    cands = {1: _build_cand(1, "BBIO"), 2: _build_cand(2, "AXSM", ta="cns")}
-    monkeypatch.setattr(discover, "discover_candidates", lambda *a, **k: cands)
-    monkeypatch.setattr(discover, "_realized_catalyst_move",
-                        lambda t, ed, **k: (0.30, "(-1,2)", "2024-06-03", "green"))
-    monkeypatch.setattr(discover, "get_weekly_bars", lambda t, s, e, **k: _bars(100, 350_000))
-    monkeypatch.setattr(discover, "fundamentals",
-                        lambda t: {"shares_outstanding": 150_000_000, "cash_runway_months": 24})
-    monkeypatch.setattr(discover.options_cboe, "fetch", lambda t: _opt())
-
-    assert db.execute("SELECT COUNT(*) AS n FROM catalyst").fetchone()["n"] == 0  # empty store (Blocker-1)
-    summary = discover.build_universe(db, "2026-08-17")
-
-    # warm-start backfill persisted (catalysts + moves)
-    assert db.execute("SELECT COUNT(*) AS n FROM catalyst").fetchone()["n"] == 4  # 2 names x 2 catalysts
-    assert db.execute("SELECT COUNT(*) AS n FROM catalyst_move").fetchone()["n"] == 4
-    # append-only survivorship-free cohort written; Blocker-1: included>0 vs the (pre-backfill) empty store
-    names = {u.ticker for u in universe_as_of(db, "2026-08-17") if u.included}
-    assert {"BBIO", "AXSM"} <= names
-    assert summary["included_count"] > 0
-    # new summary fields
-    assert summary["move_threshold"] == 0.10
-    assert summary["n_move_unknown"] == 0
-    assert summary["n_backfilled_catalysts"] == 4
-    assert summary["n_moves_persisted"] == 4
-    for a in summary["admissions"]:
-        assert a["realized_move_median"] == pytest.approx(0.30)
-
-
-def test_blocker_fixes_preserved(monkeypatch, db):
-    captured = {}
-
-    def _spy_build_snapshot(conn, as_of, seed_rows, *, criteria):
-        captured["criteria"] = criteria
-        captured["n_seed"] = len(seed_rows)
-        return 1  # store writes 1 included row
-
-    cands = {1: _build_cand(1, "BBIO")}
-    monkeypatch.setattr(discover, "discover_candidates", lambda *a, **k: cands)
-    monkeypatch.setattr(discover, "_realized_catalyst_move",
-                        lambda t, ed, **k: (0.30, "(-1,2)", "2024-06-03", "green"))
-    monkeypatch.setattr(discover, "get_weekly_bars", lambda t, s, e, **k: _bars(100, 350_000))
-    monkeypatch.setattr(discover, "fundamentals",
-                        lambda t: {"shares_outstanding": 10_000_000, "cash_runway_months": 24})
-    monkeypatch.setattr(discover.options_cboe, "fetch", lambda t: _opt())
-    monkeypatch.setattr(discover, "build_snapshot", _spy_build_snapshot)
-
-    summary = discover.build_universe(db, "2026-08-17")
-    # Blocker-1: min_catalyst_density passed as 0 (store-density floor stays disabled)
-    assert captured["criteria"]["min_catalyst_density"] == 0
-    # Blocker-2/3: included_count is DISTINCT from n_admitted and reconciles with the store's count
-    assert summary["included_count"] == 1
-    assert summary["n_admitted"] >= 1
-    assert isinstance(summary["included_count"], int)
+# NOTE: the former build_universe backfill+cohort tests here tested the retired
+# screen->diversity->size path (move_threshold/measured_lambda summary). They were superseded
+# by the BACKWARD membership pivot (Plan 07) and now live in tests/test_universe_membership.py
+# (registry-scored select_members + Blocker-1/3 preserved). The realized-move math + persist +
+# rank-by-move tests above remain valid (that machinery is unchanged, size_to_density off path).

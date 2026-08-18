@@ -205,3 +205,154 @@ def test_score_reads_only_catalyst_move(db, monkeypatch):
 
 def test_empty_registry_degrades(db):
     assert discover.score_registry(db) == ([], [])
+
+
+# ══════════════════════════════════════════════════════════════════════════════════════════
+# Task 3 — select_members percentile-cut (N as output) + build_universe rewire
+# ══════════════════════════════════════════════════════════════════════════════════════════
+
+
+def _wire_tradeable(monkeypatch, *, untradeable=frozenset()):
+    """Monkeypatch the tradeability reads to controlled values (ZERO network). Tickers in
+    `untradeable` fail optionability (a top-scorer that must be skipped)."""
+    monkeypatch.setattr(discover, "_dollar_adv", lambda t, as_of, **k: 7_000_000)
+    monkeypatch.setattr(discover, "_market_cap",
+                        lambda t, as_of: (1_000_000_000, {"cash_runway_months": 24}))
+    monkeypatch.setattr(discover, "_optionable", lambda t: t not in untradeable)
+
+
+def test_select_members_percentile_cut_N_output(db, monkeypatch):
+    _wire_tradeable(monkeypatch)
+    # 100 scorable names, all tradeable; vol_score strictly increases with i -> top 80 are members.
+    for i in range(100):
+        m = 0.20 + i * 0.001
+        _seed_name(db, f"N{i:03d}", [m, m])  # both >= 0.15 -> big_move_frac 1.0 -> vol_score = m*2
+    members, rejected, report = discover.select_members(db, "2026-08-17", target_size=80)
+    assert report["N"] == 80 and len(members) == 80
+    assert report["n_scorable"] == 100
+    assert report["cut_percentile"] == round(1 - 80 / 100, 4) == 0.2
+    assert report["target_reached"] is True
+    # the 80 highest-i (highest vol_score) names are the members
+    assert {m["ticker"] for m in members} == {f"N{i:03d}" for i in range(20, 100)}
+
+
+def test_select_members_ranks_by_vol_score(db, monkeypatch):
+    _wire_tradeable(monkeypatch)
+    _seed_name(db, "LOW", [0.16, 0.16])   # vol_score 0.32
+    _seed_name(db, "MID", [0.30, 0.30])   # vol_score 0.60
+    _seed_name(db, "HIGH", [0.55, 0.55])  # vol_score 1.10
+    members, _, _ = discover.select_members(db, "2026-08-17", target_size=80)
+    assert [m["ticker"] for m in members] == ["HIGH", "MID", "LOW"]  # biggest movers first
+
+
+def test_select_members_honest_underfill(db, monkeypatch):
+    _wire_tradeable(monkeypatch)
+    for t in ("AAA", "BBB", "CCC"):
+        _seed_name(db, t, [0.30, 0.40])
+    members, _, report = discover.select_members(db, "2026-08-17", target_size=80)
+    assert report["N"] == 3 and len(members) == 3      # honest under-fill, never padded to 80
+    assert report["target_reached"] is False
+    assert report["cut_percentile"] == 0.0             # 1 - 3/3
+
+
+def test_select_members_skips_untradeable(db, monkeypatch):
+    # HIGH is the top scorer but not optionable -> skipped; MID/LOW take the two slots.
+    _wire_tradeable(monkeypatch, untradeable={"HIGH"})
+    _seed_name(db, "LOW", [0.16, 0.16])
+    _seed_name(db, "MID", [0.30, 0.30])
+    _seed_name(db, "HIGH", [0.55, 0.55])
+    members, rejected, report = discover.select_members(db, "2026-08-17", target_size=2)
+    assert {m["ticker"] for m in members} == {"MID", "LOW"}
+    assert "HIGH" not in {m["ticker"] for m in members}
+    high_rej = next(r for r in rejected if r["ticker"] == "HIGH")
+    assert "not_optionable" in high_rej["reasons"]
+
+
+def test_insufficient_history_not_member(db, monkeypatch):
+    _wire_tradeable(monkeypatch)
+    _seed_name(db, "GOOD", [0.30, 0.40])   # 2 events -> eligible
+    _seed_name(db, "ONESHOT", [0.55])       # 1 event -> never a member
+    members, _, report = discover.select_members(db, "2026-08-17", target_size=80)
+    assert {m["ticker"] for m in members} == {"GOOD"}
+    assert "ONESHOT" in report["insufficient_history"]
+    assert report["n_insufficient"] == 1
+
+
+# ── build_universe rewire (discover+backfill -> select_members -> build_snapshot) ─────────────
+
+
+def _wire_build_backward(monkeypatch, cands):
+    """discover_candidates returns `cands`; _persist_backfill runs REAL (seeds the store the scorer
+    then reads); tradeability reads controlled; NEVER hits the network."""
+    monkeypatch.setattr(discover, "discover_candidates", lambda *a, **k: cands)
+    monkeypatch.setattr(discover, "_realized_catalyst_move",
+                        lambda t, ed, **k: (0.30, "(-1,2)", "2024-06-03", "green"))
+    _wire_tradeable(monkeypatch)
+
+
+def _bk_cand(cik, ticker, *, ta="oncology"):
+    # two PAST day-precision pdufa catalysts -> 2 moves after backfill -> n>=2 scorable
+    return {"cik": cik, "ticker": ticker, "company_name": f"{ticker} Inc.", "source_feeds": {"edgar"},
+            "therapeutic_area": ta,
+            "catalysts": [
+                {"type": "pdufa", "event_date": "2024-05-31", "source_url": f"{ticker}-A",
+                 "fetch_ts": "2026-08-17T00:00:00Z", "grade": "green"},
+                {"type": "pdufa", "event_date": "2023-02-15", "source_url": f"{ticker}-B",
+                 "fetch_ts": "2026-08-17T00:00:00Z", "grade": "green"},
+            ]}
+
+
+def test_build_universe_backward_writes_cohort(db, monkeypatch):
+    from catalyst_trader.universe.build import universe_as_of
+
+    cands = {1: _bk_cand(1, "BBIO"), 2: _bk_cand(2, "AXSM", ta="cns")}
+    _wire_build_backward(monkeypatch, cands)
+    assert db.execute("SELECT COUNT(*) AS n FROM catalyst").fetchone()["n"] == 0  # empty store (Blocker-1)
+
+    summary = discover.build_universe(db, "2026-08-17")
+
+    # registry persisted (warm-start) THEN scored from the store
+    assert db.execute("SELECT COUNT(*) AS n FROM catalyst").fetchone()["n"] == 4
+    assert db.execute("SELECT COUNT(*) AS n FROM catalyst_move").fetchone()["n"] == 4
+    names = {u.ticker for u in universe_as_of(db, "2026-08-17") if u.included}
+    assert {"BBIO", "AXSM"} <= names
+    assert summary["included_count"] > 0  # Blocker-1: min_catalyst_density=0
+    # backward-membership summary fields
+    assert summary["N"] == 2 and summary["n_scorable"] == 2
+    assert "cut_percentile" in summary and summary["n_insufficient"] == 0
+    for a in summary["admissions"]:
+        assert a["vol_score"] == pytest.approx(0.30 * 2)  # median 0.30 * (1 + big_move_frac 1.0)
+        assert a["n_moves"] == 2
+
+
+def test_blocker_fixes_preserved(db, monkeypatch):
+    captured = {}
+
+    def _spy_build_snapshot(conn, as_of, seed_rows, *, criteria):
+        captured["criteria"] = criteria
+        captured["n_seed"] = len(seed_rows)
+        return 1  # store writes 1 included row
+
+    cands = {1: _bk_cand(1, "BBIO")}
+    _wire_build_backward(monkeypatch, cands)
+    monkeypatch.setattr(discover, "build_snapshot", _spy_build_snapshot)
+
+    summary = discover.build_universe(db, "2026-08-17")
+    # Blocker-1: min_catalyst_density passed 0 (store-density floor stays disabled)
+    assert captured["criteria"]["min_catalyst_density"] == 0
+    # Blocker-3: included_count is DISTINCT from N and reconciles with the store's included==1 count
+    assert summary["included_count"] == 1
+    assert summary["N"] == 1
+    assert isinstance(summary["included_count"], int)
+
+
+def test_no_fixed_move_threshold(db, monkeypatch):
+    # membership must NOT read a fixed move_threshold gate anywhere (the cut is relative percentile).
+    cands = {1: _bk_cand(1, "BBIO")}
+    _wire_build_backward(monkeypatch, cands)
+    summary = discover.build_universe(db, "2026-08-17", criteria={"move_threshold": 0.99})
+    # a would-be 0.99 threshold changes nothing — BBIO (median move 0.30) is still a member
+    assert summary["N"] == 1
+    assert "move_threshold" not in summary
+    _, _, report = discover.select_members(db, "2026-08-17", criteria={"move_threshold": 0.99})
+    assert "move_threshold" not in report

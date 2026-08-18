@@ -5,7 +5,6 @@ cohort sized by MEASURING forward catalyst density (N is an OUTPUT, never hard-c
 API — every provider read (prices, options_cboe, edgar fundamentals) is monkeypatched.
 """
 
-import json
 from pathlib import Path
 
 import pytest
@@ -224,90 +223,7 @@ def test_recalibration_note_present():
     note = report["base_rate_recalibration_note"]
     assert note and "7.5" in note
 
-
-# ── Task 3: build_universe — emit seed_rows -> build_snapshot (append-only cohort) ────────────
-
-
-def _screen_rec(cik, ticker, *, ta="oncology", ncat=1, adv=7_000_000, cap=1_000_000_000, delisted=False):
-    return {"cik": cik, "ticker": ticker, "company_name": ticker, "catalysts": _cats(ncat),
-            "source_feeds": {"edgar"}, "therapeutic_area": ta, "adv_usd": adv, "market_cap": cap,
-            "cash_runway_months": 24, "flags": {}, "reasons": [], "delisted": delisted}
-
-
-def _wire_build(monkeypatch, admitted):
-    from catalyst_trader.universe import discover
-
-    monkeypatch.setattr(discover, "discover_candidates", lambda *a, **k: {r["cik"]: r for r in admitted})
-    monkeypatch.setattr(discover, "screen_candidates", lambda cands, as_of, criteria=None: (list(admitted), []))
-    # Plan 06: build_universe now persists a warm-start backfill (catalysts + realized moves) before
-    # screening. These cohort-write tests mock screen_candidates, so stub the backfill to a no-op
-    # (its own persistence + move computation is covered in test_universe_move_screen.py) — keeps
-    # these tests offline and focused on the append-only cohort.
-    monkeypatch.setattr(discover, "_persist_backfill", lambda conn, cand: [])
-    return discover
-
-
-def test_build_universe_writes_cohort(monkeypatch, db):
-    from catalyst_trader.universe.build import universe_as_of
-
-    d = _wire_build(monkeypatch, [_screen_rec(1, "AAA"), _screen_rec(2, "BBB", ta="cardio")])
-    summary = d.build_universe(db, "2026-08-17")
-    names = {u.ticker for u in universe_as_of(db, "2026-08-17") if u.included}
-    assert {"AAA", "BBB"} <= names
-    assert summary["n_admitted"] >= 2
-
-
-def test_seed_rows_carry_screen_data(monkeypatch, db):
-    from catalyst_trader.universe.build import universe_as_of
-
-    d = _wire_build(monkeypatch, [_screen_rec(1, "AAA")])
-    d.build_universe(db, "2026-08-17")
-    row = next(u for u in universe_as_of(db, "2026-08-17") if u.ticker == "AAA")
-    crit = json.loads(row.criteria_json)
-    assert crit["market_cap"] == 1_000_000_000
-    assert crit["adv_usd"] == 7_000_000
-    assert crit["therapeutic_area"] == "oncology"
-
-
-def test_rerun_writes_new_cohort_never_overwrites(monkeypatch, db):
-    from catalyst_trader.universe.build import universe_as_of
-
-    d = _wire_build(monkeypatch, [_screen_rec(1, "AAA")])
-    d.build_universe(db, "2026-08-17")
-    d.build_universe(db, "2026-09-17")
-    cohorts = [r["as_of_date"] for r in db.execute("SELECT DISTINCT as_of_date FROM universe_snapshot").fetchall()]
-    assert set(cohorts) == {"2026-08-17", "2026-09-17"}  # two distinct cohorts
-    # D1's cohort is still intact (append-only, survivorship-free)
-    assert any(u.ticker == "AAA" for u in universe_as_of(db, "2026-08-17"))
-
-
-def test_cohort_nonempty_with_empty_catalyst_store(monkeypatch, db):
-    """Blocker-1 trap: an EMPTY `catalyst` table (do NOT seed it) must still yield included_count>0
-    because build_universe passes min_catalyst_density=0. A seeded table would mask the trap."""
-    assert db.execute("SELECT COUNT(*) AS n FROM catalyst").fetchone()["n"] == 0  # unseeded
-    d = _wire_build(monkeypatch, [_screen_rec(1, "AAA"), _screen_rec(2, "BBB", ta="cardio")])
-    summary = d.build_universe(db, "2026-08-17")
-    assert summary["included_count"] > 0
-    included = [u for u in __import__("catalyst_trader.universe.build", fromlist=["universe_as_of"]).universe_as_of(db, "2026-08-17") if u.included]
-    assert len(included) > 0
-
-
-def test_delisted_retained(monkeypatch, db):
-    from catalyst_trader.universe.build import universe_as_of
-
-    d = _wire_build(monkeypatch, [_screen_rec(1, "AAA"), _screen_rec(2, "DEAD", delisted=True)])
-    d.build_universe(db, "2026-08-17")
-    dead = next(u for u in universe_as_of(db, "2026-08-17") if u.ticker == "DEAD")
-    assert dead.delisted is True  # retained, not dropped (survivorship-free)
-
-
-def test_summary_has_provenance_and_tradeoff(monkeypatch, db):
-    d = _wire_build(monkeypatch, [_screen_rec(1, "AAA"), _screen_rec(2, "BBB", ta="cardio")])
-    summary = d.build_universe(db, "2026-08-17")
-    assert summary["admissions"]
-    for a in summary["admissions"]:
-        assert a["source_url"] and a["fetch_ts"] and a["grade"]
-    assert "measured_lambda" in summary and "target_reached" in summary
-    assert isinstance(summary["included_count"], int)  # distinct field, reconciles with n_admitted
-    assert summary["included_count"] <= summary["n_admitted"]
-    assert "tradeoff" in summary and summary["tradeoff"]
+# NOTE: the former build_universe cohort tests (old screen->diversity->size path) were
+# superseded by the BACKWARD membership pivot (Plan 07) and now live in
+# tests/test_universe_membership.py (discover+backfill -> select_members -> build_snapshot).
+# size_to_density + _enforce_diversity remain unit-tested above (kept, but OFF the build path).
