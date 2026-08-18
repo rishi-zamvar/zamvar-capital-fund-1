@@ -1,0 +1,107 @@
+<title>Playbook Node Redesign</title>
+<style>
+*{box-sizing:border-box}
+:root{--bg:#f4efe4;--surface:#fbf7ee;--surface2:#f2ecdd;--ink:#23201a;--muted:#6f6857;--faint:#928a76;
+--line:#e0d7c2;--accent:#9a6b1f;--accent2:#7c5a2a;--pos:#2f7d4f;--neg:#b23a3a;--warn:#9a761a;--info:#3a6ea5;
+--mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;--sans:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0f1110;--surface:#171a17;--surface2:#1c201c;
+--ink:#e9e4d5;--muted:#a09982;--faint:#7d7663;--line:#2a2e29;--accent:#d4af6a;--accent2:#c8a24a;
+--pos:#5fbf87;--neg:#e0736b;--warn:#d8a94a;--info:#7fb0e0}}
+:root[data-theme="dark"]{--bg:#0f1110;--surface:#171a17;--surface2:#1c201c;--ink:#e9e4d5;--muted:#a09982;
+--faint:#7d7663;--line:#2a2e29;--accent:#d4af6a;--accent2:#c8a24a;--pos:#5fbf87;--neg:#e0736b;--warn:#d8a94a;--info:#7fb0e0}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);line-height:1.55}
+.wrap{max-width:940px;margin:0 auto;padding:40px 22px 80px}
+.brand{font-family:var(--mono);font-size:12px;letter-spacing:.22em;color:var(--accent);font-weight:600}
+h1{font-size:clamp(26px,3.6vw,38px);margin:.24em 0 .1em;letter-spacing:-.01em;text-wrap:balance}
+.sub{color:var(--muted);font-size:15px;margin:.2em 0 0;max-width:72ch}
+.banner{margin:22px 0;padding:14px 18px;border-left:3px solid var(--accent);background:var(--surface);border-radius:0 8px 8px 0;font-size:14.5px}
+h2{font-size:20px;margin:36px 0 6px;padding-top:20px;border-top:1px solid var(--line)}
+.lead{color:var(--muted);font-size:13.5px;margin:.2em 0 12px;max-width:78ch}
+.layer{border:1px solid var(--line);border-radius:10px;overflow:hidden;margin:14px 0}
+.layer .hd{background:var(--surface2);padding:9px 14px;font-family:var(--mono);font-size:12px;font-weight:600;letter-spacing:.03em;display:flex;justify-content:space-between}
+.layer .hd .r{color:var(--faint);font-weight:400}
+.fld{display:grid;grid-template-columns:170px 1fr;gap:14px;padding:9px 14px;border-top:1px solid var(--line);font-size:13px;background:var(--surface)}
+.fld .n{font-family:var(--mono);color:var(--accent2);font-size:12px}
+.fld .d{color:var(--ink)}
+.fld .d em{color:var(--muted);font-style:italic}
+.env .n{color:var(--info)}
+.ex{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:0;margin:16px 0;overflow:hidden}
+.ex .hd{background:var(--accent);color:var(--bg);padding:10px 16px;font-family:var(--mono);font-size:12px;font-weight:600;letter-spacing:.04em}
+.ex .row{padding:10px 16px;border-top:1px solid var(--line)}
+.ex .lab{font-family:var(--mono);font-size:11px;color:var(--accent2);text-transform:uppercase;letter-spacing:.04em;margin-bottom:3px}
+.ex .val{font-size:14px}
+.ex .val.num{font-family:var(--mono)}
+.ex .val.story{font-size:14px;line-height:1.6}
+.pill{display:inline-block;font-family:var(--mono);font-size:11px;padding:1px 7px;border-radius:5px;border:1px solid var(--line);color:var(--muted);margin-right:5px}
+.pill.neg{color:var(--neg);border-color:var(--neg)} .pill.warn{color:var(--warn);border-color:var(--warn)}
+.cite{font-family:var(--mono);font-size:11px;color:var(--faint)}
+footer{margin-top:40px;padding-top:18px;border-top:1px solid var(--line);color:var(--faint);font-size:12px;font-family:var(--mono)}
+b.key{color:var(--accent)}
+</style>
+<div class="wrap">
+<div class="brand">ZAMVAR CAPITAL &middot; FUND 1 &middot; NODE REDESIGN</div>
+<h1>What one event carries &mdash; now with the narrative</h1>
+<p class="sub">Redesigned so each past catalyst is a written CASE, not a row of enums. The structured fields route retrieval; the <b class="key">narrative body is what the model reasons from &mdash; and what we embed</b>, so analogs match on the situation's story, not a label.</p>
+
+<div class="banner"><b>The core principle</b> (how DoorDash, Sierra, Decagon, Letta, Zep all do it): a small <b>structured envelope</b> the retrieval layer reads deterministically, around a <b>rich natural-language body</b> the model actually reasons from. The hard facts (outcome, signed move) are code-verified and <code>read_only</code> &mdash; never LLM-trusted. The narrative gets embedded for semantic similarity. Facts route; stories reason.</p>
+
+<h2>Layer 1 &mdash; Structured envelope <span class="cite">(deterministic · filters retrieval · read-only facts)</span></h2>
+<div class="layer env">
+<div class="hd"><span>FIELD</span><span class="r">what it's for</span></div>
+<div class="fld"><span class="n">ticker · type · indication · asset</span><span class="d">routing keys <em>(find "PDUFAs in DMD", "cell-therapy readouts")</em></span></div>
+<div class="fld"><span class="n">knowable_asof</span><span class="d">the bi-temporal leak gate &mdash; retrieval only returns this node if it was knowable by the decision date</span></div>
+<div class="fld"><span class="n">outcome_label · signed_move</span><span class="d"><b>read-only, code-verified</b> facts (approve/CRL/hit/miss + the real % move) &mdash; never LLM-generated</span></div>
+<div class="fld"><span class="n">confidence · consistency_flag</span><span class="d">label confidence + "text-says-approved-but-stock-fell" mismatch flag</span></div>
+<div class="fld"><span class="n">drivers{…} (~18)</span><span class="d">the taxonomy enums (AdCom vote, CMC readiness, prior-CRL, effect size…) &mdash; filter + scaffold for the prose</span></div>
+</div>
+
+<h2>Layer 2 &mdash; Narrative body: the "before" <span class="cite">(as knowable pre-event · embedded for retrieval)</span></h2>
+<div class="layer">
+<div class="hd"><span>NARRATIVE FIELD</span><span class="r">holds (1&ndash;5 sentences, cited)</span></div>
+<div class="fld"><span class="n">thesis</span><span class="d">the one-line setup</span></div>
+<div class="fld"><span class="n">causal_setup</span><span class="d">the situation in context &mdash; what the company/drug/indication is, the stakes, the state of the data going in</span></div>
+<div class="fld"><span class="n">reference_class</span><span class="d">the named precedent group + its base rate <em>("single-arm cell-therapy BLAs in rare disease → ~X% approved")</em> &mdash; the biggest reusability lever (Mauboussin)</span></div>
+<div class="fld"><span class="n">variant_why</span><span class="d">the expectation gap &mdash; what the market priced vs what could actually happen</span></div>
+<div class="fld"><span class="n">what_to_watch</span><span class="d">the pre-event tells in prose (implied move, financing, run-up, FDA comms…)</span></div>
+<div class="fld"><span class="n">what_would_change_our_mind</span><span class="d">the disconfirmers a monitor should track</span></div>
+</div>
+
+<h2>Layer 3 &mdash; Narrative body: the "after" (post-mortem) <span class="cite">(hindsight · the teaching layer)</span></h2>
+<div class="layer">
+<div class="hd"><span>NARRATIVE FIELD</span><span class="r">holds</span></div>
+<div class="fld"><span class="n">what_happened</span><span class="d">the outcome story in plain language</span></div>
+<div class="fld"><span class="n">why_narrative</span><span class="d"><b class="key">the causal explanation in context of industry history, company track record, and regulatory precedent</b> &mdash; the meat</span></div>
+<div class="fld"><span class="n">surprise_vs_prior</span><span class="d">was the outcome surprising vs what was priced/expected</span></div>
+<div class="fld"><span class="n">which_disconfirmer_fired</span><span class="d">which pre-event risk actually materialized</span></div>
+<div class="fld"><span class="n">lesson_rule</span><span class="d">the reusable generalization &mdash; <em>this graduates into a playbook node</em></span></div>
+<div class="fld"><span class="n">second_order</span><span class="d">knock-on reads: peers, the sector, financing implications</span></div>
+</div>
+
+<h2>A single node, fully written &mdash; Capricor (CAPR), 2025</h2>
+<p class="lead">Illustrative of what the Sonnet extractor writes per event (grounded in the real deramiocel CRL; exact driver values populated from the filings at build).</p>
+<div class="ex">
+<div class="hd">CATALYST NODE &mdash; CAPR · PDUFA · Duchenne cardiomyopathy · deramiocel</div>
+<div class="row"><div class="lab">Envelope (facts, read-only)</div><div class="val num"><span class="pill neg">outcome: CRL</span><span class="pill neg">move: &minus;33%</span><span class="pill">knowable_asof: 2025-04</span><span class="pill warn">CMC: flagged</span><span class="pill">adcom: none</span></div></div>
+<div class="row"><div class="lab">thesis</div><div class="val story">First cardiac cell therapy up for accelerated approval in DMD cardiomyopathy &mdash; a genuinely novel modality in an area of high unmet need but thin pivotal support.</div></div>
+<div class="row"><div class="lab">causal_setup</div><div class="val story">Capricor sought approval largely on a single ~Phase-2 dataset (HOPE-2) plus open-label extension; a small, allogeneic cell-therapy program in a rare indication where the agency had signaled it wanted confirmatory evidence. The company had a partner (Nippon Shinyaku) and had been building commercial-scale manufacturing in parallel with review.</div></div>
+<div class="row"><div class="lab">reference_class</div><div class="val story">Novel cell/gene therapies filed on a single small trial in rare disease: this reference class approves far below the ~85&ndash;90% base rate for drugs that reach BLA, and manufacturing/CMC is the single most common rejection cause (~29% of CRLs) &mdash; often on a drug the market assumed was clean on efficacy.</div></div>
+<div class="row"><div class="lab">why_narrative <span class="cite">← the meat</span></div><div class="val story">The FDA issued a Complete Response Letter centered on chemistry-manufacturing-and-controls and the sufficiency of the single-study evidence base, not a new efficacy failure. Read in context, this fits a long regulatory pattern: the agency is structurally cautious on first-in-class cell therapies carrying scale-up risk, and a company racing manufacturing alongside review is exactly where CMC gaps surface. The −33% reaction reflects the market having priced a coin-flip-to-favorable outcome that the CMC/evidence bar overrode.</div></div>
+<div class="row"><div class="lab">lesson_rule <span class="cite">→ becomes a playbook node</span></div><div class="val story">For single-trial cell/gene therapies with in-flight manufacturing, weight CMC-driven CRL risk far above the naive BLA base rate &mdash; and note that a <em>CMC-only</em> CRL is often resolvable (resubmit → approve), so the post-drop path can diverge sharply from an efficacy CRL. Watch the CRL's stated reason before fading or buying the dip.</div></div>
+<div class="row"><div class="lab">second_order</div><div class="val story">A read-through to other single-trial rare-disease cell-therapy names on the calendar; potential financing pressure on CAPR (raise into a delayed timeline).</div></div>
+<div class="row"><div class="lab">citations</div><div class="val"><span class="cite">CAPR 8-K / press release (CRL announcement) · CT.gov HOPE-2 · signed move T-1→T+2</span></div></div>
+</div>
+
+<h2>Two nodes with the same label, opposite meaning</h2>
+<p class="lead">This is the whole reason for the narrative layer: <b>Fortress / CUTX-101</b> got a CRL that was <em>purely CMC</em> → resubmitted → <b class="key">approved ~3 months later</b> (the dip was a buy). A CRL where the FDA rejects the <em>efficacy/trial design</em> is often near-terminal. Same <code>outcome = CRL</code>, same enums &mdash; only the <code>why_narrative</code> and <code>lesson_rule</code> tell the model which future it's looking at.</p>
+
+<h2>How it's stored, embedded, retrieved</h2>
+<div class="lead" style="max-width:80ch">
+&bull; <b>Stored</b> on the existing <code>kb.py</code> nodes (envelope in <code>attrs_json</code>; facts on the <code>RESULTED_IN</code> outcome; every claim <code>CITES</code> its source). Zero schema rebuild.<br>
+&bull; <b>Embedded</b>: the composed narrative card (thesis + causal_setup + reference_class + why_narrative) is what goes into the vector index &mdash; so retrieval matches on the <em>situation</em>, not keywords.<br>
+&bull; <b>Retrieved</b>: <code>analog_query</code> filters by type/indication + <code>knowable_asof ≤ decision date</code>, ranks by narrative similarity, and hands the model the top cases &mdash; each a full written precedent with its outcome, its why, and its lesson.<br>
+&bull; <b>Versioned</b> bi-temporally (invalidate, don't overwrite) so a later revision never rewrites what was knowable then.<br>
+&bull; <b>Generalizations</b>: recurring <code>lesson_rule</code>s graduate into <code>playbook</code> nodes (e.g. "CMC-only CRL → resubmit-and-approve pattern").
+</div>
+
+<footer>Zamvar Capital Fund 1 &middot; node redesign &middot; grounded in research D (hedge-fund narrative) + E (DoorDash/Sierra/Decagon/Letta/Zep agent playbooks) &middot; all cited in .planning/phases/07.5-warm-playbook/</footer>
+</div>
