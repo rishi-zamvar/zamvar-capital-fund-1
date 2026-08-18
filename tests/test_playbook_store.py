@@ -194,3 +194,69 @@ def test_given_mismatched_embedder_when_insert_then_refuses_to_corrupt_corpus(db
     insert_catalyst_record(db, _record(cid=1), embed=hash_embed)
     with pytest.raises(ValueError, match="embedder"):
         insert_catalyst_record(db, _record(cid=2), embed=fake_local)  # would poison the KNN
+
+
+# ── build_playbooks driver: offline --run loop (injected complete_fn, no LLM/network) ──
+
+def _seed_candidate(conn, cid, ctype="pdufa"):
+    conn.execute(
+        "INSERT INTO catalyst (id, ticker, company_name, catalyst_type, event_date, date_precision, "
+        "uncertainty_type, status, source_origin, created_at, updated_at) "
+        "VALUES (?, 'KRYS','Krystal',?, '2023-02-17','day','firm','resolved','curated_pdufa',"
+        "'2026-01-01','2026-01-01')",
+        (cid, ctype),
+    )
+    conn.execute(
+        "INSERT INTO catalyst_move (catalyst_id, realized_move, move_window, knowable_asof, computed_at) "
+        "VALUES (?, 0.052, '(-1,2)', '2023-02-22', '2026-01-01')", (cid,))
+    conn.execute(
+        "INSERT INTO catalyst_source (catalyst_id, source_name, source_url, source_type, reported_date, "
+        "retrieved_at) VALUES (?, 'edgar','https://sec.gov/x','primary','2023-02-17','2026-01-01')", (cid,))
+    conn.commit()
+
+
+def test_given_dry_run_when_main_then_counts_corpus_offline(db):
+    import scripts.build_playbooks as bp
+    _seed_candidate(db, 501, "pdufa")
+    _seed_candidate(db, 502, "trial_readout")
+    _seed_candidate(db, 503, "earnings")
+    out = bp.main([], conn=db)  # default dry-run
+    assert out["total"] == 3
+    assert out["core"] == 2 and out["earnings"] == 1
+
+
+def test_given_run_with_injected_fn_when_main_then_populates_without_llm(db, monkeypatch):
+    """--run wiring: build_bundle -> extract_record(injected complete_fn) -> insert_catalyst_record.
+    build_bundle is monkeypatched to a canned bundle so the loop stays offline (no CIK network)."""
+    import scripts.build_playbooks as bp
+
+    _seed_candidate(db, 601, "pdufa")
+
+    def fake_bundle(conn, cid, **kw):
+        return dict(catalyst_id=cid, ticker="KRYS", catalyst_type="pdufa", indication="DEB",
+                    modality="gene therapy", event_date="2023-02-17",
+                    exhibit_text="FDA accepts ... priority review granted.", ctgov=None,
+                    signed_move=0.052, move_window="(-1,2)", knowable_asof="2023-02-22",
+                    date_precision="day")
+
+    def fake_complete(prompt):  # the injected, offline completion (no live Sonnet)
+        import json
+        return json.dumps({
+            "outcome_label": "approve", "confidence": 0.7,
+            "drivers": [{"factor": "designations", "value": "BTD",
+                         "evidence_quote": "priority review granted", "source_url": "https://sec.gov/x"}],
+            "narrative_before": {"thesis": "clean pivotal", "causal_setup": "expedited",
+                                 "reference_class": "orphan", "variant_why": "underweighted",
+                                 "what_to_watch": ["cmc"], "what_would_change_our_mind": ["adcom"]},
+            "narrative_after": {"what_happened": "approved", "why_narrative": "held",
+                                "surprise_vs_prior": "low", "which_disconfirmer_fired": "none",
+                                "lesson_rule": "anchor approve", "process_grade": "A"},
+            "citations": [{"url": "https://sec.gov/x", "quote": "priority review", "snippet_hash": "h601"}],
+        })
+
+    monkeypatch.setattr(bp, "build_bundle", fake_bundle)
+    monkeypatch.setenv("CT_EMBEDDER", "hash")  # keep the driver's default_embedder offline
+    out = bp.main(["--run"], complete_fn=fake_complete, conn=db)
+    assert out["processed"] == 1
+    assert db.execute("SELECT COUNT(*) AS c FROM kb_node WHERE kind='catalyst' AND ref_id=601"
+                      ).fetchone()["c"] == 1
