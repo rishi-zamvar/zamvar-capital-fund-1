@@ -1,0 +1,114 @@
+<title>Fund 1 System State</title>
+<style>
+*{box-sizing:border-box}
+:root{--bg:#f4efe4;--surface:#fbf7ee;--surface2:#f2ecdd;--ink:#23201a;--muted:#6f6857;--faint:#928a76;
+--line:#e0d7c2;--accent:#9a6b1f;--accent2:#7c5a2a;--pos:#2f7d4f;--neg:#b23a3a;--warn:#9a761a;--info:#3a6ea5;
+--mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;--sans:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0f1110;--surface:#171a17;--surface2:#1c201c;
+--ink:#e9e4d5;--muted:#a09982;--faint:#7d7663;--line:#2a2e29;--accent:#d4af6a;--accent2:#c8a24a;
+--pos:#5fbf87;--neg:#e0736b;--warn:#d8a94a;--info:#7fb0e0}}
+:root[data-theme="dark"]{--bg:#0f1110;--surface:#171a17;--surface2:#1c201c;--ink:#e9e4d5;--muted:#a09982;
+--faint:#7d7663;--line:#2a2e29;--accent:#d4af6a;--accent2:#c8a24a;--pos:#5fbf87;--neg:#e0736b;--warn:#d8a94a;--info:#7fb0e0}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);line-height:1.55}
+.wrap{max-width:940px;margin:0 auto;padding:40px 22px 80px}
+.brand{font-family:var(--mono);font-size:12px;letter-spacing:.22em;color:var(--accent);font-weight:600}
+h1{font-size:clamp(26px,3.6vw,38px);margin:.24em 0 .1em;letter-spacing:-.01em;text-wrap:balance}
+.sub{color:var(--muted);font-size:15px;margin:.2em 0 0}
+.banner{margin:22px 0;padding:14px 18px;border-left:3px solid var(--pos);background:var(--surface);border-radius:0 8px 8px 0;font-size:14.5px}
+.banner b{color:var(--pos)}
+h2{font-size:20px;margin:38px 0 6px;padding-top:20px;border-top:1px solid var(--line)}
+.lead{color:var(--muted);font-size:13.5px;margin:.2em 0 14px;max-width:74ch}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.c{background:var(--surface);padding:13px 15px;display:flex;flex-direction:column;gap:3px}
+.c .v{font-family:var(--mono);font-size:21px;font-weight:600;font-variant-numeric:tabular-nums}
+.c .v.neg{color:var(--neg)} .c .v.pos{color:var(--pos)} .c .v.warn{color:var(--warn)}
+.c .k{font-size:10.5px;letter-spacing:.04em;color:var(--muted);text-transform:uppercase}
+ul{padding-left:0;list-style:none;margin:10px 0}
+li{padding:7px 0 7px 26px;position:relative;border-bottom:1px solid var(--line);font-size:14px}
+li:before{position:absolute;left:0;top:7px;font-family:var(--mono);font-size:13px}
+li.ok:before{content:"\2713";color:var(--pos)} li.hold:before{content:"\23F8";color:var(--warn)}
+li.next:before{content:"\2192";color:var(--accent)}
+table{width:100%;border-collapse:collapse;margin:10px 0;font-size:13px}
+th,td{text-align:left;padding:7px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-family:var(--mono);font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted)}
+td.id{font-family:var(--mono);color:var(--accent);white-space:nowrap}
+.tag{font-family:var(--mono);font-size:10px;padding:1px 6px;border-radius:4px;border:1px solid var(--line);color:var(--muted)}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:22px}
+@media(max-width:640px){.grid2{grid-template-columns:1fr}}
+.callout{background:var(--surface);border:1px solid var(--line);border-left:3px solid var(--warn);border-radius:0 8px 8px 0;padding:12px 16px;margin:12px 0;font-size:13.5px}
+footer{margin-top:44px;padding-top:18px;border-top:1px solid var(--line);color:var(--faint);font-size:12px;font-family:var(--mono)}
+code{font-family:var(--mono);font-size:.9em;background:var(--surface2);padding:1px 5px;border-radius:4px}
+</style>
+<div class="wrap">
+<div class="brand">ZAMVAR CAPITAL &middot; FUND 1 &middot; SYSTEM STATE</div>
+<h1>Where the system stands before the warm playbook</h1>
+<p class="sub">Every error from the cold run is fixed. The machine works end-to-end. This is the honest full picture &mdash; what runs, what the numbers mean, and what's next.</p>
+
+<div class="banner"><b>Verdict: the system is validated, not yet proven.</b> Data flows correctly, catalysts are seen only when they were really knowable (no future-peeking), and 108 positions entered and exited on the intended 1-week cadence. That is exactly the bar for this stage &mdash; "it works the way it should," not "it makes money."</div>
+
+<h2>System-validation checklist</h2>
+<p class="lead">The things that had to be TRUE for the backtest to mean anything &mdash; all confirmed.</p>
+<ul>
+<li class="ok"><b>Data flows on-device</b> &mdash; 73/73 universe names have price history; 509/509 trial dates sourced. Zero paid API calls.</li>
+<li class="ok"><b>No look-ahead</b> &mdash; each catalyst is visible only from its real public date (PDUFA acceptance filing / CT.gov posting). Enforced by the serving gateway + 2 regression tests.</li>
+<li class="ok"><b>Dense, correct catalyst calendar</b> &mdash; 117 pre-tradeable events in the year (14 FDA decisions + 103 trial readouts), ~2.2/week.</li>
+<li class="ok"><b>Positions enter &amp; exit on the 1-week cadence</b> &mdash; 108 legs across 52 weeks, each a 1-week hold, pessimistic fills.</li>
+<li class="ok"><b>Realistic costs applied</b> &mdash; bid/ask half-spread charged on both sides (Robinhood is commission-free).</li>
+<li class="ok"><b>Honesty metrics compute</b> &mdash; benchmark-relative alpha/beta + deflated Sharpe (the "did we just get lucky trying many things" check).</li>
+</ul>
+
+<h2>The numbers &mdash; read them as a system check, not a track record</h2>
+<div class="cards">
+  <div class="c"><span class="v">$11,808</span><span class="k">$10k &rarr; final</span></div>
+  <div class="c"><span class="v pos">+18.1%</span><span class="k">total return</span></div>
+  <div class="c"><span class="v pos">+1.30</span><span class="k">sharpe</span></div>
+  <div class="c"><span class="v pos">-3.8%</span><span class="k">max drawdown</span></div>
+  <div class="c"><span class="v warn">0.32</span><span class="k">deflated sharpe</span></div>
+  <div class="c"><span class="v">108</span><span class="k">positions traded</span></div>
+</div>
+<div class="callout"><b>What the deflated Sharpe of 0.32 means, plainly:</b> if you pretend we only ever tried one version of the strategy, the +18% looks strong. But we effectively tried ~100 combinations of settings/names, and when you try that many, something looks good by chance. Corrected for that, confidence this is real skill is ~1-in-3 &mdash; <b>not proven</b>. Also: vs a biotech index that returned +73% that year, we captured almost none of that beta (beta 0.01) &mdash; the return is independent of the market, but unproven. The only real proof is the forward paper month (later).</div>
+
+<h2>Errors from the cold run &mdash; all fixed</h2>
+<table>
+<tr><th>#</th><th>Error</th><th>Fix</th></tr>
+<tr><td class="id">E1&ndash;E3</td><td>Vacuous backtest: catalysts stamped with today's date / future dates; readout dates tangled (estimated vs actual)</td><td>Point-in-time knowability restamp; readout event = estimated completion, knowable = CT.gov first-post; future stamps 944&rarr;0</td></tr>
+<tr><td class="id">E4</td><td>Gateway hid historical (resolved) catalysts entirely</td><td>Surface verified + resolved; +2 regression tests</td></tr>
+<tr><td class="id">E5</td><td>Universe invisible at past dates</td><td>Cohort stamped pre-backtest (membership is hindsight-OK by design)</td></tr>
+<tr><td class="id">E6</td><td>Moves stored as magnitude only (sign lost)</td><td>Signed recompute &mdash; catalysts resolve 56% down / 44% up</td></tr>
+<tr><td class="id">E7</td><td>Cross-source duplicate catalysts could recur</td><td>Persisted dedupe wired into universe build; +2 tests</td></tr>
+<tr><td class="id">E8</td><td>Frictionless fills overstated returns</td><td>Price-tiered half-spread on both sides; +3 tests</td></tr>
+<tr><td class="id">E9</td><td>No way to tell skill from luck/beta</td><td>Deflated Sharpe + benchmark-relative alpha/beta; +7 tests</td></tr>
+<tr><td class="id">E10</td><td>Buy-the-dip bought falling knives (CAPR post-CRL)</td><td>Skip names with a catalyst in the trailing 8 weeks; +4 tests</td></tr>
+<tr><td class="id">E11&ndash;E12</td><td>Latent bugs in deferred plans; tracking gaps</td><td>Plan-check nits folded; ROADMAP 07.7 tracked</td></tr>
+</table>
+
+<h2>What's built vs what's next</h2>
+<div class="grid2">
+<div>
+<h3 style="font-size:15px;margin:0 0 4px">Built &amp; tested <span class="tag">1324 tests green</span></h3>
+<ul>
+<li class="ok">73-name movement-screened universe + profiles</li>
+<li class="ok">Free on-device data pipeline (prices, catalysts, PIT knowability)</li>
+<li class="ok">Weekly engine: catalyst sleeve + buy-the-dip sleeve + defensive fallback</li>
+<li class="ok">Sizing-to-1% within survival caps; pessimistic fills + costs</li>
+<li class="ok">Honesty metrics (deflated Sharpe, alpha/beta)</li>
+<li class="ok">Football-field Wave 1: the move-estimate aggregator + params</li>
+</ul>
+</div>
+<div>
+<h3 style="font-size:15px;margin:0 0 4px">Next &amp; held</h3>
+<ul>
+<li class="next"><b>Warm playbook</b> &mdash; the immediate next build</li>
+<li class="hold">Football-field Wave 2/3 wiring (needs per-company assumptions data)</li>
+<li class="hold">Directional gating (only long when expected up)</li>
+<li class="hold">Beta-participation sleeve (should we ride some market?)</li>
+<li class="hold">Forward paper month &mdash; the real proof, after fine-tuning</li>
+</ul>
+</div>
+</div>
+
+<h2>Ready for the warm playbook</h2>
+<p class="lead">The playbook is the hindsight-built catalogue of <em>what drives each catalyst's outcome and what to watch for</em> &mdash; built with full knowledge of what happened (that's allowed at construction; the no-peeking rule applies only when it's later applied). It now has clean ground to stand on: correct signed outcomes, a dense PIT-correct catalyst history, per-company profiles, and the football-field estimator to feed. Everything it needs is in place.</p>
+
+<footer>Zamvar Capital Fund 1 &middot; system state as of the pre-playbook checkpoint &middot; walk-forward 2025-08-17 &rarr; 2026-08-10 &middot; 1324 tests green &middot; 0 paid API calls</footer>
+</div>
