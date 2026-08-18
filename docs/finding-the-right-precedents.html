@@ -1,0 +1,176 @@
+<title>Finding the Right Precedents</title>
+<style>
+  :root{
+    --bg:#100f0c; --panel:#17150f; --panel2:#1d1a12; --panel3:#221e15; --line:#2c2820; --line2:#3a3527;
+    --ink:#ece4d2; --mut:#a89e86; --faint:#7c745f;
+    --brass:#d4af6a; --brass2:#e6c584;
+    --pos:#6ec28a; --posbg:#14231a; --warn:#e0b24a; --warnbg:#241f12; --neg:#e0736b; --negbg:#241412; --info:#7fb0c9;
+    --mono:"SF Mono",ui-monospace,Menlo,monospace;
+    --sans:system-ui,-apple-system,"Segoe UI",Helvetica,Arial,sans-serif;
+    --serif:"Iowan Old Style","Palatino Linotype",Palatino,Georgia,serif;
+  }
+  :root[data-theme="light"]{
+    --bg:#f5f0e4; --panel:#fbf7ec; --panel2:#f2ebd9; --panel3:#ede4cd; --line:#e2d8c1; --line2:#d4c8ac;
+    --ink:#2a2519; --mut:#5f5540; --faint:#8f8568;
+    --brass:#8f6d1f; --brass2:#7a5d18;
+    --pos:#2f7d4d; --posbg:#e6f0e4; --warn:#9a7118; --warnbg:#f2e9cf; --neg:#a83f36; --negbg:#f3e0dc; --info:#356f8a;
+  }
+  @media (prefers-color-scheme:light){:root:not([data-theme="dark"]){
+    --bg:#f5f0e4; --panel:#fbf7ec; --panel2:#f2ebd9; --panel3:#ede4cd; --line:#e2d8c1; --line2:#d4c8ac;
+    --ink:#2a2519; --mut:#5f5540; --faint:#8f8568;
+    --brass:#8f6d1f; --brass2:#7a5d18;
+    --pos:#2f7d4d; --posbg:#e6f0e4; --warn:#9a7118; --warnbg:#f2e9cf; --neg:#a83f36; --negbg:#f3e0dc; --info:#356f8a;
+  }}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);line-height:1.65;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:800px;margin:0 auto;padding:0 24px 100px}
+  header{max-width:800px;margin:0 auto;padding:60px 24px 24px}
+  .eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.28em;text-transform:uppercase;color:var(--brass);margin:0 0 16px}
+  h1{font-family:var(--serif);font-size:clamp(34px,6vw,54px);line-height:1.05;margin:0 0 18px;font-weight:600;letter-spacing:-.01em;text-wrap:balance}
+  .deck{font-size:19px;color:var(--mut);margin:0;max-width:60ch}
+  .deck b{color:var(--ink);font-weight:600}
+  h2{font-family:var(--mono);font-size:12.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--brass);margin:56px 0 6px;padding-top:22px;border-top:1px solid var(--line)}
+  .lead{font-size:17px;color:var(--mut);margin:4px 0 22px;max-width:66ch}
+  p{margin:12px 0;max-width:66ch}
+  strong{color:var(--ink);font-weight:640}
+  /* the gist box */
+  .gist{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:22px 24px;margin:30px 0}
+  .gist h3{margin:0 0 12px;font-size:16px;font-family:var(--mono);letter-spacing:.05em;color:var(--brass)}
+  .gist p{margin:10px 0}
+  .gist .analogy{border-left:3px solid var(--brass);padding-left:16px;color:var(--ink);font-family:var(--serif);font-size:17px;font-style:italic;margin:16px 0 4px}
+  /* result strip */
+  .result{display:flex;gap:14px;align-items:center;background:var(--warnbg);border:1px solid color-mix(in srgb,var(--warn) 40%,var(--line));border-radius:12px;padding:16px 20px;margin:24px 0}
+  .result .big{font-family:var(--mono);font-size:15px;color:var(--warn);font-weight:600;white-space:nowrap}
+  .result p{margin:0;font-size:14.5px;color:var(--ink)}
+  /* problem cards */
+  .prob{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:22px 24px;margin:18px 0;border-top:4px solid var(--line2)}
+  .prob .hd{display:flex;align-items:baseline;gap:12px;margin-bottom:4px;flex-wrap:wrap}
+  .prob .num{font-family:var(--mono);font-size:22px;color:var(--brass);font-weight:600}
+  .prob h3{margin:0;font-size:21px;font-family:var(--serif);font-weight:600}
+  .prob .plain{font-size:14px;color:var(--faint);font-family:var(--mono);margin-top:2px}
+  .prob .row{margin-top:16px}
+  .prob .tag{display:inline-block;font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--brass);margin-bottom:5px}
+  .prob p{margin:4px 0}
+  .ex{background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:13px 16px;margin:12px 0;font-size:14.5px;color:var(--mut)}
+  .ex b{color:var(--ink)} .ex .bad{color:var(--neg);font-weight:600} .ex .good{color:var(--pos);font-weight:600}
+  .fix{background:var(--posbg);border:1px solid color-mix(in srgb,var(--pos) 30%,var(--line));border-radius:10px;padding:13px 16px;margin:12px 0 2px;font-size:14.5px}
+  .fix .lab{font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--pos);display:block;margin-bottom:4px}
+  /* recipe */
+  .recipe{counter-reset:step;margin:20px 0}
+  .step{display:grid;grid-template-columns:44px 1fr;gap:16px;align-items:start;padding:16px 0;border-bottom:1px solid var(--line)}
+  .step:last-child{border-bottom:none}
+  .step .n{counter-increment:step;width:36px;height:36px;border-radius:50%;background:var(--panel3);border:1px solid var(--brass);color:var(--brass);font-family:var(--mono);font-size:15px;display:flex;align-items:center;justify-content:center}
+  .step .n::before{content:counter(step)}
+  .step h4{margin:2px 0 3px;font-size:16.5px}
+  .step p{margin:0;font-size:14.5px;color:var(--mut)}
+  /* quality dials */
+  .dials{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:18px 0}
+  @media(max-width:640px){.dials{grid-template-columns:1fr}}
+  .dial{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px}
+  .dial .t{font-family:var(--serif);font-size:17px;font-weight:600;margin-bottom:4px}
+  .dial p{margin:0;font-size:13.5px;color:var(--mut)}
+  .callout{background:var(--panel);border:1px solid var(--line);border-left:3px solid var(--info);border-radius:10px;padding:16px 20px;margin:24px 0}
+  .callout b{color:var(--ink)}
+  .foot{margin-top:52px;padding-top:20px;border-top:1px solid var(--line);font-family:var(--mono);font-size:11.5px;color:var(--faint);letter-spacing:.03em;line-height:1.7}
+  em.term{font-style:normal;color:var(--brass2);font-weight:600}
+</style>
+
+<header>
+  <p class="eyebrow">🔍 Zamvar Capital · Fund 1 · Plain-English Explainer</p>
+  <h1>Finding the right precedents</h1>
+  <p class="deck">We gave the playbook a way to match a new event to <b>similar past situations</b>. When we tested it, it didn't help yet. Here's what that means, why, and exactly how we make it work — no jargon.</p>
+</header>
+
+<div class="wrap">
+
+  <div class="gist">
+    <h3>THE GIST</h3>
+    <p>The playbook is meant to work like a seasoned analyst's memory. A new drug event comes up, and the system asks: <b>"what past events were like this one, and what happened to them?"</b> Everything depends on pulling up the <em class="term">right</em> past events.</p>
+    <p class="analogy">Think of it as a filing cabinet of 470 past cases. The whole trick is grabbing the folders that actually rhyme with the situation in front of you — not just any folder from the same drawer.</p>
+    <p>To help it match, we put little <b>situation labels</b> on every past case — sticky notes like "the good news was already expected" or "a tiny company betting on one drug." The plan: when a new event shows up, pull the past cases wearing the same sticky notes.</p>
+  </div>
+
+  <div class="result">
+    <span class="big">Result: no change yet</span>
+    <p>Across five test events, the matching was no better than before. The idea is right — but four fixable things are stopping it from working. None is fatal.</p>
+  </div>
+
+  <h2>The four problems — and how we make each one strong</h2>
+  <p class="lead">Each is explained the same way: what it means in plain terms, a real example from our own test, and the fix.</p>
+
+  <!-- 1 -->
+  <div class="prob" style="border-top-color:var(--warn)">
+    <div class="hd"><span class="num">1</span><h3>The new event barely gets any labels</h3></div>
+    <div class="plain">the jargon term was: "query under-tagging"</div>
+    <div class="row">
+      <span class="tag">What it means</span>
+      <p>Before an event happens, we only know a little about it. So when a new event walks in, we could only stick <b>one</b> label on it — and for earnings events, often <b>zero</b>. If the new event has only one sticky note (or none), there's almost nothing to match on, so the system falls back to "just grab anything from the same drawer."</p>
+    </div>
+    <div class="ex"><b>Real example:</b> Two of our five test events were earnings. Both got <span class="bad">zero labels</span>, so the smart matching never even switched on — it behaved exactly like the old system.</div>
+    <div class="fix"><span class="lab">How we make it strong</span>Get better at reading a new event's situation from what we <b>do</b> know ahead of time — its written thesis, its disease, its type of drug, whether the news was already public, how much cash the company has. Give every new event several <b>accurate</b> labels up front, especially earnings.</div>
+  </div>
+
+  <!-- 2 -->
+  <div class="prob" style="border-top-color:var(--neg)">
+    <div class="hd"><span class="num">2</span><h3>One label is stuck on half of everything</h3></div>
+    <div class="plain">the jargon terms were: "over-broad tag" &amp; "rarity-weighting / IDF"</div>
+    <div class="row">
+      <span class="tag">What it means</span>
+      <p>One of our labels — "a tiny company betting on one drug" — ended up on roughly <b>half of all 470 cases</b>. Matching on a label that common is like sorting people by "owns a phone." It's true of almost everyone, so it tells you almost nothing.</p>
+    </div>
+    <div class="ex"><b>Real example:</b> For a muscle-disease drug (<b>SRRK</b>), all eight matches shared only that one super-common label — so the system handed back a grab-bag across totally unrelated diseases. Technically "matched," practically <span class="bad">useless</span>.</div>
+    <div class="fix"><span class="lab">How we make it strong</span>Two moves. <b>(a) Split</b> the giant label into more specific ones (e.g. "tiny company, late-stage make-or-break trial" vs "tiny company, early hint of data"). <b>(b) Make rare labels count more.</b> A label on only 20 cases is far more telling than one on 235 — so a rare shared label should pull two cases together strongly, a common one barely at all. (That's all "rarity-weighting" means: <em class="term">the rarer the shared trait, the more it means</em>.)</div>
+  </div>
+
+  <!-- 3 -->
+  <div class="prob" style="border-top-color:var(--neg)">
+    <div class="hd"><span class="num">3</span><h3>Sometimes we stuck the wrong label on</h3></div>
+    <div class="plain">the jargon term was: "mis-tag"</div>
+    <div class="row">
+      <span class="tag">What it means</span>
+      <p>Our labeler is a simple rule-of-thumb text scanner, so it occasionally mislabels a case. And because a new event only carries one or two labels, a single <b>wrong</b> label sends the whole lookup in the wrong direction.</p>
+    </div>
+    <div class="ex"><b>Real example:</b> A kidney-disease event (<b>VERA</b>) was wrongly labeled "a hard disease where drugs usually fail." That one wrong note steered the search straight into <span class="bad">brain-disease</span> cases (Alzheimer's, ALS) — zero kidney cases came back.</div>
+    <div class="fix"><span class="lab">How we make it strong</span>Add a <b>quality-check pass</b>: sanity-check each label against the case's actual disease and drug, and flag suspicious ones before they ever reach a search. For the labeling itself, a smarter labeler (reading the full story rather than scanning for keywords) makes far fewer mistakes.</div>
+  </div>
+
+  <!-- 4 -->
+  <div class="prob" style="border-top-color:var(--brass)">
+    <div class="hd"><span class="num">4</span><h3>We forgot to match on the obvious thing first</h3></div>
+    <div class="plain">the jargon terms were: "mechanism / indication axis" &amp; "domain floor"</div>
+    <div class="row">
+      <span class="tag">What it means</span>
+      <p>We matched only on the <b>situation</b> sticky notes and skipped the most obvious question a real analyst asks first: <b>is this even the same disease, or the same kind of drug?</b> A muscle-disease precedent and a psoriasis precedent can share a situation note, but they're not useful comparisons for each other.</p>
+    </div>
+    <div class="ex"><b>Real example:</b> For the muscle-disease drug, the system returned psoriasis and Alzheimer's cases that happened to share a situation label. Same "situation," <span class="bad">wrong world</span>.</div>
+    <div class="fix"><span class="lab">How we make it strong</span>Get the order right. <b>First</b> narrow to the same disease-area or type of drug (the "floor" — the non-negotiable baseline). <b>Then</b> use the situation labels to pick the best matches within that. Disease/drug is the foundation; situation is the refinement. We'd had it backwards — this is the single highest-impact fix.</div>
+  </div>
+
+  <h2>Zooming in: what "better label quality" really means</h2>
+  <p class="lead">Problems 2 and 3 are both really about label quality. A good labeling system needs three things:</p>
+  <div class="dials">
+    <div class="dial"><div class="t">Accurate</div><p>The label is actually true of the case. No kidney event tagged as a brain-disease graveyard. (Fixes problem 3.)</p></div>
+    <div class="dial"><div class="t">Specific</div><p>Labels carve the world into useful pieces — not one label smeared across half of everything. (Fixes problem 2.)</p></div>
+    <div class="dial"><div class="t">Weighted</div><p>Rare, telling labels count more than common ones, so a real match outranks a coincidental one.</p></div>
+  </div>
+  <p>The cheapest way to get all three: <b>split the broad labels</b>, <b>weight rare ones higher</b>, and upgrade the labeler from a keyword-scanner to one that reads the whole case (with a spot-check audit on top). None of this requires re-collecting any data — it's all refinement of what we already have.</p>
+
+  <h2>Putting it together: the improved matching recipe</h2>
+  <p class="lead">All four fixes combine into one better way of pulling precedents:</p>
+  <div class="recipe">
+    <div class="step"><span class="n"></span><div><h4>Start in the right world</h4><p>Only consider past cases in the same disease-area or same type of drug. This is the floor — situation can never override it. <em style="color:var(--faint)">(fix 4)</em></p></div></div>
+    <div class="step"><span class="n"></span><div><h4>Give the new event a full, accurate read</h4><p>From everything knowable beforehand, tag its real situation — several labels, not one, and right ones. <em style="color:var(--faint)">(fixes 1 &amp; 3)</em></p></div></div>
+    <div class="step"><span class="n"></span><div><h4>Rank by meaningful overlap</h4><p>Among the right-world cases, prefer those sharing the new event's situation labels — counting rare, telling labels much more than common ones. <em style="color:var(--faint)">(fix 2)</em></p></div></div>
+    <div class="step"><span class="n"></span><div><h4>Hand back the folders that truly rhyme</h4><p>The analyst-agent now reasons from precedents that share both the world <b>and</b> the situation — the way a human PM actually thinks.</p></div></div>
+  </div>
+
+  <div class="callout">
+    <b>One thing that already works — keep it.</b> We stopped letting the system lean on the company's ticker symbol to find matches, and it lost nothing: a company's own past events still surface on the strength of their story alone. That quietly removed a way the system could have fooled itself.
+  </div>
+
+  <h2>Why this is worth doing</h2>
+  <p>When the memory pulls the <b>right</b> precedents, two things get better at once: the agent reasons about a new event from cases that genuinely rhyme with it, and the "expected move" estimate is built from realistic comparisons instead of noise. Get the matching right, and every downstream judgment the desk makes rests on a firmer floor.</p>
+  <p>Today the situation-label system is <b>built and measured</b> — a foundation, not yet a win. The test told us precisely which four things to sharpen. The biggest single lever is <b>fix 4</b>: match on the right disease and drug first, then let the situation refine it.</p>
+
+  <p class="foot">Zamvar Capital — Fund 1 · precedent memory, 470 tagged cases · v1 built &amp; measured (held all 5 test grades) · next: disease/drug floor + rarer-label weighting + fuller, audited labels · validation = the forward paper month, not a backtest.</p>
+</div>
