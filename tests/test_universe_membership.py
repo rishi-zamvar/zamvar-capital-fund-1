@@ -299,6 +299,71 @@ def test_select_members_skips_untradeable(db, monkeypatch):
     assert "not_optionable" in high_rej["reasons"]
 
 
+def test_min_median_move_floor_default():
+    import inspect
+
+    assert discover._DEFAULT_MIN_MEDIAN_MOVE == 0.10
+    assert inspect.signature(discover.select_members).parameters["min_median_move"].default == 0.10
+
+
+def test_floor_drops_weak_tail_regardless_of_pool(db, monkeypatch):
+    # HUGE target so the percentile-cut alone would admit EVERYONE; only the floor can drop a name.
+    _wire_tradeable(monkeypatch)
+    _seed_name(db, "WEAK1", [0.05, 0.05])   # median 0.05 < 0.10 floor
+    _seed_name(db, "WEAK2", [0.08, 0.08])   # median 0.08 < 0.10 floor
+    _seed_name(db, "STRONG1", [0.20, 0.20])
+    _seed_name(db, "STRONG2", [0.35, 0.35])
+    members, rejected, report = discover.select_members(db, "2026-08-17", target_size=1000)
+    assert {m["ticker"] for m in members} == {"STRONG1", "STRONG2"}  # weak tail NEVER a member
+    rej_floor = {r["ticker"] for r in rejected if "below_move_floor" in r.get("reasons", [])}
+    assert rej_floor == {"WEAK1", "WEAK2"}
+    assert report["n_below_floor"] == 2
+
+
+def test_floor_composes_with_percentile_cut(db, monkeypatch):
+    # many above-floor names + a small target -> members == top scorers up to target; floor doesn't
+    # interfere with the cut on above-floor names.
+    _wire_tradeable(monkeypatch)
+    for i in range(5):
+        m = 0.20 + i * 0.01
+        _seed_name(db, f"S{i}", [m, m])
+    members, rejected, report = discover.select_members(db, "2026-08-17", target_size=3)
+    assert len(members) == 3
+    assert report["n_below_floor"] == 0  # all above the 0.10 floor
+    assert "cut_percentile" in report and "min_median_move" in report
+
+
+def test_floor_configurable_via_criteria(db, monkeypatch):
+    _wire_tradeable(monkeypatch)
+    _seed_name(db, "MED", [0.20, 0.20])  # median 0.20
+    m1, _, _ = discover.select_members(db, "2026-08-17", target_size=80)
+    assert "MED" in {m["ticker"] for m in m1}  # passes the default 0.10 floor
+    m2, rej2, report2 = discover.select_members(
+        db, "2026-08-17", target_size=80, criteria={"min_median_move": 0.25})
+    assert "MED" not in {m["ticker"] for m in m2}  # 0.20 < raised 0.25 floor
+    assert any("below_move_floor" in r.get("reasons", []) for r in rej2)
+    assert report2["min_median_move"] == 0.25
+
+
+def test_floor_reported(db, monkeypatch):
+    _wire_tradeable(monkeypatch)
+    _seed_name(db, "AAA", [0.20, 0.20])
+    _, _, report = discover.select_members(db, "2026-08-17", target_size=80)
+    assert report["min_median_move"] == 0.10
+    assert "n_below_floor" in report
+
+
+def test_build_universe_density_in_summary(db, monkeypatch):
+    cands = {1: _bk_cand(1, "BBIO"), 2: _bk_cand(2, "AXSM", ta="cns")}
+    _wire_build_backward(monkeypatch, cands)
+    summary = discover.build_universe(db, "2026-08-17")
+    assert "events_per_week" in summary and summary["events_per_week"] > 0
+    n_member_moves = sum(a["n_moves"] for a in summary["admissions"])
+    assert summary["n_member_moves"] == n_member_moves
+    # reconciles: measured member-moves / trailing weeks (edgar_years default 5 -> 260 weeks)
+    assert summary["events_per_week"] == pytest.approx(round(n_member_moves / (5 * 52), 3))
+
+
 def test_insufficient_history_not_member(db, monkeypatch):
     _wire_tradeable(monkeypatch)
     _seed_name(db, "GOOD", [0.30, 0.40])   # 2 events -> eligible

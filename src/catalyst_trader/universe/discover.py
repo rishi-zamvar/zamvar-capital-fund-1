@@ -575,6 +575,10 @@ _DEFAULT_TARGET_UNIVERSE_SIZE = 80  # replaces target_lambda for membership (N i
 # real day-precision measured move (month-precision events never got a catalyst_move row). One shared
 # default tuple keeps _registry_moves/score_registry/select_members in sync (DRY).
 _LIVE_PARITY_SCORE_TYPES = ("pdufa", "trial_readout", "adcom")
+# UNIV-10: absolute median-move floor — a scorable name whose median measured |move| is below this
+# is NEVER a member, regardless of pool size or the percentile-cut (deletes the weak ~1% tail
+# deterministically). Overridable per-call via criteria["min_median_move"] for the live-run tune.
+_DEFAULT_MIN_MEDIAN_MOVE = 0.10
 
 
 def _name_volatility(
@@ -646,6 +650,7 @@ def score_registry(
 def select_members(
     conn, as_of: str, *, target_size: int = _DEFAULT_TARGET_UNIVERSE_SIZE,
     big_move: float = _DEFAULT_BIG_MOVE, min_events: int = _DEFAULT_MIN_EVENTS,
+    min_median_move: float = _DEFAULT_MIN_MEDIAN_MOVE,
     catalyst_types: tuple[str, ...] = _LIVE_PARITY_SCORE_TYPES, criteria: dict | None = None,
 ) -> tuple[list[dict], list[dict], dict]:
     """BACKWARD percentile-cut membership (UNIV-02b/03/07). Returns (members, rejected, report).
@@ -660,15 +665,27 @@ def select_members(
     4. N = len(members) — an OUTPUT (<= target_size; honest under-fill when scorable+tradeable <
        target, reported, never padded). cut_percentile = 1 - N/n_scorable.
     """
+    floor = (criteria or {}).get("min_median_move", min_median_move)
     scorable, insufficient = score_registry(
         conn, big_move=big_move, min_events=min_events, catalyst_types=catalyst_types
     )
     n_scorable = len(scorable)
     ranked = sorted(scorable, key=lambda r: r["vol_score"], reverse=True)
 
+    # UNIV-10: apply the median-move floor as an ABSOLUTE gate FIRST — a sub-floor name is rejected
+    # and never screened/admitted, regardless of pool size or remaining target slots. Then the
+    # percentile-cut walk fills the target from the ABOVE-FLOOR survivors only. Pre-partitioning
+    # (not interleaving with the target break) keeps the floor absolute AND n_below_floor exact.
+    below_floor = [r for r in ranked if r["median_move"] < floor]
+    above_floor = [r for r in ranked if r["median_move"] >= floor]
+
     members: list[dict] = []
-    rejected: list[dict] = []
-    for rec in ranked:
+    rejected: list[dict] = [
+        {"ticker": r["ticker"], "median_move": r["median_move"], "vol_score": r.get("vol_score"),
+         "reasons": ["below_move_floor"]}
+        for r in below_floor
+    ]
+    for rec in above_floor:
         # A store-scored pseudo-candidate for the tradeability screen; realized_move_median carries
         # the backward median so screen_candidates attaches it (no move recompute, no network).
         cand = {**rec, "cik": None, "catalysts": [], "realized_move_median": rec["median_move"]}
@@ -688,6 +705,8 @@ def select_members(
         "target_size": target_size,
         "target_reached": N >= target_size,
         "cut_percentile": round(1 - N / n_scorable, 4) if n_scorable else 0.0,
+        "min_median_move": floor,
+        "n_below_floor": len(below_floor),
         "big_move": big_move,
         "min_events": min_events,
         "members": [
@@ -997,7 +1016,7 @@ _TRADEOFF_NOTE = (
 
 def build_universe(
     conn, as_of: str, *, target_lambda: float = 1.75, criteria: dict | None = None,
-    date_from: str | None = None, date_to: str | None = None,
+    date_from: str | None = None, date_to: str | None = None, edgar_years: int = 5,
 ) -> dict:
     """Orchestrate discover+backfill -> select_members (BACKWARD percentile-cut) -> build_snapshot
     into a survivorship-free append-only `universe_as_of` cohort, returning a run summary with
@@ -1021,7 +1040,7 @@ def build_universe(
     # CT.gov = forward completion window; efts = MULTI-YEAR (5yr) TRAILING filing window (PDUFA-
     # announcing 8-Ks are filed months before the catalyst — a forward filing window returns 0;
     # the 5yr breadth doubles as the warm-start historical-catalyst backfill). Verified live.
-    candidates = discover_candidates(date_from, date_to)
+    candidates = discover_candidates(date_from, date_to, edgar_years=edgar_years)
 
     # Warm-start backfill: persist each candidate's historical catalysts + point-in-time realized
     # moves BEFORE scoring, so select_members reads real moves from the store (zero API) + the
@@ -1061,9 +1080,24 @@ def build_universe(
             "n_moves": r.get("n_moves"),
         })
 
+    # DENSITY (UNIV-10): a BACKWARD proxy — sum of members' measured moves / the trailing-window
+    # weeks (edgar_years * 52). ZERO extra API (reads the n_moves already attached). NOTE: this is a
+    # historical measured-moves-per-week figure across the cohort, NOT a forward tradeable-catalyst
+    # guarantee — the live re-run reports it vs the ~1/week SELECTION goal, not as throughput.
+    n_member_moves = sum(m.get("n_moves", 0) for m in members)
+    weeks = edgar_years * 52
+    events_per_week = round(n_member_moves / weeks, 3) if weeks else 0.0
+
     return {
         "as_of": as_of,
         "n_candidates": len(candidates),
+        # backward density proxy (zero-API; historical moves/week, not a forward guarantee)
+        "n_member_moves": n_member_moves,
+        "events_per_week": events_per_week,
+        "density_note": (
+            "BACKWARD proxy: historical measured member-moves / trailing weeks "
+            "(edgar_years*52) — NOT a forward tradeable-catalyst guarantee"
+        ),
         # backward-membership fields (Plan 07 pivot)
         "n_scorable": select_report["n_scorable"],
         "N": select_report["N"],  # OUTPUT: len(members) <= target_size (honest under-fill)
