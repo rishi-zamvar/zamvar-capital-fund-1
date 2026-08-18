@@ -68,8 +68,8 @@ footer{margin-top:44px;padding-top:18px;border-top:1px solid var(--line);color:v
 <h2>Why it lost &mdash; root-caused, not hand-waved</h2>
 <div class="finding"><h3>1. Buy-the-dip sleeve caught falling knives <span class="tag">the big loser</span></h3>
 <div class="why">14 statistical trades, <strong class="n">7% win rate</strong>, -99% summed. It kept buying CAPR as it collapsed post-CRL (&minus;10/&minus;12/&minus;21%). Root cause: <code>classify_drop</code>&rsquo;s busted-catalyst / news gating is <strong>unwired</strong> (no news feed), so on a hindsight-selected <em>high-mover</em> universe (which over-weights the year&rsquo;s biggest movers = often CRL crashers) it can&rsquo;t tell a clean dip from a structural collapse.</div></div>
-<div class="finding"><h3>2. Catalyst legs are directionless <span class="tag">~break-even</span></h3>
-<div class="why">7 PDUFA trades, 43% win, -2.8% &mdash; a coin flip. Layer-A goes <em>blindly long</em> into every catalyst; it has no way to avoid a likely CRL. This is exactly the slot the catalyst-desk direction call + football-field fill.</div></div>
+<div class="finding"><h3>2. Catalyst legs are directionless &mdash; and the base rate is against long <span class="tag">~break-even</span></h3>
+<div class="why">7 PDUFA trades, 43% win, -2.8%. Layer-A goes <em>blindly long</em> into every catalyst with no way to avoid a likely CRL. Measured on our now-<strong>signed</strong> move data, biotech catalysts resolve <strong class="n">56% DOWN / 44% up</strong> &mdash; so blind-long is structurally negative-EV. This is exactly the slot the catalyst-desk direction call + football-field fill.</div></div>
 <div class="finding"><h3>3. Too defensive to participate <span class="tag">missed +73%</span></h3>
 <div class="why">Only 21 active trades in 52 weeks &mdash; the eligibility gates are strict and, being long-only with no beta sleeve, it never rode the sector. In a bull year that is a large opportunity cost worth a design decision.</div></div>
 
@@ -79,8 +79,9 @@ footer{margin-top:44px;padding-top:18px;border-top:1px solid var(--line);color:v
 <li class="done">PIT knowability restamp &mdash; 41/42 PDUFA acceptance dates recovered from SEC; readouts = same-day <span class="tag">leak-free</span></li>
 <li class="done">Fixed the vacuous-backtest root cause &mdash; gateway now surfaces resolved catalysts (+2 regression tests, 40 green)</li>
 <li class="done">73-name movement-screened universe locked + published artifact</li>
-<li class="done">Football-field valuation phase &mdash; research + 5 execution plans ready (2 net-new plugins only)</li>
-<li class="done">Backtest runs end-to-end, committed &amp; pushed</li>
+<li class="done">Football-field Wave 1 shipped &mdash; <code>expected_move_field</code> aggregator + <code>analyst_pt_move</code> + param seam (TDD, 1309 tests green) <span class="tag">gsd</span></li>
+<li class="done">Signed-move recompute (A3) + cross-source dedup (A4) &mdash; direction data now honest (56% down)</li>
+<li class="done">Backtest runs end-to-end, all committed &amp; pushed</li>
 </ul>
 
 <h2>Decision gates for you <span class="tag">money-path</span></h2>
