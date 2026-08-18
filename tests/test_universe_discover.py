@@ -552,3 +552,76 @@ def test_sec_map_degrade(monkeypatch, tmp_path):
     out = discover.discover_ctgov("2026-08-17", "2027-08-17", sponsor_map={})
     assert 1567514 not in out  # degraded -> not resolved, not crashed
     assert "Intra-Cellular Therapies, Inc." in review.read_text()
+
+
+# ── Dedup one event stored once + earnings stored-but-excluded-from-universe-score ────────────
+
+
+def _cand(ticker, catalysts, *, cik=1):
+    return {"cik": cik, "ticker": ticker, "company_name": ticker,
+            "source_feeds": {"edgar"}, "catalysts": catalysts}
+
+
+def test_dedup_catalysts_by_ticker_date_type_earliest_wins():
+    """N filings about one (event_date, catalyst_type) collapse to ONE, keeping the EARLIEST-filed
+    instance (earliest knowable date = correct point-in-time). Distinct dates/types are kept."""
+    from catalyst_trader.universe import discover
+
+    cats = [
+        {"type": "pdufa", "event_date": "2026-11-01", "filing_date": "2026-03-05", "source_url": "late"},
+        {"type": "pdufa", "event_date": "2026-11-01", "filing_date": "2026-01-10", "source_url": "early"},
+        {"type": "pdufa", "event_date": "2026-11-01", "filing_date": "2026-02-01", "source_url": "mid"},
+        {"type": "trial_readout", "event_date": "2024-06-10", "filing_date": "2024-06-10", "source_url": "r"},
+    ]
+    out = discover._dedup_catalysts(cats)
+    p = [c for c in out if c["type"] == "pdufa"]
+    assert len(p) == 1  # 3 filings about one (ticker,date,type) -> exactly 1 catalyst
+    assert p[0]["source_url"] == "early"  # earliest-filed instance wins
+    assert len([c for c in out if c["type"] == "trial_readout"]) == 1  # distinct event kept
+
+
+def test_persist_backfill_dedups_to_one_catalyst(db, monkeypatch):
+    """Whole persist path: 5 duplicate PDUFA 8-Ks -> exactly ONE stored catalyst (the earliest)."""
+    from catalyst_trader.universe import discover
+
+    monkeypatch.setattr(discover, "_realized_catalyst_move", lambda t, ed, **k: (0.2, "(-1,2)", ed, "green"))
+    cats = [
+        {"type": "pdufa", "event_date": "2026-11-01", "filing_date": f"2026-0{i}-01",
+         "source_url": f"u{i}", "fetch_ts": "t", "grade": "green"}
+        for i in (5, 1, 3, 2, 4)
+    ]
+    discover._persist_backfill(db, _cand("AUTL", cats))
+    rows = db.execute("SELECT external_ref FROM catalyst WHERE catalyst_type='pdufa'").fetchall()
+    assert len(rows) == 1
+    assert rows[0]["external_ref"] == "u1"  # 2026-01-01 earliest-filed wins
+
+
+def test_persist_backfill_stores_earnings_excluded_from_vol_score(db, monkeypatch):
+    """Earnings are persisted (catalyst + catalyst_move) for the playbook, but the backward scorer's
+    type filter EXCLUDES them -> vol_score is identical to a readout-only registry (money-path)."""
+    from catalyst_trader.universe import discover
+
+    def _fake_move(ticker, event_date, **k):
+        return (0.05 if event_date.startswith("2025") else 0.20, "(-1,2)", event_date, "green")
+
+    monkeypatch.setattr(discover, "_realized_catalyst_move", _fake_move)
+    cats = [
+        {"type": "trial_readout", "event_date": "2024-01-10", "filing_date": "2024-01-10",
+         "source_url": "r1", "fetch_ts": "t", "grade": "green"},
+        {"type": "trial_readout", "event_date": "2024-06-10", "filing_date": "2024-06-10",
+         "source_url": "r2", "fetch_ts": "t", "grade": "green"},
+        {"type": "earnings", "event_date": "2025-02-04", "filing_date": "2025-02-04",
+         "source_url": "e1", "fetch_ts": "t", "grade": "green"},
+    ]
+    discover._persist_backfill(db, _cand("ZZZ", cats))
+
+    # earnings IS stored (playbook-relevant) — both the catalyst and its move row
+    assert db.execute("SELECT COUNT(*) FROM catalyst WHERE catalyst_type='earnings'").fetchone()[0] == 1
+    assert 0.05 in [r["realized_move"] for r in db.execute("SELECT realized_move FROM catalyst_move").fetchall()]
+
+    # but the scorer's type filter excludes it -> vol_score from the two 0.20 readouts ONLY
+    assert 0.05 not in discover._registry_moves(db)["ZZZ"]["moves"]
+    scorable, _ = discover.score_registry(db)
+    zzz = next(s for s in scorable if s["ticker"] == "ZZZ")
+    assert zzz["median_move"] == 0.20  # NOT dragged down by the 0.05 earnings move
+    assert zzz["n_moves"] == 2

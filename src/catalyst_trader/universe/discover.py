@@ -335,7 +335,7 @@ def discover_edgar(
             if not html:  # exhibit degraded -> skip this hit, others still emit
                 continue
             company_name = _company_name_from_display(display[0] if display else None)
-            for cand in _extract(html, src.get("file_date")):
+            for cand in _extract(html, src.get("file_date"), items=src.get("items"), doc=doc):
                 if cand["confidence"] != "HIGH":
                     continue  # MEDIUM -> pdufa_edgar's live review CSV, not double-handled here
                 entry = out.setdefault(
@@ -352,6 +352,7 @@ def discover_edgar(
                     {
                         "type": cand["catalyst_type"].value,
                         "event_date": cand["event_date"],
+                        "filing_date": src.get("file_date"),  # earliest-filed dedup key (point-in-time)
                         "source_url": url,
                         "fetch_ts": now_iso(),
                         "grade": "green",  # HIGH-confidence SEC EDGAR extraction (self-verifying)
@@ -409,8 +410,11 @@ def discover_candidates(
     merged: dict[int, dict] = {}
     for feed in (ctgov, *edgar_feeds):
         for cik, cand in feed.items():
-            live = [c for c in cand["catalysts"] if c["type"] in LIVE_PARITY_TYPES]
-            if not live:
+            # Membership evidence gate: a CIK is a candidate only if it has >=1 live-parity catalyst
+            # (pdufa/adcom/trial_readout). But once it qualifies, carry ALL its catalysts (incl.
+            # earnings) so they persist for the playbook — the scorer's type filter keeps earnings out
+            # of the universe score. An earnings-only CIK (no live-parity anywhere) is never a candidate.
+            if not any(c["type"] in LIVE_PARITY_TYPES for c in cand["catalysts"]):
                 continue
             entry = merged.setdefault(
                 cik,
@@ -422,7 +426,7 @@ def discover_candidates(
                     "source_feeds": set(),
                 },
             )
-            entry["catalysts"].extend(live)
+            entry["catalysts"].extend(cand["catalysts"])
             entry["source_feeds"] |= set(cand["source_feeds"])
             entry["company_name"] = entry["company_name"] or cand.get("company_name")
     return merged
@@ -535,18 +539,36 @@ def _upsert_move(conn, catalyst_id: int, move: float, move_window: str, knowable
     conn.commit()
 
 
+def _dedup_catalysts(catalysts: list[dict]) -> list[dict]:
+    """Collapse duplicate 8-Ks referencing the SAME event to ONE catalyst, keyed by
+    (event_date, catalyst_type) — the ticker is fixed per candidate. Multiple filings recap the same
+    PDUFA date (AUTL x6, CAPR x5, ...) -> keep the EARLIEST-filed instance (earliest knowable date =
+    correct point-in-time provenance). filing_date is the sort key (falls back to event_date/fetch_ts
+    for feeds like CT.gov that carry no filing_date)."""
+    best: dict[tuple, dict] = {}
+    for c in catalysts:
+        key = (c["event_date"], c["type"])
+        stamp = c.get("filing_date") or c.get("event_date") or c.get("fetch_ts") or ""
+        cur = best.get(key)
+        if cur is None or stamp < (cur.get("filing_date") or cur.get("event_date") or cur.get("fetch_ts") or ""):
+            best[key] = c
+    return list(best.values())
+
+
 def _persist_backfill(conn, candidate: dict) -> list[int]:
     """Persist a candidate's historical catalysts (catalyst table) + their point-in-time realized
     moves (catalyst_move table) as the warm-start backfill. Idempotent: re-running upserts by
     (ticker, external_ref) and UNIQUE(catalyst_id, move_window), never duplicating. Attaches the
     per-name median realized move + n_moves to the candidate (read by the move screen). Returns the
     persisted catalyst ids. A single catalyst failing to persist degrades (skip), never raises.
+
+    ALL catalyst types are persisted (incl. earnings) so earnings stay for the playbook; the backward
+    universe scorer (_registry_moves) excludes non-parity types at the SQL level, so this does NOT
+    pollute membership. Duplicate 8-Ks about one event are collapsed FIRST (one catalyst per event).
     """
     ids: list[int] = []
     moves: list[float] = []
-    for c in candidate.get("catalysts", []):
-        if c["type"] not in LIVE_PARITY_TYPES:
-            continue
+    for c in _dedup_catalysts(candidate.get("catalysts", [])):
         try:
             cid = insert_catalyst(conn, _to_catalyst_model(candidate, c))
         except Exception as e:  # noqa: BLE001 — a bad row degrades, never sinks the backfill
@@ -558,7 +580,8 @@ def _persist_backfill(conn, candidate: dict) -> list[int]:
         if mv is not None:
             move, move_window, knowable_asof, grade = mv
             _upsert_move(conn, cid, move, move_window, knowable_asof, grade)
-            moves.append(move)
+            if c["type"] in LIVE_PARITY_TYPES:
+                moves.append(move)  # per-name candidate stat stays universe-relevant (earnings excluded)
     candidate["realized_move_median"] = _name_move_stat(moves)
     candidate["n_moves"] = len(moves)
     return ids
