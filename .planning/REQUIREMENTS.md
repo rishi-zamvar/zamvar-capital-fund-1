@@ -148,8 +148,8 @@
 - [ ] **PLAY-02**: Pre-event setup features stamped as-of `pre_event_asof` (drop-regime, base rates, SI, options-implied move/IV, fundamentals/runway/float, analyst signals, prior analogs) — point-in-time, no peek at the outcome.
 - [ ] **PLAY-03**: Post-event outcome computed deterministically from bars + fill.py (1d/1wk move, direction, surprise-vs-expected, IV crush, hedge-leg behavior) — no LLM arithmetic.
 - [ ] **PLAY-04**: Structured RATIONALE — mechanism (sourced + cited), surprise + which pre-signals were predictive (deterministic match), inferred-vs-sourced labeled. cite-or-drop.
-- [ ] **PLAY-05**: No-look-ahead guaranteed by two disjoint as-of passes + `last_verified_at <= effective_asof`; historical backfill (backtest events → records) + forward WEEK-05 seam (each resolved trade → a record).
-- [ ] **PLAY-06**: Per-cohort (catalyst-type × therapeutic-area × drop-regime) `fitted_params` refit via seed_fitted_params/load_params, with per-stock adjustment only where a name has enough history; `analog_query` returns real analogs. `kb.insert_catalyst_record` + `scripts/build_playbooks.py`.
+- [x] **PLAY-05**: No-look-ahead guaranteed by two disjoint as-of passes + `last_verified_at <= effective_asof`; historical backfill (backtest events → records) + forward WEEK-05 seam (each resolved trade → a record).
+- [x] **PLAY-06**: Per-cohort (catalyst-type × therapeutic-area × drop-regime) `fitted_params` refit via seed_fitted_params/load_params, with per-stock adjustment only where a name has enough history; `analog_query` returns real analogs. `kb.insert_catalyst_record` + `scripts/build_playbooks.py`.
 
 ### Backtest / Baseline Harness (BACK)
 

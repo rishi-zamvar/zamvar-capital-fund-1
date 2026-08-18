@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: verifying
-stopped_at: Completed 07.7-02-PLAN.md
-last_updated: "2026-08-18T05:50:57.483Z"
+stopped_at: Completed 07.5-02-PLAN.md
+last_updated: "2026-08-18T19:10:49.580Z"
 last_activity: 2026-08-18
 progress:
-  total_phases: 17
+  total_phases: 19
   completed_phases: 11
-  total_plans: 67
-  completed_plans: 66
+  total_plans: 77
+  completed_plans: 70
 ---
 
 # Project State
@@ -128,6 +128,7 @@ Note: Phase 6.9/6.10 are retro-inserted sub-phases; the frontmatter project-wide
 | Phase 06.12 P07 | 22min | 3 tasks tasks | 4 files files |
 | Phase 06.12 P08 | 20min | 3 tasks | 5 files |
 | Phase 07.7 P02 | 10m | 2 tasks | 3 files |
+| Phase 07.5 P02 | 10min | 3 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -245,6 +246,7 @@ Recent decisions affecting current work:
 - [Phase 06.12]: Backward scorer is ZERO-API (reads persisted catalyst_move JOIN catalyst); tradeability API hits only the ranked top slice; Blocker-1(min_catalyst_density=0)/Blocker-3(included_count distinct from N) preserved
 - [Phase 06.12]: Readout capture (UNIV-08): trial-RESULT 8-Ks -> day-precision trial_readout catalysts as the RESIDUAL branch of _extract (PDUFA/AdCom precedence), event_date = filing_date
 - [Phase 06.12]: Scorer widened to pdufa+trial_readout+adcom (UNIV-09) + absolute min_median_move floor 0.10 (UNIV-10) applied before the percentile-cut
+- [Phase 07.5]: as_of gate is the SINGLE no-look-ahead guarantee: knowable_asof is the T+2 date, so gating the catalyst also gates its realized move
 
 ### Pending Todos
 
@@ -258,6 +260,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-08-18T05:50:57.478Z
-Stopped at: Completed 07.7-02-PLAN.md
+Last session: 2026-08-18T19:10:44.194Z
+Stopped at: Completed 07.5-02-PLAN.md
 Resume file: None
