@@ -151,16 +151,47 @@ def test_screen_still_tradeability(monkeypatch):
 
 
 def test_registry_moves_grouped_by_ticker(db):
-    # two PDUFA moves for BBIO -> one entry with 2 moves; an adcom row is EXCLUDED under the default
-    # catalyst_types=("pdufa",).
+    # UNIV-09 (widened default): the adcom move (0.99) now COUNTS alongside the two pdufa moves
+    # (was excluded under the old pdufa-only default; this pivot-correction is documented).
     _seed_name(db, "BBIO", [0.20, 0.35])
     aid = _seed_catalyst(db, "BBIO", "2022-03-01", "BBIO-adcom", ctype="adcom")
     _seed_move(db, aid, 0.99)
     reg = discover._registry_moves(db)
     assert set(reg) == {"BBIO"}
-    assert sorted(reg["BBIO"]["moves"]) == [0.20, 0.35]  # adcom 0.99 excluded
+    assert sorted(reg["BBIO"]["moves"]) == [0.20, 0.35, 0.99]  # adcom now counted (widened default)
     assert reg["BBIO"]["ticker"] == "BBIO"
     assert reg["BBIO"]["company_name"] == "BBIO Inc."
+
+
+def test_registry_moves_counts_readout_only_name(db):
+    # UNIV-09 pool-grower: a name measurable ONLY via trial_readout is now visible (invisible under
+    # the old pdufa-only default).
+    _seed_name(db, "READONLY", [0.22, 0.28], ctype="trial_readout")
+    reg = discover._registry_moves(db)
+    assert "READONLY" in reg
+    assert sorted(reg["READONLY"]["moves"]) == [0.22, 0.28]
+
+
+def test_score_counts_all_live_parity(db):
+    # 1 pdufa + 1 trial_readout -> n_moves==2 -> scorable (was <2 pdufa-only -> insufficient).
+    pid = _seed_catalyst(db, "MIXED", "2024-05-31", "MIXED-p", ctype="pdufa")
+    _seed_move(db, pid, 0.30)
+    rid = _seed_catalyst(db, "MIXED", "2023-02-15", "MIXED-r", ctype="trial_readout")
+    _seed_move(db, rid, 0.40)
+    scorable, insufficient = discover.score_registry(db)
+    assert {r["ticker"] for r in scorable} == {"MIXED"}
+    assert next(r for r in scorable if r["ticker"] == "MIXED")["n_moves"] == 2
+    assert not insufficient
+
+
+def test_default_catalyst_types_widened():
+    # guard against silent regression to pdufa-only
+    assert discover._LIVE_PARITY_SCORE_TYPES == ("pdufa", "trial_readout", "adcom")
+    import inspect
+
+    for fn in (discover._registry_moves, discover.score_registry, discover.select_members):
+        assert inspect.signature(fn).parameters["catalyst_types"].default == (
+            "pdufa", "trial_readout", "adcom")
 
 
 def test_name_volatility_score():

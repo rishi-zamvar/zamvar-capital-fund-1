@@ -571,6 +571,10 @@ def _persist_backfill(conn, candidate: dict) -> list[int]:
 _DEFAULT_BIG_MOVE = 0.15          # |move| >= this counts as a "big move"
 _DEFAULT_MIN_EVENTS = 2           # a name needs >=2 measured PAST events to be scorable
 _DEFAULT_TARGET_UNIVERSE_SIZE = 80  # replaces target_lambda for membership (N is an OUTPUT <= this)
+# UNIV-09: score every live-parity measurable move, not just pdufa. Every counted move is still a
+# real day-precision measured move (month-precision events never got a catalyst_move row). One shared
+# default tuple keeps _registry_moves/score_registry/select_members in sync (DRY).
+_LIVE_PARITY_SCORE_TYPES = ("pdufa", "trial_readout", "adcom")
 
 
 def _name_volatility(
@@ -597,7 +601,7 @@ def _name_volatility(
     }
 
 
-def _registry_moves(conn, *, catalyst_types: tuple[str, ...] = ("pdufa",)) -> dict[str, dict]:
+def _registry_moves(conn, *, catalyst_types: tuple[str, ...] = _LIVE_PARITY_SCORE_TYPES) -> dict[str, dict]:
     """Read the persisted registry (catalyst_move JOIN catalyst) grouped by ticker, scoped to
     `catalyst_types` (operator default 'pdufa') -> {ticker: {"ticker","company_name","moves":[...]}}.
     ZERO API (store-only). Only past + day-precision events ever got a catalyst_move row, so every
@@ -621,7 +625,7 @@ def _registry_moves(conn, *, catalyst_types: tuple[str, ...] = ("pdufa",)) -> di
 
 def score_registry(
     conn, *, big_move: float = _DEFAULT_BIG_MOVE, min_events: int = _DEFAULT_MIN_EVENTS,
-    catalyst_types: tuple[str, ...] = ("pdufa",),
+    catalyst_types: tuple[str, ...] = _LIVE_PARITY_SCORE_TYPES,
 ) -> tuple[list[dict], list[dict]]:
     """Score every registry name BACKWARD from its persisted past moves (ZERO API). Returns
     (scorable, insufficient): scorable = names with n>=min_events (each record = ticker/company_name/
@@ -642,7 +646,7 @@ def score_registry(
 def select_members(
     conn, as_of: str, *, target_size: int = _DEFAULT_TARGET_UNIVERSE_SIZE,
     big_move: float = _DEFAULT_BIG_MOVE, min_events: int = _DEFAULT_MIN_EVENTS,
-    catalyst_types: tuple[str, ...] = ("pdufa",), criteria: dict | None = None,
+    catalyst_types: tuple[str, ...] = _LIVE_PARITY_SCORE_TYPES, criteria: dict | None = None,
 ) -> tuple[list[dict], list[dict], dict]:
     """BACKWARD percentile-cut membership (UNIV-02b/03/07). Returns (members, rejected, report).
 
