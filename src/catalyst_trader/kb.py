@@ -139,18 +139,44 @@ def get_node(conn, node_id: int) -> dict | None:
     return d
 
 
-def _structural_filter(conn, filters: dict) -> set[int]:
+def _structural_filter(conn, filters: dict, as_of: str | None = None) -> set[int]:
     """Candidate catalyst node ids whose attrs match every key in `filters` (deterministic SQL).
 
     A scenario failing the structural filter never reaches the semantic rank, even if
     embedding-close. Empty filters -> every catalyst is a candidate.
+
+    `as_of` is the NO-LOOK-AHEAD gate (research C §5.3): when set, only catalysts with
+    knowable_asof <= as_of survive. ISO YYYY-MM-DD strings compare lexicographically, so <= is a
+    correct date compare. Fail-safe: a node MISSING knowable_asof has json_extract -> NULL, and
+    `NULL <= date` is NULL (falsy) in SQLite, so an undated node is EXCLUDED under any set as_of.
+    Default None = no gate = today's behavior (every existing caller/test is untouched).
     """
     sql = "SELECT id FROM kb_node WHERE kind='catalyst'"
     params: list = []
     for key, val in filters.items():
         sql += f" AND json_extract(attrs_json,'$.{key}')=?"
         params.append(val)
+    if as_of is not None:
+        sql += " AND json_extract(attrs_json,'$.knowable_asof') <= ?"
+        params.append(as_of)
     return {r["id"] for r in conn.execute(sql, params).fetchall()}
+
+
+def conditional_filters(conn, ctype: str, indication: str | None = None, min_analogs: int = 5) -> dict:
+    """Structural filter dict that adds `indication` to the type filter ONLY when the type+indication
+    cohort still yields >= min_analogs — else falls back to type-only so the KNN is never starved
+    below the estimator's min_analogs. Base is always {"type": ctype}."""
+    filters = {"type": ctype}
+    if indication is None:
+        return filters
+    n = conn.execute(
+        "SELECT COUNT(*) AS c FROM kb_node WHERE kind='catalyst' "
+        "AND json_extract(attrs_json,'$.type')=? AND json_extract(attrs_json,'$.indication')=?",
+        (ctype, indication),
+    ).fetchone()["c"]
+    if n >= min_analogs:
+        filters["indication"] = indication
+    return filters
 
 
 def _with_outcome(conn, node_id: int, distance: float) -> dict:
@@ -169,14 +195,18 @@ def _with_outcome(conn, node_id: int, distance: float) -> dict:
     }
 
 
-def analog_query(conn, embed, context: str, filters: dict, k: int = 5) -> list[dict]:
+def analog_query(conn, embed, context: str, filters: dict, k: int = 5, as_of: str | None = None) -> list[dict]:
     """Nearest past scenarios matching `filters`, ranked by semantic similarity to `context`,
     each with its realized Outcome. Structural SQL filter first, then KNN rank (KB-03).
+
+    `as_of` is the NO-LOOK-AHEAD gate (default None = unchanged): it filters candidates to
+    knowable_asof <= as_of. Because knowable_asof is the T+2 date, gating the catalyst also gates
+    its realized move — one gate covers existence AND outcome (research C §5.3).
 
     # ponytail: SQL-filter + python-set intersect avoids sqlite-vec's alpha metadata-filter API;
     #           brute-force KNN over hundreds of vecs is sub-ms. Over-fetch k*4 then intersect.
     """
-    cand = _structural_filter(conn, filters)
+    cand = _structural_filter(conn, filters, as_of=as_of)
     if not cand:
         return []
     q = serialize_float32(embed(context))
