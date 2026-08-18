@@ -20,7 +20,7 @@ money number is a DETERMINISTIC quant output the committee can never inject:
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from .. import kb, store
+from .. import kb, serving
 from ..contracts import Hedge, RiskAssessment
 from ..quant.pairs import cointegration, conditional_payoff
 from ..quant.result import ToolResult
@@ -144,8 +144,10 @@ def validate_hedge(
 
     cointegrated = cointegration(prices["target"], prices["peer"]).detail["cointegrated"]
 
+    # peer catalyst-clean check through the serving gateway at cutoff=entry (the decision date) — the
+    # SAME seam the backtest uses; a peer catalyst not yet knowable at entry can't disqualify the hedge.
     peer_events = [
-        c for c in store.tradeable_catalysts(conn)
+        c for c in serving.asof(conn, cutoff=entry).catalysts()
         if c.ticker == peer_ticker and entry <= c.event_date <= exit_by_date
     ]
     catalyst_clean = not peer_events

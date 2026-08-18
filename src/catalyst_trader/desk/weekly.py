@@ -27,9 +27,8 @@ from datetime import date, timedelta
 
 from catalyst_trader.dates import now_iso
 
-from .. import kb, store
-from ..quant.weekly import classify_drop, thesis_scan
-from ..universe.build import universe_as_of
+from .. import kb, serving
+from ..quant.weekly import as_of_view, classify_drop, thesis_scan
 from .evidence import tool_ref_for
 from .orchestrator import run_desk, run_portfolio
 from .portfolio import Candidate
@@ -46,8 +45,8 @@ def _weekly_exit(as_of, anchor):
     return (date.fromisoformat(as_of) + timedelta(days=7)).isoformat()
 
 
-def _last_close(conn, ticker, as_of):
-    bars = store.bars_asof(conn, ticker, as_of, lookback_weeks=1)
+def _last_close(book, ticker, as_of):
+    bars = book.bars(ticker, as_of, lookback_weeks=1)
     return float(bars[-1]["close"]) if bars else 0.0
 
 
@@ -66,10 +65,11 @@ def build_defensive_book(params) -> list[Candidate]:
     ]
 
 
-def _catalyst_dict(conn, ticker, as_of):
-    """The verified catalyst for `ticker` inside the upcoming hold week (as_of, as_of + 7d], or None."""
+def _catalyst_dict(book, ticker, as_of):
+    """The verified catalyst for `ticker` inside the upcoming hold week (as_of, as_of + 7d], or None.
+    Sourced from the gateway's knowability-gated set (book.catalysts()), not a raw scan."""
     end = (date.fromisoformat(as_of) + timedelta(days=7)).isoformat()
-    for c in store.tradeable_catalysts(conn):
+    for c in book.catalysts():
         if c.ticker == ticker and as_of < c.event_date <= end:
             return {"ticker": c.ticker, "catalyst_type": c.catalyst_type.value,
                     "event_date": c.event_date, "catalyst_id": f"{ticker}:{c.event_date}"}
@@ -93,8 +93,13 @@ async def run_weekly(conn, embed, as_of, open_book, *, params=None, target_weekl
     stat_gap = abs(w["hard_veto_drop"])       # worst tolerated weekly move = the survival down-gap
     exit_by = _weekly_exit(as_of, anchor)
 
-    universe = [u.ticker for u in universe_as_of(conn, as_of)]
-    scan = thesis_scan(universe, as_of, store, conn, params=params)
+    # ponytail: LIVE reads through the SAME serving gateway as the backtest (decision B), at cutoff=now.
+    # book/view execute the IDENTICAL read code the backtest runs at cutoff=W — no live-vs-backtest drift.
+    book = serving.asof(conn)
+    view = as_of_view(conn, book.cutoff)
+
+    universe = [u.ticker for u in book.universe(as_of)]
+    scan = thesis_scan(universe, as_of, view, conn, params=params)
     rows = scan.detail["rows"]
 
     # shortlist: catalyst names (Workflow-1 owns them) + top-k eligible statistical rows (edge x mean).
@@ -106,7 +111,7 @@ async def run_weekly(conn, embed, as_of, open_book, *, params=None, target_weekl
     # catalyst legs -> the shipped Workflow-1 desk -> run_portfolio work items.
     verdicts = []
     for name in catalyst_names:
-        cat = _catalyst_dict(conn, name, as_of)
+        cat = _catalyst_dict(book, name, as_of)
         if cat is None or catalyst_context is None:
             continue  # no price/analog feed wired this phase — statistical + defensive carry the book
         verdict = await run_desk(conn, cat)
@@ -116,7 +121,7 @@ async def run_weekly(conn, embed, as_of, open_book, *, params=None, target_weekl
     # statistical single-leg candidates: NO hedge (Phase-5 fallback), sized target-within-survival-cap.
     extra = []
     for r in top_stat:
-        cd = classify_drop(r["ticker"], as_of, store, conn, params=params).detail
+        cd = classify_drop(r["ticker"], as_of, view, conn, params=params).detail
         br_inputs = {"ticker": r["ticker"], "trigger": r["trigger"], "drop_class": cd["drop_class"],
                      "turnover": cd["turnover_flag"], "as_of": as_of, "params": params,
                      "window_years": None}
@@ -128,7 +133,7 @@ async def run_weekly(conn, embed, as_of, open_book, *, params=None, target_weekl
             size_pct=size, expected_move=r["mean_next"], weight=size,
             payload={"weekly": True, "ticker": r["ticker"], "thesis_type": r["thesis_type"],
                      "trigger": r["trigger"], "p": r["p"], "mean_next": r["mean_next"],
-                     "entry": _last_close(conn, r["ticker"], as_of), "exit_by_date": exit_by,
+                     "entry": _last_close(book, r["ticker"], as_of), "exit_by_date": exit_by,
                      "base_rate_ref": tool_ref_for("weekly_base_rate", br_inputs),
                      "base_rate_inputs": br_inputs},
         ))

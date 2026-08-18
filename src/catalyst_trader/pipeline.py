@@ -19,7 +19,7 @@ import os
 from datetime import date, timedelta
 from pathlib import Path
 
-from catalyst_trader import ingest, store
+from catalyst_trader import ingest, serving, store
 from catalyst_trader.dates import now_iso
 from catalyst_trader.providers import prices, registry  # registry.CADENCE re-exported for callers
 
@@ -62,9 +62,10 @@ def detect_gaps(conn, universe, window, cadence=None, *, now=None) -> dict:
 
     universe_set = set(universe)
     missing_cards = []
+    book = serving.asof(conn)  # LIVE card-presence check through the gateway at cutoff=now (decision B)
     for r in conn.execute("SELECT DISTINCT ticker FROM catalyst WHERE event_date >= ?", (end,)).fetchall():
         tk = r["ticker"]
-        if tk in universe_set and store.card_asof(conn, tk, end) is None:
+        if tk in universe_set and book.card(tk, end) is None:
             missing_cards.append(tk)
 
     return {"price_weeks_missing": price_weeks_missing,

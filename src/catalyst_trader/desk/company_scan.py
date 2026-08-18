@@ -1,7 +1,8 @@
 """Phase 6.8 Stage-1 scanner (SCAN-02/03): the deterministic, $0-LLM trigger layer.
 
 `build_card` assembles the write-once company vetting card from point-in-time price bars
-(store.bars_asof) + injected raw provider values + the EMBEDDED weekly thesis_scan row — it
+(read through the serving gateway at cutoff=now) + injected raw provider values + the EMBEDDED
+weekly thesis_scan row — it
 RECOMPUTES NO quant number (agents-never-do-arithmetic extended to modules: one computation
 site per number, consumed here verbatim). `delta_card` is the pure, reproducible week-over-week
 flag engine (F1-F13) that fires on band/sign/set TRANSITIONS with latching, hysteresis, and
@@ -17,7 +18,8 @@ import statistics
 from datetime import date, timedelta
 
 from ..contracts import OpportunityFlag, ScanInput, WeeklyFlag
-from ..store import bars_asof, card_asof, write_card, write_scan_flag
+from .. import serving
+from ..store import write_card, write_scan_flag
 from . import diligence
 from .diligence import DILIGENCE_PARAMS, options_liquid, zero_liquidity
 from .evidence import resolve
@@ -81,7 +83,7 @@ def _runway_band(months, edges):
 def build_card(conn, ticker, week_end, raw, thesis_row, *, params=SCAN_PARAMS):
     """Assemble the §2.2 company vetting card deterministically — point-in-time, no recompute.
 
-    Price/vol fields come from store.bars_asof (week_end <= as_of, no look-ahead). Options /
+    Price/vol fields come from the serving gateway (week_end <= as_of, no look-ahead). Options /
     positioning / balance-sheet fields come from the injected `raw` provider dict (CBOE / FINRA /
     EDGAR / FMP are mocked seams this phase — build_card CONSUMES raw[...], it never fetches).
     The `thesis_row` is embedded VERBATIM (build_card calls no classify_drop / weekly_base_rate /
@@ -89,7 +91,9 @@ def build_card(conn, ticker, week_end, raw, thesis_row, *, params=SCAN_PARAMS):
     forward; delta_card mutates it next.
     """
     p = params["scan"]
-    bars = bars_asof(conn, ticker, week_end)               # point-in-time: week_end <= as_of only
+    # LIVE scan reads through the serving gateway at cutoff=now (decision B — same seam as backtest).
+    book = serving.asof(conn)
+    bars = book.bars(ticker, week_end)                     # point-in-time: week_end <= as_of only
     closes = [b["close"] for b in bars if b.get("close") is not None]
     volumes = [b["volume"] for b in bars if b.get("volume") is not None]
     rets = _returns(closes)
@@ -148,7 +152,7 @@ def build_card(conn, ticker, week_end, raw, thesis_row, *, params=SCAN_PARAMS):
         "card_version": "1",
     }
 
-    prev = card_asof(conn, ticker, _prior_week(week_end))     # carry the prior latch state forward
+    prev = book.card(ticker, _prior_week(week_end))          # carry the prior latch state forward
     card["fired"] = dict(prev["fired"]) if prev and prev.get("fired") else {}
     return card
 
@@ -445,9 +449,10 @@ async def run_scan(conn, embed, week_end, raw_by_ticker, thesis_rows, *, params=
     scan = params["scan"]
     routed: list = []
     wakes = 0
+    book = serving.asof(conn)  # LIVE latch-memory read through the gateway at cutoff=now
     for ticker in raw_by_ticker:
         thesis_row = thesis_rows.get(ticker, {})
-        prev = card_asof(conn, ticker, _prior_week(week_end))
+        prev = book.card(ticker, _prior_week(week_end))
         cur = build_card(conn, ticker, week_end, raw_by_ticker[ticker], thesis_row, params=params)
         tripped = delta_card(prev, cur, params=params)   # MUTATES cur["fired"] — must precede write_card
         write_card(conn, ticker, week_end, cur)          # persist AFTER the delta (latch memory)

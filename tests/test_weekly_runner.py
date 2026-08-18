@@ -245,9 +245,12 @@ def _rep(seq, times):
 def _seed_universe(db, tickers, as_of):
     for tk in tickers:
         db.execute(
-            "INSERT INTO universe_snapshot (as_of_date,ticker,included,delisted,criteria_json,reason) "
-            "VALUES (?,?,?,?,?,?)",
-            (as_of, tk, 1, 0, "{}", None),
+            "INSERT INTO universe_snapshot "
+            "(as_of_date,ticker,included,delisted,criteria_json,reason,recorded_at) "
+            "VALUES (?,?,?,?,?,?,?)",
+            # recorded_at = as_of (contemporaneous cohort) so the serving gateway (07.6) serves it;
+            # a raw INSERT that omits the transaction stamp is denied deny-by-default.
+            (as_of, tk, 1, 0, "{}", None, as_of),
         )
     db.commit()
 
