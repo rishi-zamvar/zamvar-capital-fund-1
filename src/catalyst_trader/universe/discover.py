@@ -565,6 +565,81 @@ def _persist_backfill(conn, candidate: dict) -> list[int]:
 
 
 # ══════════════════════════════════════════════════════════════════════════════════════════
+# Plan 07 — BACKWARD membership: proven-PDUFA-volatility score from the STORE (UNIV-07, ZERO API)
+# ══════════════════════════════════════════════════════════════════════════════════════════
+
+_DEFAULT_BIG_MOVE = 0.15          # |move| >= this counts as a "big move"
+_DEFAULT_MIN_EVENTS = 2           # a name needs >=2 measured PAST events to be scorable
+_DEFAULT_TARGET_UNIVERSE_SIZE = 80  # replaces target_lambda for membership (N is an OUTPUT <= this)
+
+
+def _name_volatility(
+    moves: list[float], *, big_move: float = _DEFAULT_BIG_MOVE, min_events: int = _DEFAULT_MIN_EVENTS
+) -> dict | None:
+    """Backward per-name volatility from its PAST |move| list -> {median_move, big_move_frac,
+    n_moves, vol_score}, or None if n_moves < min_events (insufficient history — NEVER a fabricated
+    score from one event). realized_move is stored as an absolute magnitude already; abs() here is a
+    defensive no-op so a hand-seeded signed move can't skew the median.
+
+    # ponytail: composite score default (median magnitude * (1 + big-move frequency)) — the
+    # calibration knob; both components are reported so the percentile cut stays auditable.
+    """
+    mags = [abs(m) for m in moves]
+    if len(mags) < min_events:
+        return None
+    median_move = statistics.median(mags)
+    big_move_frac = sum(1 for m in mags if m >= big_move) / len(mags)
+    return {
+        "median_move": median_move,
+        "big_move_frac": big_move_frac,
+        "n_moves": len(mags),
+        "vol_score": median_move * (1 + big_move_frac),
+    }
+
+
+def _registry_moves(conn, *, catalyst_types: tuple[str, ...] = ("pdufa",)) -> dict[str, dict]:
+    """Read the persisted registry (catalyst_move JOIN catalyst) grouped by ticker, scoped to
+    `catalyst_types` (operator default 'pdufa') -> {ticker: {"ticker","company_name","moves":[...]}}.
+    ZERO API (store-only). Only past + day-precision events ever got a catalyst_move row, so every
+    read value is a real measured move. An absent/empty table -> {} (degrade)."""
+    placeholders = ",".join("?" for _ in catalyst_types)
+    rows = conn.execute(
+        f"SELECT c.ticker AS ticker, c.company_name AS company_name, cm.realized_move AS realized_move "
+        f"FROM catalyst_move cm JOIN catalyst c ON cm.catalyst_id = c.id "
+        f"WHERE c.catalyst_type IN ({placeholders})",
+        tuple(catalyst_types),
+    ).fetchall()
+    out: dict[str, dict] = {}
+    for r in rows:
+        entry = out.setdefault(
+            r["ticker"], {"ticker": r["ticker"], "company_name": r["company_name"], "moves": []}
+        )
+        entry["moves"].append(r["realized_move"])
+        entry["company_name"] = entry["company_name"] or r["company_name"]
+    return out
+
+
+def score_registry(
+    conn, *, big_move: float = _DEFAULT_BIG_MOVE, min_events: int = _DEFAULT_MIN_EVENTS,
+    catalyst_types: tuple[str, ...] = ("pdufa",),
+) -> tuple[list[dict], list[dict]]:
+    """Score every registry name BACKWARD from its persisted past moves (ZERO API). Returns
+    (scorable, insufficient): scorable = names with n>=min_events (each record = ticker/company_name/
+    moves + the vol fields median_move/big_move_frac/n_moves/vol_score); insufficient = the
+    <min_events names (ticker + n_moves) for the honest watch list (no fabricated score). An
+    empty/absent registry -> ([], [])."""
+    scorable: list[dict] = []
+    insufficient: list[dict] = []
+    for name in _registry_moves(conn, catalyst_types=catalyst_types).values():
+        vol = _name_volatility(name["moves"], big_move=big_move, min_events=min_events)
+        if vol is None:
+            insufficient.append({"ticker": name["ticker"], "n_moves": len(name["moves"])})
+        else:
+            scorable.append({**name, **vol})
+    return scorable, insufficient
+
+
+# ══════════════════════════════════════════════════════════════════════════════════════════
 # Plan 02 — screen (UNIV-02) + measure-and-grow (UNIV-03) + write (UNIV-04/05)
 # ══════════════════════════════════════════════════════════════════════════════════════════
 
