@@ -15,3 +15,14 @@ graphify-out/
 
 # Raw-response snapshot lake (runtime data, $0 local disk)
 data/raw/
+
+# Monitor runtime + live-run outputs (regenerable — not source)
+.planning/phases/*/.monitor-state
+.planning/phases/*/.monitor.log
+.planning/phases/*/expansion-monitor.html
+.planning/phases/*/*-live-run.log
+.planning/phases/*/*-live-expand-report.json
+.planning/phases/*/*-live-expand-report.json.done
+.planning/*-result.json
+# CT.gov unmapped-sponsor review queue (regenerable scan output)
+data/ctgov_sponsor_review.csv

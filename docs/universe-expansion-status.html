@@ -1,0 +1,194 @@
+<title>Movement-Screened Universe</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+:root{
+  --bg:#f6f4ee; --panel:#fffdf8; --line:#e2ddd0; --ink:#1b1d22; --muted:#6c7180;
+  --brass:#9a7a2e; --brass-ink:#7c6122;
+  --ok:#1f8a4c; --warn:#b5771a; --crit:#c0392b;
+  --shadow:0 1px 0 rgba(0,0,0,.03), 0 8px 24px -18px rgba(0,0,0,.25);
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --bg:#0d0f12; --panel:#15181d; --line:#2a2f37; --ink:#e6e9ef; --muted:#8b93a1;
+    --brass:#C8A24B; --brass-ink:#d9b96a; --ok:#7CFC9B; --warn:#F5C451; --crit:#FF6B6B;
+    --shadow:0 1px 0 rgba(255,255,255,.02), 0 12px 30px -20px rgba(0,0,0,.7);
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0d0f12; --panel:#15181d; --line:#2a2f37; --ink:#e6e9ef; --muted:#8b93a1;
+  --brass:#C8A24B; --brass-ink:#d9b96a; --ok:#7CFC9B; --warn:#F5C451; --crit:#FF6B6B;
+  --shadow:0 1px 0 rgba(255,255,255,.02), 0 12px 30px -20px rgba(0,0,0,.7);
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{
+  margin:0; background:var(--bg); color:var(--ink);
+  font:16px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  padding:clamp(20px,5vw,64px);
+}
+.wrap{max-width:920px;margin:0 auto}
+.mono{font-family:ui-monospace,SFMono-Regular,Menlo,"Cascadia Code",monospace}
+.eyebrow{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px;letter-spacing:.18em;
+  text-transform:uppercase;color:var(--brass);margin:0 0 10px}
+h1{font-size:clamp(28px,5vw,44px);line-height:1.05;margin:0 0 12px;text-wrap:balance;letter-spacing:-.01em}
+h1 .glyph{font-size:.8em;margin-right:.15em}
+.lede{font-size:clamp(16px,2.2vw,19px);color:var(--muted);max-width:62ch;margin:0 0 6px}
+.meta{font-family:ui-monospace,monospace;font-size:12px;color:var(--muted);margin-top:14px}
+.rule{height:1px;background:var(--line);border:0;margin:34px 0}
+h2{font-family:ui-monospace,monospace;font-size:13px;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--brass);margin:0 0 16px;display:flex;align-items:center;gap:10px}
+h2::before{content:"";width:22px;height:2px;background:var(--brass);display:inline-block}
+.banner{display:flex;gap:14px;align-items:flex-start;background:var(--panel);border:1px solid var(--line);
+  border-left:3px solid var(--warn);border-radius:10px;padding:18px 20px;box-shadow:var(--shadow)}
+.banner .dot{width:11px;height:11px;border-radius:50%;background:var(--warn);margin-top:6px;flex:0 0 auto;
+  box-shadow:0 0 0 4px color-mix(in srgb,var(--warn) 22%,transparent)}
+.banner h3{margin:0 0 4px;font-size:16px}
+.banner p{margin:0;color:var(--muted);font-size:14px}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:12px;margin:22px 0 0}
+.stat{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:15px 16px;box-shadow:var(--shadow)}
+.stat .n{font-family:ui-monospace,monospace;font-size:26px;font-weight:600;font-variant-numeric:tabular-nums;letter-spacing:-.02em}
+.stat .l{font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin-top:5px}
+.cards{display:grid;gap:12px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:18px 20px;box-shadow:var(--shadow)}
+.card h3{margin:0 0 6px;font-size:16px;display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.card h3 .tag{font-family:ui-monospace,monospace;font-size:11px;color:var(--brass-ink);border:1px solid var(--line);
+  border-radius:5px;padding:2px 7px;letter-spacing:.03em}
+.card p{margin:0;color:var(--muted);font-size:14.5px}
+.card p + p{margin-top:8px}
+.card .why{color:var(--ink)}
+b{font-weight:650}
+.fix{border-left:3px solid var(--ok)}
+.pipe{display:flex;flex-wrap:wrap;gap:8px;align-items:center;font-family:ui-monospace,monospace;font-size:13px;
+  background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:16px 18px;box-shadow:var(--shadow)}
+.pipe .step{white-space:nowrap}
+.pipe .arw{color:var(--brass)}
+.next{list-style:none;padding:0;margin:0;display:grid;gap:10px}
+.next li{display:flex;gap:12px;align-items:baseline;background:var(--panel);border:1px solid var(--line);
+  border-radius:10px;padding:14px 16px;box-shadow:var(--shadow)}
+.next .k{font-family:ui-monospace,monospace;font-size:11px;color:var(--brass);border:1px solid var(--line);
+  border-radius:5px;padding:2px 8px;white-space:nowrap;letter-spacing:.05em}
+.next .t b{display:block;margin-bottom:2px}
+.next .t span{color:var(--muted);font-size:14px}
+.foot{color:var(--muted);font-size:12.5px;font-family:ui-monospace,monospace;margin-top:34px;
+  padding-top:16px;border-top:1px solid var(--line);text-wrap:balance}
+a{color:var(--brass-ink)}
+code{font-family:ui-monospace,monospace;font-size:.88em;background:color-mix(in srgb,var(--brass) 12%,transparent);
+  padding:1px 5px;border-radius:4px}
+@media (prefers-reduced-motion:no-preference){.stat,.card{transition:transform .15s ease}}
+</style>
+
+<div class="wrap">
+  <p class="eyebrow">Zamvar Capital · Fund 1 · Phase 6.12</p>
+  <h1><span class="glyph">🧬</span>Movement-Screened Universe</h1>
+  <p class="lede">The universe builder was rebuilt this session to select biotech names by <b>how much their
+  catalysts actually move the stock</b> — not by market cap — and hardened against three failures that only
+  showed up on live data.</p>
+  <p class="meta">2026-08-17 · branch main · 1,180 tests green</p>
+
+  <hr class="rule">
+
+  <div class="banner">
+    <span class="dot"></span>
+    <div>
+      <h3>Engine built &amp; hardened — cohort run in progress</h3>
+      <p>Every part of the pipeline is built, tested, and fixed against real data. The final live run that
+      gathers the actual ~80-name cohort is executing now (watch it at <code>127.0.0.1:8812</code>); the
+      last blocker — historical price moves — was just fixed.</p>
+    </div>
+  </div>
+
+  <div class="stats">
+    <div class="stat"><div class="n">1,180</div><div class="l">tests green</div></div>
+    <div class="stat"><div class="n">256</div><div class="l">candidates found</div></div>
+    <div class="stat"><div class="n">779</div><div class="l">catalysts backfilled</div></div>
+    <div class="stat"><div class="n">3</div><div class="l">live-gap fixes</div></div>
+    <div class="stat"><div class="n">5 yr</div><div class="l">history window</div></div>
+  </div>
+
+  <hr class="rule">
+
+  <h2>The pivot</h2>
+  <div class="card">
+    <h3>Screen on catalyst movement, not size</h3>
+    <p class="why">The old screen capped market cap and dropped prime names (BBIO, AXSM, PRAX). The new rule
+    keeps a name only if its catalysts have <b>historically moved the stock ≥10% (median)</b> — the trait that
+    actually makes a catalyst tradeable. Big or small, if the events move it, it's in.</p>
+    <p>This required computing every name's real past catalyst moves — which front-loads exactly the historical
+    data the year-long walk-forward needs anyway.</p>
+  </div>
+
+  <div class="pipe" style="margin-top:12px">
+    <span class="step">Discover</span><span class="arw">→</span>
+    <span class="step">Backfill 5-yr catalysts</span><span class="arw">→</span>
+    <span class="step">Compute realized moves</span><span class="arw">→</span>
+    <span class="step">Screen by movement</span><span class="arw">→</span>
+    <span class="step">Rank &amp; write cohort</span>
+  </div>
+
+  <hr class="rule">
+
+  <h2>What got built</h2>
+  <div class="cards">
+    <div class="card">
+      <h3>Broader, safer discovery <span class="tag">plan 05</span></h3>
+      <p>Widened the SEC 8-K PDUFA search to <b>5 years</b> (20 names/yr → 256 candidates) and added
+      exact-match company→ticker resolution so real biotechs stop getting dropped — with a strict rule that
+      any ambiguous name goes to a human review queue, never a guessed ticker.</p>
+    </div>
+    <div class="card">
+      <h3>Movement screen + history store <span class="tag">plan 06</span></h3>
+      <p>New database table for realized catalyst moves, a daily-price accessor, the T-1→T+2 move math
+      (stamped with when it became knowable, so nothing peeks at the future), and the screen itself. The
+      market-cap ceiling was removed entirely.</p>
+    </div>
+    <div class="card">
+      <h3>Options liquidity fix <span class="tag">plan 04</span></h3>
+      <p>Fixed how the option chain's at-the-money contract is picked. It now chooses a liquid, near-the-money
+      monthly contract instead of whatever thin weekly quoted first — a fix that also sharpens the diligence
+      desk and implied-move tools that share the same code.</p>
+    </div>
+  </div>
+
+  <hr class="rule">
+
+  <h2>Three gaps only live data revealed</h2>
+  <p class="lede" style="font-size:15px;margin-bottom:16px">Every plan passed its offline tests. Then running
+  it on the real internet exposed three things fixtures never could — each found, diagnosed, and fixed on the spot.</p>
+  <div class="cards">
+    <div class="card fix">
+      <h3>Never discard fetched data</h3>
+      <p class="why">The trial-search feed hit a rate limit mid-way and threw away every page it had already
+      fetched. Rerouted it through the archiving layer: every page is now saved to the raw data lake and a
+      failure keeps what it already has. <b>Your standing rule, applied.</b></p>
+    </div>
+    <div class="card fix">
+      <h3>Options were being read wrong</h3>
+      <p class="why">17 of 20 clearly-optionable names were being rejected as "not optionable" — the chain
+      reader was grabbing a worthless far-out-of-the-money contract. That's the plan-04 fix above; it surfaced
+      here, on live chains.</p>
+    </div>
+    <div class="card fix">
+      <h3>No historical prices for the moves</h3>
+      <p class="why">The screen's whole point — past moves — computed for only <b>1 of 779</b> catalysts: the
+      daily-price sources couldn't reach back in time (one needs a paid key, one only serves recent data).
+      Added yfinance daily as the reliable free multi-year source. Moves now compute; this was the last blocker.</p>
+    </div>
+  </div>
+
+  <hr class="rule">
+
+  <h2>Where this leaves us</h2>
+  <ul class="next">
+    <li><span class="k">NOW</span><div class="t"><b>Cohort run finishing</b><span>Live on the monitor
+      (<code>127.0.0.1:8812</code>) — it'll write the movement-screened universe and flip to a green "complete" banner.</span></div></li>
+    <li><span class="k">NEXT</span><div class="t"><b>You review the names</b><span>A human-verify gate: the
+      cohort, each name's median catalyst move + source links, and why anything was dropped — before it's trusted to define what the desk trades.</span></div></li>
+    <li><span class="k">THEN</span><div class="t"><b>The 1-year walk-forward</b><span>The 5-yr catalyst
+      history backfilled here is the warm-start data the simulation needs — this phase was the fuel tank.</span></div></li>
+    <li><span class="k">OPT</span><div class="t"><b>Free API keys</b><span>Your <code>.env</code> is prepped
+      for Alpha Vantage / Tiingo / FRED — filling them adds cross-source price redundancy beyond yfinance.</span></div></li>
+  </ul>
+
+  <p class="foot">Zamvar Capital — Fund 1 · Phase 6.12 universe expansion · plans 04·05·06 + revised live run,
+  three live-gap fixes, migration 010 · 1,180 tests · this is the data foundation for the walk-forward, not a finished cohort.</p>
+</div>

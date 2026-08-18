@@ -1,0 +1,246 @@
+<title>Trading Without Peeking</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+:root{
+  --bg:#f6f3ec; --panel:#fffdf8; --panel2:#faf6ec; --line:#e6dfce; --ink:#211d17; --muted:#6d6656;
+  --brass:#9a7a2e; --brass-deep:#7a5f1f;
+  --green:#2f7d4f; --blue:#2f6f8f; --red:#b23b2e; --amber:#a9711a;
+  --green-bg:#eaf3ec; --blue-bg:#e9f1f4; --red-bg:#f7ece9; --amber-bg:#f6efe1;
+  --shadow:0 1px 0 rgba(0,0,0,.02),0 10px 30px -22px rgba(0,0,0,.35);
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --bg:#14120f; --panel:#1d1a15; --panel2:#221e18; --line:#332d22; --ink:#ece6da; --muted:#9a917f;
+    --brass:#d9b96a; --brass-deep:#e6cd8f;
+    --green:#6fd39a; --blue:#7fbcd8; --red:#ff8272; --amber:#f0c060;
+    --green-bg:#16241c; --blue-bg:#132530; --red-bg:#2a1714; --amber-bg:#241d10;
+    --shadow:0 1px 0 rgba(255,255,255,.02),0 14px 34px -22px rgba(0,0,0,.7);
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#14120f; --panel:#1d1a15; --panel2:#221e18; --line:#332d22; --ink:#ece6da; --muted:#9a917f;
+  --brass:#d9b96a; --brass-deep:#e6cd8f;
+  --green:#6fd39a; --blue:#7fbcd8; --red:#ff8272; --amber:#f0c060;
+  --green-bg:#16241c; --blue-bg:#132530; --red-bg:#2a1714; --amber-bg:#241d10;
+  --shadow:0 1px 0 rgba(255,255,255,.02),0 14px 34px -22px rgba(0,0,0,.7);
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--ink);
+  font:18px/1.68 Georgia,"Iowan Old Style","Times New Roman",serif;
+  padding:clamp(20px,5vw,64px)}
+.wrap{max-width:44rem;margin:0 auto}
+.sans{font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+.mono{font-family:ui-monospace,SFMono-Regular,Menlo,monospace}
+.eyebrow{font-family:ui-monospace,monospace;font-size:12px;letter-spacing:.2em;text-transform:uppercase;
+  color:var(--brass-deep);margin:0 0 10px}
+h1{font-family:system-ui,-apple-system,sans-serif;font-size:clamp(32px,6vw,52px);line-height:1.02;
+  margin:0 0 14px;letter-spacing:-.02em;text-wrap:balance;font-weight:800}
+.lede{font-size:clamp(18px,2.4vw,21px);color:var(--muted);margin:0}
+.bigidea{background:var(--panel);border:1px solid var(--line);border-left:4px solid var(--brass);
+  border-radius:12px;padding:18px 22px;margin:26px 0;box-shadow:var(--shadow)}
+.bigidea b{color:var(--brass-deep)}
+hr{height:1px;background:var(--line);border:0;margin:44px 0}
+h2{font-family:system-ui,sans-serif;font-size:clamp(22px,3.4vw,28px);letter-spacing:-.01em;margin:0 0 4px;
+  font-weight:750;text-wrap:balance}
+h2 .num{color:var(--brass);font-variant-numeric:tabular-nums;margin-right:.4em}
+.sectlede{color:var(--muted);font-size:16px;margin:0 0 20px}
+p{margin:0 0 16px}
+strong{font-weight:700}
+.plain{background:var(--panel2);border:1px solid var(--line);border-left:4px solid var(--brass);
+  border-radius:10px;padding:14px 18px;margin:16px 0;font-size:16px;line-height:1.6}
+.plain .tag{font-family:ui-monospace,monospace;font-size:11px;letter-spacing:.08em;text-transform:uppercase;
+  color:var(--brass-deep);display:block;margin-bottom:5px}
+.term{font-family:ui-monospace,monospace;font-size:.86em;background:color-mix(in srgb,var(--brass) 15%,transparent);
+  color:var(--brass-deep);padding:1px 6px;border-radius:5px;white-space:nowrap}
+/* flow diagrams */
+.flow{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:22px 18px;margin:20px 0;
+  box-shadow:var(--shadow);overflow-x:auto}
+.row{display:flex;align-items:stretch;gap:0;justify-content:center;flex-wrap:nowrap;min-width:min-content}
+.node{font-family:system-ui,sans-serif;background:var(--panel2);border:1px solid var(--line);border-radius:10px;
+  padding:12px 14px;min-width:120px;max-width:190px;text-align:center;font-size:13.5px;line-height:1.4}
+.node b{display:block;font-size:14px;margin-bottom:3px}
+.node small{color:var(--muted);font-size:12px;font-family:Georgia,serif;font-style:italic}
+.node.key{border-color:var(--brass);border-width:2px;background:color-mix(in srgb,var(--brass) 10%,var(--panel2))}
+.node.good{border-color:var(--green)}.node.bad{border-color:var(--red)}.node.blue{border-color:var(--blue)}
+.arw{display:flex;align-items:center;color:var(--brass);font-size:22px;padding:0 8px;flex:0 0 auto}
+.caption{font-family:system-ui,sans-serif;font-size:13px;color:var(--muted);text-align:center;margin-top:14px}
+.stack{display:flex;flex-direction:column;align-items:center;gap:0}
+.arw.down{padding:6px 0}
+.pair{display:flex;gap:14px;justify-content:center;flex-wrap:wrap}
+/* verdict cards */
+.cards{display:grid;gap:12px;margin:20px 0}
+.card{border:1px solid var(--line);border-left:4px solid var(--muted);border-radius:10px;padding:16px 18px;
+  background:var(--panel);box-shadow:var(--shadow)}
+.card .lbl{font-family:ui-monospace,monospace;font-size:11px;letter-spacing:.08em;text-transform:uppercase;
+  font-weight:700;margin-bottom:6px}
+.card h3{font-family:system-ui,sans-serif;margin:0 0 6px;font-size:17px;font-weight:700}
+.card p{margin:0;font-size:15.5px;color:var(--ink)}
+.card.green{border-left-color:var(--green)} .card.green .lbl{color:var(--green)}
+.card.blue{border-left-color:var(--blue)} .card.blue .lbl{color:var(--blue)}
+.card.red{border-left-color:var(--red)} .card.red .lbl{color:var(--red)}
+.card.green{background:var(--green-bg)} .card.blue{background:var(--blue-bg)} .card.red{background:var(--red-bg)}
+.foot{font-family:system-ui,sans-serif;color:var(--muted);font-size:13px;margin-top:40px;padding-top:16px;
+  border-top:1px solid var(--line)}
+</style>
+
+<div class="wrap">
+  <p class="eyebrow">Zamvar Capital · Fund 1 · plain-language briefing</p>
+  <h1>Trading Without Peeking</h1>
+  <p class="lede">How our AI trading desk learns from history without accidentally cheating — every technical word explained in plain English first, then used.</p>
+
+  <div class="bigidea">
+    <b>The one big idea, up front.</b> We are building an AI that decides which biotech stocks to trade around big events (like FDA drug decisions). To trust it, we have to test it on the past. But there's a catch that runs through everything below: <b>the AI was trained on news up to recently, so it may already "remember" how those past events turned out.</b> The entire design exists to stop it from cheating with that memory — and to be honest about the parts we can't stop.
+  </div>
+
+  <hr>
+
+  <h2><span class="num">1</span>What we're building</h2>
+  <p>Once or twice a week, a group of AI "analysts" looks at a biotech company with a big event coming — usually an FDA decision on whether a drug gets approved. They debate it, decide whether the stock is likely to jump or fall, and propose a one-week trade. Over time, the desk keeps a growing notebook of lessons: "when this kind of thing happens, that tends to follow."</p>
+  <div class="plain"><span class="tag">Plain words</span>
+    <b>Playbook</b> = that growing notebook of lessons — "when X happens, Y usually follows, and here's the early sign Z to watch for." From here on we'll call it the <span class="term">playbook</span>.
+  </div>
+
+  <h2><span class="num">2</span>The problem: the AI already knows how the story ended</h2>
+  <p>To find out if the desk is any good, we replay the past and let it "trade" as if it were back then, then check how it did.</p>
+  <div class="plain"><span class="tag">Plain words</span>
+    <b>Backtest</b> = replaying history and letting the strategy make its calls as if it were living through that time, so we can score it against what really happened. We'll call this the <span class="term">backtest</span>.
+  </div>
+  <p>Here's the trap. Imagine betting on a horse race <em>after</em> you've already seen who won. You'd look like a genius. If the AI "remembers" from its training that a certain drug got approved, its backtest bet is really that kind of after-the-fact bet — it looks brilliant, but it learned nothing.</p>
+  <div class="plain"><span class="tag">Plain words</span>
+    <b>Look-ahead bias</b> (also called <b>leakage</b>) = accidentally using information that wasn't actually available yet at the moment of the decision. It's the horse-race-after-the-result problem. We'll call it <span class="term">leakage</span>.
+  </div>
+  <p>Leakage comes from two places, and this distinction decides the whole design:</p>
+  <p style="margin-left:6px"><strong>①&nbsp; Our data.</strong> If our own databases hand the AI a price or an outcome from after the decision date — that's leakage we <em>control</em>. We can fix it.<br>
+  <strong>②&nbsp; The AI's memory.</strong> The AI read the real news during training, so it may recall the outcome no matter what we show it — leakage we <em>cannot</em> erase. Independent research measured this: crossing into the period the model was trained on can inflate results by <strong>roughly 50–70%</strong>. It's large and real.</p>
+
+  <hr>
+
+  <h2><span class="num">3</span>How data reaches the AI — the "cutoff"</h2>
+  <p class="sectlede">Fixing the half we control: never let our own data show the AI anything from after the decision date.</p>
+  <div class="plain"><span class="tag">Plain words</span>
+    <b>Cutoff / point-in-time</b> = we pick a date and only show the system what was <em>knowable</em> before that date — nothing from later. Like handing someone a newspaper archive frozen on a specific morning. The tool that enforces this is the <span class="term">cutoff gateway</span>.
+  </div>
+  <div class="flow">
+    <div class="row">
+      <div class="node"><b>The full database</b><small>all history we've gathered</small></div>
+      <div class="arw">→</div>
+      <div class="node key"><b>Cutoff gateway</b><small>"only show what was known before date D"</small></div>
+      <div class="arw">→</div>
+      <div class="node"><b>The AI desk</b><small>makes its call</small></div>
+      <div class="arw">→</div>
+      <div class="node"><b>Decision</b><small>scored later vs. what truly happened</small></div>
+    </div>
+    <div class="caption">Every read passes through the one gateway. Live trading uses the same gateway with the cutoff set to <em>today</em> — so the real system and the test run on identical plumbing.</div>
+  </div>
+  <p>Two refinements the research says we must get right, in plain terms:</p>
+  <div class="plain"><span class="tag">Plain words</span>
+    <b>Two clocks (bitemporal)</b> = for every fact, record <em>both</em> when it happened <em>and</em> when we found out. Example: a drug-decision date can be <em>announced</em>, then later <em>changed</em>. We must keep both the old and the new version, each stamped with when we learned it — so a replay shows the date <em>as we knew it then</em>, not the corrected one. "Bitemporal" just means "two clocks." We keep every version instead of overwriting.
+  </div>
+  <p>And the gateway must be <strong>"deny by default"</strong>: if a piece of data has no proper "when did we know this" stamp, the gateway refuses to serve it, rather than leaking it with a green light. The gateway is only as trustworthy as those stamps — so the real work is auditing them, table by table.</p>
+
+  <hr>
+
+  <h2><span class="num">4</span>How the desk gets smarter — two notebooks and an editor</h2>
+  <p class="sectlede">This is your idea for two versions of the playbook, and how they combine.</p>
+  <p>We end up with <strong>two</strong> playbooks:</p>
+  <p style="margin-left:6px"><strong>The hindsight playbook.</strong> Built once, up front, looking back over 5 years <em>with full knowledge</em> of how each event turned out — cataloguing "here's what drove the move and what to watch for." This is fine: its whole job is to learn from outcomes. It's the desk's warm starting knowledge.<br><br>
+  <strong>The forward-walk playbook.</strong> During the backtest, the desk steps through history week by week and writes its <em>own</em> fresh lessons as it goes — without being shown the future.</p>
+  <div class="plain"><span class="tag">Plain words</span>
+    <b>Walk-forward</b> = stepping through time one week at a time — decide, move to the next week, decide again — never peeking ahead. It mirrors how live trading actually feels. We'll call it the <span class="term">walk-forward</span>.
+  </div>
+  <div class="plain"><span class="tag">Plain words</span>
+    <b>Branch</b> = a separate copy-lane of the notebook so the desk's forward-walk lessons never scribble over the main one until we choose to combine them. (Same idea as a "draft branch" in writing software.) The forward-walk playbook lives on its own <span class="term">branch</span>.
+  </div>
+  <p>Then an <strong>editor</strong> compares the two and merges the best lessons into the live notebook — because sometimes the desk's own week-by-week analysis is sharper than the pre-written version.</p>
+  <div class="plain"><span class="tag">Plain words</span>
+    <b>Reconciler</b> = the editor step that merges two playbooks into one, keeping the better lessons. We'll call it the <span class="term">reconciler</span>. Important safety rule (from the research): the AI may <em>propose</em> a merge, but a plain, logged rule <em>decides</em> — so it can't quietly blend two contradictory lessons into a convincing-but-wrong third.
+  </div>
+  <div class="flow">
+    <div class="stack">
+      <div class="pair">
+        <div class="node blue"><b>Hindsight playbook</b><small>built with full knowledge</small></div>
+        <div class="node blue"><b>Forward-walk playbook</b><small>built week-by-week, no peeking</small></div>
+      </div>
+      <div class="arw down">↓</div>
+      <div class="node key"><b>Reconciler</b><small>AI proposes, a fixed rule decides</small></div>
+      <div class="arw down">↓</div>
+      <div class="node"><b>Eval gate</b><small>must prove itself before going live</small></div>
+      <div class="arw down">↓</div>
+      <div class="node good"><b>Live playbook</b><small>a label moves to the new version</small></div>
+    </div>
+    <div class="caption">The old version isn't deleted — it's kept forever; we just move the "live" label. Instant undo if the new one disappoints.</div>
+  </div>
+  <div class="plain"><span class="tag">Plain words</span>
+    <b>Keep every version, move a label</b> (jargon: <em>immutable versions + a pointer</em>) = instead of erasing the old playbook and saving a backup copy, we keep <em>all</em> versions permanently and just move a little "this one is live" label to whichever we trust. Cheaper, and undo is instant. This replaces the clunkier "overwrite and archive a copy" we first sketched.
+  </div>
+  <div class="plain"><span class="tag">Plain words</span>
+    <b>Eval gate</b> = a checkpoint a new playbook must pass before it's allowed to touch real decisions. Think of it as a driving test for a strategy change. We'll call it the <span class="term">eval gate</span>.
+  </div>
+
+  <hr>
+
+  <h2><span class="num">5</span>Practice vs. the real exam</h2>
+  <p class="sectlede">Why the year-long backtest is only practice, and the forward month is the real test.</p>
+  <p>Because the AI may "remember" the past, its score on the replayed year is not trustworthy as proof of skill. The only genuinely clean test is trading <em>forward</em>, into weeks that hadn't happened yet when we froze the system.</p>
+  <div class="flow">
+    <div class="pair">
+      <div class="node bad"><b>The replayed year</b><br><small>"Practice." The AI might remember it — so use it only to throw out bad logic and check the plumbing. NOT to prove skill.</small></div>
+      <div class="node good"><b>The forward month(s)</b><br><small>"Real exam." Genuinely unknown weeks. This is the only clean proof the desk actually has an edge.</small></div>
+    </div>
+    <div class="caption">Same desk, two very different levels of trust. We stopped confusing the two.</div>
+  </div>
+  <p>This matches the honest stance you set earlier — the year is for tuning, the forward month is the truth — the research just sharpened <em>how careful</em> we have to be about it (next section).</p>
+
+  <hr>
+
+  <h2><span class="num">6</span>The stress test — what we checked against how the pros do it</h2>
+  <p class="sectlede">We compared this whole design to how real quant funds and the latest AI-finance research operate. Three verdicts.</p>
+  <div class="cards">
+    <div class="card green">
+      <div class="lbl">✓ Solid — this is proven, standard practice</div>
+      <h3>The skeleton is what serious firms already do</h3>
+      <p>The cutoff gateway, the walk-forward, keeping every version and moving a label, and the "prove-it-before-it-goes-live" gate are all established, named techniques used by professional quant shops and modern AI teams. You did not invent something risky here — you rebuilt proven machinery. That's the right instinct for real money.</p>
+    </div>
+    <div class="card blue">
+      <div class="lbl">◆ Genuinely new — but modestly, and that's fine</div>
+      <h3>The two-playbook combination looks original</h3>
+      <p>The cutoff idea itself is now common enough that researchers have named it. What appears genuinely new is our specific combination: a desk that <em>writes its own playbook as it walks forward</em>, kept separate from a hindsight playbook, on cutoff-protected data. Fair to call that novel — but the value is the composition, not any single new invention.</p>
+    </div>
+    <div class="card red">
+      <div class="lbl">✕ Would have fooled us — must change</div>
+      <h3>Two choices would have quietly lied to us</h3>
+      <p>Detailed below. In short: letting the desk pick its "best" lessons by their score <em>on the replayed year</em>, and letting that same replayed year <em>set its own passing grades</em>, are two well-documented ways to fool yourself. The fixes are cheap.</p>
+    </div>
+  </div>
+
+  <h2 style="margin-top:34px"><span class="num">7</span>The two traps, in plain words</h2>
+  <div class="plain"><span class="tag">Plain words</span>
+    <b>Overfitting</b> = a strategy that basically memorized the past instead of learning a real, repeatable pattern. It looks spectacular on old data and falls apart on new data — like a student who memorized last year's exam answers.
+  </div>
+  <p><strong>Trap 1 — grading lessons on the practice test.</strong> If the reconciler keeps whichever lessons scored highest on the replayed year, it's picking winners partly by luck. The math is brutal: try just <strong>five</strong> ideas and one will look "great" purely by chance; try forty-five and one looks "world-class" — with zero real skill behind it. Worse, for our AI the score is <em>doubly</em> untrustworthy, because it blends real skill with the AI's memory of the answers, and researchers proved those two can't be separated no matter how much data you add.</p>
+  <p><strong>The fix:</strong> the replayed year's scores become <em>diagnostics only</em> — hints, never the thing we optimize. Real skill is measured <em>only</em> on the clean forward weeks. And when we do compare, we discount for how many ideas we tried.</p>
+  <div class="plain"><span class="tag">Plain words</span>
+    <b>Discount for how many you tried</b> (jargon: <em>deflated Sharpe / multiple-testing correction</em>) = if you test a hundred ideas, raise the bar for calling any of them "good," because with enough tries something always looks good by luck. A <em>Sharpe ratio</em> is just a standard score for "return earned per unit of nerve-wracking bumpiness" — higher is better.
+  </div>
+  <p><strong>Trap 2 — letting the practice test write its own passing grades.</strong> You'd wanted the backtest to "fine-tune the gates" — the passing bars for promoting a change. But if the same data both <em>sets</em> the bar and <em>is judged</em> against it, the bar just gets tuned to that year's luck.</p>
+  <p><strong>The fix:</strong> set the bars on one slice of data (or from principle), and confirm on a different, untouched slice — ideally the forward weeks. The replayed year can <em>suggest</em> bars; it can't <em>bless</em> its own.</p>
+  <div class="plain"><span class="tag">Plain words</span>
+    <b>Prove it on the side first</b> (jargon: <em>shadow / champion–challenger</em>) = before a new version handles real money, run it quietly alongside the current one on live incoming data, making pretend decisions we log but don't act on. If it genuinely beats the incumbent on data that didn't exist when we built it, <em>then</em> it gets promoted. The current live version is the "champion," the new one the "challenger."
+  </div>
+  <p>One more, plainly: judging a change by <strong>replaying a single week</strong> is meaningless — one week is about five data points, far too few to tell skill from luck. We need many forward weeks and a proper statistical margin before believing an improvement is real.</p>
+
+  <hr>
+
+  <h2><span class="num">8</span>Bottom line — and what changes</h2>
+  <p>The system is <strong>smart and mostly standard</strong> — we keep it. The stress test didn't kill it; it caught the two spots where it would have quietly told us we were winning when we weren't, and it pointed toward <em>less</em> machinery, not more.</p>
+  <div class="cards">
+    <div class="card"><h3>1 · Two clocks on our data</h3><p>Record when a fact happened <em>and</em> when we learned it; keep every version of a changed fact instead of overwriting. The gateway denies anything without a proper "when did we know this" stamp.</p></div>
+    <div class="card"><h3>2 · Keep every playbook version, move a label</h3><p>Drop the "overwrite-and-copy-a-backup" plan. Keep all versions; move a "live" label; instant undo. The AI proposes merges, a fixed rule decides.</p></div>
+    <div class="card"><h3>3 · Never grade skill on the practice test</h3><p>The replayed year is for rejecting bad logic and checking plumbing — not for scoring skill or picking winning lessons. Real skill is measured only on clean forward weeks, discounted for how many ideas we tried.</p></div>
+    <div class="card"><h3>4 · Prove changes forward, on the side, before real money</h3><p>New playbooks run quietly alongside the live one on genuinely new weeks; promote only on a real, statistically-sound margin — never on a single replayed week.</p></div>
+  </div>
+  <p style="margin-top:20px">None of this slows down what we're building now (gathering the universe of stocks and their event history). It shapes <em>how</em> the backtest and the learning loop get built next — so that when the desk tells us it's good, it's telling the truth.</p>
+
+  <p class="foot">Zamvar Capital — Fund 1 · plain-language briefing on the data-serving, playbook-learning, and honesty design · grounded in point-in-time/bitemporal data practice, walk-forward + deflated-Sharpe overfitting controls, champion/challenger promotion, and 2023–2026 research on look-ahead bias in AI trading agents.</p>
+</div>
