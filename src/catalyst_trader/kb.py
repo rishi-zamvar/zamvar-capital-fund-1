@@ -154,8 +154,23 @@ def _structural_filter(conn, filters: dict, as_of: str | None = None) -> set[int
     sql = "SELECT id FROM kb_node WHERE kind='catalyst'"
     params: list = []
     for key, val in filters.items():
-        sql += f" AND json_extract(attrs_json,'$.{key}')=?"
-        params.append(val)
+        # GENERIC list-membership (no fork): a LIST value matches any candidate whose $.key (scalar
+        # OR json array) overlaps it; a SCALAR value keeps the exact match AND allows list-membership
+        # so a scalar query can still match a list attr. json_each over a MISSING path yields no rows
+        # (EXISTS false), over a scalar yields that scalar — so scalar filters stay correct.
+        if isinstance(val, (list, tuple)):
+            if not val:
+                continue  # empty list = no constraint on this key (never emit `IN ()`)
+            marks = ",".join("?" for _ in val)
+            sql += (f" AND (json_extract(attrs_json,'$.{key}') IN ({marks})"
+                    f" OR EXISTS(SELECT 1 FROM json_each(attrs_json,'$.{key}') WHERE value IN ({marks})))")
+            params.extend(val)
+            params.extend(val)
+        else:
+            sql += (f" AND (json_extract(attrs_json,'$.{key}')=?"
+                    f" OR EXISTS(SELECT 1 FROM json_each(attrs_json,'$.{key}') WHERE value=?))")
+            params.append(val)
+            params.append(val)
     if as_of is not None:
         sql += " AND json_extract(attrs_json,'$.knowable_asof') <= ?"
         params.append(as_of)
@@ -176,6 +191,27 @@ def conditional_filters(conn, ctype: str, indication: str | None = None, min_ana
     ).fetchone()["c"]
     if n >= min_analogs:
         filters["indication"] = indication
+    return filters
+
+
+def setup_filters(conn, ctype: str, setups, min_analogs: int = 5) -> dict:
+    """Structural filter dict that adds a `setups` LIST-membership axis to the type filter ONLY when
+    the type+setups cohort yields >= min_analogs members — else falls back to type-only so the KNN is
+    never starved (mirrors conditional_filters, but counts a LIST cohort via json_each, a genuinely
+    different axis than the scalar indication gate). None/empty setups -> type-only.
+    """
+    filters = {"type": ctype}
+    if not setups:
+        return filters
+    marks = ",".join("?" for _ in setups)
+    n = conn.execute(
+        f"SELECT COUNT(*) AS c FROM kb_node WHERE kind='catalyst' "
+        f"AND json_extract(attrs_json,'$.type')=? "
+        f"AND EXISTS(SELECT 1 FROM json_each(attrs_json,'$.setups') WHERE value IN ({marks}))",
+        (ctype, *setups),
+    ).fetchone()["c"]
+    if n >= min_analogs:
+        filters["setups"] = list(setups)
     return filters
 
 
@@ -210,9 +246,16 @@ def analog_query(conn, embed, context: str, filters: dict, k: int = 5, as_of: st
     if not cand:
         return []
     q = serialize_float32(embed(context))
+    # REACHABILITY: with a LIST filter active, a setup-matched-but-disease-distant precedent can fall
+    # outside the global top k*4 KNN — deepen the over-fetch to the whole vec set so it is rankable.
+    # Brute-force KNN over hundreds of vecs is sub-ms, so ranking all is free at this scale.
+    if any(isinstance(v, (list, tuple)) for v in filters.values()):
+        overfetch = conn.execute("SELECT COUNT(*) AS c FROM kb_vec").fetchone()["c"]
+    else:
+        overfetch = k * 4
     rows = conn.execute(
         "SELECT node_id, distance FROM kb_vec WHERE embedding MATCH ? ORDER BY distance LIMIT ?",
-        (q, k * 4),
+        (q, overfetch or k * 4),
     ).fetchall()
     ranked = [r for r in rows if r["node_id"] in cand][:k]
     return [_with_outcome(conn, r["node_id"], r["distance"]) for r in ranked]

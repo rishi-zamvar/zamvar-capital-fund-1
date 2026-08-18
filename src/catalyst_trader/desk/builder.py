@@ -30,6 +30,7 @@ from ..quant.sizing import adaptive_sl_tp_levels
 from . import evidence, risk
 from ..playbook.store import assert_embedder_consistency
 from .analysts import _get
+from ..playbook import tagger
 from .runtime import run_structured
 from .verifier import EstimateRejectedError, enforce_estimate
 
@@ -60,8 +61,9 @@ def _candidate_peer(conn, target) -> str | None:
     return inverse[0]["peer"] if inverse else None
 
 
-def _analog_context(verdict, target, ctype) -> str:
-    return f"{ctype} catalyst for {target}: {verdict.thesis}"
+def _analog_context(verdict, ctype) -> str:
+    # No ticker: retrieval must cluster on the SETUP, not the firm's identity (quick-260818-l64).
+    return f"{ctype} catalyst: {verdict.thesis}"
 
 
 def _split_moves(analogs) -> tuple[list[float], list[float]]:
@@ -110,11 +112,17 @@ async def build(conn, embed, verdict, catalyst, *, entry: float,
     params = kb.load_params(conn, ctype)  # the frozen model-fit seam (estimator/sl_tp/builder groups)
     builder_p = params["builder"]         # a missing builder param RAISES here (no literal fallback)
 
-    context = _analog_context(verdict, target, ctype)
+    context = _analog_context(verdict, ctype)
     # Refuse to KNN a corpus populated with a DIFFERENT embedder — a mismatch is silent garbage
     # (Plan 04 stamps the embedder on every catalyst node; this is the warm-retrieval guard).
     assert_embedder_consistency(conn, embed)
-    analogs = kb.analog_query(conn, embed, context, filters={"type": ctype}, k=5, as_of=as_of)
+    # SETUP-aware retrieval: tag the query event, then filter on setups (thinness-gated) so setup-
+    # matched precedents in OTHER indications are reachable. Falls back to type-only when the cohort
+    # is thin (setup_filters), so the KNN is never starved.
+    q_setups = tagger.tag_setups({"thesis": verdict.thesis, "indication": _get(catalyst, "indication"),
+                                  "modality": _get(catalyst, "modality")})
+    filters = kb.setup_filters(conn, ctype, q_setups)
+    analogs = kb.analog_query(conn, embed, context, filters=filters, k=5, as_of=as_of)
     candidate = _candidate_peer(conn, target)
 
     # 1. Estimate the catalyst payoff distribution (param-driven, cited). p_positive comes from the
@@ -146,7 +154,7 @@ async def build(conn, embed, verdict, catalyst, *, entry: float,
 
     # 5. VET the estimate assumptions BEFORE finalize — a reject blocks the trade (pass / no proposal).
     est_ref = evidence.tool_ref(est)
-    analog_ref = evidence.tool_ref_for("analog_query", {"context": context, "filters": {"type": ctype}, "k": 5, "as_of": as_of})
+    analog_ref = evidence.tool_ref_for("analog_query", {"context": context, "filters": filters, "k": 5, "as_of": as_of})
     estimate_inputs = [
         {"input": "p_positive", "ref": est_ref, "value": p_positive},
         {"input": "up_move", "ref": est_ref, "value": up_move},
