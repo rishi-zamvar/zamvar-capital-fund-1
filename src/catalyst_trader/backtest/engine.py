@@ -162,6 +162,15 @@ def _base_rate_ev(ticker, as_of, conn, params, default, store_view=None):
         return default
 
 
+def _recent_catalyst_tickers(conn, as_of, *, lookback_days):
+    """E10: tickers with a KNOWABLE catalyst whose event_date is in (as_of - lookback_days, as_of] —
+    i.e. names that just had a catalyst and are in post-event drift, not a clean dip. Read through
+    the serving gateway at cutoff=as_of so only catalysts knowable by then count (no look-ahead)."""
+    from datetime import date, timedelta
+    lo = (date.fromisoformat(as_of) - timedelta(days=lookback_days)).isoformat()
+    return {c.ticker for c in serving.asof(conn, as_of).catalysts() if lo < c.event_date <= as_of}
+
+
 def _fill_leg(conn, ticker, as_of, exit_by, *, held_through, slippage, apply_costs=True):
     """Enter at the decision-week close, exit via the pessimistic fill (07-02). Returns
     (entry, fill, realized_ret) or None when the leg cannot be entered/exited honestly.
@@ -222,7 +231,8 @@ def _cash_leg(ticker, exit_by, size_pct):
 
 def run_layer_a(conn, embed, *, start, end, params=None, target_weekly=0.01,
                 direction_proxy="base_rate", slippage=0.0, latency_cfg=None,
-                weekly_budget=0.10, heat_cap=1.0, periods_per_year=52):
+                weekly_budget=0.10, heat_cap=1.0, periods_per_year=52,
+                busted_lookback_days=56):
     """The deterministic weekly mechanical backtest of the CORRECTED strategy (BACK-02).
 
     Iterates the 07-02 point-in-time event set; for each week re-expresses the shipped cadence
@@ -283,8 +293,13 @@ def run_layer_a(conn, embed, *, start, end, params=None, target_weekly=0.01,
             rows = qw.thesis_scan(rec["universe"], as_of, view, conn, params=params).detail["rows"]
         except (ValueError, KeyError):
             rows = []
+        # E10 busted-catalyst guard: a name that JUST had a catalyst is in post-event drift, NOT a
+        # clean dip — buying its dip is catching a falling knife (the CAPR-post-CRL failure mode).
+        # Exclude any name with a knowable catalyst in the trailing window; catalyst legs handle events.
+        recent_cat = _recent_catalyst_tickers(conn, as_of, lookback_days=busted_lookback_days)
         eligible = [r for r in rows
-                    if r["eligible"] and r["thesis_type"] != "catalyst" and r["ticker"] != qw._XBI]
+                    if r["eligible"] and r["thesis_type"] != "catalyst" and r["ticker"] != qw._XBI
+                    and r["ticker"] not in recent_cat]
         eligible.sort(key=lambda r: (r["p"] or 0.0) * (r["mean_next"] or 0.0), reverse=True)
         for r in eligible[:shortlist_k]:
             filled = _fill_leg(conn, r["ticker"], as_of, exit_by, held_through=False,
