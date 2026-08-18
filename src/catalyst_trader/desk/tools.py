@@ -53,11 +53,12 @@ def build_quant_tools(conn) -> list:
         })
 
     @tool("analog_query", "Nearest past catalysts (structural filter + semantic KNN) with realized outcomes",
-          {"context": str, "filters": dict, "k": int})
+          {"context": str, "filters": dict, "k": int, "as_of": str})
     async def _analog_query(args):
         context, filters, k = args["context"], args.get("filters") or {}, args.get("k", 5)
-        rows = kb.analog_query(conn, kb.default_embedder(), context, filters, k)
-        ref = evidence.tool_ref_for("analog_query", {"context": context, "filters": filters, "k": k})
+        as_of = args.get("as_of")  # None = no no-look-ahead gate; the live cutoff wires in later
+        rows = kb.analog_query(conn, kb.default_embedder(), context, filters, k, as_of=as_of)
+        ref = evidence.tool_ref_for("analog_query", {"context": context, "filters": filters, "k": k, "as_of": as_of})
         return _content({"results": rows, "evidence_ref": ref})
 
     @tool("query_playbooks", "Scenario playbooks for a scenario_type, confidence-desc",

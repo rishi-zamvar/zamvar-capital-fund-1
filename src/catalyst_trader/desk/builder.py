@@ -89,7 +89,7 @@ catalyst), and the kill criteria that would falsify the thesis.
 
 
 async def build(conn, embed, verdict, catalyst, *, entry: float,
-                extra_context: str | None = None) -> TradeProposal | None:
+                extra_context: str | None = None, as_of: str | None = None) -> TradeProposal | None:
     """Turn a `DebateVerdict` into a `TradeProposal` (or None = no trade this week, HEDGE-04).
 
     `entry` is the current leg price (the caller — 05-07 — supplies it; the builder can't invent a
@@ -110,7 +110,7 @@ async def build(conn, embed, verdict, catalyst, *, entry: float,
     builder_p = params["builder"]         # a missing builder param RAISES here (no literal fallback)
 
     context = _analog_context(verdict, target, ctype)
-    analogs = kb.analog_query(conn, embed, context, filters={"type": ctype}, k=5)
+    analogs = kb.analog_query(conn, embed, context, filters={"type": ctype}, k=5, as_of=as_of)
     candidate = _candidate_peer(conn, target)
 
     # 1. Estimate the catalyst payoff distribution (param-driven, cited). p_positive comes from the
@@ -142,7 +142,7 @@ async def build(conn, embed, verdict, catalyst, *, entry: float,
 
     # 5. VET the estimate assumptions BEFORE finalize — a reject blocks the trade (pass / no proposal).
     est_ref = evidence.tool_ref(est)
-    analog_ref = evidence.tool_ref_for("analog_query", {"context": context, "filters": {"type": ctype}, "k": 5})
+    analog_ref = evidence.tool_ref_for("analog_query", {"context": context, "filters": {"type": ctype}, "k": 5, "as_of": as_of})
     estimate_inputs = [
         {"input": "p_positive", "ref": est_ref, "value": p_positive},
         {"input": "up_move", "ref": est_ref, "value": up_move},
