@@ -144,7 +144,7 @@
 
 ### Catalyst-Outcome Playbook Dataset & Calibration (PLAY) — added 2026-08-16 (the moat)
 
-- [ ] **PLAY-01**: Per-catalyst record schema on the shipped KB (ZERO migration): company→catalyst→outcome + catalyst→prediction (pre-event SETUP), every node CITES an evidence_source.
+- [x] **PLAY-01**: Per-catalyst record schema on the shipped KB (ZERO migration): company→catalyst→outcome + catalyst→prediction (pre-event SETUP), every node CITES an evidence_source.
 - [ ] **PLAY-02**: Pre-event setup features stamped as-of `pre_event_asof` (drop-regime, base rates, SI, options-implied move/IV, fundamentals/runway/float, analyst signals, prior analogs) — point-in-time, no peek at the outcome.
 - [x] **PLAY-03**: Post-event outcome computed deterministically from bars + fill.py (1d/1wk move, direction, surprise-vs-expected, IV crush, hedge-leg behavior) — no LLM arithmetic.
 - [x] **PLAY-04**: Structured RATIONALE — mechanism (sourced + cited), surprise + which pre-signals were predictive (deterministic match), inferred-vs-sourced labeled. cite-or-drop.

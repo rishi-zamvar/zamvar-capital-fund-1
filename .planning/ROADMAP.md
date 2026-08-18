@@ -43,7 +43,7 @@ Decimal phases appear between their surrounding integers in numeric order.
     - [x] 07.5-01-PLAN.md — playbook record contract + narrative-card composer + node-attr mappers (envelope + ~18 drivers + before/after narrative; SIGNED move key; top-level filter keys) [PLAY-01/02/04] (Wave 1)
     - [x] 07.5-02-PLAN.md — no-look-ahead leak-gate: knowable_asof<=as_of clause on analog_query/_structural_filter + threaded seam (builder/tools) + conditional type/indication filter + MANDATORY dedicated no-look-ahead test [PLAY-05/06] (Wave 1)
     - [x] 07.5-03-PLAN.md — attribution front-half: CIK-filtered event-proximate bundle + Sonnet extractor (injected complete_fn, fixture-tested offline) + move/text anchoring + move_consistency + skip/flag [PLAY-03/04] (Wave 2)
-    - [ ] 07.5-04-PLAN.md — attribution back-half: insert_catalyst_record (catalyst+outcome+RESULTED_IN+CITES+card kb_vec via insert_claim, idempotent) + one-time build_playbooks.py (218 core + 118 earnings, Sonnet ~$7, cache-first, gated) [PLAY-01/05/06] (Wave 3)
+    - [x] 07.5-04-PLAN.md — attribution back-half: insert_catalyst_record (catalyst+outcome+RESULTED_IN+CITES+card kb_vec via insert_claim, idempotent) + one-time build_playbooks.py (218 core + 118 earnings, Sonnet ~$7, cache-first, gated) [PLAY-01/05/06] (Wave 3)
     - [ ] 07.5-05-PLAN.md — generalization: recurring lesson_rules -> cited free-form insert_playbook scenario nodes (no fitted_params collision) wired as the build's closing step [PLAY-06] (Wave 4)
 - [ ] **Phase 7: Verifier/Guardrails + Backtest Harness** - Fact-check verifier + runtime monitors + mechanical (Layer A) and guarded-agentic (Layer B) backtests
 - [ ] **Phase 8: Paper Ledger, Attribution & Post-Mortem (Layer C)** - Simulated ledger vs live quotes + P&L attribution + post-mortem into the KB
@@ -262,7 +262,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 **Plans**: 5 plans (4 waves)
 - [x] 07.5-01-PLAN.md — record contract + narrative-card composer + node-attr mappers (Wave 1)
 - [x] 07.5-02-PLAN.md — no-look-ahead leak-gate + threaded seam + mandatory test (Wave 1)
-- [ ] 07.5-03-PLAN.md — CIK-filtered bundle + fixture-tested Sonnet extractor + anchoring/consistency (Wave 2)
+- [x] 07.5-03-PLAN.md — CIK-filtered bundle + fixture-tested Sonnet extractor + anchoring/consistency (Wave 2)
 - [ ] 07.5-04-PLAN.md — insert_catalyst_record + one-time build_playbooks.py (Wave 3)
 - [ ] 07.5-05-PLAN.md — lesson_rule generalization into scenario playbook nodes (Wave 4)
 
