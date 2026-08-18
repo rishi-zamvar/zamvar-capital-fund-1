@@ -639,20 +639,77 @@ def score_registry(
     return scorable, insufficient
 
 
+def select_members(
+    conn, as_of: str, *, target_size: int = _DEFAULT_TARGET_UNIVERSE_SIZE,
+    big_move: float = _DEFAULT_BIG_MOVE, min_events: int = _DEFAULT_MIN_EVENTS,
+    catalyst_types: tuple[str, ...] = ("pdufa",), criteria: dict | None = None,
+) -> tuple[list[dict], list[dict], dict]:
+    """BACKWARD percentile-cut membership (UNIV-02b/03/07). Returns (members, rejected, report).
+
+    1. score_registry (store-read, ZERO API) -> (scorable, insufficient).
+    2. rank scorable by vol_score DESC (cheap).
+    3. walk the ranked list, checking tradeability via the repurposed screen_candidates path
+       (ADV floor, cap floor, relaxed optionable — free-first/cached); a tradeable name -> members,
+       a non-tradeable -> rejected (with the screen reasons). STOP admitting once len(members) >=
+       target_size OR the pool is exhausted. This IS "remove the lowest percentile until it fits":
+       the low-scorers are never reached (frugal — no tradeability API on the tail).
+    4. N = len(members) — an OUTPUT (<= target_size; honest under-fill when scorable+tradeable <
+       target, reported, never padded). cut_percentile = 1 - N/n_scorable.
+    """
+    scorable, insufficient = score_registry(
+        conn, big_move=big_move, min_events=min_events, catalyst_types=catalyst_types
+    )
+    n_scorable = len(scorable)
+    ranked = sorted(scorable, key=lambda r: r["vol_score"], reverse=True)
+
+    members: list[dict] = []
+    rejected: list[dict] = []
+    for rec in ranked:
+        # A store-scored pseudo-candidate for the tradeability screen; realized_move_median carries
+        # the backward median so screen_candidates attaches it (no move recompute, no network).
+        cand = {**rec, "cik": None, "catalysts": [], "realized_move_median": rec["median_move"]}
+        admitted, screen_rej = screen_candidates({0: cand}, as_of, criteria=criteria)
+        if admitted:
+            members.append(admitted[0])
+        else:
+            rejected.append(screen_rej[0])
+        if len(members) >= target_size:
+            break  # target filled — the lower-scoring tail is never screened (frugal)
+
+    N = len(members)
+    report = {
+        "n_scorable": n_scorable,
+        "n_insufficient": len(insufficient),
+        "N": N,
+        "target_size": target_size,
+        "target_reached": N >= target_size,
+        "cut_percentile": round(1 - N / n_scorable, 4) if n_scorable else 0.0,
+        "big_move": big_move,
+        "min_events": min_events,
+        "members": [
+            {"ticker": m["ticker"], "vol_score": m.get("vol_score"),
+             "median_move": m.get("median_move"), "big_move_frac": m.get("big_move_frac"),
+             "n_moves": m.get("n_moves")}
+            for m in members
+        ],
+        "insufficient_history": [r["ticker"] for r in insufficient],
+    }
+    return members, rejected, report
+
+
 # ══════════════════════════════════════════════════════════════════════════════════════════
 # Plan 02 — screen (UNIV-02) + measure-and-grow (UNIV-03) + write (UNIV-04/05)
 # ══════════════════════════════════════════════════════════════════════════════════════════
 
-# Screen thresholds (research §A.2 + live-close finding 3 / decision C). Tradeable ADV floor $5M; a
-# $2-5M name is KEPT + size_tiny (the IVA/MASH lesson — don't drop a thin-but-real name); a $200M
-# market-cap FLOOR (no CEILING — a large-cap binary-catalyst biotech, BBIO/AXSM/PRAX, must qualify).
-# The screen gates on realized catalyst MOVEMENT instead of size: keep a name only if its per-name
-# median realized catalyst move >= move_threshold (default 0.10, the tuning knob). Override per-call
-# via `criteria`.
+# Tradeability thresholds (research §A.2 + live-close finding 3 / decision C). Tradeable ADV floor
+# $5M; a $2-5M name is KEPT + size_tiny (the IVA/MASH lesson — don't drop a thin-but-real name); a
+# $200M market-cap FLOOR (no CEILING — a large-cap binary-catalyst biotech, BBIO/AXSM/PRAX, must
+# qualify). The fixed realized-move threshold gate is RETIRED (Plan 07 pivot) — the BACKWARD
+# vol_score percentile-cut in select_members is the membership judgement; these floors are
+# tradeability only. Override per-call via `criteria`.
 _DEFAULT_MIN_ADV_USD = 5_000_000
 _SIZE_TINY_FLOOR = 2_000_000
 _DEFAULT_MIN_MARKET_CAP = 200_000_000
-_DEFAULT_MOVE_THRESHOLD = 0.10
 
 _BASE_RATE_NOTE = (
     "per-name catalyst base rate (~2/yr) is a DERIVED estimate from FORWARD discovered evidence; "
@@ -821,6 +878,8 @@ def _candidate_move_stat(cand: dict) -> tuple[float | None, int]:
 
 
 def _enforce_diversity(admitted: list[dict], *, max_per_ta: int = 4) -> list[dict]:
+    # ponytail: off the build path since 06.12-07 (the backward percentile-cut is the sole membership
+    # gate now); kept defined + tested, retire in cleanup.
     """Cap any single therapeutic-area cluster at `max_per_ta`, keeping the densest-catalyst names;
     demote the rest (append 'ta_cluster_full' to their reasons). Dataset-quality gate so cohort
     cells (catalyst_type x TA x drop_regime) later populate — not just risk. Returns the kept list."""
@@ -864,6 +923,8 @@ def size_to_density(
     safety_cap: int = 90,
     window_months: int = 12,
 ) -> tuple[list[dict], dict]:
+    # ponytail: off the build path since 06.12-07 (superseded by select_members' backward
+    # percentile-cut over vol_score); kept defined + tested, retire in cleanup.
     """Measure-and-grow: N is an OUTPUT. Rank the screened candidates by realized catalyst-MOVE
     magnitude (biggest movers first; live-parity catalyst count is the tiebreaker), grow the
     shortlist one at a time, and STOP when projected weekly lambda >= target_lambda OR the shortlist
@@ -934,15 +995,21 @@ def build_universe(
     conn, as_of: str, *, target_lambda: float = 1.75, criteria: dict | None = None,
     date_from: str | None = None, date_to: str | None = None,
 ) -> dict:
-    """Orchestrate discover -> backfill -> screen -> diversity -> size -> build_snapshot into a
-    survivorship-free append-only `universe_as_of` cohort, returning a run summary with per-name
-    provenance + realized-move stats + the honest breadth/depth tradeoff.
+    """Orchestrate discover+backfill -> select_members (BACKWARD percentile-cut) -> build_snapshot
+    into a survivorship-free append-only `universe_as_of` cohort, returning a run summary with
+    per-name vol_score provenance + the honest breadth/depth tradeoff (Plan 07 pivot).
+
+    Membership is now BACKWARD-looking: discovery + _persist_backfill persist the 5-yr PDUFA registry
+    (catalyst + catalyst_move) UNCHANGED, then select_members READS THAT STORE (zero API) to score
+    each name from its proven past moves and percentile-cut to the tradeable target. The old
+    screen -> diversity -> size_to_density path is retired (those helpers stay defined + tested, OFF
+    the build path). `target_lambda` is kept for signature back-compat but is no longer used.
 
     CRITICAL (Blocker 1): build_snapshot re-applies its OWN store-density floor via _catalyst_density
-    over the `catalyst` table, so we pass min_catalyst_density=0 — discovery's size_to_density +
-    the move screen are the gates (from FORWARD evidence + realized moves), NOT the store-density
-    floor. The floor stays disabled even though _persist_backfill now makes the catalyst table
-    non-empty, because a partial backfill would otherwise trap the cohort empty.
+    over the `catalyst` table, so we pass min_catalyst_density=0 — the backward vol_score cut +
+    tradeability floors are the gates, NOT the store-density floor. The floor stays disabled even
+    though _persist_backfill makes the catalyst table non-empty, because a partial backfill would
+    otherwise trap the cohort empty.
     """
     date_from = date_from or as_of
     date_to = date_to or _add_months(as_of, 12)
@@ -953,21 +1020,20 @@ def build_universe(
     candidates = discover_candidates(date_from, date_to)
 
     # Warm-start backfill: persist each candidate's historical catalysts + point-in-time realized
-    # moves BEFORE screening, so the move screen reads real moves and the playbook seed is written.
+    # moves BEFORE scoring, so select_members reads real moves from the store (zero API) + the
+    # playbook seed is written. UNCHANGED from Plan 06 — this IS the registry the scorer reads.
     backfilled_ids: list[int] = []
     for cand in candidates.values():
         backfilled_ids += _persist_backfill(conn, cand)
 
-    admitted, rejected = screen_candidates(candidates, as_of, criteria=criteria)
-    kept = _enforce_diversity(admitted)
-    demoted = [r for r in admitted if r not in kept]
-    rejected = rejected + demoted
+    target_size = (criteria or {}).get("target_universe_size", _DEFAULT_TARGET_UNIVERSE_SIZE)
+    members, rejected, select_report = select_members(
+        conn, as_of, target_size=target_size, criteria=criteria
+    )
 
-    shortlist, density_report = size_to_density(kept, as_of, target_lambda=target_lambda)
-
-    seed_rows = [_to_seed_row(r) for r in shortlist]
-    # ponytail: min_catalyst_density=0 here because the catalyst table is empty pre-7.5; the
-    # store-density floor re-engages once 7.5 backfills the trailing history.
+    seed_rows = [_to_seed_row(r) for r in members]
+    # ponytail: min_catalyst_density=0 here because the store-density floor is disabled this phase
+    # (Blocker 1); it re-engages once Phase 7.5 backfills the full trailing history.
     build_criteria = {
         "min_catalyst_density": 0,
         "min_adv_usd": _DEFAULT_MIN_ADV_USD,
@@ -977,40 +1043,39 @@ def build_universe(
     included_count = build_snapshot(conn, as_of, seed_rows, criteria=build_criteria)
 
     admissions = []
-    for r in shortlist:
-        prov = (r.get("catalysts") or [{}])[0]
+    for r in members:
         admissions.append({
             "ticker": r["ticker"],
             "cik": r.get("cik"),
             "therapeutic_area": r.get("therapeutic_area"),
-            "source_feeds": sorted(r.get("source_feeds", [])),
-            "source_url": prov.get("source_url"),
-            "fetch_ts": prov.get("fetch_ts"),
-            "grade": prov.get("grade"),
+            "market_cap": r.get("market_cap"),
+            "adv_usd": r.get("adv_usd"),
             "flags": r.get("flags", {}),
-            "n_catalysts": len(r.get("catalysts", [])),
-            "realized_move_median": r.get("realized_move_median"),
+            "vol_score": r.get("vol_score"),
+            "median_move": r.get("median_move"),
+            "big_move_frac": r.get("big_move_frac"),
             "n_moves": r.get("n_moves"),
         })
 
-    move_threshold = (criteria or {}).get("move_threshold", _DEFAULT_MOVE_THRESHOLD)
     return {
         "as_of": as_of,
         "n_candidates": len(candidates),
-        "n_screened": len(kept),
-        "n_admitted": density_report["n_admitted"],
+        # backward-membership fields (Plan 07 pivot)
+        "n_scorable": select_report["n_scorable"],
+        "N": select_report["N"],  # OUTPUT: len(members) <= target_size (honest under-fill)
+        "target_size": select_report["target_size"],
+        "target_reached": select_report["target_reached"],
+        "cut_percentile": select_report["cut_percentile"],
+        "n_insufficient": select_report["n_insufficient"],
+        "insufficient_history": select_report["insufficient_history"],
         # included_count is build_snapshot's RETURNED count of rows written included=1 — a DISTINCT
-        # field from n_admitted so the two reconcile; a large gap means the store-density trap
+        # field from N so the two reconcile (Blocker 3); a large gap means the store-density trap
         # (Blocker 1) re-appeared, or size_tiny names fell under the snapshot's $5M floor.
         "included_count": included_count,
-        "measured_lambda": density_report["measured_lambda"],
-        "target_reached": density_report["target_reached"],
-        "density_report": density_report,
+        "select_report": select_report,
         "admissions": admissions,
         "n_rejected": len(rejected),
-        # move-screen + warm-start-backfill stats (this phase)
-        "move_threshold": move_threshold,
-        "n_move_unknown": sum(1 for r in rejected if "move_unknown" in r.get("reasons", [])),
+        # warm-start-backfill stats (the registry the scorer reads)
         "n_backfilled_catalysts": len(backfilled_ids),
         "n_moves_persisted": sum(c.get("n_moves", 0) for c in candidates.values()),
         "tradeoff": _TRADEOFF_NOTE,
