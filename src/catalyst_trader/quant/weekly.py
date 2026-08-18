@@ -22,11 +22,39 @@ from datetime import date, timedelta
 
 import numpy as np
 
+from .. import serving
+from .. import store as _store
 from .pairs import correlation_beta
 from .result import ToolResult
 
 _VERSION = "1.0.0"
 _XBI = "XBI"
+
+
+class _AsOfView:
+    """The point-in-time read adapter the shared sleeve uses IN PLACE of the raw store module, so the
+    SAME sleeve code serves the backtest (cutoff=W) and the live desk (cutoff=now) through the ONE
+    serving gateway (decision B — no live-vs-backtest read drift). Bars route through the gateway
+    (knowable=week_end<=cutoff). tradeable_catalysts_light stays UNGUARDED on purpose: the sleeve uses
+    it only for busted-catalyst classification + hold-window precedence (belt-and-suspenders — it keeps
+    a catalyst name OUT of the statistical bucket regardless of knowability); the MONEY-PATH catalyst
+    knowability gate lives in backtest/events.py + desk candidate selection, both via book.catalysts().
+    Signature mirrors the store module so it drops in as the `store` arg with zero sleeve-math change.
+    """
+
+    def __init__(self, book):
+        self._book = book
+
+    def bars_asof(self, conn, ticker, as_of, *, lookback_weeks=None):
+        return self._book.bars(ticker, as_of, lookback_weeks=lookback_weeks)
+
+    def tradeable_catalysts_light(self, conn):
+        return _store.tradeable_catalysts_light(conn)
+
+
+def as_of_view(conn, cutoff, *, latency_cfg=None) -> _AsOfView:
+    """Build the sleeve's point-in-time read adapter at `cutoff` (backtest=W, live=now)."""
+    return _AsOfView(serving.asof(conn, cutoff, latency_cfg=latency_cfg))
 
 # FIXED trigger grammar (research §2.4) — no free-form. trigger -> (op, threshold on the weekly ret).
 _TRIGGERS = {

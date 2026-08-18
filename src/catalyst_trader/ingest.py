@@ -207,6 +207,16 @@ def ingest_history(conn, *, start, end, providers, universe_csv="data/seed_unive
             stamp = _pit_stamp(cat)
             if stamp is not None:  # null publication_date -> stays unstamped (excluded downstream)
                 conn.execute("UPDATE catalyst SET last_verified_at=? WHERE id=?", (stamp, cid))
+                # The bitemporal knowable time IS this point-in-time announcement stamp, not the
+                # ingest wall-clock. verify runs AFTER insert (so insert stamped the version at now);
+                # re-stamp the latest version's recorded_at to the PIT date so the serving gateway
+                # gates the catalyst on when it became KNOWABLE (07.6 — no historical look-ahead).
+                conn.execute(
+                    "UPDATE catalyst_version SET recorded_at=? WHERE id = "
+                    "(SELECT id FROM catalyst_version WHERE catalyst_id=? "
+                    " ORDER BY recorded_at DESC, id DESC LIMIT 1)",
+                    (stamp, cid),
+                )
                 conn.commit()
                 verified += 1
         cats_by_ticker[cat.ticker].append(cat)

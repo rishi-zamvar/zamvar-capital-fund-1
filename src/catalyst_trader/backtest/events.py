@@ -1,19 +1,21 @@
 """BACK-01: the point-in-time, survivorship-free event-set builder.
 
-`build_event_set` walks a weekly `as_of` cursor across the backtest window and, at each
-week, assembles a `(as_of, universe, catalysts, has_bars)` record read STRICTLY through
-the shipped no-look-ahead guards:
+`build_event_set` walks a weekly `as_of` cursor across the backtest window and, at each week,
+assembles a `(as_of, universe, catalysts, has_bars)` record read STRICTLY through the MANDATORY
+serving gateway (07.6, decision B) at cutoff=as_of — the SAME seam the live desk reads through at
+cutoff=now, so backtest and live execute identical read code (no logic drift):
 
-- universe  -> universe.build.universe_as_of (latest cohort <= as_of, delisted retained)
-- bars      -> store.bars_asof (week_end <= as_of, delisted retained)
-- catalysts -> store.tradeable_catalysts THEN a MANDATORY post-filter on
-               `last_verified_at <= effective_asof`. tradeable_catalysts is status-only
-               (no date guard, store.py L166), so on a historical replay it returns
-               catalysts verified AFTER the simulated week; the post-filter is the
-               money-honesty fix that closes that verification look-ahead.
+- universe  -> book.universe(as_of)   (latest cohort valid AND knowable by cutoff, delisted retained)
+- bars      -> book.bars(ticker, as_of)  (week_end <= as_of; delisted retained)
+- catalysts -> book.catalysts()  (the bitemporal recorded_at<=cutoff resolve). This REPLACES the old
+               ad-hoc `tradeable_catalysts` + manual `last_verified_at`-post-filter: the gateway is
+               now the SOLE catalyst-knowability gate, resolving each event_date from the append-only
+               catalyst_version history so a catalyst recorded (verified) after the simulated week is
+               never seen, and a pre-amendment replay returns the pre-amendment date.
 
-The result is survivorship-free (delisted cohort names appear) and look-ahead-impossible
-on BOTH the event date (coming hold window) and the verification date.
+The result is survivorship-free (delisted cohort names appear) and look-ahead-impossible on BOTH the
+event date (coming hold window) and the knowable/transaction date. The per-class ingestion lag rides
+the catalyst read (cat_book carries latency_cfg); bars/universe read a no-lag book (as before).
 
 ponytail: tests run on synthetic fixtures (tests/synth_history.py). Wiring the REAL ~1yr
 earnings/PDUFA calendar into the store is a documented carry-forward, not this module's job.
@@ -23,8 +25,7 @@ from __future__ import annotations
 
 from datetime import date, timedelta
 
-from ..store import bars_asof, tradeable_catalysts_light
-from ..universe.build import universe_as_of
+from .. import serving
 
 
 def build_event_set(
@@ -55,23 +56,20 @@ def build_event_set(
     cursor = date.fromisoformat(start)
     end_d = date.fromisoformat(end)
 
-    # status='verified' is week-invariant, so read the whole verified set ONCE; the per-week
-    # date/verification guards below still filter it against each as_of (no look-ahead change).
-    verified = tradeable_catalysts_light(conn)
-
     while cursor <= end_d:
         as_of = cursor.isoformat()
         hold_end = (cursor + timedelta(days=hold_days)).isoformat()
 
-        # effective_asof lives in fill.py; import lazily so events tests (latency_cfg=None)
-        # never require it, and the two modules can ship in either order within this plan.
-        if latency_cfg:
-            from .fill import effective_asof
-            eff = effective_asof("catalyst", as_of, latency_cfg)
-        else:
-            eff = as_of
+        # ponytail: the serving gateway is now the SOLE catalyst-knowability gate — the old ad-hoc
+        # last_verified_at<=eff post-filter is GONE, replaced by book.catalysts() (bitemporal
+        # recorded_at<=cutoff resolve). Two books: bars/universe read with NO lag (as before);
+        # catalysts read through cat_book which carries the per-class ingestion lag (latency_cfg),
+        # exactly where the old code applied effective_asof("catalyst", ...). A single book can't
+        # serve mixed classes when latency_cfg omits "price", so bars/universe use a no-lag book.
+        book = serving.asof(conn, cutoff=as_of, latency_cfg=None)
+        cat_book = serving.asof(conn, cutoff=as_of, latency_cfg=latency_cfg)
 
-        universe = [u.ticker for u in universe_as_of(conn, as_of)]
+        universe = [u.ticker for u in book.universe(as_of)]
 
         catalysts = [
             {
@@ -80,16 +78,13 @@ def build_event_set(
                 "event_date": c.event_date,
                 "last_verified_at": c.last_verified_at,
             }
-            for c in verified
-            # event is in the coming hold window (no past/too-far-future event) ...
+            for c in cat_book.catalysts()
+            # the gateway already enforced knowability (recorded_at<=cutoff, +lag); here we keep only
+            # the coming hold window (as_of < event_date <= hold_end) on the AS-OF-resolved event_date.
             if as_of < c.event_date <= hold_end
-            # ... AND we could actually have known it was verified by the effective as_of.
-            # tradeable_catalysts_light has NO date guard, so this filter is mandatory (BACK-01).
-            and c.last_verified_at is not None
-            and c.last_verified_at <= eff
         ]
 
-        has_bars = {tk: bool(bars_asof(conn, tk, as_of)) for tk in universe}
+        has_bars = {tk: bool(book.bars(tk, as_of)) for tk in universe}
 
         records.append({
             "as_of": as_of,

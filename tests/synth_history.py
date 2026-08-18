@@ -120,6 +120,12 @@ def seed_history(
         conn, wk_list[0], seed_rows,
         criteria={"min_catalyst_density": 0, "min_market_cap": 0, "min_adv_usd": 0},
     )
+    # Bitemporal bridge (07.6): build_snapshot stamps recorded_at=now_iso() (correct for LIVE, where
+    # a cohort built today IS knowable today), but this fixture fabricates a HISTORICAL cohort — so
+    # backdate its knowable time to its contemporaneous as_of_date (mirrors migration 011's backfill).
+    # Without this, the gateway would gate a 2024 cohort on a 2026 recorded_at and deny it at replay.
+    conn.execute("UPDATE universe_snapshot SET recorded_at = as_of_date")
+    conn.commit()
 
     # 3) dated, verified catalysts stamped with last_verified_at
     for spec in catalysts:
@@ -149,6 +155,9 @@ def seed_history(
             )],
         )
         insert_catalyst(conn, c)
+        # insert_catalyst stamps the version's knowable time = last_verified_at (07.6), so the
+        # gateway's catalyst gate is contemporaneous with the fixture — no manual backdate needed.
+    conn.commit()
 
     return wk_list
 

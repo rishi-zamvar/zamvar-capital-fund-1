@@ -73,6 +73,11 @@ def test_event_set_no_future_bar(db):
         [{"ticker": "LIVE", "delisted": False}, {"ticker": "LATE", "delisted": False}],
         criteria=_OPEN,
     )
+    # bitemporal bridge (07.6): backdate the fabricated historical cohort's knowable stamp to its
+    # contemporaneous as_of_date so the gateway serves it at the 2024 replay cutoff (build_snapshot
+    # stamps recorded_at=now, correct for LIVE but not for a hand-seeded historical cohort).
+    db.execute("UPDATE universe_snapshot SET recorded_at = as_of_date")
+    db.commit()
     recs = build_event_set(db, start=wk[0], end=wk[-1])
     assert recs[0]["has_bars"]["LIVE"] is True
     assert recs[0]["has_bars"]["LATE"] is False          # no future bar leaks into coverage

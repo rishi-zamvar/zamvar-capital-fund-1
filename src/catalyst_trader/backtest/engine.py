@@ -22,7 +22,7 @@ from datetime import date, timedelta
 
 from pydantic import BaseModel, ConfigDict
 
-from .. import kb, store
+from .. import kb, serving, store
 from ..desk.portfolio import Candidate, select_book
 from ..desk.risk import size_for_survival, validate_hedge
 from ..quant import weekly as qw
@@ -143,18 +143,20 @@ def _ev_from_mean_next(mean_next, default):
     return mean_next if mean_next and mean_next > 0 else default
 
 
-def _base_rate_ev(ticker, as_of, conn, params, default):
+def _base_rate_ev(ticker, as_of, conn, params, default, store_view=None):
     """The base-rate expected next-week move for a catalyst leg's sizing (expected_move in
     size_for_survival), COMPUTED with the same tools as the direction proxy. Used by the long_runup
     proxy, which does not compute the base rate itself. Falls back to the caller's target when there
-    is no measured cell so the leg is never sized to the tiny FLOOR."""
+    is no measured cell so the leg is never sized to the tiny FLOOR. `store_view` = the gateway-backed
+    sleeve adapter (defaults to the raw store module for direct callers/tests — behaviour-identical)."""
+    sv = store_view if store_view is not None else store
     try:
-        cd = qw.classify_drop(ticker, as_of, store, conn, params=params).detail
+        cd = qw.classify_drop(ticker, as_of, sv, conn, params=params).detail
         trig = qw._match_trigger(cd["ret"])
         if trig is None:
             return default
         det = qw.weekly_base_rate(ticker, trig, cd["drop_class"], cd["turnover_flag"],
-                                  as_of, store, conn, params=params).detail
+                                  as_of, sv, conn, params=params).detail
         return _ev_from_mean_next(det.get("mean_next"), default)
     except (ValueError, KeyError):
         return default
@@ -162,14 +164,19 @@ def _base_rate_ev(ticker, as_of, conn, params, default):
 
 def _fill_leg(conn, ticker, as_of, exit_by, *, held_through, slippage):
     """Enter at the decision-week close, exit via the pessimistic fill (07-02). Returns
-    (entry, fill, realized_ret) or None when the leg cannot be entered/exited honestly."""
-    entry_bars = store.bars_asof(conn, ticker, as_of)
+    (entry, fill, realized_ret) or None when the leg cannot be entered/exited honestly.
+
+    # ponytail: reads through the serving gateway (decision B). Entry bars are knowable at cutoff=as_of;
+    # exit bars at cutoff=exit_by (a future-relative read that is legitimately knowable at exit time).
+    # No lag here (price bars were never latency-shifted in the fill path) — behaviour-preserving.
+    """
+    entry_bars = serving.asof(conn, as_of).bars(ticker, as_of)
     if not entry_bars:
         return None
     entry = float(entry_bars[-1]["close"])
     if entry <= 0:
         return None
-    exit_bars = store.bars_asof(conn, ticker, exit_by)
+    exit_bars = serving.asof(conn, exit_by).bars(ticker, exit_by)
     if not exit_bars or exit_bars[-1]["week_end"] <= as_of:
         return None  # no hold-week bar yet -> the outcome is unmeasurable, do not fabricate it
     fill = fill_price(exit_bars, side="long", held_through=held_through, slippage=slippage)
@@ -230,12 +237,15 @@ def run_layer_a(conn, embed, *, start, end, params=None, target_weekly=0.01,
         as_of = rec["as_of"]
         exit_by = (date.fromisoformat(as_of) + timedelta(days=7)).isoformat()
         candidates: list[Candidate] = []
+        # The shared sleeve reads through the gateway at cutoff=as_of (decision B: the SAME adapter
+        # the live desk uses at cutoff=now). No lag on the sleeve's bars (behaviour-preserving).
+        view = qw.as_of_view(conn, as_of)
 
-        # --- catalyst legs: sourced from the 07-02 point-in-time (last_verified_at-filtered) set ---
+        # --- catalyst legs: sourced from the 07-02 point-in-time (gateway-gated) event set ---
         for cat in rec["catalysts"]:
             tk = cat["ticker"]
             try:
-                side, p, ev_raw = proxy_fn(tk, as_of, store, conn, params=params)
+                side, p, ev_raw = proxy_fn(tk, as_of, view, conn, params=params)
             except (ValueError, KeyError):
                 continue  # insufficient history at this as_of -> no directional read (honest skip)
             if side is None or p is None:
@@ -247,7 +257,7 @@ def run_layer_a(conn, embed, *, start, end, params=None, target_weekly=0.01,
             # reuse the base-rate mean_next the proxy already computed; long_runup (ev_raw=None)
             # never computes it, so it still sizes via the independent _base_rate_ev recompute.
             ev = (_ev_from_mean_next(ev_raw, target_weekly) if ev_raw is not None
-                  else _base_rate_ev(tk, as_of, conn, params, target_weekly))
+                  else _base_rate_ev(tk, as_of, conn, params, target_weekly, store_view=view))
             size = size_for_survival(p_loss=1.0 - p, gap=stat_gap,
                                      target_return=target_weekly, expected_move=ev).value
             hedge = _honest_hedge(conn, embed, tk, cat, as_of, exit_by)
@@ -264,7 +274,7 @@ def run_layer_a(conn, embed, *, start, end, params=None, target_weekly=0.01,
 
         # --- statistical sleeve: mirror the deterministic top-k eligible rows (single-leg, exit@1wk) ---
         try:
-            rows = qw.thesis_scan(rec["universe"], as_of, store, conn, params=params).detail["rows"]
+            rows = qw.thesis_scan(rec["universe"], as_of, view, conn, params=params).detail["rows"]
         except (ValueError, KeyError):
             rows = []
         eligible = [r for r in rows

@@ -73,10 +73,17 @@ def _latest_version(conn: sqlite3.Connection, catalyst_id: int) -> sqlite3.Row |
 
 
 def _append_version(conn: sqlite3.Connection, catalyst_id: int, catalyst: Catalyst, now: str) -> None:
+    # The version's KNOWABLE time (transaction-time the gateway gates on) is when the date became
+    # available to us = its verification/announcement stamp (last_verified_at), NOT the ingest
+    # wall-clock. This is critical for HISTORICAL backfill: a 2026-01 catalyst ingested today must
+    # be knowable from its 2026-01 announcement, not from `now`. Falls back to now when unstamped
+    # (a live discovery with no explicit verification date). Makes the bitemporal gate equivalent
+    # to the shipped last_verified_at<=cutoff filter — behaviour-preserving across every path.
+    knowable = _v(catalyst.last_verified_at) or now
     conn.execute(
         "INSERT INTO catalyst_version (catalyst_id, event_date, event_date_end, recorded_at) "
         "VALUES (?,?,?,?)",
-        (catalyst_id, _v(catalyst.event_date), _v(catalyst.event_date_end), now),
+        (catalyst_id, _v(catalyst.event_date), _v(catalyst.event_date_end), knowable),
     )
 
 
