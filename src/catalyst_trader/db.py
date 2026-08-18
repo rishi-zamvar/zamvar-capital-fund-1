@@ -19,6 +19,14 @@ def connect(path: str | None = None) -> sqlite3.Connection:
     sqlite_vec.load(conn)
     conn.enable_load_extension(False)
     conn.execute("PRAGMA foreign_keys = ON")
+    # Concurrency: WAL lets readers and one writer proceed without blocking each other, and commits
+    # are appends (faster to clear a queue of concurrent writers, e.g. the playbook extraction fan-out).
+    # busy_timeout makes a writer WAIT (and retry) for the lock instead of failing fast. WAL is a
+    # persistent per-DB setting; harmless to re-assert. Skip on in-memory DBs (WAL is a no-op there).
+    conn.execute("PRAGMA busy_timeout = 30000")
+    resolved = path if path is not None else settings.db_path
+    if resolved != ":memory:":
+        conn.execute("PRAGMA journal_mode = WAL")
     return conn
 
 
