@@ -260,6 +260,17 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] 07-04-PLAN.md — backtest/engine.py: Layer A deterministic weekly loop (NO run_desk) + base-rate direction proxy + baseline distribution, BACK-02 (Wave 2)
 - [x] 07-05-PLAN.md — backtest/layerb.py (guarded replay + biased_optimistic label + sample/drop-log, BACK-03) + backtest/gate.py (sample-based go/no-go, BACK-05) (Wave 3)
 
+### Phase 7.7: Football-Field Valuation Plugin Suite
+**Depends on**: Phase 5 (trade builder + quant/ tools), Phase 6 (diligence), Phase 6.7 (MD reconciliation loop — reused verbatim)
+**Goal**: Replicate the hedge-fund valuation "football field" — estimate the expected move every principled way, assemble the range, pick the convergence value — as canonical reusable `quant/` plugins. Company params come from playbooks/assumptions, never hardcoded; NO-DUPLICATION (only 2 net-new functions, rest parameterize existing tools).
+**Requirements**: FF-01..FF-07
+**Plans**: 5 plans (3 waves) — CONTEXT + RESEARCH + plan-check PASS-WITH-NITS (nits folded into plans)
+- [x] 07.7-01-PLAN.md — `quant/field.py::expected_move_field` aggregator (conf-weighted trimmed median + dispersion) + `quant/valuation.py::analyst_pt_move` (Wave 1, TDD)
+- [x] 07.7-02-PLAN.md — `field` param group in kb BOOTSTRAP + cited CSV seed (Wave 1)
+- [ ] 07.7-03-PLAN.md — wire football field into `desk/builder.py::build` (Wave 2) — HELD for CEO greenlight + `assumptions:<ticker>` data scope
+- [ ] 07.7-04-PLAN.md — DD `dd_expected_move` seam + DiligenceDossier field (Wave 2) — HELD
+- [ ] 07.7-05-PLAN.md — `move_discrepancy` comparator in `md.cross_check` (Wave 3) — HELD
+
 ### Phase 8: Paper Ledger, Attribution & Post-Mortem (Layer C)
 **Goal**: Run the full desk forward against live quotes for the true out-of-sample test, and learn from every resolved trade.
 **Depends on**: Phase 7
