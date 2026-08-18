@@ -303,6 +303,15 @@ def seed_fitted_params(conn, csv_path: str | None = None) -> int:
                 "log_growth_margin": float(r["log_growth_margin"]),
                 "runup_capture_frac": float(r["runup_capture_frac"]),
             },
+            # FF-06 field knobs seeded uncalibrated (refit Phase 9). Direct subscript so a missing
+            # column raises, same cite-or-drop discipline as evidence_url.
+            "field": {
+                "min_methods": int(r["min_methods"]),
+                "trim_frac": float(r["trim_frac"]),
+                "dispersion_wide": float(r["dispersion_wide"]),
+                "move_discrepancy_tol": float(r["move_discrepancy_tol"]),
+                "weights": json.loads(r["field_weights_json"]),
+            },
             "fit_source": r["fit_source"],
         }
         ev = EvidenceSource(
@@ -365,6 +374,20 @@ BOOTSTRAP_DEFAULT = {
         "defensive_instruments": ["SGOV", "BIL", "XBI"],
         "defensive_max_frac": 1.0,     # defensive book may be the whole book
         "statistical_sleeve_cap": 0.5, # max fraction of the weekly risk budget in statistical legs when catalyst legs exist (research §4.5 knob #4)
+    },
+    # FF-06: the football-field aggregator / builder / DD / cross_check read EVERY threshold + method
+    # weight from here (never a literal in a consumer body). ALL UNCALIBRATED — labeled for Phase-9
+    # refit (RESEARCH §6 + Open Questions). Deliberately DECOUPLED from diligence.DILIGENCE_PARAMS.
+    "field": {
+        "min_methods": 2,             # a one-method "field" raises (no false precision)
+        "trim_frac": 0.0,             # pure weighted median default; trim only when n is large (Open Q3)
+        "dispersion_wide": 0.5,       # CV threshold for "wide" cross-method disagreement (uncalibrated)
+        "move_discrepancy_tol": 0.35, # builder-vs-DD relative gap tolerance (uncalibrated, Open Q2)
+        "weights": {                  # structural reliability -> ordinal weight (Open Q1, uncalibrated)
+            "analog_cold": 0.5, "analog_warm": 1.0,
+            "implied_liquid": 1.0, "base_rate_thin": 0.5, "base_rate_ample": 1.0,
+            "rnpv_scenario": 1.0, "analyst_pt": 0.75,
+        },
     },
     "fit_source": "bootstrap default (uncalibrated) — refit from realized outcomes in Phase 9",
 }
