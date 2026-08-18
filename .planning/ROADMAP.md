@@ -39,6 +39,12 @@ Decimal phases appear between their surrounding integers in numeric order.
     - [x] 06.12-07-PLAN.md — BACKWARD membership PIVOT: score names from PROVEN PAST PDUFA moves in the store (median + big-move freq, n≥2, insufficient-history watch list) → percentile-cut to ~80 (N-as-output, cut_percentile, NO fixed threshold) + RELAX universe optionability to "has options at all" (strict OI/spread → per-trade gate desk/diligence.options_liquid); rewire build_universe; Blocker-1/3 preserved [UNIV-02b/02c/03/06/07]
     - [ ] 06.12-03-PLAN.md — operator-directed LIVE run (BACKWARD): reuse persisted 5-yr PDUFA registry → store-scored percentile-cut → relaxed tradeability → real survivorship-free universe_as_of cohort (~80) + honest JSON report (vol scores, cut_percentile, insufficient-history) + human-verify gate (launch-signal-return, frugal/cache-first) [UNIV-01..07 live-close]
 - [ ] **Phase 7.5: Catalyst-Outcome Playbook Dataset & Per-Cohort Calibration** *(added 2026-08-16; scope-confirmed 2026-08-17)* - The agentic warm-start pass that CONSUMES Phase 6.12's backward PDUFA move-registry (`catalyst` → `catalyst_move`: every past PDUFA event ↔ company ↔ realized move ↔ `knowable_asof`). For each historical event, agents work WITH FULL HINDSIGHT (they know the outcome — that is the point) to catalogue ALL the factors that drove the move and the leading indicators a forward-looking person should WATCH FOR, writing setup→event→move→rationale records into the KB (company→catalyst→outcome + catalyst→prediction, CITES) + cohort-grouped fitted_params refit. NO point-in-time constraint on this CONSTRUCTION pass (hindsight is the value); the no-look-ahead discipline lives at APPLICATION — the walk-forward + live, where a forward agent uses only pre-event data plus the playbook's "what to look for" list. This warm playbook is the starting point for the walk-forward (week 1 isn't blind). Honest + CEO-accepted: the 1-yr backtest over the same history the playbook trained on is biased/optimistic (for config fine-tuning); the leak-free edge proof is the forward paper month (Phase 8). The moat. No migration, no new dep. PLAY-01..06.
+  - **Plans:** 5 plans in 4 waves
+    - [ ] 07.5-01-PLAN.md — playbook record contract + narrative-card composer + node-attr mappers (envelope + ~18 drivers + before/after narrative; SIGNED move key; top-level filter keys) [PLAY-01/02/04] (Wave 1)
+    - [ ] 07.5-02-PLAN.md — no-look-ahead leak-gate: knowable_asof<=as_of clause on analog_query/_structural_filter + threaded seam (builder/tools) + conditional type/indication filter + MANDATORY dedicated no-look-ahead test [PLAY-05/06] (Wave 1)
+    - [ ] 07.5-03-PLAN.md — attribution front-half: CIK-filtered event-proximate bundle + Sonnet extractor (injected complete_fn, fixture-tested offline) + move/text anchoring + move_consistency + skip/flag [PLAY-03/04] (Wave 2)
+    - [ ] 07.5-04-PLAN.md — attribution back-half: insert_catalyst_record (catalyst+outcome+RESULTED_IN+CITES+card kb_vec via insert_claim, idempotent) + one-time build_playbooks.py (218 core + 118 earnings, Sonnet ~$7, cache-first, gated) [PLAY-01/05/06] (Wave 3)
+    - [ ] 07.5-05-PLAN.md — generalization: recurring lesson_rules -> cited free-form insert_playbook scenario nodes (no fitted_params collision) wired as the build's closing step [PLAY-06] (Wave 4)
 - [ ] **Phase 7: Verifier/Guardrails + Backtest Harness** - Fact-check verifier + runtime monitors + mechanical (Layer A) and guarded-agentic (Layer B) backtests
 - [ ] **Phase 8: Paper Ledger, Attribution & Post-Mortem (Layer C)** - Simulated ledger vs live quotes + P&L attribution + post-mortem into the KB
 - [ ] **Phase 8.5: Intra-Week Position Monitor** *(BUILD DEFERRED)* - Light/fast Haiku agent group, event-triggered by deterministic monitors (TA thresholds/news), flags positions → routes adjustment back to portfolio builder; no order placement
@@ -242,6 +248,23 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] 06.10-05-PLAN.md — coverage fixes: FINRA NDJSON parse + Nasdaq earnings FMP-fallback (Wave 2)
 - [x] 06.10-06-PLAN.md — daemon: registry + run_cycle/cadence + detect_gaps/backfill/failover + data_health.json + monitor tab + launchd (Wave 3)
 - [ ] 06.10-07-PLAN.md — live --once operator shakedown: >=2-source median live + GREEN-key doc + catalyst debug ($0) (Wave 4)
+
+### Phase 7.5: Catalyst-Outcome Playbook Dataset & Per-Cohort Calibration
+**Goal**: A warm, leak-safe analog playbook on the existing kb.py scaffold — every attributable peer catalyst becomes a cited case (structured envelope + narrative body + drivers + realized SIGNED move + outcome), retrievable by analogy with a no-look-ahead gate, so week 1 of the walk-forward isn't blind and the football-field analog leg goes cold->warm.
+**Depends on**: Phase 6.12 (backward PDUFA move-registry: catalyst -> catalyst_move), Phase 2 (kb.py scaffold + analog_query), Phase 7.7 (football-field field-weight table consumes the warm analog leg)
+**Requirements**: PLAY-01, PLAY-02, PLAY-03, PLAY-04, PLAY-05, PLAY-06
+**Success Criteria** (what must be TRUE):
+  1. Each attributable peer catalyst is a cited KB case: structured envelope (type/ticker/indication/modality/knowable_asof + outcome_label + SIGNED move + confidence + move_consistency_flag + ~18 drivers) + full before/after narrative body, embedded as a composed card
+  2. Population is a one-time Sonnet pass (1 call/catalyst, CIK-filtered own-company bundle, ~$7), idempotent on catalyst_id+content-hash, cite-or-drop, move/text-anchored with a consistency flag; 218 binary core + 118 earnings tier kept distinct; month-precision/no-exhibit/naked skipped-or-flagged honestly
+  3. Retrieval enforces no-look-ahead at APPLICATION: analog_query gates on knowable_asof <= as_of (a dedicated test proves two-node filtering); construction keeps full hindsight
+  4. Recurring lesson_rules graduate into cited free-form scenario playbook nodes (never the reserved fitted_params namespace)
+  5. No migration, no new dependency; kb.py extended additively (analog_query as_of), all prior tests still green
+**Plans**: 5 plans (4 waves)
+- [ ] 07.5-01-PLAN.md — record contract + narrative-card composer + node-attr mappers (Wave 1)
+- [ ] 07.5-02-PLAN.md — no-look-ahead leak-gate + threaded seam + mandatory test (Wave 1)
+- [ ] 07.5-03-PLAN.md — CIK-filtered bundle + fixture-tested Sonnet extractor + anchoring/consistency (Wave 2)
+- [ ] 07.5-04-PLAN.md — insert_catalyst_record + one-time build_playbooks.py (Wave 3)
+- [ ] 07.5-05-PLAN.md — lesson_rule generalization into scenario playbook nodes (Wave 4)
 
 ### Phase 7: Verifier/Guardrails + Backtest Harness
 **Goal**: Prove the strategy honestly against history and stand up the runtime safety gates before any capital — real or simulated — is at stake.
