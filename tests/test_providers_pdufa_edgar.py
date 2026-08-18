@@ -360,3 +360,115 @@ def test_no_network_in_readout_extract():
     src = inspect.getsource(pdufa_edgar._extract)
     assert "_READOUT_RX" in src  # readout classification is in _extract (not a separate fetch)
     assert not re.search(r"get_json|_http|httpx|requests|urllib|anthropic|openai", src)
+
+
+# ── Earnings/deck/annual exclusion guard on BOTH branches (money-path: false positives) ───────
+# ~11% of readouts AND ~13 "pdufa" catalysts were earnings/deck/annual 8-Ks that mention a
+# result-phrase or a target-action date in PASSING. The guard reclassifies genuine earnings ->
+# CatalystType.earnings (stored, playbook-relevant, excluded from the universe by the scorer's
+# type filter) and DROPS pure decks/annual boilerplate, while genuine PDUFA/readout are unchanged.
+
+
+def test_earnings_8k_reclassified_not_readout_item_202():
+    """AMGN-earnings-shape 8-K (Item 2.02, earningsrelease exhibit) containing 'primary endpoint'
+    -> CatalystType.earnings (day-precision filing_date), NEVER trial_readout."""
+    from catalyst_trader.providers import pdufa_edgar
+
+    out = pdufa_edgar._extract(
+        _load_htm("edgar_8k_amgn_earnings.htm"), "2025-02-04",
+        items=["2.02", "9.01"], doc="d123amgnearningsrelease.htm",
+    )
+    assert len(out) == 1
+    assert out[0]["catalyst_type"] == CatalystType.earnings
+    assert out[0]["catalyst_type"] != CatalystType.trial_readout
+    assert out[0]["event_date"] == "2025-02-04"  # the earnings event day == filing_date
+    assert out[0]["confidence"] == "HIGH"
+
+
+def test_earnings_8k_reclassified_by_filename_no_item():
+    """No item codes available -> the exhibit-filename/opening keyword guard is the backstop:
+    an 'earningsrelease' exhibit with a result phrase -> earnings, not trial_readout."""
+    from catalyst_trader.providers import pdufa_edgar
+
+    out = pdufa_edgar._extract(
+        _load_htm("edgar_8k_amgn_earnings.htm"), "2025-02-04", doc="earningsrelease.htm"
+    )
+    assert len(out) == 1
+    assert out[0]["catalyst_type"] == CatalystType.earnings
+
+
+def test_investor_deck_8k_dropped_not_readout():
+    """An investor-deck / corporate-presentation 8-K is NOT a tradeable event -> dropped, even
+    though the deck recaps a topline result."""
+    from catalyst_trader.providers import pdufa_edgar
+
+    out = pdufa_edgar._extract(
+        _load_htm("edgar_8k_deck.htm"), "2026-08-11",
+        items=["7.01", "9.01"], doc="zuracorporatedeck.htm",
+    )
+    assert out == []
+
+
+def test_earnings_guard_gates_pdufa_branch_too():
+    """PDUFA branch guard: an earnings 8-K (Item 2.02) that recaps a 'PDUFA target action date' in
+    passing must classify as earnings, NEVER pdufa (pdufa moves DO count toward the universe)."""
+    from catalyst_trader.providers import pdufa_edgar
+
+    html = (
+        "<p>BioMarin Reports Second Quarter 2025 Financial Results.</p>"
+        "<p>Pipeline: the BLA remains under review with a PDUFA target action "
+        "date of November 30, 2025.</p>"
+    )
+    out = pdufa_edgar._extract(html, "2025-08-04", items=["2.02"], doc="bmrnearningsrelease.htm")
+    assert len(out) == 1
+    assert out[0]["catalyst_type"] == CatalystType.earnings
+    assert all(c["catalyst_type"] != CatalystType.pdufa for c in out)
+
+
+def test_deck_guard_gates_pdufa_branch_too():
+    """A corporate-presentation 8-K reciting a target-action date is dropped, not a pdufa."""
+    from catalyst_trader.providers import pdufa_edgar
+
+    html = (
+        "<p>Aquestive Therapeutics Corporate Presentation.</p>"
+        "<p>Our lead program has a PDUFA target action date of January 31, 2026.</p>"
+    )
+    out = pdufa_edgar._extract(html, "2025-09-01", items=["7.01"], doc="aqstcorporatepresentation.htm")
+    assert out == []
+
+
+def test_item_202_wins_over_result_phrase_without_earnings_filename():
+    """Item 2.02 is the STRONGEST signal — an earnings 8-K with a neutral exhibit filename and a
+    topline-result phrase still classifies earnings by the item code alone."""
+    from catalyst_trader.providers import pdufa_edgar
+
+    html = "<p>The Company reported topline results that met the primary endpoint.</p>"
+    out = pdufa_edgar._extract(html, "2025-02-04", items=["2.02"], doc="d123ex991.htm")
+    assert len(out) == 1
+    assert out[0]["catalyst_type"] == CatalystType.earnings
+
+
+def test_genuine_topline_still_readout_with_item_801():
+    """Regression: a genuine Item 8.01 topline 8-K (neutral exhibit filename) is UNCHANGED ->
+    trial_readout at day-precision filing_date, guard does not false-reject it."""
+    from catalyst_trader.providers import pdufa_edgar
+
+    out = pdufa_edgar._extract(
+        _load_htm("edgar_8k_readout.htm"), "2024-05-31",
+        items=["8.01", "9.01"], doc="ex991topline.htm",
+    )
+    assert len(out) == 1
+    assert out[0]["catalyst_type"] == CatalystType.trial_readout
+    assert out[0]["event_date"] == "2024-05-31"
+
+
+def test_genuine_pdufa_still_pdufa_with_item_801():
+    """Regression: a genuine Item 8.01 PDUFA 8-K (neutral filename) is UNCHANGED -> pdufa."""
+    from catalyst_trader.providers import pdufa_edgar
+
+    out = pdufa_edgar._extract(
+        _load_htm("edgar_8k_imnm.htm"), "2026-08-11", items=["8.01"], doc="d123ex991.htm"
+    )
+    pdufa = [c for c in out if c["catalyst_type"] == CatalystType.pdufa]
+    assert len(pdufa) == 1
+    assert pdufa[0]["event_date"] == "2027-04-28"

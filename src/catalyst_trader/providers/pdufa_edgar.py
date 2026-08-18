@@ -87,6 +87,49 @@ _READOUT_RX = re.compile(
     re.I,
 )
 
+# Money-path false-positive guard (both branches). Earnings/deck/annual 8-Ks routinely mention a
+# result phrase or a target-action date IN PASSING (a pipeline recap), which mis-fired the PDUFA and
+# the readout branches -> ~11% fake readouts + ~13 fake pdufas, polluting the universe score. So an
+# 8-K that IS an earnings/financial/deck/annual filing is NEVER a pdufa/readout: a genuine EARNINGS
+# release is reclassified -> CatalystType.earnings (stored for the playbook, excluded from the
+# universe by the scorer's type filter); a pure deck/annual/presentation is DROPPED (not an event).
+# Signals, strongest first: (1) SEC 8-K Item 2.02 (Results of Operations and Financial Condition) ==
+# earnings; else (2) an earnings/deck/annual keyword in the exhibit FILENAME or its opening title.
+_EARNINGS_RX = re.compile(
+    r"earnings"
+    r"|quarterly\s+results"
+    r"|financial\s+results"
+    r"|results\s+of\s+operations"
+    r"|financial\s+condition"
+    r"|\bq[1-4]\s*20\d\d"
+    r"|\b(?:first|second|third|fourth)\s+quarter\b",
+    re.I,
+)
+_DECK_RX = re.compile(
+    r"corporate\s*deck"
+    r"|corporate\s+presentation"
+    r"|investor\s+(?:presentation|deck)"
+    r"|annual\s+report"
+    r"|\b10-?[kq]\b",
+    re.I,
+)
+
+
+def _financial_signal(items, doc: str | None, text: str) -> str | None:
+    """"earnings" | "deck" | None — is this 8-K an earnings/deck/annual filing (NOT a real
+    pdufa/readout)? Item 2.02 is the cleanest signal; the filename/opening-title keyword guard is the
+    always-on backstop (scoped to the opening so forward-looking-statement boilerplate near the tail
+    can't false-reject a genuine result 8-K). Earnings is checked before deck (item 2.02 == earnings).
+    """
+    if items and any(str(it).strip() == "2.02" for it in items):
+        return "earnings"  # Item 2.02 == Results of Operations and Financial Condition
+    hay = f"{doc or ''} {text[:500]}"  # exhibit filename + opening title/lede only
+    if _EARNINGS_RX.search(hay):
+        return "earnings"
+    if _DECK_RX.search(hay):
+        return "deck"
+    return None
+
 
 
 
@@ -105,7 +148,7 @@ def _normalize(html: str) -> str:
     return re.sub(r"\s+", " ", text).strip()
 
 
-def _extract(html: str, filing_date: str) -> list[dict]:
+def _extract(html: str, filing_date: str, *, items=None, doc: str | None = None) -> list[dict]:
     """Normalize the RAW HTML, then deterministically pull each keyword-adjacent date.
 
     Returns candidate dicts {catalyst_type, event_date (ISO), confidence, matched_keyword,
@@ -114,8 +157,32 @@ def _extract(html: str, filing_date: str) -> list[dict]:
       HIGH   = a single distinct date AND a "PDUFA" token present in some match (unambiguous).
       MEDIUM = multiple DISTINCT candidate dates, OR target-action/goal without a "PDUFA" token,
                OR an AdCom-only date -> routed to the human-review queue, never auto-tradeable.
+
+    ``items`` (efts _source.items 8-K codes) + ``doc`` (exhibit filename) gate the earnings/deck
+    false-positive guard: an earnings/financial 8-K is reclassified -> a day-precision earnings
+    catalyst (stored, excluded from the universe by the scorer's type filter); a pure deck/annual
+    filing is dropped; a genuine pdufa/readout is unaffected. The guard runs FIRST so a pipeline
+    recap of a target-action date or a result phrase inside an earnings/deck 8-K can't mis-fire.
     """
     text = _normalize(html)
+
+    signal = _financial_signal(items, doc, text)
+    if signal == "deck":
+        return []  # a corporate deck / annual boilerplate is not a tradeable event -> drop
+    if signal == "earnings":
+        # a genuine earnings 8-K IS a real event (the filing day) -> store as CatalystType.earnings
+        # for the playbook; excluded from the universe by _registry_moves' catalyst_type filter. No
+        # day-precision filing_date -> no anchorable T-1..T+2 move -> cite-or-drop.
+        if filing_date and len(filing_date) == 10:
+            return [{
+                "catalyst_type": CatalystType.earnings,
+                "event_date": filing_date,
+                "confidence": "HIGH",
+                "matched_keyword": "earnings/financial 8-K",
+                "filing_date": filing_date,
+            }]
+        return []
+
     cands: list[dict] = []
     for rx, ctype in ((_PDUFA_RX, CatalystType.pdufa), (_ADCOM_RX, CatalystType.adcom)):
         for m in rx.finditer(text):
@@ -222,6 +289,7 @@ def _discover(date_from: str, date_to: str, universe: set[int], cik_map: dict[in
                     "ticker": cik_map[cik],
                     "cik": cik,
                     "doc": doc,
+                    "items": src.get("items"),  # 8-K item codes -> earnings/deck false-positive guard
                     "file_date": src.get("file_date"),
                     "company_name": _company_name(src.get("display_names")),
                 },
@@ -300,7 +368,7 @@ def fetch(
         html = get_text("edgar_8k", url, ua="sec")
         if not html:  # exhibit degraded -> skip this hit, others still emit
             continue
-        for cand in _extract(html, hit["file_date"]):
+        for cand in _extract(html, hit["file_date"], items=hit.get("items"), doc=hit["doc"]):
             if cand["confidence"] == "HIGH":
                 out.append(_to_catalyst(hit, accession, url, cand))
             else:  # MEDIUM/LOW -> human-review queue, never auto-tradeable
