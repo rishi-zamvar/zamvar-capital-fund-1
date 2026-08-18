@@ -1,0 +1,59 @@
+{
+  "ticker": "KRYS",
+  "catalyst_type": "pdufa",
+  "indication": "Dystrophic epidermolysis bullosa (DEB)",
+  "modality": "Redosable topical HSV-1 gene therapy",
+  "event_date": "2023-02-17",
+  "outcome_label": "approve",
+  "confidence": 0.72,
+  "drivers": [
+    {
+      "factor": "designations",
+      "value": "Breakthrough Therapy + Priority Review + Orphan + Fast Track",
+      "evidence_quote": "B-VEC has received Breakthrough Therapy, Fast Track, Rare Pediatric Disease and Orphan Drug designations from the FDA.",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1711279/000171127922000052/fdaacceptskrystalbiotech.htm"
+    },
+    {
+      "factor": "pivotal_effect_consistency",
+      "value": "Primary + key secondary both met at p<0.001",
+      "evidence_quote": "the trial met both its primary endpoint of complete wound healing at six months and its key secondary endpoint of complete wound healing at three months, each with high statistical significance (p<0.001).",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1711279/000171127922000052/fdaacceptskrystalbiotech.htm"
+    },
+    {
+      "factor": "prior_crl",
+      "value": "No prior Complete Response Letter for this program",
+      "evidence_quote": "there is no prior Complete Response Letter for this program",
+      "source_url": "https://www.sec.gov/Archives/edgar/data/1711279/000171127922000052/fdaacceptskrystalbiotech.htm"
+    }
+  ],
+  "narrative_before": {
+    "thesis": "A first-cycle approval for the only redosable topical gene therapy in a fatal orphan skin disease with no approved therapies.",
+    "causal_setup": "Priority Review + Breakthrough on a clean pivotal (dual endpoints p<0.001), in-house manufacturing, no prior CRL — every material CRL lever is favorable.",
+    "reference_class": "First-cycle BLA approvals in rare-disease gene therapy with Breakthrough designation and a met pivotal.",
+    "variant_why": "Market underweighted how strongly the agency's own expedited designations reveal its prior toward approval.",
+    "what_to_watch": [
+      "Any late CMC / facility inspection 483 disclosure",
+      "Label / boxed-warning language on immunogenicity"
+    ],
+    "what_would_change_our_mind": [
+      "A surprise AdCom being convened",
+      "Disclosure of a manufacturing deficiency or import alert"
+    ]
+  },
+  "narrative_after": {
+    "what_happened": "FDA approved B-VEC (VYJUVEK) on the PDUFA date; the stock moved up into and through the decision.",
+    "why_narrative": "The clean pivotal, orphan unmet need, and in-house CMC left no material approvability gap, so the high filing-to-approval base rate held.",
+    "surprise_vs_prior": "Low surprise — the approval was largely anticipated given the designation stack.",
+    "which_disconfirmer_fired": "None — no CMC or AdCom disconfirmer fired.",
+    "lesson_rule": "In fatal orphan indications with Breakthrough + a met pivotal + in-house manufacturing, anchor toward first-cycle approval.",
+    "process_grade": "A",
+    "second_order": "Validated the redosable-topical delivery platform for follow-on COL7A1 and other cutaneous indications."
+  },
+  "citations": [
+    {
+      "url": "https://www.sec.gov/Archives/edgar/data/1711279/000171127922000052/fdaacceptskrystalbiotech.htm",
+      "quote": "The FDA has granted Priority Review to the BLA and has set a Prescription Drug User Fee Act (PDUFA) target action date of February 17, 2023.",
+      "snippet_hash": "krys271pdufaaccept"
+    }
+  ]
+}
