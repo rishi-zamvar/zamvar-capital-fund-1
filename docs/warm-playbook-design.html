@@ -1,0 +1,104 @@
+<title>Warm Playbook Design</title>
+<style>
+*{box-sizing:border-box}
+:root{--bg:#f4efe4;--surface:#fbf7ee;--surface2:#f2ecdd;--ink:#23201a;--muted:#6f6857;--faint:#928a76;
+--line:#e0d7c2;--accent:#9a6b1f;--accent2:#7c5a2a;--pos:#2f7d4f;--neg:#b23a3a;--warn:#9a761a;--info:#3a6ea5;
+--mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;--sans:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0f1110;--surface:#171a17;--surface2:#1c201c;
+--ink:#e9e4d5;--muted:#a09982;--faint:#7d7663;--line:#2a2e29;--accent:#d4af6a;--accent2:#c8a24a;
+--pos:#5fbf87;--neg:#e0736b;--warn:#d8a94a;--info:#7fb0e0}}
+:root[data-theme="dark"]{--bg:#0f1110;--surface:#171a17;--surface2:#1c201c;--ink:#e9e4d5;--muted:#a09982;
+--faint:#7d7663;--line:#2a2e29;--accent:#d4af6a;--accent2:#c8a24a;--pos:#5fbf87;--neg:#e0736b;--warn:#d8a94a;--info:#7fb0e0}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);line-height:1.55}
+.wrap{max-width:960px;margin:0 auto;padding:40px 22px 80px}
+.brand{font-family:var(--mono);font-size:12px;letter-spacing:.22em;color:var(--accent);font-weight:600}
+h1{font-size:clamp(26px,3.6vw,38px);margin:.24em 0 .1em;letter-spacing:-.01em;text-wrap:balance}
+.sub{color:var(--muted);font-size:15px;margin:.2em 0 0;max-width:70ch}
+.banner{margin:22px 0;padding:14px 18px;border-left:3px solid var(--accent);background:var(--surface);border-radius:0 8px 8px 0;font-size:14.5px}
+h2{font-size:20px;margin:36px 0 4px;padding-top:20px;border-top:1px solid var(--line)}
+h2 .n{font-family:var(--mono);color:var(--accent);font-size:15px;margin-right:8px}
+.lead{color:var(--muted);font-size:13.5px;margin:.2em 0 12px;max-width:76ch}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:10px;overflow:hidden;margin:14px 0}
+.c{background:var(--surface);padding:12px 14px;display:flex;flex-direction:column;gap:2px}
+.c .v{font-family:var(--mono);font-size:20px;font-weight:600;font-variant-numeric:tabular-nums}
+.c .k{font-size:10px;letter-spacing:.03em;color:var(--muted);text-transform:uppercase}
+.box{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:14px 16px;margin:10px 0}
+.box h3{margin:0 0 6px;font-size:14px;font-family:var(--mono);color:var(--accent2)}
+code{font-family:var(--mono);font-size:.88em;background:var(--surface2);padding:1px 5px;border-radius:4px}
+pre{background:var(--surface2);border:1px solid var(--line);border-radius:8px;padding:12px 14px;overflow-x:auto;font-family:var(--mono);font-size:12px;line-height:1.5}
+ul{padding-left:0;list-style:none;margin:8px 0}
+li{padding:6px 0 6px 22px;position:relative;border-bottom:1px solid var(--line);font-size:13.5px}
+li:before{content:"\2022";position:absolute;left:4px;color:var(--accent)}
+li.q:before{content:"\25C6";color:var(--warn)}
+.flow{font-family:var(--mono);font-size:12.5px;background:var(--surface2);border:1px solid var(--line);border-radius:8px;padding:12px 14px;overflow-x:auto}
+.tag{font-family:var(--mono);font-size:10px;padding:1px 6px;border-radius:4px;border:1px solid var(--line);color:var(--muted)}
+footer{margin-top:40px;padding-top:18px;border-top:1px solid var(--line);color:var(--faint);font-size:12px;font-family:var(--mono)}
+b.pos{color:var(--pos)} b.warn{color:var(--warn)}
+</style>
+<div class="wrap">
+<div class="brand">ZAMVAR CAPITAL &middot; FUND 1 &middot; DESIGN FOR SIGN-OFF</div>
+<h1>The Warm Playbook</h1>
+<p class="sub">A retrievable, cited catalogue of every past peer-universe catalyst — what happened, WHY, and what to watch — that turns raw events into the analog context the models reason with. Built with hindsight; leak-guarded at retrieval.</p>
+
+<div class="banner">This is the project's core: it promotes the analog method in the move-estimator from <b class="warn">cold weight 0.5</b> to <b class="pos">warm weight 1.0</b> — i.e. the models start reasoning from real precedent instead of priors. Everything below is grounded in the 3 research streams + our actual data.</div>
+
+<h2>Scope <span class="tag">measured, not guessed</span></h2>
+<div class="cards">
+  <div class="c"><span class="v">73</span><span class="k">peer names</span></div>
+  <div class="c"><span class="v">336</span><span class="k">peer catalysts</span></div>
+  <div class="c"><span class="v">218</span><span class="k">binary core (pdufa+readout)</span></div>
+  <div class="c"><span class="v">258</span><span class="k">have move + text</span></div>
+  <div class="c"><span class="v">118</span><span class="k">peer earnings (optional)</span></div>
+</div>
+<p class="lead">Core = 23 PDUFA + 195 readouts. Gaps handled honestly (never fabricated): 46 month-precision readouts (text-only, move=null), 55 with no exhibit (CT.gov+move or skip), 8 naked (skip). AdCom has zero history (forward-only) — its taxonomy applies live, not in the backfill.</p>
+
+<h2><span class="n">1</span>What goes in it — the schema</h2>
+<p class="lead">Each past catalyst becomes one cited KB node (reusing the shipped <code>kb.py</code> scaffold), with three layers:</p>
+<pre>catalyst node (insert_claim -> cited)
+  filterable:  type · ticker · indication · knowable_asof · outcome_label
+  outcome:     move (SIGNED) · label · confidence · move_consistency_flag   [RESULTED_IN edge]
+  drivers:     { PDUFA: adcom_vote, pivotal_strength, endpoint_acceptability,
+                        safety_signal, prior_crl, cmc_readiness, review_division,
+                        class_precedent, expedited_designation, label_risk
+                 READOUT: prior_ph2_effect_size, endpoint_type, powering,
+                        class_precedent, mechanism_validation, population, prior_interim }
+  watch:       implied_move · IV_crush · financing · short_interest · run_up ·
+               options_flow · insider · mgmt_tone · FDA_comms · competitor_reads
+  retrieval_text: "{type} catalyst for {ticker} ({indication}): {one-line setup}"  -> embedded
+  CITES -> the 8-K/CT.gov evidence source</pre>
+<p class="lead">Plus <b>generalization nodes</b> (<code>insert_playbook</code>): per scenario_type — e.g. <code>pdufa|prior_crl=cmc</code>, <code>ph3_readout|surrogate_endpoint</code> — a base-rate + driver-adjustment summary cited from the catalysts it generalizes. The playbook is a <b>base-rate + driver-adjustment engine, not an oracle</b>; weights are refittable priors, never hardcoded laws.</p>
+
+<h2><span class="n">2</span>How it's built — the attribution pipeline</h2>
+<div class="flow">per catalyst:&nbsp; CIK-filter exhibits (drop 41% cross-company contamination)<br>
+&nbsp;&nbsp;→ bundle: own-company 8-K/PR text + CT.gov status + SIGNED move<br>
+&nbsp;&nbsp;→ 1 LLM call → structured JSON {outcome, label, drivers, watch, confidence, citation}<br>
+&nbsp;&nbsp;→ insert_claim (cite-or-drop, idempotent on catalyst_id+hash)<br>
+then: aggregate per scenario_type → insert_playbook base-rate+driver summaries</div>
+<ul>
+<li><b>Outcome anchoring differs by type:</b> PDUFA = signed move is primary truth, text corroborates (the lake skews to acceptance PRs, not decision-day 8-Ks); readouts = text is primary, move corroborates.</li>
+<li><b>Consistency cross-check:</b> if text says "approved" but the stock fell, set <code>move_consistency_flag</code> + lower confidence — never silently trust one side.</li>
+<li><b>One-time cost</b> for ~218 catalysts: ~$2 (Haiku) to ~$7 (Sonnet). Fully cached/offline inputs otherwise.</li>
+</ul>
+
+<h2><span class="n">3</span>How models pull from it — retrieval</h2>
+<ul>
+<li><code>analog_query(local bge-large embedder, context, filters, k)</code> → structural filter (type always; +indication when the cohort stays ≥5) → cosine nearest-neighbors → attaches each analog's outcome.</li>
+<li>Analogs flow into the <b>football-field estimator</b> (analogs → signed up/down move split → aggregator). Populating the playbook flips that analog leg <b>0.5 → 1.0</b>.</li>
+<li>The model receives a structured "updated context" block: the top-k precedents with their outcome, signed move, drivers, and what-to-watch — each with a citation.</li>
+</ul>
+
+<h2><span class="n">4</span>How we identify what happened — outcome attribution</h2>
+<p class="lead">Covered by the pipeline in §2: the LLM reads the company's own announcement, the CT.gov status, and the signed price move together; the move/text consistency check guards each label; cite-or-drop means no label exists without its source. Month-precision or exhibit-less catalysts get a null move / text-only label or are skipped — flagged, never invented.</p>
+
+<h2><span class="n">5</span>No-look-ahead (the one correctness guarantee)</h2>
+<p class="lead">The playbook is built with hindsight — that's allowed. But at <em>retrieval</em> time (backtest or live) it must only return catalysts knowable as of the decision. Fix: stamp each node with <code>knowable_asof</code>, add one filter clause to <code>analog_query</code>, thread the cutoff, and ship a dedicated leak test. Small, and non-negotiable.</p>
+
+<h2>Decisions for your sign-off</h2>
+<ul>
+<li class="q"><b>Extractor model</b> — Sonnet (~$7, sharper attribution on messy filings) vs Haiku (~$2). One-time money-path build.</li>
+<li class="q"><b>Earnings tier</b> — include the 118 peer earnings as context too, or keep the playbook to the 218 binary catalysts?</li>
+<li class="q"><b>Driver depth</b> — the full ~18-field taxonomy (recommended — it's the meat), or a lean core subset?</li>
+</ul>
+
+<footer>Zamvar Capital Fund 1 &middot; warm-playbook design &middot; synthesized from research streams A (driver taxonomy) · B (attribution + coverage) · C (KB architecture) &middot; all cited in .planning/phases/07.5-warm-playbook/</footer>
+</div>
