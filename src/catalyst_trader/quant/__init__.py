@@ -12,6 +12,7 @@ pulls those in — that is intentional (the desk always uses the whole toolbox).
 
 from .base_rates import base_rate, load_base_rates
 from .events import catalyst_move_estimate, expected_log_growth, hold_vs_exit
+from .field import expected_move_field
 from .options import implied_move, iv_crush
 from .pairs import cointegration, conditional_payoff, correlation_beta
 from .performance import (
@@ -34,7 +35,7 @@ from .sizing import (
     risk_of_ruin,
     sl_tp_levels,
 )
-from .valuation import cash_runway, rnpv
+from .valuation import analyst_pt_move, cash_runway, rnpv
 from .weekly import classify_drop, thesis_scan, weekly_base_rate
 
 __all__ = [
@@ -42,6 +43,9 @@ __all__ = [
     # valuation
     "rnpv",
     "cash_runway",
+    "analyst_pt_move",
+    # field
+    "expected_move_field",
     # sizing
     "kelly",
     "fractional_kelly",

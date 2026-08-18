@@ -7,6 +7,7 @@ pre-revenue biotech valuation — risk lives in the per-phase PoS weights, not t
 """
 
 import math
+from statistics import median, quantiles
 
 from .result import ToolResult
 
@@ -112,4 +113,36 @@ def pipeline_value(results: list[ToolResult]) -> ToolResult:
         inputs={"asset_values": values},
         value=sum(values),
         detail={"n_assets": len(values)},
+    )
+
+
+def analyst_pt_move(current_price: float, price_targets: list[float]) -> ToolResult:
+    """Street price-target implied move MAGNITUDE + dispersion (a valuation-consensus method).
+
+    value = median(|pt - current_price| / current_price) over the PT list — the robust central
+    street-implied move magnitude (direction-agnostic; the field never votes on sign). detail
+    carries the high/low implied moves, the raw dispersion (IQR/median), and n. Raises on
+    current_price <= 0, empty list, or any non-finite target (Pattern 2 — never a misleading NaN).
+    Generic math only; the PT list is injected by the caller (no company constant baked in).
+    """
+    _finite(current_price, "current_price")
+    if current_price <= 0:
+        raise ValueError("current_price must be > 0")
+    if not price_targets:
+        raise ValueError("price_targets must be non-empty")
+
+    moves = [abs(_finite(pt, "price_target") - current_price) / current_price for pt in price_targets]
+    center = median(moves)
+    if len(moves) >= 2 and center > 0:
+        q1, _, q3 = quantiles(moves, n=4, method="inclusive")
+        dispersion = (q3 - q1) / center
+    else:
+        dispersion = 0.0
+
+    return ToolResult(
+        tool="analyst_pt_move",
+        tool_version=_VERSION,
+        inputs={"current_price": current_price, "price_targets": price_targets},
+        value=center,
+        detail={"high": max(moves), "low": min(moves), "dispersion": dispersion, "n": len(moves)},
     )
