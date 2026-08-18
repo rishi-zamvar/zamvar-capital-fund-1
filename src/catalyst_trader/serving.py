@@ -128,10 +128,14 @@ class Databook:
         # recorded after the cutoff is not yet knowable -> dropped.
         spec = self._require("catalyst")
         eff = self._effective_cutoff(spec)
+        # verified = live upcoming; resolved = a historical catalyst that HAS occurred. At a past
+        # cutoff a now-resolved catalyst was a real known-upcoming event, so the backward/backtest
+        # walk must surface it too. Safe in live: the caller's `as_of < event_date` window filters
+        # already-occurred events. Knowability stays gated by the version recorded_at below.
         rows = self.conn.execute(
             "SELECT id, ticker, catalyst_type, last_verified_at FROM catalyst "
-            "WHERE status=? ORDER BY id",
-            (Status.verified.value,),
+            "WHERE status IN (?, ?) ORDER BY id",
+            (Status.verified.value, Status.resolved.value),
         ).fetchall()
         out: list[CatalystLite] = []
         for r in rows:
