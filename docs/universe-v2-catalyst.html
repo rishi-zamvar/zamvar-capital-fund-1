@@ -1,0 +1,775 @@
+<title>Fund 1 Catalyst Universe</title>
+<style>
+*{box-sizing:border-box}
+:root{
+  --bg:#f4efe4; --surface:#fbf7ee; --surface2:#f2ecdd; --ink:#23201a; --muted:#6f6857; --faint:#928a76;
+  --line:#e0d7c2; --accent:#9a6b1f; --accent2:#7c5a2a;
+  --pos:#2f7d4f; --neg:#b23a3a; --warn:#9a761a; --info:#3a6ea5;
+  --mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+  --sans:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0f1110; --surface:#171a17; --surface2:#1c201c; --ink:#e9e4d5; --muted:#a09982; --faint:#7d7663;
+  --line:#2a2e29; --accent:#d4af6a; --accent2:#c8a24a;
+  --pos:#5fbf87; --neg:#e0736b; --warn:#d8a94a; --info:#7fb0e0;
+}}
+:root[data-theme="dark"]{
+  --bg:#0f1110; --surface:#171a17; --surface2:#1c201c; --ink:#e9e4d5; --muted:#a09982; --faint:#7d7663;
+  --line:#2a2e29; --accent:#d4af6a; --accent2:#c8a24a;
+  --pos:#5fbf87; --neg:#e0736b; --warn:#d8a94a; --info:#7fb0e0;
+}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);line-height:1.5;
+  -webkit-font-smoothing:antialiased}
+.wrap{max-width:1080px;margin:0 auto;padding:40px 22px 80px}
+header{border-bottom:1px solid var(--line);padding-bottom:26px;margin-bottom:8px}
+.brand{font-family:var(--mono);font-size:12px;letter-spacing:.22em;color:var(--accent);font-weight:600}
+h1{font-size:clamp(28px,4vw,42px);margin:.24em 0 .3em;letter-spacing:-.01em;text-wrap:balance}
+.lede{color:var(--muted);max-width:66ch;font-size:15.5px}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:1px;background:var(--line);
+  border:1px solid var(--line);border-radius:10px;overflow:hidden;margin:22px 0 14px}
+.s{background:var(--surface);padding:14px 16px;display:flex;flex-direction:column;gap:3px}
+.s .v{font-family:var(--mono);font-size:22px;font-weight:600;color:var(--ink);font-variant-numeric:tabular-nums}
+.s .v .u{color:var(--faint);font-size:14px;font-weight:400}
+.s .k{font-size:11px;letter-spacing:.04em;color:var(--muted);text-transform:uppercase}
+.note{font-size:12.5px;color:var(--faint);font-style:italic}
+section{margin-top:40px}
+h2{font-size:20px;margin:0 0 2px;display:flex;align-items:baseline;gap:10px}
+h2 .cnt{font-family:var(--mono);font-size:13px;color:var(--bg);background:var(--accent);padding:1px 8px;border-radius:20px;font-weight:600}
+.sub{color:var(--muted);font-size:13.5px;margin:0 0 16px;max-width:74ch}
+.grid{display:flex;flex-direction:column;gap:1px;background:var(--line);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.r{display:grid;grid-template-columns:120px 1fr 220px;gap:18px;background:var(--surface);padding:14px 16px;align-items:start}
+.r:hover{background:var(--surface2)}
+.r.excl{opacity:.62}
+.c-tk{display:flex;flex-direction:column;gap:3px}
+.tk{font-family:var(--mono);font-weight:700;font-size:16px;letter-spacing:.02em}
+.mv{font-family:var(--mono);font-size:19px;font-weight:600;font-variant-numeric:tabular-nums}
+.mv.hi{color:var(--pos)} .mv.mid{color:var(--accent)} .mv.lo{color:var(--muted)}
+.nm{font-family:var(--mono);font-size:11px;color:var(--faint)}
+.co{font-weight:600;font-size:14.5px;margin-bottom:3px}
+.summ{font-size:13.5px;color:var(--ink);opacity:.9;max-width:70ch}
+.meta{font-family:var(--mono);font-size:11.5px;color:var(--accent2);margin-top:4px}
+.flag{font-size:12px;color:var(--warn);margin-top:5px;max-width:70ch}
+.c-ch{display:flex;flex-wrap:wrap;gap:5px;align-content:flex-start;justify-content:flex-end}
+.chip{font-family:var(--mono);font-size:10.5px;padding:2px 7px;border-radius:5px;white-space:nowrap;
+  border:1px solid var(--line);color:var(--muted);background:var(--bg)}
+.chip.cat{color:var(--bg);background:var(--accent);border-color:var(--accent);font-weight:600}
+.chip.pdufa{color:var(--info);border-color:var(--info)}
+.chip.readout{color:var(--pos);border-color:var(--pos)}
+.chip.adcom{color:var(--warn);border-color:var(--warn)}
+.chip.warn{color:var(--warn);border-color:var(--warn)}
+.chip.neg{color:var(--neg);border-color:var(--neg);font-weight:600}
+.chip.px{color:var(--faint)}
+footer{margin-top:48px;padding-top:20px;border-top:1px solid var(--line);color:var(--faint);font-size:12px;font-family:var(--mono)}
+@media(max-width:720px){
+  .r{grid-template-columns:1fr;gap:8px}
+  .c-tk{flex-direction:row;align-items:baseline;gap:10px}
+  .c-ch{justify-content:flex-start}
+}
+</style>
+<div class="wrap">
+<header>
+  <div class="brand">ZAMVAR CAPITAL &middot; FUND 1</div>
+  <h1>Biotech Catalyst Universe</h1>
+  <p class="lede">Names screened on <strong>how much they move on their catalysts</strong> — not market cap. Each row shows the apples-to-apples membership evidence: median historical catalyst move (magnitude), sample size, and the tradeable catalysts landing inside the backtest year (Aug&nbsp;2025&nbsp;–&nbsp;Aug&nbsp;2026).</p>
+  <div class="stats">
+    <div class="s"><span class="v">73</span><span class="k">tradeable names</span></div>
+    <div class="s"><span class="v">78</span><span class="k">in-window catalysts</span></div>
+    <div class="s"><span class="v">1.50<span class="u">/wk</span></span><span class="k">calendar density</span></div>
+    <div class="s"><span class="v">13<span class="u"> / </span>65<span class="u"> / </span>0</span><span class="k">PDUFA / readout / AdCom</span></div>
+    <div class="s"><span class="v">1%<span class="u">–</span>298%</span><span class="k">median-move range</span></div>
+    <div class="s"><span class="v">8<span class="u"> / </span>73</span><span class="k">price-cached now</span></div>
+  </div>
+  <div class="note">AdCom = 0 pending the Federal Register wiring (tonight). Move figures are magnitudes (|move|); signed direction recompute is queued. 3 names excluded as delisted/bankrupt/wound-down.</div>
+</header>
+<section><h2>Catalyst calendar <span class="cnt">58</span></h2><p class="sub">Names with a real PDUFA / readout / AdCom inside the backtest year — the catalyst-lever candidates. Sorted by number of in-window catalysts, then move size.</p>
+<div class="grid"><div class="r">
+  <div class="c-tk"><span class="tk">ZURA</span><span class="mv lo">7%</span><span class="nm">n=6</span></div>
+  <div class="c-co">
+    <div class="co">Zura Bio Ltd.</div>
+    <div class="summ">Immunology firm whose lead tibulizumab (ZB-106) is a dual-antagonist antibody hitting both IL-17A and BAFF in one molecule — a two-pathway bet distinct from single-cytokine biologics, now in Phase 2 for hidradenitis suppurativa and systemic sclerosis.</div>
+    <div class="meta">Tibulizumab (ZB-106) · Hidradenitis suppurativa / systemic sclerosis (autoimmune-inflammatory) · Bispecific monoclonal antibody (anti-IL-17A x anti-BAFF)</div>
+    <div class="flag">⚠ Prompt-named &#x27;torudokimab&#x27; is a secondary anti-IL-33 asset (ZB-880), not the lead; correct lead is tibulizumab</div>
+  </div>
+  <div class="c-ch"><span class="chip cat">6 in-window</span><span class="chip readout">readout×6</span><span class="chip px">needs price backfill</span></div>
+</div><div class="r">
+  <div class="c-tk"><span class="tk">IONS</span><span class="mv lo">7%</span><span class="nm">n=11</span></div>
+  <div class="c-co">
+    <div class="co">Ionis Pharmaceuticals, Inc.</div>
+    <div class="summ">The founding pioneer of antisense oligonucleotide (RNA-targeting) medicine, now pivoting from a royalty/partnering model (Spinraza with Biogen) to self-commercializing wholly-owned drugs like Tryngolza (olezarsen) and Dawnzera (donidalorsen).</div>
+    <div class="meta">Olezarsen (Tryngolza); donidalorsen (Dawnzera); eplontersen (Wainua) · Familial chylomicronemia syndrome; hereditary angioedema; ATTR amyloidosis · Antisense oligonucleotide (RNA-targeted)</div>
+    
+  </div>
+  <div class="c-ch"><span class="chip cat">5 in-window</span><span class="chip readout">readout×5</span></div>
+</div><div class="r">
+  <div class="c-tk"><span class="tk">VTGN</span><span class="mv lo">8%</span><span class="nm">n=5</span></div>
+  <div class="c-co">
+    <div class="co">Vistagen Therapeutics, Inc.</div>
+    <div class="summ">CNS company developing &#x27;pherine&#x27; nasal sprays — synthetic neuroactive compounds that act on nasal chemosensory (olfactory-amygdala) neurons to blunt fear circuitry within minutes without systemic absorption, a mechanism unlike any benzodiazepine or SSRI.</div>
+    <div class="meta">Fasedienol (PH94B) · Social anxiety disorder (acute) · Pherine (intranasal neuroactive small molecule, non-systemic)</div>
+    
+  </div>
+  <div class="c-ch"><span class="chip cat">3 in-window</span><span class="chip readout">readout×3</span><span class="chip px">needs price backfill</span></div>
+</div><div class="r">
+  <div class="c-tk"><span class="tk">ALKS</span><span class="mv lo">7%</span><span class="nm">n=5</span></div>
+  <div class="c-co">
+    <div class="co">Alkermes plc</div>
+    <div class="summ">Profitable neuroscience company built on proprietary long-acting injectable and oral drug-delivery tech (Vivitrol, Aristada, Lybalvi antipsychotic), now betting its pipeline on orexin-2 receptor agonists for sleep-wake disorders like narcolepsy.</div>
+    <div class="meta">Alixorexine (ALKS 2680), orexin-2 agonist; commercial: Lybalvi, Vivitrol, Aristada · Narcolepsy (lead pipeline); schizophrenia/bipolar &amp; addiction (commercial) · Small molecule (orexin agonist) + long-acting injectable formulations</div>
+    <div class="flag">⚠ Legal name is Alkermes plc (Ireland-domiciled), not &#x27;Alkermes, Inc.&#x27;</div>
+  </div>
+  <div class="c-ch"><span class="chip cat">3 in-window</span><span class="chip readout">readout×3</span><span class="chip px">needs price backfill</span></div>
+</div><div class="r">
+  <div class="c-tk"><span class="tk">CAPR</span><span class="mv hi">164%</span><span class="nm">n=2</span></div>
+  <div class="c-co">
+    <div class="co">Capricor Therapeutics, Inc.</div>
+    <div class="summ">Cell-therapy company whose deramiocel (CAP-1002) is an allogeneic cardiosphere-derived cell (CDC) product targeting the cardiac/skeletal muscle deterioration of Duchenne — an immunomodulatory/anti-fibrotic cell approach rather than gene or exon-skipping therapy.</div>
+    <div class="meta">Deramiocel (CAP-1002) · Duchenne muscular dystrophy cardiomyopathy · Allogeneic cell therapy (cardiosphere-derived cells)</div>
+    <div class="flag">⚠ FDA issued a Complete Response Letter (CRL) for the deramiocel BLA (July 2025); resubmission pending HOPE-3 Phase 3 data</div>
+  </div>
+  <div class="c-ch"><span class="chip cat">2 in-window</span><span class="chip pdufa">PDUFA×1</span><span class="chip readout">readout×1</span><span class="chip px">needs price backfill</span></div>
+</div><div class="r">
+  <div class="c-tk"><span class="tk">MPLT</span><span class="mv mid">33%</span><span class="nm">n=2</span></div>
+  <div class="c-co">
+    <div class="co">MapLight Therapeutics, Inc.</div>
+    <div class="summ">Recently-IPO&#x27;d (Oct 2025) CNS company whose lead is an oral fixed-combination M1/M4 muscarinic agonist for schizophrenia — a direct competitor to BMS&#x27;s Cobenfy, differentiated by its specific receptor-subtype combination and dose regimen.</div>
+    <div class="meta">ML-007C-MA (betovumeline, M1/M4 muscarinic agonist combination) · Schizophrenia (also Alzheimer&#x27;s disease psychosis) · Small molecule (muscarinic receptor agonist)</div>
+    <div class="flag">⚠ IPO Oct 2025; July 2026 Phase 2 gave a split dose result (high dose hit PANSS, stock fell sharply)</div>
+  </div>
+  <div class="c-ch"><span class="chip cat">2 in-window</span><span class="chip readout">readout×2</span><span class="chip px">needs price backfill</span></div>
+</div><div class="r">
+  <div class="c-tk"><span class="tk">ALDX</span><span class="mv mid">17%</span><span class="nm">n=4</span></div>
+  <div class="c-co">
+    <div class="co">Aldeyra Therapeutics, Inc.</div>
+    <div class="summ">Company built around &#x27;RASP modulators&#x27; — small molecules that covalently trap reactive aldehyde species (pro-inflammatory mediators); lead reproxalap is a topical ocular aldehyde trap for dry eye, a mechanism distinct from anti-inflammatory or tear-stimulating rivals.</div>
+    <div class="meta">Reproxalap (RASP modulator) · Dry eye disease · Small molecule (reactive aldehyde species trap)</div>
+    <div class="flag">⚠ FDA issued a Complete Response Letter (March 2026) citing failure to demonstrate efficacy; second CRL for the program</div>
+  </div>
+  <div class="c-ch"><span class="chip cat">2 in-window</span><span class="chip pdufa">PDUFA×2</span><span class="chip px">needs price backfill</span></div>
+</div><div class="r">
+  <div class="c-tk"><span class="tk">DFTX</span><span class="mv lo">10%</span><span class="nm">n=3</span></div>
+  <div class="c-co">
+    <div class="co">Definium Therapeutics, Inc. (formerly Mind Medicine / MindMed)</div>
+    <div class="summ">Psychedelic-derived CNS company (renamed from MindMed in Jan 2026) whose lead DT120 is an orally-disintegrating tablet of LSD (lysergide) in four Phase 3 trials for GAD and MDD — pursuing standardized pharmaceutical LSD dosing rather than psilocybin or ketamine.</div>
+    <div class="meta">DT120 (lysergide/LSD ODT; formerly MM120) · Generalized anxiety disorder (GAD) and major depressive disorder (MDD) · Small molecule (LSD / lysergide, orally-disintegrating tablet)</div>
+    <div class="flag">⚠ Name/ticker change: formerly Mind Medicine Inc. (MindMed, MNMD) → Definium (DFTX) Jan 2026</div>
+  </div>
+  <div class="c-ch"><span class="chip cat">2 in-window</span><span class="chip readout">readout×2</span><span class="chip px">needs price backfill</span></div>
+</div><div class="r">
+  <div class="c-tk"><span class="tk">TECX</span><span class="mv lo">6%</span><span class="nm">n=3</span></div>
+  <div class="c-co">
+    <div class="co">Tectonic Therapeutic, Inc.</div>
+    <div class="summ">GPCR-focused protein engineering company (GEODe platform) whose lead TX45 is a long-acting Fc-relaxin fusion protein activating the RXFP1 receptor for pulmonary hypertension in HFpEF — a hormone-replacement protein approach unusual in the crowded PH small-molecule field.</div>
+    <div class="meta">TX45 (Fc-relaxin fusion protein) · Group 2 pulmonary hypertension in HFpEF (PH-HFpEF) · Engineered fusion protein (Fc-relaxin, GPCR/RXFP1 agonist)</div>
+    <div class="flag">⚠ Public via 2024 reverse merger with Avrobio; APEX Phase 2 fully enrolled, interim data positive</div>
+  </div>
+  <div class="c-ch"><span class="chip cat">2 in-window</span><span class="chip readout">readout×2</span><span class="chip px">needs price backfill</span></div>
+</div><div class="r">
+  <div class="c-tk"><span class="tk">MNPR</span><span class="mv lo">4%</span><span class="nm">n=2</span></div>
+  <div class="c-co">
+    <div class="co">Monopar Therapeutics Inc.</div>
+    <div class="summ">Rare-disease company whose lead ALXN1840 (tiomolibdate choline), in-licensed from Alexion/AstraZeneca, is a first-in-class copper-sequestering &#x27;albumin tripartite complex&#x27; activator for Wilson disease — a novel copper-mobilizing mechanism vs. legacy chelators, now in rolling NDA.</div>
+    <div class="meta">ALXN1840 (tiomolibdate choline / TMC) · Wilson disease · Small molecule (copper-sequestering ATC activator)</div>
+    <div class="flag">⚠ Rolling NDA initiated July 2026; asset in-licensed from Alexion/AstraZeneca</div>
+  </div>
+  <div class="c-ch"><span class="chip cat">2 in-window</span><span class="chip readout">readout×2</span><span class="chip px">needs price backfill</span></div>
+</div><div class="r">
+  <div class="c-tk"><span class="tk">BCRX</span><span class="mv lo">3%</span><span class="nm">n=2</span></div>
+  <div class="c-co">
+    <div class="co">BioCryst Pharmaceuticals, Inc.</div>
+    <div class="summ">Structure-based drug-design company that turned its lead into Orladeyo (berotralstat), the first and only oral once-daily plasma kallikrein inhibitor for hereditary angioedema prophylaxis — an oral alternative to injectable HAE prophylactics.</div>
+    <div class="meta">Berotralstat (Orladeyo); pipeline: avoralstat, BCX17725 · Hereditary angioedema (prophylaxis) · Oral small molecule (plasma kallikrein inhibitor)</div>
+    
+  </div>
+  <div class="c-ch"><span class="chip cat">2 in-window</span><span class="chip pdufa">PDUFA×2</span></div>
+</div><div class="r">
+  <div class="c-tk"><span class="tk">QURE</span><span class="mv hi">298%</span><span class="nm">n=1</span></div>
+  <div class="c-co">
+    <div class="co">uniQure N.V.</div>
+    <div class="summ">AAV gene-therapy company whose lead AMT-130 is a one-time intrastriatal AAV5 delivering a microRNA that lowers huntingtin protein — the most clinically advanced gene therapy for Huntington&#x27;s disease, with FDA-aligned accelerated-approval BLA planned for Q3 2026.</div>
+    <div class="meta">AMT-130 · Huntington&#x27;s disease · AAV gene therapy (huntingtin-lowering miRNA)</div>
+    <div class="flag">⚠ Netherlands-domiciled (N.V.); also earns royalties on Hemgenix (hemophilia B, marketed by CSL)</div>
+  </div>
+  <div class="c-ch"><span class="chip cat">1 in-window</span><span class="chip readout">readout×1</span><span class="chip px">needs price backfill</span></div>
+</div><div class="r">
+  <div class="c-tk"><span class="tk">MBX</span><span class="mv hi">101%</span><span class="nm">n=1</span></div>
+  <div class="c-co">
+    <div class="co">MBX Biosciences, Inc.</div>
+    <div class="summ">Endocrine-focused company using a &#x27;Precision Endocrine Peptide&#x27; (PEP) prodrug platform; lead canvuparatide is a once-weekly PTH peptide prodrug giving continuous infusion-like hormone exposure for hypoparathyroidism — differentiated from daily/twice-daily PTH replacements.</div>
+    <div class="meta">Canvuparatide (MBX 2109) · Chronic hypoparathyroidism · Peptide prodrug (long-acting PTH)</div>
+    <div class="flag">⚠ IPO 2024; Phase 3 pivotal planned Q3 2026 after positive Phase 2</div>
+  </div>
+  <div class="c-ch"><span class="chip cat">1 in-window</span><span class="chip readout">readout×1</span><span class="chip px">needs price backfill</span></div>
+</div><div class="r">
+  <div class="c-tk"><span class="tk">KALA</span><span class="mv hi">93%</span><span class="nm">n=1</span></div>
+  <div class="c-co">
+    <div class="co">KALA BIO, Inc.</div>
+    <div class="summ">Ophthalmology company whose lead KPI-012 is a topical human mesenchymal stem cell secretome (a cocktail of growth factors, protease inhibitors and matrix proteins) for persistent corneal epithelial defect — a cell-free biofactor approach rather than a single recombinant growth factor.</div>
+    <div class="meta">KPI-012 (MSC secretome, MSC-S platform) · Persistent corneal epithelial defect (PCED) · Cell-derived secretome (biologic)</div>
+    <div class="flag">⚠ CHASE Phase 2b MISSED primary endpoint (Sep 2025); company announced it will cease KPI-012/MSC-S platform development — lead program effectively dead</div>
+  </div>
+  <div class="c-ch"><span class="chip cat">1 in-window</span><span class="chip readout">readout×1</span><span class="chip px">needs price backfill</span></div>
+</div><div class="r">
+  <div class="c-tk"><span class="tk">GOSS</span><span class="mv hi">77%</span><span class="nm">n=3</span></div>
+  <div class="c-co">
+    <div class="co">Gossamer Bio, Inc.</div>
+    <div class="summ">Single-asset PAH company whose seralutinib is an inhaled (dry-powder) PDGFR/CSF1R/c-KIT kinase inhibitor aiming to reverse pulmonary vascular remodeling — a targeted kinase approach to PAH vs. vasodilator standards of care.</div>
+    <div class="meta">Seralutinib · Pulmonary arterial hypertension (PAH); PH-ILD · Inhaled small molecule (multi-kinase PDGFR/CSF1R/c-KIT inhibitor)</div>
+    <div class="flag">⚠ Phase 3 PROSERA MISSED primary endpoint (Feb 2026) but signal in higher-risk patients; NDA still planned. Reacquired worldwide rights from Chiesi. No &#x27;Chinook&#x27; merger (that was a different company).</div>
+  </div>
+  <div class="c-ch"><span class="chip cat">1 in-window</span><span class="chip readout">readout×1</span><span class="chip px">needs price backfill</span></div>
+</div><div class="r">
+  <div class="c-tk"><span class="tk">KPTI</span><span class="mv hi">72%</span><span class="nm">n=1</span></div>
+  <div class="c-co">
+    <div class="co">Karyopharm Therapeutics Inc.</div>
+    <div class="summ">Commercial-stage oncology company and pioneer of oral XPO1 (nuclear export) inhibition; its drug selinexor (Xpovio) is the only approved oral SINE compound, now betting on a myelofibrosis combination with ruxolitinib after an endometrial-cancer Phase 3 miss.</div>
+    <div class="meta">Selinexor (Xpovio/Nexpovio) · Multiple myeloma (approved); myelofibrosis (sNDA); endometrial cancer · Oral small molecule (XPO1/exportin-1 inhibitor)</div>
+    <div class="flag">⚠ Phase 3 XPORT-EC-042 endometrial cancer MISSED primary endpoint (July 2026); myelofibrosis sNDA (SENTRY) is the forward catalyst</div>
+  </div>
+  <div class="c-ch"><span class="chip cat">1 in-window</span><span class="chip readout">readout×1</span><span class="chip px">needs price backfill</span></div>
+</div><div class="r">
+  <div class="c-tk"><span class="tk">PVLA</span><span class="mv hi">69%</span><span class="nm">n=1</span></div>
+  <div class="c-co">
+    <div class="co">Palvella Therapeutics, Inc.</div>
+    <div class="summ">Rare-skin-disease company whose QTORIN platform delivers a 3.9% anhydrous rapamycin gel topically into the skin/vasculature; lead targets microcystic lymphatic malformations — a topical mTOR inhibitor for a disease with no approved therapy, avoiding systemic sirolimus toxicity.</div>
+    <div class="meta">QTORIN rapamycin (3.9% anhydrous gel) · Microcystic lymphatic malformations (also cutaneous venous malformations, angiokeratomas) · Topical small molecule (anhydrous-gel mTOR inhibitor)</div>
+    <div class="flag">⚠ Public via 2024 reverse merger with Pieris Pharmaceuticals; Phase 3 SELVA positive (Feb 2026), pre-NDA meeting done — near-term NDA</div>
+  </div>
+  <div class="c-ch"><span class="chip cat">1 in-window</span><span class="chip readout">readout×1</span><span class="chip px">needs price backfill</span></div>
+</div><div class="r">
+  <div class="c-tk"><span class="tk">ADCT</span><span class="mv hi">68%</span><span class="nm">n=1</span></div>
+  <div class="c-co">
+    <div class="co">ADC Therapeutics SA</div>
+    <div class="summ">Commercial-stage antibody-drug-conjugate specialist whose approved Zynlonta (loncastuximab tesirine) is a CD19-directed ADC carrying a potent pyrrolobenzodiazepine (PBD) DNA-crosslinking payload — distinct from CD19 CAR-T and bispecifics in relapsed/refractory DLBCL.</div>
+    <div class="meta">Zynlonta (loncastuximab tesirine) · Relapsed/refractory diffuse large B-cell lymphoma (DLBCL) · Antibody-drug conjugate (CD19-directed, PBD payload)</div>
+    <div class="flag">⚠ Switzerland-domiciled (SA); trades NYSE:ADCT. LOTIS-5 Phase 3 confirmatory met PFS (June 2026); underwent strategic reorganization</div>
+  </div>
+  <div class="c-ch"><span class="chip cat">1 in-window</span><span class="chip readout">readout×1</span><span class="chip px">needs price backfill</span></div>
+</div><div class="r">
+  <div class="c-tk"><span class="tk">CMPX</span><span class="mv hi">67%</span><span class="nm">n=1</span></div>
+  <div class="c-co">
+    <div class="co">Compass Therapeutics, Inc.</div>
+    <div class="summ">Oncology antibody developer whose lead tovecimig (CTX-009) is a DLL4 x VEGF-A bispecific — it hit its primary endpoint in the Phase 2/3 COMPANION-002 trial for 2nd-line biliary tract cancer (ORR 17.1% vs 5.3%), a rare positive readout in an indication with almost no approved options.</div>
+    <div class="meta">Tovecimig (CTX-009), DLL4 x VEGF-A bispecific antibody · Biliary tract cancer (2nd-line, + paclitaxel) · Bispecific monoclonal antibody</div>
+    
+  </div>
+  <div class="c-ch"><span class="chip cat">1 in-window</span><span class="chip readout">readout×1</span><span class="chip px">needs price backfill</span></div>
+</div><div class="r">
+  <div class="c-tk"><span class="tk">QTTB</span><span class="mv hi">62%</span><span class="nm">n=2</span></div>
+  <div class="c-co">
+    <div class="co">Q32 Bio Inc.</div>
+    <div class="summ">Autoimmune biologics firm whose lead bempikibart (ADX-914) is a fully human anti-IL-7Ra antibody that blocks both IL-7 and TSLP signaling to re-regulate adaptive immunity — differentiated by dual-pathway inhibition, but its atopic dermatitis Phase 2 (SIGNAL-AD) missed in Part B while alopecia areata (SIGNAL-AA) showed activity and won FDA Fast Track.</div>
+    <div class="meta">Bempikibart (ADX-914), anti-IL-7Ra antibody · Alopecia areata (lead focus); atopic dermatitis (missed) · Monoclonal antibody</div>
+    
+  </div>
+  <div class="c-ch"><span class="chip cat">1 in-window</span><span class="chip readout">readout×1</span><span class="chip px">needs price backfill</span></div>
+</div><div class="r">
+  <div class="c-tk"><span class="tk">RAPP</span><span class="mv hi">56%</span><span class="nm">n=1</span></div>
+  <div class="c-co">
+    <div class="co">Rapport Therapeutics, Inc.</div>
+    <div class="summ">CNS precision-medicine firm exploiting &#x27;receptor-associated proteins&#x27; (RAPs); lead RAP-219 is a first-in-class TARPgamma8-selective AMPA-receptor negative allosteric modulator that targets only hippocampus/neocortex to spare hindbrain side effects — Phase 2a in focal seizures showed ~90% median seizure reduction.</div>
+    <div class="meta">RAP-219, TARPgamma8-selective AMPA receptor NAM · Focal onset seizures (also bipolar mania, PGTC seizures) · Small molecule (oral)</div>
+    
+  </div>
+  <div class="c-ch"><span class="chip cat">1 in-window</span><span class="chip readout">readout×1</span><span class="chip px">needs price backfill</span></div>
+</div><div class="r">
+  <div class="c-tk"><span class="tk">EVMN</span><span class="mv hi">49%</span><span class="nm">n=1</span></div>
+  <div class="c-co">
+    <div class="co">Evommune, Inc.</div>
+    <div class="summ">Chronic-inflammation biotech (Nov 2025 IPO, $150M) whose lead EVO756 is an oral small-molecule MRGPRX2 antagonist — a mast-cell/sensory-nerve receptor target distinct from the antibody/BTK crowd — for chronic spontaneous urticaria and atopic dermatitis; also has EVO301, an IL-18 binding-protein fusion.</div>
+    <div class="meta">EVO756, oral MRGPRX2 antagonist · Chronic spontaneous/inducible urticaria; atopic dermatitis · Small molecule (oral); plus fusion protein (EVO301)</div>
+    <div class="flag">⚠ recent IPO (Nov 2025)</div>
+  </div>
+  <div class="c-ch"><span class="chip cat">1 in-window</span><span class="chip readout">readout×1</span><span class="chip px">needs price backfill</span></div>
+</div><div class="r">
+  <div class="c-tk"><span class="tk">BBIO</span><span class="mv hi">46%</span><span class="nm">n=2</span></div>
+  <div class="c-co">
+    <div class="co">BridgeBio Pharma, Inc.</div>
+    <div class="summ">Genetic-disease pharma built as a hub-and-spoke of Mendelian-disease subsidiaries; now commercial with acoramidis (Attruby/Beyonttra) for ATTR-CM and advancing oral infigratinib — the only oral FGFR1-3 inhibitor for achondroplasia (positive Phase 3 PROPEL 3) — plus encaleret for ADH1 hypoparathyroidism.</div>
+    <div class="meta">Acoramidis (Attruby, marketed); infigratinib (achondroplasia, Phase 3); encaleret (ADH1, NDA filed) · ATTR cardiomyopathy; achondroplasia; ADH1 hypoparathyroidism · Small molecules (multi-asset genetic-disease platform)</div>
+    <div class="flag">⚠ given name &#x27;QED Therapeutics&#x27; corrected to BridgeBio Pharma (QED is the infigratinib subsidiary)</div>
+  </div>
+  <div class="c-ch"><span class="chip cat">1 in-window</span><span class="chip readout">readout×1</span></div>
+</div><div class="r">
+  <div class="c-tk"><span class="tk">AQST</span><span class="mv mid">36%</span><span class="nm">n=1</span></div>
+  <div class="c-co">
+    <div class="co">Aquestive Therapeutics, Inc.</div>
+    <div class="summ">Oral/sublingual film-delivery specialist (PharmFilm tech); lead Anaphylm is a needle-free sublingual epinephrine film — a postage-stamp-sized, water-free alternative to auto-injectors for anaphylaxis — that received a Jan 2026 CRL and is being resubmitted Q3 2026. Also markets Libervant diazepam buccal film.</div>
+    <div class="meta">Anaphylm (epinephrine sublingual film) · Anaphylaxis / severe allergic reactions · Sublingual/oral film drug-delivery</div>
+    <div class="flag">⚠ lead asset received FDA CRL Jan 2026 (resubmission planned Q3 2026)</div>
+  </div>
+  <div class="c-ch"><span class="chip cat">1 in-window</span><span class="chip pdufa">PDUFA×1</span><span class="chip px">needs price backfill</span></div>
+</div><div class="r">
+  <div class="c-tk"><span class="tk">PRAX</span><span class="mv mid">34%</span><span class="nm">n=2</span></div>
+  <div class="c-co">
+    <div class="co">Praxis Precision Medicines, Inc.</div>
+    <div class="summ">CNS ion-channel firm with two 2026 NDAs: ulixacaltamide (T-type/N-type calcium channel modulator) delivered the first-ever successful Phase 3 program in essential tremor (PDUFA Jan 2027), and relutrigine (Nav modulator) was stopped early for overwhelming efficacy in SCN2A/SCN8A developmental epileptic encephalopathies.</div>
+    <div class="meta">Ulixacaltamide (essential tremor); relutrigine (SCN2A/SCN8A DEE) · Essential tremor; SCN2A/SCN8A developmental epileptic encephalopathies · Small molecules (ion-channel modulators)</div>
+    
+  </div>
+  <div class="c-ch"><span class="chip cat">1 in-window</span><span class="chip readout">readout×1</span></div>
+</div><div class="r">
+  <div class="c-tk"><span class="tk">EDSA</span><span class="mv mid">29%</span><span class="nm">n=1</span></div>
+  <div class="c-co">
+    <div class="co">Edesa Biotech, Inc.</div>
+    <div class="summ">Canada-based inflammatory/immune biotech; lead paridiprubart (EB05) is an anti-TLR4 monoclonal antibody that hit primary/secondary endpoints in a Phase 3 ARDS study (25% relative death-risk reduction), run in a US government-funded platform trial; dermatology arm has EB06 anti-CXCL10 mAb for vitiligo.</div>
+    <div class="meta">Paridiprubart (EB05), anti-TLR4 monoclonal antibody · Acute respiratory distress syndrome (ARDS); vitiligo (EB06) · Monoclonal antibody</div>
+    <div class="flag">⚠ micro-cap</div>
+  </div>
+  <div class="c-ch"><span class="chip cat">1 in-window</span><span class="chip readout">readout×1</span><span class="chip px">needs price backfill</span></div>
+</div><div class="r">
+  <div class="c-tk"><span class="tk">RZLT</span><span class="mv mid">25%</span><span class="nm">n=3</span></div>
+  <div class="c-co">
+    <div class="co">Rezolute, Inc.</div>
+    <div class="summ">Rare-disease firm whose lead ersodetug (RZ358) is a fully human anti-insulin-receptor antibody that binds allosterically to blunt receptor over-activation downstream of the pancreas — giving it potential to treat any form of hyperinsulinism; Breakthrough Therapy in congenital HI (Phase 3 sunRIZE) plus a Phase 3 in tumor HI.</div>
+    <div class="meta">Ersodetug (RZ358), allosteric anti-insulin-receptor antibody · Congenital hyperinsulinism; tumor hyperinsulinism · Monoclonal antibody</div>
+    
+  </div>
+  <div class="c-ch"><span class="chip cat">1 in-window</span><span class="chip readout">readout×1</span><span class="chip px">needs price backfill</span></div>
+</div><div class="r">
+  <div class="c-tk"><span class="tk">ZBIO</span><span class="mv mid">17%</span><span class="nm">n=1</span></div>
+  <div class="c-co">
+    <div class="co">Zenas BioPharma, Inc.</div>
+    <div class="summ">Autoimmune firm whose lead obexelimab (ex-Xencor XmAb5871) is a bifunctional antibody co-engaging CD19 and the inhibitory FcgRIIb (CD32b) to reversibly shut down B cells without depleting them — Phase 3 INDIGO hit in IgG4-related disease (56% flare-risk reduction), BLA filed 2026, with SLE data due Q4 2026.</div>
+    <div class="meta">Obexelimab, CD19 x FcgRIIb bifunctional antibody · IgG4-related disease (BLA filed); SLE; multiple sclerosis · Bifunctional monoclonal antibody</div>
+    
+  </div>
+  <div class="c-ch"><span class="chip cat">1 in-window</span><span class="chip readout">readout×1</span><span class="chip px">needs price backfill</span></div>
+</div><div class="r">
+  <div class="c-tk"><span class="tk">ANAB</span><span class="mv mid">16%</span><span class="nm">n=3</span></div>
+  <div class="c-co">
+    <div class="co">AnaptysBio, Inc.</div>
+    <div class="summ">Antibody-discovery immunology firm with a royalty engine (GSK&#x27;s Jemperli/dostarlimab); proprietary lead rosnilimab is a PD-1 agonist that depletes pathogenic T cells (Phase 2b RA), though it missed in ulcerative colitis — the company plans to split its biopharma operations from its substantial royalty assets by end-2026.</div>
+    <div class="meta">Rosnilimab, PD-1 agonist / pathogenic-T-cell depleter · Rheumatoid arthritis (missed in ulcerative colitis) · Monoclonal antibody</div>
+    <div class="flag">⚠ planned separation of biopharma ops from royalty assets by end-2026</div>
+  </div>
+  <div class="c-ch"><span class="chip cat">1 in-window</span><span class="chip readout">readout×1</span><span class="chip px">needs price backfill</span></div>
+</div><div class="r">
+  <div class="c-tk"><span class="tk">UPB</span><span class="mv lo">15%</span><span class="nm">n=1</span></div>
+  <div class="c-co">
+    <div class="co">Upstream Bio, Inc.</div>
+    <div class="summ">Respiratory-inflammation firm whose sole asset verekitug (UPB-101) is the most advanced antibody targeting the TSLP receptor (vs. Tezspire, which binds the TSLP ligand), enabling potent, durable ~6-month dosing; in three Phase 2 trials across severe asthma, CRSwNP, and COPD.</div>
+    <div class="meta">Verekitug (UPB-101), anti-TSLP-receptor antibody · Severe asthma; chronic rhinosinusitis with nasal polyps; COPD · Monoclonal antibody</div>
+    
+  </div>
+  <div class="c-ch"><span class="chip cat">1 in-window</span><span class="chip readout">readout×1</span><span class="chip px">needs price backfill</span></div>
+</div><div class="r">
+  <div class="c-tk"><span class="tk">EYPT</span><span class="mv lo">15%</span><span class="nm">n=1</span></div>
+  <div class="c-co">
+    <div class="co">EyePoint Pharmaceuticals, Inc.</div>
+    <div class="summ">Retinal-disease firm built on its bioerodible Durasert E sustained-delivery insert; lead DURAVYU combines the TKI vorolanib in a Durasert depot for ~6-month intravitreal dosing to cut anti-VEGF injection burden — in Phase 3 for wet AMD and Phase 2/3 for diabetic macular edema.</div>
+    <div class="meta">DURAVYU (vorolanib in Durasert E insert) · Wet AMD; diabetic macular edema · Sustained-release intravitreal drug-delivery insert (small-molecule TKI)</div>
+    <div class="flag">⚠ legal name shortened to &#x27;EyePoint, Inc.&#x27; in some 2026 filings</div>
+  </div>
+  <div class="c-ch"><span class="chip cat">1 in-window</span><span class="chip readout">readout×1</span><span class="chip px">needs price backfill</span></div>
+</div><div class="r">
+  <div class="c-tk"><span class="tk">VNDA</span><span class="mv lo">15%</span><span class="nm">n=1</span></div>
+  <div class="c-co">
+    <div class="co">Vanda Pharmaceuticals Inc.</div>
+    <div class="summ">Commercial-stage specialty pharma monetizing circadian/CNS assets — HETLIOZ (tasimelteon) for Non-24 and Fanapt/Bysanti (iloperidone/milsaperidone) for schizophrenia/bipolar — plus a pipeline of tradipitant (NK-1 antagonist for motion sickness/gastroparesis) and licensed imsidolimab; known for its litigious, cash-rich, activist-targeted profile.</div>
+    <div class="meta">Fanapt (iloperidone) &amp; HETLIOZ (tasimelteon) marketed; tradipitant &amp; Bysanti under FDA review · Schizophrenia, bipolar, sleep/circadian disorders, motion sickness · Small molecules (commercial + pipeline)</div>
+    
+  </div>
+  <div class="c-ch"><span class="chip cat">1 in-window</span><span class="chip pdufa">PDUFA×1</span><span class="chip px">needs price backfill</span></div>
+</div><div class="r">
+  <div class="c-tk"><span class="tk">HRMY</span><span class="mv lo">14%</span><span class="nm">n=1</span></div>
+  <div class="c-co">
+    <div class="co">Harmony Biosciences Holdings, Inc.</div>
+    <div class="summ">Rare-neuro commercial firm anchored by WAKIX (pitolisant), the only non-scheduled (H3 antagonist/inverse agonist) narcolepsy drug for adults and pediatrics; diversifying into ZYN002 transdermal cannabidiol gel (Fragile X Phase 3 missed) and pitolisant HD, plus other CNS programs.</div>
+    <div class="meta">WAKIX (pitolisant), H3 receptor antagonist/inverse agonist · Narcolepsy (adult + pediatric); Fragile X (ZYN002, missed) · Small molecule (commercial) + transdermal CBD gel</div>
+    
+  </div>
+  <div class="c-ch"><span class="chip cat">1 in-window</span><span class="chip readout">readout×1</span><span class="chip px">needs price backfill</span></div>
+</div><div class="r">
+  <div class="c-tk"><span class="tk">QNCX</span><span class="mv lo">14%</span><span class="nm">n=1</span></div>
+  <div class="c-co">
+    <div class="co">Quince Therapeutics, Inc.</div>
+    <div class="summ">Late-stage firm with a distinctive AIDE platform that encapsulates dexamethasone sodium phosphate into a patient&#x27;s own red blood cells (eDSP/EryDex) for slow steroid release; lead in Ataxia-Telangiectasia, but the pivotal Phase 3 NEAT trial narrowly missed its primary endpoint (p=0.0851).</div>
+    <div class="meta">eDSP (EryDex) — dexamethasone encapsulated in autologous erythrocytes · Ataxia-Telangiectasia · Autologous red-blood-cell drug encapsulation (drug/device combination)</div>
+    <div class="flag">⚠ pivotal Phase 3 NEAT missed primary endpoint (Jan 2026)</div>
+  </div>
+  <div class="c-ch"><span class="chip cat">1 in-window</span><span class="chip readout">readout×1</span><span class="chip px">needs price backfill</span></div>
+</div><div class="r">
+  <div class="c-tk"><span class="tk">BHC</span><span class="mv lo">13%</span><span class="nm">n=1</span></div>
+  <div class="c-co">
+    <div class="co">Bausch Health Companies Inc.</div>
+    <div class="summ">Large diversified specialty pharma (not clinical-stage) spanning GI, derm, neuro, and eye health; earnings driven by Salix&#x27;s Xifaxan (rifaximin) for hepatic encephalopathy/IBS-D and a controlling stake in Bausch + Lomb — carries a heavy debt load and an overhang around the planned B+L separation and the Xifaxan patent cliff.</div>
+    <div class="meta">Xifaxan (rifaximin) — marketed; controlling interest in Bausch + Lomb · Hepatic encephalopathy, IBS-D, GI/derm/neuro/eye health · Diversified marketed pharmaceuticals (small molecules)</div>
+    <div class="flag">⚠ large-cap commercial pharma (not clinical-stage); high debt; pending Bausch+Lomb separation</div>
+  </div>
+  <div class="c-ch"><span class="chip cat">1 in-window</span><span class="chip readout">readout×1</span><span class="chip px">needs price backfill</span></div>
+</div><div class="r">
+  <div class="c-tk"><span class="tk">CABA</span><span class="mv lo">12%</span><span class="nm">n=1</span></div>
+  <div class="c-co">
+    <div class="co">Cabaletta Bio, Inc.</div>
+    <div class="summ">Engineered T-cell firm applying oncology-style CD19 CAR-T to autoimmunity; lead rese-cel (CABA-201) is a fully human 4-1BB CD19 CAR-T aiming for a drug-free, potentially curative &#x27;immune reset&#x27; — early lupus data showed patients off all immunosuppressants, with programs across SLE, myositis, systemic sclerosis, and myasthenia gravis.</div>
+    <div class="meta">Rese-cel (CABA-201), autologous CD19 CAR-T · Systemic lupus erythematosus, myositis, systemic sclerosis, myasthenia gravis · Autologous CAR-T cell therapy</div>
+    
+  </div>
+  <div class="c-ch"><span class="chip cat">1 in-window</span><span class="chip readout">readout×1</span><span class="chip px">needs price backfill</span></div>
+</div><div class="r">
+  <div class="c-tk"><span class="tk">RYTM</span><span class="mv lo">12%</span><span class="nm">n=2</span></div>
+  <div class="c-co">
+    <div class="co">Rhythm Pharmaceuticals, Inc.</div>
+    <div class="summ">The only company commercializing an MC4R-pathway (melanocortin) agonist for rare genetic obesity; setmelanotide (IMCIVREE) is FDA-approved and, as of 2026, newly launched for acquired hypothalamic obesity, with an oral MC4R follow-on (bivamelagon) and long-acting RM-718 behind it.</div>
+    <div class="meta">Setmelanotide (IMCIVREE); pipeline bivamelagon (oral MC4R agonist), RM-718 · Rare genetic / acquired hypothalamic obesity (MC4R pathway deficiencies) · Peptide MC4R agonist (small molecule oral for bivamelagon)</div>
+    
+  </div>
+  <div class="c-ch"><span class="chip cat">1 in-window</span><span class="chip readout">readout×1</span><span class="chip px">needs price backfill</span></div>
+</div><div class="r">
+  <div class="c-tk"><span class="tk">CGEM</span><span class="mv lo">11%</span><span class="nm">n=1</span></div>
+  <div class="c-co">
+    <div class="co">Cullinan Therapeutics, Inc.</div>
+    <div class="summ">Straddles oncology and a distinctive autoimmune pivot using CD19xCD3 and BCMAxCD3 T-cell engagers (CLN-978, velinotamig) as off-the-shelf alternatives to CAR-T for lupus/RA; its near-term commercial asset is zipalertinib, a Taiho-partnered EGFR exon-20 NSCLC inhibitor with an FDA action date of Feb 2027.</div>
+    <div class="meta">Zipalertinib (EGFR exon20 NSCLC, Taiho-partnered); CLN-978 (CD19xCD3 TCE) in autoimmune · EGFR exon-20 insertion NSCLC; autoimmune (SLE, RA, Sjogren&#x27;s) · Small-molecule TKI (zipalertinib) + bispecific T-cell engagers</div>
+    
+  </div>
+  <div class="c-ch"><span class="chip cat">1 in-window</span><span class="chip readout">readout×1</span><span class="chip px">needs price backfill</span></div>
+</div><div class="r">
+  <div class="c-tk"><span class="tk">LBRX</span><span class="mv lo">8%</span><span class="nm">n=1</span></div>
+  <div class="c-co">
+    <div class="co">LB Pharmaceuticals Inc.</div>
+    <div class="summ">Single-asset neuropsychiatry IPO (late 2025) whose LB-102 is a methylated derivative of amisulpride positioned as the first benzamide antipsychotic in the U.S. — a D2/D3/5-HT7 antagonist repositioning a drug used abroad for schizophrenia, bipolar and mood disorders.</div>
+    <div class="meta">LB-102 (methylated amisulpride, D2/D3/5-HT7 antagonist) · Schizophrenia (Phase 3), bipolar disorder (Phase 2) · Small-molecule benzamide antipsychotic</div>
+    <div class="flag">⚠ Recent IPO (Nasdaq listing 2025)</div>
+  </div>
+  <div class="c-ch"><span class="chip cat">1 in-window</span><span class="chip readout">readout×1</span><span class="chip px">needs price backfill</span></div>
+</div><div class="r">
+  <div class="c-tk"><span class="tk">OTLK</span><span class="mv lo">8%</span><span class="nm">n=1</span></div>
+  <div class="c-co">
+    <div class="co">Outlook Therapeutics, Inc.</div>
+    <div class="summ">Uniquely positioned as maker of the first and only FDA-approved ophthalmic formulation of bevacizumab (LYTENAVA / ONS-5010) for wet AMD — approved July 2026 after multiple CRLs — challenging off-label Avastin repackaging with an on-label branded product.</div>
+    <div class="meta">LYTENAVA / ONS-5010 (bevacizumab-vikg, ophthalmic) · Wet age-related macular degeneration (retinal) · Anti-VEGF monoclonal antibody (ophthalmic formulation)</div>
+    
+  </div>
+  <div class="c-ch"><span class="chip cat">1 in-window</span><span class="chip pdufa">PDUFA×1</span><span class="chip px">needs price backfill</span></div>
+</div><div class="r">
+  <div class="c-tk"><span class="tk">AZTR</span><span class="mv lo">8%</span><span class="nm">n=1</span></div>
+  <div class="c-co">
+    <div class="co">Azitra Inc.</div>
+    <div class="summ">Precision-dermatology microbiome player engineering live strains of S. epidermidis to secrete therapeutic proteins topically; lead ATR-12 is an engineered bacterium for Netherton syndrome, with ATR-04 (Fast Track) targeting EGFR-inhibitor-associated rash — a live-biotherapeutic approach distinct from small-molecule/antibody dermatology.</div>
+    <div class="meta">ATR-12 (engineered S. epidermidis); ATR-04 for EGFRi rash · Netherton syndrome; EGFR-inhibitor-associated rash (dermatology) · Engineered live biotherapeutic (topical genetically-modified bacteria)</div>
+    <div class="flag">⚠ Micro-cap clinical-stage</div>
+  </div>
+  <div class="c-ch"><span class="chip cat">1 in-window</span><span class="chip readout">readout×1</span><span class="chip px">needs price backfill</span></div>
+</div><div class="r">
+  <div class="c-tk"><span class="tk">PTCT</span><span class="mv lo">8%</span><span class="nm">n=3</span></div>
+  <div class="c-co">
+    <div class="co">PTC Therapeutics, Inc.</div>
+    <div class="summ">Diversified rare-disease commercial company built on RNA-splicing and metabolic platforms; 2026 growth driver is Sephience (sepiapterin), newly approved in US/EU/Japan for PKU, alongside a Huntington&#x27;s splicing candidate (PTC518) and the ferroptosis asset vatiquinone (received an FDA CRL in Friedreich ataxia).</div>
+    <div class="meta">Sephience (sepiapterin) for PKU; PTC518 (Huntington&#x27;s), vatiquinone · Phenylketonuria; Huntington&#x27;s disease; Friedreich ataxia · Small molecules (splicing modulation, cofactor/metabolic, ferroptosis)</div>
+    
+  </div>
+  <div class="c-ch"><span class="chip cat">1 in-window</span><span class="chip readout">readout×1</span><span class="chip px">needs price backfill</span></div>
+</div><div class="r">
+  <div class="c-tk"><span class="tk">OCGN</span><span class="mv lo">7%</span><span class="nm">n=1</span></div>
+  <div class="c-co">
+    <div class="co">Ocugen, Inc.</div>
+    <div class="summ">Pursues a &#x27;modifier gene therapy&#x27; thesis: a single AAV-delivered nuclear receptor gene (NR2E3, OCU400) intended to work across multiple gene mutations of retinitis pigmentosa rather than one mutation at a time, differentiating it from mutation-specific ocular gene therapies; OCU410/OCU410ST target dry AMD and Stargardt.</div>
+    <div class="meta">OCU400 (AAV-NR2E3 modifier gene therapy) · Retinitis pigmentosa (broad, mutation-agnostic); dry AMD; Stargardt · AAV gene therapy (modifier / nuclear-hormone-receptor)</div>
+    
+  </div>
+  <div class="c-ch"><span class="chip cat">1 in-window</span><span class="chip readout">readout×1</span><span class="chip px">needs price backfill</span></div>
+</div><div class="r">
+  <div class="c-tk"><span class="tk">VRDN</span><span class="mv lo">6%</span><span class="nm">n=3</span></div>
+  <div class="c-co">
+    <div class="co">Viridian Therapeutics, Inc.</div>
+    <div class="summ">Directly challenging Amgen&#x27;s Tepezza in thyroid eye disease with anti-IGF-1R antibodies; IV veligrotug (PDUFA June 30, 2026) offers a shorter 5-infusion course, while subcutaneous elegrobart (VRDN-003) aims to be the first at-home autoinjector for TED.</div>
+    <div class="meta">Veligrotug (VRDN-001, IV anti-IGF-1R); elegrobart (VRDN-003, SC) · Thyroid eye disease · Anti-IGF-1R monoclonal antibody</div>
+    
+  </div>
+  <div class="c-ch"><span class="chip cat">1 in-window</span><span class="chip pdufa">PDUFA×1</span><span class="chip px">needs price backfill</span></div>
+</div><div class="r">
+  <div class="c-tk"><span class="tk">MNKD</span><span class="mv lo">6%</span><span class="nm">n=1</span></div>
+  <div class="c-co">
+    <div class="co">MannKind Corporation</div>
+    <div class="summ">Built around its Technosphere dry-powder inhalation platform: markets ultra-rapid inhaled insulin Afrezza and earns royalties on partner United Therapeutics&#x27; Tyvaso DPI for PAH; internal pipeline extends the inhaled route to clofazimine (MNKD-101) for NTM lung disease and nintedanib DPI (MNKD-201) for IPF.</div>
+    <div class="meta">Afrezza (inhaled insulin); Tyvaso DPI royalties; MNKD-101, MNKD-201 · Diabetes; pulmonary arterial hypertension; NTM lung disease; IPF · Dry-powder inhalation (Technosphere platform)</div>
+    
+  </div>
+  <div class="c-ch"><span class="chip cat">1 in-window</span><span class="chip pdufa">PDUFA×1</span><span class="chip px">needs price backfill</span></div>
+</div><div class="r">
+  <div class="c-tk"><span class="tk">MIRM</span><span class="mv lo">6%</span><span class="nm">n=1</span></div>
+  <div class="c-co">
+    <div class="co">Mirum Pharmaceuticals, Inc.</div>
+    <div class="summ">Commercial rare-cholestatic-liver-disease specialist whose franchise centers on IBAT (bile-acid transporter) inhibition — Livmarli (maralixibat) for Alagille syndrome and PFIC pruritus — plus marketed bile-acid products (Cholbam, Chenodal) and a second IBAT inhibitor, volixibat, in trials for PSC and PBC.</div>
+    <div class="meta">Livmarli (maralixibat, IBAT inhibitor); volixibat (IBAT) in development · Cholestatic liver diseases (Alagille, PFIC, PSC, PBC) · Small-molecule IBAT (ASBT) inhibitors; bile acids</div>
+    
+  </div>
+  <div class="c-ch"><span class="chip cat">1 in-window</span><span class="chip readout">readout×1</span></div>
+</div><div class="r">
+  <div class="c-tk"><span class="tk">DNLI</span><span class="mv lo">4%</span><span class="nm">n=4</span></div>
+  <div class="c-co">
+    <div class="co">Denali Therapeutics Inc.</div>
+    <div class="summ">Neuro-focused company whose TransportVehicle (TV) platform engineers biologics to cross the blood-brain barrier; its AVLAYAH (tividenofusp alfa, DNL310) won FDA accelerated approval in March 2026 as the first brain-penetrant enzyme replacement therapy for Hunter syndrome (MPS II).</div>
+    <div class="meta">AVLAYAH / tividenofusp alfa (DNL310, IDS enzyme + TransportVehicle) · Hunter syndrome (MPS II) and other CNS/lysosomal disorders · Brain-penetrant enzyme-replacement / biologic (TransportVehicle)</div>
+    
+  </div>
+  <div class="c-ch"><span class="chip cat">1 in-window</span><span class="chip pdufa">PDUFA×1</span><span class="chip px">needs price backfill</span></div>
+</div><div class="r">
+  <div class="c-tk"><span class="tk">MLYS</span><span class="mv lo">4%</span><span class="nm">n=2</span></div>
+  <div class="c-co">
+    <div class="co">Mineralys Therapeutics, Inc.</div>
+    <div class="summ">Single-mechanism cardio-renal company betting on aldosterone-synthase (CYP11B2) inhibition; lead lorundrostat is a highly selective oral inhibitor (FDA NDA accepted) for uncontrolled/resistant hypertension, with extension into CKD and obstructive sleep apnea — an aldosterone-specific angle vs. broad antihypertensives.</div>
+    <div class="meta">Lorundrostat (oral aldosterone synthase / CYP11B2 inhibitor) · Uncontrolled / treatment-resistant hypertension (also CKD, OSA) · Small-molecule aldosterone synthase inhibitor</div>
+    
+  </div>
+  <div class="c-ch"><span class="chip cat">1 in-window</span><span class="chip readout">readout×1</span><span class="chip px">needs price backfill</span></div>
+</div><div class="r">
+  <div class="c-tk"><span class="tk">IDYA</span><span class="mv lo">4%</span><span class="nm">n=1</span></div>
+  <div class="c-co">
+    <div class="co">IDEAYA Biosciences, Inc.</div>
+    <div class="summ">Precision oncology built on synthetic lethality (exploiting tumor genomic vulnerabilities with biomarker selection); lead darovasertib is a PKC inhibitor headed to FDA under RTOR for HLA-A2-negative metastatic uveal melanoma (with crizotinib) — a rare tumor with essentially no approved therapies.</div>
+    <div class="meta">Darovasertib (PKC inhibitor, +crizotinib); broad synthetic-lethality pipeline · Metastatic / neoadjuvant uveal melanoma; molecularly-defined solid tumors · Small-molecule synthetic-lethality inhibitors + ADCs</div>
+    
+  </div>
+  <div class="c-ch"><span class="chip cat">1 in-window</span><span class="chip readout">readout×1</span></div>
+</div><div class="r">
+  <div class="c-tk"><span class="tk">DYN</span><span class="mv lo">3%</span><span class="nm">n=1</span></div>
+  <div class="c-co">
+    <div class="co">Dyne Therapeutics, Inc.</div>
+    <div class="summ">Muscle-targeted oligonucleotide company whose FORCE platform conjugates ASOs to an antibody Fab against the transferrin receptor to reach muscle/CNS; twin lead assets are DYNE-101 (zeleciment basivarsen) for myotonic dystrophy type 1 and DYNE-251 for exon-51 Duchenne, both Breakthrough-designated and heading toward US accelerated-approval filings.</div>
+    <div class="meta">DYNE-101 (DM1) and DYNE-251 (DMD exon 51), FORCE-conjugated ASOs · Myotonic dystrophy type 1; Duchenne muscular dystrophy · Antibody-oligonucleotide conjugates (FORCE platform)</div>
+    
+  </div>
+  <div class="c-ch"><span class="chip cat">1 in-window</span><span class="chip readout">readout×1</span></div>
+</div><div class="r">
+  <div class="c-tk"><span class="tk">ORKA</span><span class="mv lo">1%</span><span class="nm">n=1</span></div>
+  <div class="c-co">
+    <div class="co">Oruka Therapeutics, Inc.</div>
+    <div class="summ">Immuno-dermatology company differentiating purely on dosing convenience via Fc-engineered half-life extension of validated targets; lead ORKA-001 is an IL-23p19 antibody with a ~100-day half-life aiming for once-or-twice-yearly dosing in plaque psoriasis (&gt;60% PASI 100 at wk16 in Ph2a).</div>
+    <div class="meta">ORKA-001 (half-life-extended anti-IL-23p19 mAb); ORKA-002 (IL-17A/F) · Moderate-to-severe plaque psoriasis (and other dermatologic) · Half-life-extended monoclonal antibodies (Fc engineering)</div>
+    
+  </div>
+  <div class="c-ch"><span class="chip cat">1 in-window</span><span class="chip readout">readout×1</span><span class="chip px">needs price backfill</span></div>
+</div><div class="r">
+  <div class="c-tk"><span class="tk">IMNM</span><span class="mv lo">1%</span><span class="nm">n=1</span></div>
+  <div class="c-co">
+    <div class="co">Immunome, Inc.</div>
+    <div class="summ">Oncology company whose near-term value is varegacestat (formerly AL102), an oral gamma-secretase inhibitor with strongly positive Phase 3 RINGSIDE data (84% risk reduction) in desmoid tumors and an FDA NDA accepted (PDUFA Apr 2027); backed by a targeted-oncology pipeline of ADCs (IM-1021 ROR1) and a FAP radioligand (IM-3050).</div>
+    <div class="meta">Varegacestat (AL102, oral gamma-secretase inhibitor) · Desmoid tumors; broader solid tumors / B-cell malignancies · Small-molecule GSI + ADCs + radioligand therapy</div>
+    
+  </div>
+  <div class="c-ch"><span class="chip cat">1 in-window</span><span class="chip readout">readout×1</span><span class="chip px">needs price backfill</span></div>
+</div><div class="r">
+  <div class="c-tk"><span class="tk">JAZZ</span><span class="mv lo">1%</span><span class="nm">n=1</span></div>
+  <div class="c-co">
+    <div class="co">Jazz Pharmaceuticals plc</div>
+    <div class="summ">Profitable commercial-stage company with two anchor franchises unusual in scope — sleep/neuroscience (Xywav/Xyrem oxybate for narcolepsy, Epidiolex cannabidiol for epilepsy) and oncology (Rylaze, Zepzelca lurbinectedin in SCLC, Ziihera zanidatamab in HER2+ biliary) — funding growth via M&amp;A rather than a single platform.</div>
+    <div class="meta">Xywav / Xyrem (oxybate); Epidiolex; Zepzelca (lurbinectedin); Ziihera · Narcolepsy, epilepsy; small-cell lung &amp; biliary cancers · Marketed small molecules, cannabinoid, and antibody (diversified)</div>
+    
+  </div>
+  <div class="c-ch"><span class="chip cat">1 in-window</span><span class="chip pdufa">PDUFA×1</span><span class="chip px">needs price backfill</span></div>
+</div><div class="r">
+  <div class="c-tk"><span class="tk">MANE</span><span class="mv lo">1%</span><span class="nm">n=1</span></div>
+  <div class="c-co">
+    <div class="co">Veradermics, Inc.</div>
+    <div class="summ">NYSE-listed (Feb 2026 IPO) dermatology/hair company whose lead is an extended-release oral minoxidil (VDPHL01) aiming to be the first oral approval for male pattern hair loss in 30 years and the first ever for female pattern hair loss — a reformulation-driven, non-hormonal oral angle distinct from topical/finasteride incumbents.</div>
+    <div class="meta">VDPHL01 (extended-release oral minoxidil) · Androgenetic alopecia (male and female pattern hair loss) · Reformulated oral small molecule (extended-release)</div>
+    <div class="flag">⚠ Ticker/name confirmed CORRECT (not a mismatch): MANE = Veradermics on NYSE, recent IPO</div>
+  </div>
+  <div class="c-ch"><span class="chip cat">1 in-window</span><span class="chip readout">readout×1</span><span class="chip px">needs price backfill</span></div>
+</div><div class="r">
+  <div class="c-tk"><span class="tk">AGIO</span><span class="mv lo">1%</span><span class="nm">n=1</span></div>
+  <div class="c-co">
+    <div class="co">Agios Pharmaceuticals, Inc.</div>
+    <div class="summ">Pure-play cellular-metabolism company built around Pyrukynd (mitapivat), the first and only oral pyruvate kinase (PK) activator, now expanding across hemolytic anemias after divesting its entire oncology business to Servier. Differentiated by a PK-activation franchise no rival markets, reaching from rare PK deficiency into the far larger thalassemia and sickle cell populations.</div>
+    <div class="meta">Pyrukynd (mitapivat) · Hemolytic anemias — PK deficiency, thalassemia, sickle cell disease · Oral small-molecule pyruvate kinase (PKR) activator</div>
+    
+  </div>
+  <div class="c-ch"><span class="chip cat">1 in-window</span><span class="chip pdufa">PDUFA×1</span><span class="chip px">needs price backfill</span></div>
+</div><div class="r">
+  <div class="c-tk"><span class="tk">ARWR</span><span class="mv lo">1%</span><span class="nm">n=1</span></div>
+  <div class="c-co">
+    <div class="co">Arrowhead Pharmaceuticals, Inc.</div>
+    <div class="summ">RNAi specialist whose proprietary TRiM (Targeted RNAi Molecule) platform enables tissue-directed silencing beyond the liver into lung, muscle and CNS; lead wholly-owned asset plozasiran silences APOC3 for severe hypertriglyceridemia. Differentiated by breadth of extrahepatic siRNA delivery and a partnership engine (Sarepta, Amgen, Takeda, GSK) monetizing the pipeline.</div>
+    <div class="meta">Plozasiran (APOC3 siRNA) · Familial chylomicronemia syndrome / severe hypertriglyceridemia · Subcutaneous RNAi (siRNA)</div>
+    
+  </div>
+  <div class="c-ch"><span class="chip cat">1 in-window</span><span class="chip readout">readout×1</span><span class="chip px">needs price backfill</span></div>
+</div><div class="r">
+  <div class="c-tk"><span class="tk">CRMD</span><span class="mv lo">1%</span><span class="nm">n=1</span></div>
+  <div class="c-co">
+    <div class="co">CorMedix Inc.</div>
+    <div class="summ">Commercial-stage anti-infective company selling DefenCath, the first and only FDA-approved antimicrobial catheter lock solution, to cut catheter-related bloodstream infections in hemodialysis patients. Differentiated as a single-product commercial infection-prevention play rather than a pipeline-stage developer.</div>
+    <div class="meta">DefenCath (taurolidine + heparin) · Prevention of catheter-related bloodstream infections in hemodialysis · Antimicrobial catheter lock solution</div>
+    
+  </div>
+  <div class="c-ch"><span class="chip cat">1 in-window</span><span class="chip readout">readout×1</span><span class="chip px">needs price backfill</span></div>
+</div><div class="r">
+  <div class="c-tk"><span class="tk">ALT</span><span class="mv lo">1%</span><span class="nm">n=1</span></div>
+  <div class="c-co">
+    <div class="co">Altimmune, Inc.</div>
+    <div class="summ">Metabolic-disease developer centered on pemvidutide, a GLP-1/glucagon dual receptor agonist whose glucagon arm drives liver-fat reduction and weight loss with an emphasis on lean-mass preservation. Differentiated from pure GLP-1 obesity drugs by the dual-agonist mechanism targeting both MASH and obesity.</div>
+    <div class="meta">Pemvidutide · MASH (metabolic dysfunction-associated steatohepatitis) and obesity · GLP-1/glucagon dual receptor agonist peptide</div>
+    
+  </div>
+  <div class="c-ch"><span class="chip cat">1 in-window</span><span class="chip readout">readout×1</span><span class="chip px">needs price backfill</span></div>
+</div></div></section>
+<section><h2>High-mover core <span class="cnt">15</span></h2><p class="sub">No catalyst in this specific year, but they swing hard historically — the buy-the-dip / mean-reversion candidates. Sorted by median move.</p>
+<div class="grid"><div class="r">
+  <div class="c-tk"><span class="tk">SPRO</span><span class="mv hi">165%</span><span class="nm">n=2</span></div>
+  <div class="c-co">
+    <div class="co">Spero Therapeutics, Inc.</div>
+    <div class="summ">Antibacterial developer whose lead tebipenem HBr is a first-of-its-kind oral carbapenem for complicated UTI, licensed to GSK for late-stage development, backed by SPR720 for non-tuberculous mycobacterial lung disease. Differentiated by bringing carbapenem-class potency into an oral pill for serious Gram-negative infections.</div>
+    <div class="meta">Tebipenem HBr (tebipenem pivoxil hydrobromide) · Complicated urinary tract infection (cUTI) · Oral carbapenem antibiotic (small molecule)</div>
+    
+  </div>
+  <div class="c-ch"><span class="chip px">needs price backfill</span></div>
+</div><div class="r">
+  <div class="c-tk"><span class="tk">AVTX</span><span class="mv hi">155%</span><span class="nm">n=2</span></div>
+  <div class="c-co">
+    <div class="co">Avalo Therapeutics, Inc.</div>
+    <div class="summ">Immunology company fully focused on abdakibart (AVTX-009), a high-affinity anti-IL-1beta monoclonal antibody, which hit its Phase 2 LOTUS primary endpoint in hidradenitis suppurativa. Differentiated by targeting IL-1beta specifically (vs. IL-17/TNF competitors) in HS, an asset acquired via the 2024 AlmataBio reverse merger.</div>
+    <div class="meta">Abdakibart (AVTX-009) · Hidradenitis suppurativa · Anti-IL-1beta humanized monoclonal antibody (IgG4)</div>
+    <div class="flag">⚠ Product came in via 2024 reverse merger with AlmataBio</div>
+  </div>
+  <div class="c-ch"><span class="chip px">needs price backfill</span></div>
+</div><div class="r">
+  <div class="c-tk"><span class="tk">LONA</span><span class="mv hi">75%</span><span class="nm">n=2</span></div>
+  <div class="c-co">
+    <div class="co">LeonaBio, Inc. (formerly Athira Pharma, Inc.)</div>
+    <div class="summ">Rebranded from Athira Pharma in January 2026, LeonaBio pivoted its identity to lasofoxifene, a selective estrogen receptor modulator (SERM) licensed from Sermonix for ESR1-mutated metastatic breast cancer, while retaining legacy neuro asset ATH-1105 for ALS. Differentiated by a SERM+CDK4/6 combination strategy (ELAINE-3) in a genetically defined breast-cancer niche rather than its former Alzheimer&#x27;s focus.</div>
+    <div class="meta">Lasofoxifene · ER+/ESR1-mutated metastatic breast cancer (plus ATH-1105 in ALS) · Oral selective estrogen receptor modulator (SERM)</div>
+    <div class="flag">⚠ Name/ticker change: was Athira Pharma; became LeonaBio (LONA) Jan 2026 following Sermonix lasofoxifene license</div>
+  </div>
+  <div class="c-ch"><span class="chip px">needs price backfill</span></div>
+</div><div class="r">
+  <div class="c-tk"><span class="tk">VERA</span><span class="mv hi">69%</span><span class="nm">n=3</span></div>
+  <div class="c-co">
+    <div class="co">Vera Therapeutics, Inc.</div>
+    <div class="summ">Kidney/immunology developer whose lead atacicept is a dual APRIL/BLyS inhibitor fusion protein reducing pathogenic Gd-IgA1 antibodies in IgA nephropathy. Differentiated by simultaneously blocking both APRIL and BLyS (vs. single-cytokine rivals like sibeprenlimab) in the autoantibody-driven kidney disease.</div>
+    <div class="meta">Atacicept · IgA nephropathy (also lupus nephritis) · Dual APRIL/BLyS-inhibiting recombinant fusion protein</div>
+    
+  </div>
+  <div class="c-ch"><span class="chip px">needs price backfill</span></div>
+</div><div class="r">
+  <div class="c-tk"><span class="tk">ATNM</span><span class="mv hi">48%</span><span class="nm">n=3</span></div>
+  <div class="c-co">
+    <div class="co">Actinium Pharmaceuticals, Inc.</div>
+    <div class="summ">Targeted-radiotherapy developer building antibody radioconjugates — Actimab-A (lintuzumab-Ac225) and Iomab-B (apamistamab-I131) — for hematologic cancers and bone-marrow transplant conditioning. Differentiated by using CD45/CD33-targeted radioisotopes as a conditioning/therapy tool for AML and stem-cell transplant, distinct from chemo conditioning.</div>
+    <div class="meta">Iomab-B (apamistamab-I131) / Actimab-A (lintuzumab-Ac225) · AML and targeted bone-marrow transplant conditioning · Antibody radioconjugate (targeted radiotherapy)</div>
+    
+  </div>
+  <div class="c-ch"><span class="chip px">needs price backfill</span></div>
+</div><div class="r">
+  <div class="c-tk"><span class="tk">TRVI</span><span class="mv hi">45%</span><span class="nm">n=3</span></div>
+  <div class="c-co">
+    <div class="co">Trevi Therapeutics, Inc.</div>
+    <div class="summ">Respiratory/neuro developer repurposing Haduvio (oral extended-release nalbuphine), a dual kappa-opioid agonist / mu-opioid antagonist, as an antitussive for chronic cough in idiopathic pulmonary fibrosis and refractory chronic cough. Differentiated by exploiting nalbuphine&#x27;s dual-opioid mechanism to suppress cough without classic opioid abuse liability.</div>
+    <div class="meta">Haduvio (nalbuphine ER) · Chronic cough in IPF and refractory chronic cough · Oral small molecule — kappa agonist/mu antagonist</div>
+    
+  </div>
+  <div class="c-ch"><span class="chip px">needs price backfill</span></div>
+</div><div class="r">
+  <div class="c-tk"><span class="tk">AMLX</span><span class="mv hi">41%</span><span class="nm">n=2</span></div>
+  <div class="c-co">
+    <div class="co">Amylyx Pharmaceuticals, Inc.</div>
+    <div class="summ">Following withdrawal of ALS drug Relyvrio (AMX0035) after a failed Phase 3, Amylyx re-anchored on avexitide, a first-in-class GLP-1 receptor antagonist for post-bariatric hypoglycemia, plus AMX0114 antisense for ALS. Differentiated by attacking hyperinsulinemic hypoglycemia by blocking (not agonizing) GLP-1 — the opposite of the obesity-drug wave.</div>
+    <div class="meta">Avexitide · Post-bariatric hypoglycemia (PBH) · GLP-1 receptor antagonist peptide</div>
+    <div class="flag">⚠ Relyvrio/AMX0035 voluntarily withdrawn from market (2024) after Phase 3 failure; company pivoted pipeline</div>
+  </div>
+  <div class="c-ch"><span class="chip px">needs price backfill</span></div>
+</div><div class="r">
+  <div class="c-tk"><span class="tk">KRYS</span><span class="mv hi">40%</span><span class="nm">n=2</span></div>
+  <div class="c-co">
+    <div class="co">Krystal Biotech, Inc.</div>
+    <div class="summ">Commercial gene-therapy company selling Vyjuvek (beremagene geperpavec), the first redosable, topically applied HSV-1-vectored gene therapy, for dystrophic epidermolysis bullosa. Differentiated by an off-the-shelf, repeat-dose delivery model (gel/eye drops) versus one-time systemic gene therapies, now extended to inhaled (cystic fibrosis) and aesthetic programs.</div>
+    <div class="meta">Vyjuvek (beremagene geperpavec, B-VEC) · Dystrophic epidermolysis bullosa (DEB) · Redosable topical HSV-1-based gene therapy</div>
+    
+  </div>
+  <div class="c-ch"><span class="chip px">needs price backfill</span></div>
+</div><div class="r">
+  <div class="c-tk"><span class="tk">INSM</span><span class="mv mid">37%</span><span class="nm">n=3</span></div>
+  <div class="c-co">
+    <div class="co">Insmed Incorporated</div>
+    <div class="summ">Rare-disease company with marketed inhaled Arikayce (amikacin liposome inhalation) for refractory MAC lung disease and newly approved Brinsupri (brensocatib), the first-in-class oral DPP1 inhibitor for bronchiectasis. Differentiated by pairing an inhaled anti-infective with a neutrophil-serine-protease franchise addressing large under-served pulmonary populations.</div>
+    <div class="meta">Brinsupri (brensocatib); Arikayce (amikacin liposome inhalation) · Bronchiectasis (brensocatib); refractory MAC lung disease (Arikayce) · Oral DPP1 inhibitor + liposomal inhaled antibiotic</div>
+    
+  </div>
+  <div class="c-ch"></div>
+</div><div class="r">
+  <div class="c-tk"><span class="tk">ANNX</span><span class="mv mid">20%</span><span class="nm">n=2</span></div>
+  <div class="c-co">
+    <div class="co">Annexon, Inc.</div>
+    <div class="summ">Complement-medicine company targeting C1q, the initiating protein of the classical complement cascade; lead tanruprubart (ANX005) is an IV antibody for Guillain-Barre Syndrome, with intravitreal ANX007 for geographic atrophy. Differentiated by blocking complement at the very top of the classical pathway (C1q) rather than downstream C5/C3.</div>
+    <div class="meta">Tanruprubart (ANX005) · Guillain-Barre Syndrome (plus ANX007 in geographic atrophy) · Anti-C1q monoclonal antibody (classical complement inhibitor)</div>
+    
+  </div>
+  <div class="c-ch"><span class="chip px">needs price backfill</span></div>
+</div><div class="r">
+  <div class="c-tk"><span class="tk">ABEO</span><span class="mv mid">18%</span><span class="nm">n=3</span></div>
+  <div class="c-co">
+    <div class="co">Abeona Therapeutics Inc.</div>
+    <div class="summ">Gene-therapy company whose FDA-approved Zevaskyn (prademagene zamikeracel) is an autologous, gene-corrected epidermal cell-sheet therapy surgically applied to wounds in recessive dystrophic epidermolysis bullosa. Differentiated by a one-time, surgically-grafted ex vivo cell/gene therapy for RDEB, distinct from Krystal&#x27;s redosable topical approach.</div>
+    <div class="meta">Zevaskyn (prademagene zamikeracel, pz-cel) · Recessive dystrophic epidermolysis bullosa (RDEB) · Autologous gene-corrected epidermal cell-sheet (ex vivo gene therapy)</div>
+    
+  </div>
+  <div class="c-ch"><span class="chip px">needs price backfill</span></div>
+</div><div class="r">
+  <div class="c-tk"><span class="tk">LPCN</span><span class="mv lo">15%</span><span class="nm">n=2</span></div>
+  <div class="c-co">
+    <div class="co">Lipocine Inc.</div>
+    <div class="summ">Oral drug-delivery specialist reformulating hard-to-dose molecules via its Lip&#x27;ral lipid platform; pipeline led by LPCN 1154 (oral brexanolone) for postpartum depression and LPCN 1148 (oral testosterone prodrug) for cirrhosis-related sarcopenia. Differentiated by converting injectable/neuroactive steroids into oral products rather than developing novel chemistry.</div>
+    <div class="meta">LPCN 1154 (oral brexanolone); LPCN 1148 (testosterone prodrug) · Postpartum depression (1154); decompensated cirrhosis/sarcopenia (1148) · Oral lipid-based reformulations of neurosteroids/androgens</div>
+    
+  </div>
+  <div class="c-ch"><span class="chip px">needs price backfill</span></div>
+</div><div class="r">
+  <div class="c-tk"><span class="tk">KROS</span><span class="mv lo">14%</span><span class="nm">n=2</span></div>
+  <div class="c-co">
+    <div class="co">Keros Therapeutics, Inc.</div>
+    <div class="summ">Keros engineers modified activin-receptor ligand traps that tune TGF-beta/activin superfamily signaling; after its cibotercept PAH program failed the TROPOS trial and was discontinued, it pivoted to prioritize KER-065 for Duchenne muscular dystrophy while monetizing its anemia asset elritercept via a global Takeda license.</div>
+    <div class="meta">KER-065 (activin ligand trap); elritercept (KER-050) partnered/licensed to Takeda · Duchenne muscular dystrophy (KER-065); anemia/cytopenias in myelodysplastic syndrome and myelofibrosis (elritercept) · Engineered TGF-beta superfamily ligand-trap fusion proteins (modified activin receptor)</div>
+    <div class="flag">⚠ Lead program churn: cibotercept discontinued after TROPOS PAH failure + corporate restructuring/leadership changes</div>
+  </div>
+  <div class="c-ch"><span class="chip px">needs price backfill</span></div>
+</div><div class="r">
+  <div class="c-tk"><span class="tk">CRNX</span><span class="mv lo">13%</span><span class="nm">n=4</span></div>
+  <div class="c-co">
+    <div class="co">Crinetics Pharmaceuticals Inc.</div>
+    <div class="summ">Crinetics develops oral, nonpeptide small-molecule agonists and antagonists of endocrine GPCRs, displacing injectable peptide analogs; its lead PALSONIFY (paltusotine) is the first FDA/EMA-approved once-daily oral SST2 agonist for acromegaly, backed by atumelnant, an oral ACTH-receptor (MC2R) antagonist for CAH and Cushing&#x27;s.</div>
+    <div class="meta">Paltusotine (PALSONIFY) — oral SST2 agonist; atumelnant — oral ACTH/MC2R antagonist · Acromegaly (approved) and carcinoid syndrome; congenital adrenal hyperplasia and ACTH-dependent Cushing&#x27;s syndrome (atumelnant) · Oral nonpeptide small-molecule GPCR agonists/antagonists (plus CRN09682 nonpeptide drug conjugate for SST2+ NETs)</div>
+    <div class="flag">⚠ Pending acquisition by Vertex Pharmaceuticals (announced 2026)</div>
+  </div>
+  <div class="c-ch"><span class="chip warn">pending M&amp;A</span><span class="chip px">needs price backfill</span></div>
+</div><div class="r">
+  <div class="c-tk"><span class="tk">TBPH</span><span class="mv lo">12%</span><span class="nm">n=3</span></div>
+  <div class="c-co">
+    <div class="co">Theravance Biopharma, Inc.</div>
+    <div class="summ">Theravance is effectively a single-product COPD company built around YUPELRI (revefenacin), the first once-daily nebulized long-acting muscarinic antagonist, and is winding down R&amp;D after its pipeline hope ampreloxetine (a norepinephrine reuptake inhibitor for symptomatic neurogenic orthostatic hypotension) missed the Phase 3 CYPRESS endpoint.</div>
+    <div class="meta">YUPELRI (revefenacin) — marketed; ampreloxetine terminated after Phase 3 CYPRESS miss · Maintenance treatment of COPD (YUPELRI); symptomatic neurogenic orthostatic hypotension (ampreloxetine, discontinued) · Small-molecule inhaled/nebulized LAMA bronchodilator (revefenacin); oral NET inhibitor (ampreloxetine)</div>
+    <div class="flag">⚠ Pending acquisition by Zymeworks at $17/share cash + CVR; ampreloxetine program ended, ~60% opex cut</div>
+  </div>
+  <div class="c-ch"><span class="chip warn">pending M&amp;A</span><span class="chip px">needs price backfill</span></div>
+</div></div></section>
+<section><h2>Excluded <span class="cnt">3</span></h2><p class="sub">Delisted, bankrupt, or wound down — not tradeable going forward. Shown for provenance.</p>
+<div class="grid"><div class="r excl">
+  <div class="c-tk"><span class="tk">CMRX</span><span class="mv lo">—</span><span class="nm">n=0</span></div>
+  <div class="c-co">
+    <div class="co">Chimerix, Inc. (acquired by Jazz Pharmaceuticals)</div>
+    <div class="summ">Rare-oncology developer of dordaviprone (ONC201/imipridone), a first-in-class small molecule for H3 K27M-mutant diffuse glioma, a lethal pediatric/young-adult brain tumor. Differentiated by its imipridone mechanism in a genetically defined CNS tumor — now owned by Jazz.</div>
+    <div class="meta">Dordaviprone (ONC201) · H3 K27M-mutant diffuse glioma · Oral small-molecule imipridone (DRD2 antagonist / ClpP agonist)</div>
+    <div class="flag">⚠ Acquired by Jazz Pharmaceuticals (closed Q2 2025, ~$935M); ticker CMRX delisted</div>
+  </div>
+  <div class="c-ch"><span class="chip cat">1 in-window</span><span class="chip pdufa">PDUFA×1</span><span class="chip neg">EXCLUDED — delisted</span></div>
+</div><div class="r excl">
+  <div class="c-tk"><span class="tk">BXRXQ</span><span class="mv mid">31%</span><span class="nm">n=2</span></div>
+  <div class="c-co">
+    <div class="co">Baudax Bio, Inc.</div>
+    <div class="summ">Former specialty pharma (marketed IV NSAID Anjeso/meloxicam) that filed Chapter 11 in February 2024 and now trades on OTC as a distressed shell pivoting toward neuromuscular blocking/reversal agents. Differentiated mainly by its distressed status — an operating bankruptcy case rather than a viable clinical franchise.</div>
+    <div class="meta">Anjeso (meloxicam IV) legacy; neuromuscular blocking agents (BX1000/BX2000) · Acute pain (legacy) / procedural neuromuscular blockade · Injectable small molecules</div>
+    <div class="flag">⚠ Chapter 11 bankruptcy (filed Feb 2024); Nasdaq-delisted, trades OTC as BXRXQ (&#x27;Q&#x27; = bankruptcy)</div>
+  </div>
+  <div class="c-ch"><span class="chip neg">EXCLUDED — delisted</span></div>
+</div><div class="r excl">
+  <div class="c-tk"><span class="tk">LIANY</span><span class="mv lo">10%</span><span class="nm">n=2</span></div>
+  <div class="c-co">
+    <div class="co">LianBio (wound down / delisted)</div>
+    <div class="summ">LianBio was a China-focused biopharma that in-licensed Western assets (e.g., mavacamten, infigratinib, NBTXR3) for the Greater China and Asian markets rather than discovering its own drugs; in 2024 it rejected Concentra&#x27;s buyout offer, wound down operations, sold remaining assets, and returned ~$528M to shareholders via a special dividend before delisting from Nasdaq.</div>
+    <div class="meta">In-licensed regional rights portfolio (e.g., mavacamten, infigratinib, NBTXR3) — divested during wind-down · Cardiovascular, oncology and other conditions (regional China/Asia commercialization licensee) · In-licensing / regional development-and-commercialization licensee (no proprietary discovery platform)</div>
+    <div class="flag">⚠ DELISTED — wound down operations in 2024, returned cash to shareholders via special dividend; trades only OTC as LIANY shell</div>
+  </div>
+  <div class="c-ch"><span class="chip neg">EXCLUDED — delisted</span></div>
+</div></div></section>
+<footer>Generated for Zamvar Capital Fund 1 · movement-screened backward-membership universe · company profiles web-verified.</footer>
+</div>
