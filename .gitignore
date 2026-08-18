@@ -31,3 +31,5 @@ data/ctgov_sponsor_review.csv
 # overnight-run runtime signals (regenerable)
 scripts/.*.done
 scripts/.*.log
+*.db-wal
+*.db-shm
