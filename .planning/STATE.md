@@ -3,8 +3,8 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: verifying
-stopped_at: Completed 06.12-06-PLAN.md (movement-based screen + migration 010 + daily prices + move backfill); Wave 4 done, Wave 5 (live cohort Plan 03) operator-gated
-last_updated: "2026-08-17T22:23:36.960Z"
+stopped_at: "Completed 06.12-07-PLAN.md (backward proven-PDUFA-volatility membership: relaxed optionability + vol_score percentile-cut + build_universe rewire); full suite 1191 green; Plan 03 live run remains operator-gated"
+last_updated: "2026-08-18T01:47:43.152Z"
 last_activity: 2026-08-17
 progress:
   total_phases: 17
@@ -125,6 +125,7 @@ Note: Phase 6.9/6.10 are retro-inserted sub-phases; the frontmatter project-wide
 | Phase 06.12 P04 | 15m | 2 tasks | 3 files |
 | Phase 06.12 P05 | 25min | 2 tasks | 6 files |
 | Phase 06.12 P06 | 80min | 3 tasks | 7 files |
+| Phase 06.12 P07 | 22min | 3 tasks tasks | 4 files files |
 
 ## Accumulated Context
 
@@ -237,6 +238,9 @@ Recent decisions affecting current work:
 - [Phase 06.12]: N is measured-and-grown as an output (target lambda 1.75 avg/yr), never hard-coded 80; optionability = bid both legs + OI>=100 + spread/mid<0.6
 - [Phase 06.12]: efts default is a 5yr multi-year trailing filing window merged by CIK (breadth + warm-start backfill); unmapped CT.gov sponsors resolve via SEC company_tickers normalized-EXACT only (ambiguous/near->review, CIK-keyed, degrade->review, never fuzzy)
 - [Phase 06.12]: Movement-based screen: cap ceiling removed, keep iff per-name median realized catalyst move >= move_threshold (default 0.10), window=(-1,+2) trading days
+- [Phase 06.12]: Membership pivoted FORWARD->BACKWARD: names admitted from proven past PDUFA volatility (vol_score = median|move|*(1+big_move_frac), n>=2), percentile-cut to target 80, N an OUTPUT + cut_percentile reported; no fixed move_threshold gate
+- [Phase 06.12]: Universe optionability relaxed to 'has options at all' (bid>0 both legs); strict OI>=100+spread/mid<0.6 relocated to per-trade desk/diligence.options_liquid (no guard deleted)
+- [Phase 06.12]: Backward scorer is ZERO-API (reads persisted catalyst_move JOIN catalyst); tradeability API hits only the ranked top slice; Blocker-1(min_catalyst_density=0)/Blocker-3(included_count distinct from N) preserved
 
 ### Pending Todos
 
@@ -250,6 +254,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-08-17T22:23:30.386Z
-Stopped at: Completed 06.12-06-PLAN.md (movement-based screen + migration 010 + daily prices + move backfill); Wave 4 done, Wave 5 (live cohort Plan 03) operator-gated
+Last session: 2026-08-18T01:47:43.100Z
+Stopped at: Completed 06.12-07-PLAN.md (backward proven-PDUFA-volatility membership: relaxed optionability + vol_score percentile-cut + build_universe rewire); full suite 1191 green; Plan 03 live run remains operator-gated
 Resume file: None

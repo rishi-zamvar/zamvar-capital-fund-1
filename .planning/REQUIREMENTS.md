@@ -138,7 +138,7 @@
 
 - [ ] **UNIV-01**: Candidate discovery from our own free data — CT.gov near-term Ph2/Ph3 primaryCompletionDate → lead-sponsor → ticker + unfiltered EDGAR-8K PDUFA efts pass → ticker-per-hit.
 - [ ] **UNIV-02**: Screen candidates for tradeability + fit-ability: dollar-ADV floor (~$5M; $2-5M size-tiny tier), listed-options (optionability), market-cap floor/ceiling, cash-runway sanity, therapeutic-area + catalyst-type diversity (cohort cells).
-- [ ] **UNIV-03**: Measure-and-grow sizing — N is an OUTPUT: grow the shortlist until trailing-12mo store-measured tradeable-catalyst density ≥ target λ (~1.75-2.0/wk); do not hard-code N. Re-measure the soft base rates from the store, not the estimate.
+- [x] **UNIV-03**: Measure-and-grow sizing — N is an OUTPUT: grow the shortlist until trailing-12mo store-measured tradeable-catalyst density ≥ target λ (~1.75-2.0/wk); do not hard-code N. Re-measure the soft base rates from the store, not the estimate.
 - [ ] **UNIV-04**: Write the expanded universe into the shipped survivorship-free `universe_as_of` store via `build_snapshot` (append-only, CIK-keyed for ticker-recycling), point-in-time. `universe/discover.py`.
 - [ ] **UNIV-05**: Honest breadth/depth tradeoff surfaced — more names = more diligence load; per-catalyst diligence + verify gates still gate every trade; the weekly desk SELECTS the best (≥1/wk = enough to choose from, not trade-all). Automated screening + provenance compensate for the loss of per-name eyeballing.
 
