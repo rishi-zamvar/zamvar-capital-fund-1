@@ -49,7 +49,13 @@ logger = logging.getLogger(__name__)
 _EFTS_URL = "https://efts.sec.gov/LATEST/search-index"
 # One query per keyword phrase (research §1.2). Same 8-K may surface under several -> deduped by
 # accession downstream. AdCom phrase discovers advisory-committee 8-Ks alongside PDUFA ones.
-_EFTS_QUERIES = ('"PDUFA target action date"', '"target action date"', '"advisory committee meeting"')
+# The trailing three are PRECISE completion-anchored result phrases (UNIV-08) so trial-RESULT 8-Ks
+# surface at all; kept exact-phrase so per-hit exhibit-fetch volume stays proportional to real
+# readouts (CLAUDE.md frugality — SEC EDGAR is rank-0 free, cache-served, accession-deduped).
+_EFTS_QUERIES = (
+    '"PDUFA target action date"', '"target action date"', '"advisory committee meeting"',
+    '"topline results"', '"met the primary endpoint"', '"did not meet the primary endpoint"',
+)
 
 # The human-review queue is the EXISTING curated CSV (verify.load_curated_pdufa skips #-comment
 # rows). MEDIUM/LOW candidates land here as #-commented rows so a human uncomments to confirm.
@@ -66,6 +72,18 @@ _PDUFA_RX = re.compile(
 _ADCOM_RX = re.compile(
     r"advisory\s+committee\s+meeting[^.]{0,80}?(?:on|scheduled\s+for)\s+"
     r"([A-Z][a-z]+\.?\s+\d{1,2},\s+\d{4})",
+    re.I,
+)
+
+# UNIV-08: COMPLETION-anchored result phrases only (excludes bare "primary endpoint" trial-DESIGN/
+# initiation language -> no false readout). A match means the filing ANNOUNCES a result; both the
+# positive ("met") and the negative ("did not meet / failed to meet") are large measurable moves and
+# both MUST count. Run AFTER _normalize (tag-strip), same as the PDUFA/AdCom regexes.
+_READOUT_RX = re.compile(
+    r"top-?line\s+(?:results|data)"
+    r"|(?:met|achieved|did\s+not\s+meet|failed\s+to\s+meet)\s+(?:the|its)\s+primary\s+endpoint"
+    r"|phase\s+[23]\s+(?:topline\s+)?(?:results|data)"
+    r"|results\s+from\s+(?:the|its)\s+(?:pivotal|phase\s+[23])",
     re.I,
 )
 
@@ -113,6 +131,23 @@ def _extract(html: str, filing_date: str) -> list[dict]:
                 }
             )
     if not cands:
+        # PDUFA/AdCom PRECEDENCE: the readout branch is the RESIDUAL — it fires ONLY when no
+        # target-action/AdCom date was extracted, so one filing's move is never double-counted and a
+        # PDUFA-acceptance 8-K that recaps trial data is never misclassified as a readout. The
+        # readout event IS the announcement day (the filing_date), not an extracted future date; drop
+        # unless the filing_date is day-precision (else no anchorable T-1..T+2 move -> cite-or-drop).
+        # ponytail: readout date = the 8-K filing_date; add an adjacent-date regex only if a real
+        # filing ever announces a result for a different past day.
+        if filing_date and len(filing_date) == 10:
+            m = _READOUT_RX.search(text)  # reuse the already-normalized text (no second normalize)
+            if m:
+                return [{
+                    "catalyst_type": CatalystType.trial_readout,
+                    "event_date": filing_date,
+                    "confidence": "HIGH",
+                    "matched_keyword": m.group(0),
+                    "filing_date": filing_date,
+                }]
         return []
 
     distinct_dates = {c["event_date"] for c in cands}

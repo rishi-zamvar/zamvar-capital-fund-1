@@ -156,6 +156,24 @@ def _wire_edgar(monkeypatch, *, efts, text_map):
     return discover
 
 
+def test_discover_edgar_admits_readout(monkeypatch):
+    """UNIV-08 wiring: a result-8-K flows the discovery path -> a HIGH day-precision trial_readout
+    candidate under the real (TICKER)/CIK (proves the readout reaches the backfill, not just
+    _extract)."""
+    efts = json.loads((FIXTURES / "efts_readout_hits.json").read_text())
+    discover = _wire_edgar(
+        monkeypatch,
+        efts=efts,
+        text_map={"000162828024025999": _load_htm("edgar_8k_readout.htm")},
+    )
+    out = discover.discover_edgar("2024-01-01", "2024-12-31")
+    assert 1820875 in out  # CIK key from ciks[0]
+    cand = out[1820875]
+    assert cand["ticker"] == "TOPL"
+    cats = cand["catalysts"]
+    assert any(c["type"] == "trial_readout" and c["event_date"] == "2024-05-31" for c in cats)
+
+
 def test_edgar_unfiltered_discovers_new_ticker(monkeypatch):
     """A hit for a ticker NOT in today's seed universe is returned (no CIK-intersection filter)."""
     discover = _wire_edgar(

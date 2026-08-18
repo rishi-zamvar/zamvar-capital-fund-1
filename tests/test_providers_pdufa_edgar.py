@@ -137,9 +137,10 @@ from catalyst_trader.calendar import verify  # noqa: E402
 from catalyst_trader.config import settings  # noqa: E402
 from catalyst_trader.models import SourceType  # noqa: E402
 
-_CIK = {"IMNM": 1476964, "CAPR": 1133869}
+_CIK = {"IMNM": 1476964, "CAPR": 1133869, "TOPL": 1820875}
 _IMNM_FRAG = "000119312526344577"  # accession no-dashes, in the built exhibit URL
 _CAPR_FRAG = "000110465926059380"
+_READOUT_FRAG = "000162828024025999"  # readout 8-K accession no-dashes
 
 
 class _FakeCompany:
@@ -259,3 +260,103 @@ def test_fetch_exhibit_degrades(monkeypatch, tmp_path):
     )
     out = pe.fetch(["IMNM", "CAPR"], "2026-01-01", "2026-12-31")
     assert {c.ticker for c in out} == {"IMNM"}  # CAPR exhibit degraded -> skipped, IMNM still emits
+
+
+# ── Task 1 (UNIV-08): trial-RESULT 8-Ks -> day-precision measurable trial_readout ────────────
+
+
+def _readout_efts_fixture():
+    return json.loads((Path(__file__).parent / "fixtures" / "efts_readout_hits.json").read_text())
+
+
+def test_extract_readout_emits_day_precision():
+    """A topline-result 8-K (no PDUFA/AdCom date) -> exactly one HIGH day-precision trial_readout
+    keyed on the filing_date (the announcement day IS the event)."""
+    from catalyst_trader.providers import pdufa_edgar
+
+    out = pdufa_edgar._extract(_load_htm("edgar_8k_readout.htm"), "2024-05-31")
+    assert len(out) == 1
+    c = out[0]
+    assert c["catalyst_type"] == CatalystType.trial_readout
+    assert c["event_date"] == "2024-05-31"  # == filing_date, day precision
+    assert c["filing_date"] == "2024-05-31"
+    assert c["confidence"] == "HIGH"
+
+
+def test_extract_readout_negative_still_captured():
+    """A FAILED readout ('did not meet the primary endpoint') is a big measurable move -> MUST count."""
+    from catalyst_trader.providers import pdufa_edgar
+
+    html = (
+        "<p>The Company today announced that its Phase 3 trial "
+        "<b>did not meet</b> its <span>primary endpoint</span>.</p>"
+    )
+    out = pdufa_edgar._extract(html, "2024-05-31")
+    assert len(out) == 1
+    assert out[0]["catalyst_type"] == CatalystType.trial_readout
+
+
+def test_extract_pdufa_precedence_no_false_readout():
+    """PDUFA PRECEDENCE: an 8-K with BOTH a target-action date AND topline-result language emits the
+    PDUFA candidate ONLY — never also a trial_readout (no double-count / no misclassification)."""
+    from catalyst_trader.providers import pdufa_edgar
+
+    html = (
+        "<p>The FDA accepted our NDA with a PDUFA target action date of April 28, 2027.</p>"
+        "<p>The submission was supported by <span>topline results</span> that "
+        "<b>met the primary endpoint</b>.</p>"
+    )
+    out = pdufa_edgar._extract(html, "2024-05-31")
+    assert [c["catalyst_type"] for c in out] == [CatalystType.pdufa]
+    assert all(c["catalyst_type"] != CatalystType.trial_readout for c in out)
+
+
+def test_extract_non_result_8k_not_emitted():
+    """cite-or-drop: bare 'primary endpoint' in trial-DESIGN context (no completion phrase) -> []."""
+    from catalyst_trader.providers import pdufa_edgar
+
+    html = (
+        "<p>The trial has been initiated; the <span>primary endpoint</span> is overall "
+        "survival and enrollment is ongoing.</p>"
+    )
+    assert pdufa_edgar._extract(html, "2024-05-31") == []
+
+
+def test_extract_readout_requires_day_precision_filing_date():
+    """No day-precision filing_date -> no anchorable move -> no readout (cite-or-drop)."""
+    from catalyst_trader.providers import pdufa_edgar
+
+    html = _load_htm("edgar_8k_readout.htm")
+    assert pdufa_edgar._extract(html, "2024-05") == []  # month precision
+    assert pdufa_edgar._extract(html, None) == []       # missing filing_date
+
+
+def test_fetch_emits_readout_single_sec_edgar_primary(monkeypatch, tmp_path):
+    pe = _wire(
+        monkeypatch,
+        efts=_readout_efts_fixture(),
+        text_map={_READOUT_FRAG: _load_htm("edgar_8k_readout.htm")},
+        tmp_csv=tmp_path / "c.csv",
+    )
+    out = pe.fetch(["TOPL"], "2024-01-01", "2024-12-31")
+    assert len(out) == 1
+    c = out[0]
+    assert c.catalyst_type == CatalystType.trial_readout
+    assert c.event_date == "2024-05-31"  # == filing_date (a PAST day, never the FORWARD calendar)
+    assert len(c.sources) == 1
+    src = c.sources[0]
+    assert src.source_name == "SEC EDGAR"
+    assert src.source_type == SourceType.primary
+    assert _READOUT_FRAG in src.source_url
+    assert verify._authoritative_single(c.sources) is True  # self-verifies, zero verify.py change
+
+
+def test_no_network_in_readout_extract():
+    """The readout branch is pure regex (no network/LLM) and lives INSIDE _extract."""
+    import inspect
+
+    from catalyst_trader.providers import pdufa_edgar
+
+    src = inspect.getsource(pdufa_edgar._extract)
+    assert "_READOUT_RX" in src  # readout classification is in _extract (not a separate fetch)
+    assert not re.search(r"get_json|_http|httpx|requests|urllib|anthropic|openai", src)
