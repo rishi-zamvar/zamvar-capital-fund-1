@@ -10,7 +10,12 @@ import math
 import pytest
 
 from catalyst_trader.quant.result import ToolResult
-from catalyst_trader.quant.valuation import cash_runway, pipeline_value, rnpv
+from catalyst_trader.quant.valuation import (
+    analyst_pt_move,
+    cash_runway,
+    pipeline_value,
+    rnpv,
+)
 
 # --------------------------------------------------------------------------- rNPV
 
@@ -178,3 +183,59 @@ def test_pipeline_value_rejects_result_without_value():
     bad = ToolResult(tool="rnpv", tool_version="1.0.0", inputs={}, value=None)
     with pytest.raises(ValueError):
         pipeline_value([bad])
+
+
+# --------------------------------------------------------------- analyst_pt_move (FF-04)
+
+
+def test_analyst_pt_move_happy_path_hand_computed():
+    # |pt-price|/price for [110,120,130] at price 100 -> [0.10,0.20,0.30]; median 0.20
+    res = analyst_pt_move(current_price=100.0, price_targets=[110.0, 120.0, 130.0])
+    assert isinstance(res, ToolResult)
+    assert res.value == pytest.approx(0.20)
+    assert res.detail["high"] == pytest.approx(0.30)
+    assert res.detail["low"] == pytest.approx(0.10)
+    # dispersion = IQR/median; inclusive quartiles of [0.10,0.20,0.30] -> Q1=0.15,Q3=0.25,IQR=0.10
+    assert res.detail["dispersion"] == pytest.approx(0.10 / 0.20)
+    assert res.detail["n"] == 3
+
+
+def test_analyst_pt_move_absolute_move_ignores_direction():
+    # a below-price target still contributes a positive magnitude
+    res = analyst_pt_move(current_price=100.0, price_targets=[80.0, 130.0])
+    assert res.detail["high"] == pytest.approx(0.30)
+    assert res.detail["low"] == pytest.approx(0.20)  # |80-100|/100
+    assert res.value >= 0.0
+
+
+def test_analyst_pt_move_zero_price_raises():
+    with pytest.raises(ValueError):
+        analyst_pt_move(current_price=0.0, price_targets=[110.0, 120.0])
+
+
+def test_analyst_pt_move_negative_price_raises():
+    with pytest.raises(ValueError):
+        analyst_pt_move(current_price=-5.0, price_targets=[110.0, 120.0])
+
+
+def test_analyst_pt_move_empty_targets_raises():
+    with pytest.raises(ValueError):
+        analyst_pt_move(current_price=100.0, price_targets=[])
+
+
+@pytest.mark.parametrize("bad", [math.nan, math.inf, -math.inf])
+def test_analyst_pt_move_non_finite_target_raises(bad):
+    with pytest.raises(ValueError):
+        analyst_pt_move(current_price=100.0, price_targets=[110.0, bad])
+
+
+def test_analyst_pt_move_non_finite_price_raises():
+    with pytest.raises(ValueError):
+        analyst_pt_move(current_price=math.nan, price_targets=[110.0, 120.0])
+
+
+def test_analyst_pt_move_inputs_snapshot_matches_call_args():
+    targets = [110.0, 120.0, 130.0]
+    res = analyst_pt_move(current_price=100.0, price_targets=targets)
+    assert res.inputs == {"current_price": 100.0, "price_targets": targets}
+    assert res.tool == "analyst_pt_move"
