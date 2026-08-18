@@ -28,6 +28,7 @@ from ..contracts import TradeProposal
 from ..quant.events import catalyst_move_estimate, hold_vs_exit
 from ..quant.sizing import adaptive_sl_tp_levels
 from . import evidence, risk
+from ..playbook.store import assert_embedder_consistency
 from .analysts import _get
 from .runtime import run_structured
 from .verifier import EstimateRejectedError, enforce_estimate
@@ -110,6 +111,9 @@ async def build(conn, embed, verdict, catalyst, *, entry: float,
     builder_p = params["builder"]         # a missing builder param RAISES here (no literal fallback)
 
     context = _analog_context(verdict, target, ctype)
+    # Refuse to KNN a corpus populated with a DIFFERENT embedder — a mismatch is silent garbage
+    # (Plan 04 stamps the embedder on every catalyst node; this is the warm-retrieval guard).
+    assert_embedder_consistency(conn, embed)
     analogs = kb.analog_query(conn, embed, context, filters={"type": ctype}, k=5, as_of=as_of)
     candidate = _candidate_peer(conn, target)
 

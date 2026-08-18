@@ -23,6 +23,7 @@ import json
 from claude_agent_sdk import create_sdk_mcp_server, tool
 
 from catalyst_trader import kb, quant
+from catalyst_trader.playbook.store import assert_embedder_consistency
 
 from . import evidence
 
@@ -57,7 +58,9 @@ def build_quant_tools(conn) -> list:
     async def _analog_query(args):
         context, filters, k = args["context"], args.get("filters") or {}, args.get("k", 5)
         as_of = args.get("as_of")  # None = no no-look-ahead gate; the live cutoff wires in later
-        rows = kb.analog_query(conn, kb.default_embedder(), context, filters, k, as_of=as_of)
+        embed = kb.default_embedder()
+        assert_embedder_consistency(conn, embed)  # fail loud on a query/populate embedder mismatch
+        rows = kb.analog_query(conn, embed, context, filters, k, as_of=as_of)
         ref = evidence.tool_ref_for("analog_query", {"context": context, "filters": filters, "k": k, "as_of": as_of})
         return _content({"results": rows, "evidence_ref": ref})
 

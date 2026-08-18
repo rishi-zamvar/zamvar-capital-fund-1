@@ -24,6 +24,7 @@ import sqlite3
 
 from catalyst_trader import kb
 from catalyst_trader.playbook.extract import build_bundle, extract_record
+from catalyst_trader.playbook.generalize import generalize_playbooks
 from catalyst_trader.playbook.store import insert_catalyst_record
 
 DB = "catalyst.db"
@@ -114,10 +115,22 @@ def _live_run(conn, complete_fn) -> dict:
         if i % 25 == 0:
             print(f"[{i}/{len(cands)}] processed={processed} skipped={skipped} flagged={flagged}",
                   flush=True)
+    # Closing step (Plan 05): graduate recurring per-catalyst lesson_rules into cited per-scenario
+    # playbook nodes — the desk's query_playbooks heuristics. Runs after populate, same --run pass.
+    n_scenarios = generalize_playbooks(conn)
+    by_type: dict[str, int] = {}
+    for row in conn.execute(
+        "SELECT json_extract(attrs_json,'$.scenario_type') AS st FROM kb_node WHERE kind='playbook' "
+        "AND json_extract(attrs_json,'$.scenario_type') NOT LIKE 'fitted_params:%'"
+    ).fetchall():
+        t = (row["st"] or "").split(":", 1)[0]
+        by_type[t] = by_type.get(t, 0) + 1
     print("=== build_playbooks RUN DONE ===", flush=True)
     print(f"processed={processed}  skipped={skipped} {reasons}  move_consistency_flagged={flagged}",
           flush=True)
-    return {"processed": processed, "skipped": skipped, "reasons": reasons, "flagged": flagged}
+    print(f"generalized {n_scenarios} scenario playbooks this run  (by type: {by_type})", flush=True)
+    return {"processed": processed, "skipped": skipped, "reasons": reasons, "flagged": flagged,
+            "scenarios": n_scenarios}
 
 
 def main(argv=None, *, complete_fn=None, conn=None) -> dict:

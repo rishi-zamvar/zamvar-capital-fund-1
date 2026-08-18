@@ -106,6 +106,24 @@ async def test_analog_query_cited_as_resolvable_tool_ref(db, monkeypatch):
     assert evidence.resolve(db, ref) is not None
 
 
+async def test_analog_query_refuses_embedder_mismatch(db, monkeypatch):
+    """Plan-05 warm-retrieval guard: the query path asserts embedder consistency BEFORE the KNN, so
+    a corpus populated with a different embedder fails loud instead of returning garbage neighbours."""
+    import pytest
+
+    monkeypatch.setenv("CT_EMBEDDER", "hash")  # default_embedder -> hash_embed
+    ev = EvidenceSource(url="https://ct.gov/x", retrieved_at="2026-08-14", snippet_hash="h")
+    # a catalyst STAMPED with a foreign embedder name (as Plan 04's writer does)
+    insert_claim(
+        db, KBNode(kind="catalyst", attrs={"type": "pdufa", "embedder": "some_other_embedder"}), [ev],
+        embed=kb.hash_embed, embed_text="x",
+    )
+    db.commit()
+    with pytest.raises(ValueError, match="embedder"):
+        await _handlers(db)["analog_query"].handler(
+            {"context": "c", "filters": {"type": "pdufa"}, "k": 5})
+
+
 async def test_query_playbooks_cited_as_resolvable_tool_ref(db):
     ev = EvidenceSource(url="https://x/y", retrieved_at="2026-08-14", snippet_hash="p")
     insert_playbook(db, "pdufa", "prior-cycle CRL", "size tiny / exit pre-event", 0.8, [ev])
