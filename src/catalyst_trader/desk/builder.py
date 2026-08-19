@@ -32,6 +32,7 @@ from ..quant.field import expected_move_field
 from ..quant.sizing import adaptive_sl_tp_levels
 from ..quant.valuation import analyst_pt_move, pipeline_value, rnpv
 from . import evidence, risk
+from .assumptions_adapter import assumptions_snapshot_provider
 from .options_adapter import implied_move_from_provider
 from ..playbook.store import assert_embedder_consistency
 from .analysts import _get
@@ -180,7 +181,9 @@ async def build(conn, embed, verdict, catalyst, *, entry: float,
         if im is not None:
             methods.append({"method": "implied", "magnitude": im.value,
                             "weight": w["implied_liquid"], "ref": evidence.tool_ref(im)})
-    a = assumptions_provider(target, catalyst, as_of) if assumptions_provider else {}
+    if assumptions_provider is None:  # default to the headless assumptions_snapshot cache read
+        assumptions_provider = assumptions_snapshot_provider(conn)
+    a = assumptions_provider(target, catalyst, as_of)  # provider abstains with {} — None-safe/byte-for-byte
     if "rnpv" in a:
         r = rnpv(a["rnpv"]["cashflows"], a["rnpv"]["discount_rate"], a["rnpv"].get("costs"))
         mag = abs(r.value / a["rnpv"]["shares_out"] - entry) / entry

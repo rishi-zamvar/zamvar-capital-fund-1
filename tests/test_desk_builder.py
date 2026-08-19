@@ -430,3 +430,71 @@ async def test_abstaining_method_is_omitted_not_zero(db, monkeypatch):
     assert fd is not None
     assert "implied" not in fd["method_labels"]
     assert set(fd["method_labels"]) == {"analog", "analyst_pt"}
+
+
+# ---------------------------------------------------------------------------
+# quick-260818-r3y Task 3 — assumptions_snapshot_provider is the builder DEFAULT.
+# No cache row -> {} abstain -> byte-for-byte; a seeded (knowable) row -> valuation methods enter
+# the field; a no-look-ahead row (stored as_of AFTER the decision as_of) -> abstains.
+# ---------------------------------------------------------------------------
+
+from catalyst_trader.desk.assumptions_adapter import write_assumptions_snapshot
+
+_VALID_RNPV = {"rnpv": {"cashflows": [[1, 1.2e10, 0.6]], "discount_rate": 0.10,
+                        "costs": None, "shares_out": 1.0e8}}
+
+
+def _seed_knowable_analog(db, *, move, text, knowable_asof="2025-01-03"):
+    """A cited analog stamped knowable_asof so it survives the builder's as_of-gated analog recall."""
+    ev = EvidenceSource(url="https://ct.gov/x", retrieved_at="2026-08-14", snippet_hash=text)
+    cid = insert_claim(db, KBNode(kind="catalyst",
+                                  attrs={"type": "pdufa", "knowable_asof": knowable_asof}),
+                       [ev], embed=kb.hash_embed, embed_text=text)
+    oid = insert_claim(db, KBNode(kind="outcome", attrs={"move": move}), [ev])
+    add_edge(db, cid, "RESULTED_IN", oid)
+    db.commit()
+
+
+def _seed_knowable_analogs(db, ups=(0.20, 0.30), downs=(0.50, 0.60)):
+    for i, m in enumerate(ups):
+        _seed_knowable_analog(db, move=+m, text=f"knowable up {i}")
+    for i, m in enumerate(downs):
+        _seed_knowable_analog(db, move=-m, text=f"knowable down {i}")
+
+
+async def test_default_provider_no_row_is_byte_for_byte(db, monkeypatch):
+    """With no assumptions_snapshot row the default provider abstains ({}) — the proposal is
+    IDENTICAL to an explicit assumptions_provider=None build (the pre-provider behaviour)."""
+    _seed_knowable_analogs(db)
+    _patch_seams(monkeypatch)
+    out_default = await builder.build(db, kb.hash_embed, _verdict(confidence=0.62), CAT,
+                                      entry=100.0, as_of="2026-11-14")
+    _patch_seams(monkeypatch)
+    out_explicit = await builder.build(db, kb.hash_embed, _verdict(confidence=0.62), CAT,
+                                       entry=100.0, as_of="2026-11-14", assumptions_provider=None)
+    assert out_default.expected_move_field is None  # only the analog method -> no field forms
+    assert out_default == out_explicit              # byte-for-byte
+
+
+async def test_seeded_knowable_row_enters_the_field(db, monkeypatch):
+    """A valid assumptions_snapshot row with as_of <= the decision as_of -> the default provider
+    returns it -> the rnpv valuation method ENTERS the assembled field (analog + rnpv >= min_methods)."""
+    _seed_knowable_analogs(db)
+    _patch_seams(monkeypatch)
+    write_assumptions_snapshot(db, "ACME", "2026-11-15", _VALID_RNPV, as_of="2026-11-14", source="agent")
+    out = await builder.build(db, kb.hash_embed, _verdict(confidence=0.62), CAT,
+                              entry=100.0, as_of="2026-11-14")
+    fd = out.expected_move_field
+    assert fd is not None
+    assert "rnpv" in fd["method_labels"]
+
+
+async def test_no_look_ahead_row_abstains_methods_absent(db, monkeypatch):
+    """The SAME row stored with as_of AFTER the decision as_of -> the provider abstains ({}) -> the
+    rnpv method does NOT enter (same as no row -> no field forms)."""
+    _seed_knowable_analogs(db)
+    _patch_seams(monkeypatch)
+    write_assumptions_snapshot(db, "ACME", "2026-11-15", _VALID_RNPV, as_of="2026-11-20", source="agent")
+    out = await builder.build(db, kb.hash_embed, _verdict(confidence=0.62), CAT,
+                              entry=100.0, as_of="2026-11-14")
+    assert out.expected_move_field is None  # abstained -> only analog -> no field
