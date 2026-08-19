@@ -38,6 +38,7 @@ def _signal(pairs):
     return AnalystSignal(
         dimension="clinical", ticker="ACME", catalyst_id="cat-001",
         score=0.4, confidence=0.6,
+        thesis="The cited clinical findings point to a positive readout.",
         key_findings=[KeyFinding(claim=c, evidence_ref=r) for r, c in pairs],
     )
 

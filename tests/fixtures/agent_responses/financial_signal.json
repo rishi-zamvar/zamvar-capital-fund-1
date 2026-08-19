@@ -4,6 +4,7 @@
   "catalyst_id": "cat-001",
   "score": -0.15,
   "confidence": 0.58,
+  "thesis": "Financially a mild negative: runway covers this catalyst but not the following readout, and the asset's rNPV is sensitive to the discount rate.",
   "key_findings": [
     {
       "claim": "Cash runway extends past the catalyst but not through the following readout.",

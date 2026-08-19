@@ -4,6 +4,7 @@
   "catalyst_id": "cat-001",
   "score": 0.4,
   "confidence": 0.8,
+  "thesis": "Both legs trade at the ~1% target size with only a modest slippage haircut — no liquidity hard fail.",
   "key_findings": [
     {
       "claim": "ADV comfortably supports the ~1% target size on both legs with a modest slippage haircut.",

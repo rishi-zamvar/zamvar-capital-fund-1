@@ -4,6 +4,7 @@
   "catalyst_id": "cat-001",
   "score": 0.35,
   "confidence": 0.6,
+  "thesis": "The pivotal endpoint is well powered (0.9) under a pre-registered analysis plan, supporting the readout.",
   "key_findings": [
     {
       "claim": "Primary endpoint is powered at 0.9 with a pre-registered analysis plan on ClinicalTrials.gov.",

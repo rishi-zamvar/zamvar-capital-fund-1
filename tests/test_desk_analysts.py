@@ -83,6 +83,15 @@ async def test_prompt_mandates_quant_tools_and_dimension_token():
     assert "ACME" in prompt
 
 
+@pytest.mark.parametrize("dimension", DIMENSIONS)
+async def test_prompt_mandates_grounded_thesis(dimension):
+    # CALL-01: every dimension prompt instructs a thesis SYNTHESIZED from its own cited findings
+    # (no new uncited claim) — grounding is inherited, not a new verification pass.
+    prompt = analysts.build_prompt(dimension, CATALYST)
+    assert "thesis" in prompt
+    assert "cited key_findings" in prompt  # grounded-in-own-findings phrasing
+
+
 async def test_uncited_finding_rejected(monkeypatch, load_fixture):
     # A recorded payload with zero key_findings must be rejected at the schema
     # boundary — proven through the REAL run_structured (only the SDK query faked),

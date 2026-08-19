@@ -4,6 +4,7 @@
   "catalyst_id": "cat-001",
   "score": 0.3,
   "confidence": 0.7,
+  "thesis": "The candidate peer revalidates as an inverse hedge: the worst-cell conditional payoff is offsetting and cointegration holds over 60 days.",
   "key_findings": [
     {
       "claim": "PEER pays off inversely on this catalyst: worst-cell conditional payoff is offsetting and cointegration holds over 60d.",

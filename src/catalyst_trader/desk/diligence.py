@@ -145,6 +145,10 @@ HARD RULES (a source-cited signal, never LLM arithmetic):
   3. Fill `unknowns` with the explicit gaps a tool could not close.
   4. Emit `dimension` EXACTLY as "{dimension}", with ticker "{ticker}" and catalyst_id "{catalyst_id}",
      and a score in [-1, 1] (bearish..bullish) with a calibrated confidence in [0, 1].
+  5. LEAD with a `thesis`: 1-3 sentences stating your dimension-specific read of this catalyst
+     ("here is my read"), consistent with your score/confidence. It MUST be a SYNTHESIS of your own
+     cited key_findings — introduce NO claim that is not already in a cited finding (the thesis
+     inherits their grounding; it is not a new uncited assertion).
 """
 
 

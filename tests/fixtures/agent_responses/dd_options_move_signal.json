@@ -4,6 +4,7 @@
   "catalyst_id": "cat-001",
   "score": 0.1,
   "confidence": 0.65,
+  "thesis": "The straddle-implied ~28% move is consistent with the in-house historical-gap distribution — the event looks roughly fairly priced.",
   "key_findings": [
     {
       "claim": "Straddle-implied move (~28%) is consistent with the in-house historical-gap distribution for this catalyst type.",

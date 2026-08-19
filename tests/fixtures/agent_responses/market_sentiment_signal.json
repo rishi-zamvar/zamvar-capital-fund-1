@@ -4,6 +4,7 @@
   "catalyst_id": "cat-001",
   "score": 0.35,
   "confidence": 0.45,
+  "thesis": "Sentiment is constructive but crowded: the options-implied event move already exceeds the historical realized move for analog catalysts.",
   "key_findings": [
     {
       "claim": "Options-implied event move exceeds the historical realized move for analog catalysts.",

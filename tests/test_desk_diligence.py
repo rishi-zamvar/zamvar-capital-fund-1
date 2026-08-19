@@ -149,8 +149,20 @@ def test_dimension_prompt_reads_only_firewall_fields():
     assert "ACME" in prompt  # ticker
     assert "pdufa" in prompt  # catalyst fact
     assert '"financials"' in prompt  # the mandated dimension token (router matches on this)
-    for leaked in ("thesis", "bull_strongest_point", "direction", "kill_criteria"):
+    # NB: `thesis` is now a legitimate AnalystSignal field (CALL-01) the DD prompt requests, so it is
+    # NOT a firewall leak. The Workflow-1/2 VERDICT concepts below must still never appear.
+    for leaked in ("bull_strongest_point", "direction", "kill_criteria"):
         assert leaked not in prompt
+
+
+def test_dimension_prompt_mandates_grounded_thesis():
+    """CALL-01: the shared DD prompt requests a thesis SYNTHESIZED from the dimension's own cited
+    findings — the DD dims share the AnalystSignal schema, so the required field is instructed."""
+    from catalyst_trader.desk import diligence
+
+    prompt = diligence.build_dimension_prompt("financials", DiligenceInput(**DD_INPUT))
+    assert "thesis" in prompt
+    assert "cited key_findings" in prompt
 
 
 def test_build_dimension_prompt_rejects_unknown_dimension():
@@ -299,6 +311,7 @@ def _sig(dimension, *, score=0.3, confidence=0.7):
     return AnalystSignal(
         dimension=dimension, ticker="ACME", catalyst_id="cat-001",
         score=score, confidence=confidence,
+        thesis=f"On the {dimension} dimension the cited finding does not kill the trade.",
         key_findings=[KeyFinding(claim="cited fact", evidence_ref="tool:x#abc123")],
     )
 

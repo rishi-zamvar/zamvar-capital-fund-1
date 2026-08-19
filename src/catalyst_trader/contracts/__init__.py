@@ -26,6 +26,7 @@ class AnalystSignal(BaseModel):
     dimension: str
     ticker: str
     catalyst_id: str
+    thesis: str = Field(min_length=1)  # synthesized dimension-specific read; grounded in key_findings (CALL-01)
     score: float = Field(ge=-1.0, le=1.0)  # bearish..bullish
     confidence: float = Field(ge=0.0, le=1.0)
     key_findings: list[KeyFinding]

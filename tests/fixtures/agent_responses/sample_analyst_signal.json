@@ -4,6 +4,7 @@
   "catalyst_id": "cat-001",
   "score": 0.42,
   "confidence": 0.6,
+  "thesis": "The pivotal Phase 3 primary endpoint was met with p<0.001, supporting a positive clinical read.",
   "key_findings": [
     {
       "claim": "Phase 3 primary endpoint met with p<0.001 in the pivotal readout.",

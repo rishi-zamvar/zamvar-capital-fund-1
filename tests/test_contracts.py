@@ -34,6 +34,7 @@ def valid_analyst_signal() -> dict:
         "catalyst_id": "cat_2026_001",
         "score": 0.4,
         "confidence": 0.7,
+        "thesis": "The pivotal endpoint was met, which supports a positive readout on this indication.",
         "key_findings": [
             {"claim": "primary endpoint met", "evidence_ref": "ev_ct_001", "source_url": "https://clinicaltrials.gov/x"}
         ],
@@ -183,6 +184,22 @@ def test_analyst_signal_out_of_range_score_rejected(score):
 def test_analyst_signal_out_of_range_confidence_rejected():
     payload = valid_analyst_signal()
     payload["confidence"] = 1.2
+    with pytest.raises(ValidationError):
+        AnalystSignal.model_validate(payload)
+
+
+def test_analyst_signal_missing_thesis_rejected():
+    # CALL-01: a signal with no synthesized thesis is rejected — every analyst must LEAD with a read.
+    payload = valid_analyst_signal()
+    del payload["thesis"]
+    with pytest.raises(ValidationError):
+        AnalystSignal.model_validate(payload)
+
+
+def test_analyst_signal_empty_thesis_rejected():
+    # CALL-01: an empty thesis is rejected (min_length=1, mirrors evidence_ref) — no silent skip.
+    payload = valid_analyst_signal()
+    payload["thesis"] = ""
     with pytest.raises(ValidationError):
         AnalystSignal.model_validate(payload)
 
