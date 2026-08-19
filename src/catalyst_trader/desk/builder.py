@@ -21,13 +21,18 @@ threshold is a loaded param; a missing builder param RAISES (no literal in the b
 #           every trade NUMBER is a deterministic tool output it can never inject.
 """
 
+from statistics import median
+
 from pydantic import BaseModel, ConfigDict
 
 from .. import kb
 from ..contracts import TradeProposal
 from ..quant.events import catalyst_move_estimate, hold_vs_exit
+from ..quant.field import expected_move_field
 from ..quant.sizing import adaptive_sl_tp_levels
+from ..quant.valuation import analyst_pt_move, pipeline_value, rnpv
 from . import evidence, risk
+from .options_adapter import implied_move_from_provider
 from ..playbook.store import assert_embedder_consistency
 from .analysts import _get
 from ..playbook import tagger
@@ -92,7 +97,8 @@ catalyst), and the kill criteria that would falsify the thesis.
 
 
 async def build(conn, embed, verdict, catalyst, *, entry: float,
-                extra_context: str | None = None, as_of: str | None = None) -> TradeProposal | None:
+                extra_context: str | None = None, as_of: str | None = None,
+                options_provider=None, assumptions_provider=None) -> TradeProposal | None:
     """Turn a `DebateVerdict` into a `TradeProposal` (or None = no trade this week, HEDGE-04).
 
     `entry` is the current leg price (the caller — 05-07 — supplies it; the builder can't invent a
@@ -103,10 +109,30 @@ async def build(conn, embed, verdict, catalyst, *, entry: float,
     # ponytail: extra_context re-reasons the NARRATIVE only; sizing/hold/SL-TP are deterministic +
     # input-driven. A sizing-related gap MUST also reach the refreshed risk_inputs/entry the work-item
     # carries (Plan 04 cascade) — text alone won't move deterministic sizing.
+
+    FF-05 — the expected-move football field. Two injectable provider seams (both default None ->
+    byte-for-byte the pre-FF behaviour: only the analog method is available, 1 < min_methods, no
+    field forms, catalyst_move_estimate is called with implied_move=None):
+      options_provider(ticker, event_date) -> {underlying_price, call_mid, put_mid, iv, days_to_event}
+        | None  (live = RH, backtest = options_snapshot_provider(conn), tests = fake). Abstains -> omitted.
+      assumptions_provider(ticker, catalyst, as_of) -> a dict of OPTIONAL keys, or {} to abstain:
+        {"rnpv": {"cashflows", "discount_rate", "costs"|None, "shares_out">0},
+         "sop":  {"segments":[{"cashflows","discount_rate","costs"}], "shares_out">0},
+         "analyst_pt": {"price_targets":[float]}}  — the desk agent fills this LIVE per opportunity
+        (CEO decision: estimate live, no static file).
+    When >= min_methods assemble, the field convergence feeds sizing via the SAME
+    catalyst_move_estimate implied_move prior — the deterministic sizing/hold/SL-TP contract is
+    otherwise unchanged.
+    # ponytail: NO-LOOK-AHEAD is a construction-time discipline, not an in-builder guard. In BACKTEST
+    #   both providers MUST be built to read ONLY pre-event (as_of < event) data — the builder threads
+    #   `as_of` INTO assumptions_provider so it can gate as-of; the options_snapshot backtest provider
+    #   is likewise as-of-scoped. Ceiling: full enforcement is imperfect (an off-by-one snapshot slips
+    #   through) — the discipline lives in the provider, not here.
     """
     target = _get(catalyst, "ticker")
     catalyst_id = _get(catalyst, "catalyst_id")
     ctype = _ctype(catalyst)
+    event_date_str = _get(catalyst, "event_date")
     exit_by_date = _get(catalyst, "event_date_end") or _get(catalyst, "event_date")
 
     params = kb.load_params(conn, ctype)  # the frozen model-fit seam (estimator/sl_tp/builder groups)
@@ -134,7 +160,50 @@ async def build(conn, embed, verdict, catalyst, *, entry: float,
     #    verdict; the estimate + sizing + hold-vs-exit + SL/TP are ALL deterministic tool outputs.
     up_moves, down_moves = _split_moves(analogs)
     p_positive = verdict.confidence if verdict.direction == "positive" else 1.0 - verdict.confidence
-    est = catalyst_move_estimate(p_positive, up_moves, down_moves, params)  # implied_move None this phase
+
+    # 1a. Assemble the expected-move football field (FF-05). Each method ABSTAINS independently
+    #     (omitted, never entered as magnitude 0 — which would bias the field toward zero). Every
+    #     weight is read from params["field"]["weights"] (a missing key RAISES — no literal here).
+    analog_ref = evidence.tool_ref_for("analog_query_v2", {
+        "context": context, "ctype": ctype, "disease_area": q_disease,
+        "mechanism_class": q_mech, "setups": q_setups, "k": 5, "as_of": as_of})
+    w = params["field"]["weights"]
+    min_analogs = params["estimator"]["min_analogs"]
+    methods: list[dict] = []
+    if up_moves or down_moves:  # analog method: magnitude = median of |analog moves| (both are magnitudes)
+        analog_mag = median(up_moves + down_moves)
+        methods.append({"method": "analog", "magnitude": analog_mag,
+                        "weight": w["analog_warm"] if len(analogs) >= min_analogs else w["analog_cold"],
+                        "ref": analog_ref})
+    if options_provider is not None:  # implied-IV via the abstaining Task-1 adapter
+        im = implied_move_from_provider(target, event_date_str, options_provider)
+        if im is not None:
+            methods.append({"method": "implied", "magnitude": im.value,
+                            "weight": w["implied_liquid"], "ref": evidence.tool_ref(im)})
+    a = assumptions_provider(target, catalyst, as_of) if assumptions_provider else {}
+    if "rnpv" in a:
+        r = rnpv(a["rnpv"]["cashflows"], a["rnpv"]["discount_rate"], a["rnpv"].get("costs"))
+        mag = abs(r.value / a["rnpv"]["shares_out"] - entry) / entry
+        methods.append({"method": "rnpv", "magnitude": mag, "weight": w["rnpv_scenario"], "ref": evidence.tool_ref(r)})
+    if "sop" in a:
+        segs = [rnpv(s["cashflows"], s["discount_rate"], s.get("costs")) for s in a["sop"]["segments"]]
+        pv = pipeline_value(segs)
+        mag = abs(pv.value / a["sop"]["shares_out"] - entry) / entry
+        methods.append({"method": "sop", "magnitude": mag, "weight": w["rnpv_scenario"], "ref": evidence.tool_ref(pv)})
+    if "analyst_pt" in a:
+        pt = analyst_pt_move(entry, a["analyst_pt"]["price_targets"])
+        methods.append({"method": "analyst_pt", "magnitude": pt.value, "weight": w["analyst_pt"], "ref": evidence.tool_ref(pt)})
+
+    # 1b. Form the field only when it can (>= min_methods); feed the convergence into sizing via the
+    #     EXISTING implied_move prior. field_prior=None -> current behaviour EXACTLY (sizing/hold/SL-TP
+    #     contract preserved); a one-method "field" never forms (expected_move_field would raise).
+    field_detail = None
+    field_prior = None
+    if len(methods) >= params["field"]["min_methods"]:
+        field = expected_move_field(methods, params)
+        field_detail = field.detail
+        field_prior = field.value
+    est = catalyst_move_estimate(p_positive, up_moves, down_moves, params, implied_move=field_prior)
     up_move, down_move = est.detail["up_move"], est.detail["down_move"]
 
     # 2. Size the leg on the ESTIMATED down-move (not a blanket 0.70). Zero-trade allowed: a leg
@@ -159,9 +228,6 @@ async def build(conn, embed, verdict, catalyst, *, entry: float,
 
     # 5. VET the estimate assumptions BEFORE finalize — a reject blocks the trade (pass / no proposal).
     est_ref = evidence.tool_ref(est)
-    analog_ref = evidence.tool_ref_for("analog_query_v2", {
-        "context": context, "ctype": ctype, "disease_area": q_disease,
-        "mechanism_class": q_mech, "setups": q_setups, "k": 5, "as_of": as_of})
     estimate_inputs = [
         {"input": "p_positive", "ref": est_ref, "value": p_positive},
         {"input": "up_move", "ref": est_ref, "value": up_move},
@@ -202,4 +268,6 @@ async def build(conn, embed, verdict, catalyst, *, entry: float,
         direction=verdict.direction,
         estimate_vetting=vetting,
         sl_advisory=sl_advisory,
+        expected_move_field=field_detail,          # FF-05 field detail (None when < min_methods)
+        retrieval_confidence=retrieval_confidence,
     )

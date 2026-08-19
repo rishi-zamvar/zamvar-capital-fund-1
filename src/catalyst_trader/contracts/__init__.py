@@ -130,6 +130,8 @@ class TradeProposal(BaseModel):
     direction: Literal["positive", "negative"]  # carried from DebateVerdict
     estimate_vetting: EstimateVetting  # §7 — endorse required before promote
     sl_advisory: bool  # True whenever holds_through_catalyst (mirrors sl_tp_levels advisory)
+    expected_move_field: dict | None = None  # FF-05 field detail (point_estimate/dispersion/agreement/refs); None when < min_methods
+    retrieval_confidence: str | None = None  # analog retrieval confidence label ("thin"/"ok") surfaced for field weighting
 
 
 class RiskAssessment(BaseModel):

@@ -338,3 +338,95 @@ def test_no_raw_ev_hold_branch_in_source():
         body = f.read()
     import re
     assert not re.search(r"est\.value\s*>", body)  # hold-vs-exit is log-growth, never raw EV
+
+
+# ---------------------------------------------------------------------------
+# quick-260818-q7f Task 2 — the 5-method football field behind the two provider seams.
+# No providers -> byte-for-byte current behaviour; providers -> a multi-method field whose
+# convergence feeds sizing via the catalyst_move_estimate implied_move prior.
+# ---------------------------------------------------------------------------
+
+
+def _straddle_provider(underlying=100.0, call_mid=5.0, put_mid=5.0):
+    """A fake liquid-straddle options_provider (implied move = (call+put)/underlying)."""
+    return lambda ticker, event_date: {
+        "underlying_price": underlying, "call_mid": call_mid, "put_mid": put_mid,
+    }
+
+
+def _assumptions_provider(price_targets=(130.0,)):
+    """A fake live assumptions_provider seeding the analyst-target method only (kept minimal)."""
+    return lambda ticker, catalyst, as_of: {"analyst_pt": {"price_targets": list(price_targets)}}
+
+
+async def test_no_provider_field_is_none_byte_for_byte(db, monkeypatch):
+    """Default path (no providers): only the analog method is available (1 < min_methods=2), so no
+    field forms, expected_move_field is None, and the proposal is IDENTICAL to a build with the
+    seams passed explicitly as None (implied_move prior stays None -> unchanged sizing)."""
+    _seed_analogs(db)
+    _patch_seams(monkeypatch)
+    out_default = await builder.build(db, kb.hash_embed, _verdict(confidence=0.62), CAT, entry=100.0)
+
+    _patch_seams(monkeypatch)
+    out_explicit = await builder.build(db, kb.hash_embed, _verdict(confidence=0.62), CAT, entry=100.0,
+                                       options_provider=None, assumptions_provider=None)
+
+    assert out_default.expected_move_field is None
+    assert out_default == out_explicit  # byte-for-byte
+
+
+async def test_providers_assemble_multi_method_field(db, monkeypatch):
+    """With a liquid straddle + seeded analyst targets, the builder assembles >= 2 methods (analog +
+    implied + analyst_pt), expected_move_field carries the detail, and retrieval_confidence surfaces."""
+    _seed_analogs(db)
+    _patch_seams(monkeypatch)
+    out = await builder.build(
+        db, kb.hash_embed, _verdict(confidence=0.62), CAT, entry=100.0,
+        options_provider=_straddle_provider(), assumptions_provider=_assumptions_provider(),
+    )
+    fd = out.expected_move_field
+    assert fd is not None
+    assert fd["n_methods"] >= 2
+    assert set(fd["method_labels"]) == {"analog", "implied", "analyst_pt"}
+    assert "point_estimate" in fd and "dispersion" in fd and "agreement" in fd
+    assert out.retrieval_confidence is not None
+
+
+async def test_field_convergence_feeds_sizing_via_implied_prior(db, monkeypatch):
+    """The field convergence is passed as implied_move= into catalyst_move_estimate (blended per
+    implied_blend), so the down_move that SIZES the leg moves off the analog-only median."""
+    _seed_analogs(db)  # downs=(0.5, 0.6) -> analog-only down_move median = 0.55
+    _patch_seams(monkeypatch)
+    captured = {}
+    real = risk.size_for_survival
+
+    def _spy(p_loss, gap=0.70, **kw):
+        captured["gap"] = gap
+        return real(p_loss, gap, **kw)
+
+    monkeypatch.setattr(builder.risk, "size_for_survival", _spy)
+    out = await builder.build(
+        db, kb.hash_embed, _verdict(confidence=0.62), CAT, entry=100.0,
+        options_provider=_straddle_provider(), assumptions_provider=_assumptions_provider(),
+    )
+    # field: analog mag=median(0.2,0.3,0.5,0.6)=0.40 (w cold 0.5), implied=0.10 (w 1.0),
+    #        analyst_pt=0.30 (w 0.75) -> weighted median convergence = 0.30.
+    assert out.expected_move_field["point_estimate"] == pytest.approx(0.30)
+    # blended down_move = (1-0.5)*0.55 + 0.5*0.30 = 0.425 (implied_blend=0.5), NOT the 0.55 analog-only.
+    assert captured["gap"] == pytest.approx(0.425)
+    assert captured["gap"] != pytest.approx(0.55)
+
+
+async def test_abstaining_method_is_omitted_not_zero(db, monkeypatch):
+    """An options_provider that abstains (returns None) contributes NO method — with only analog +
+    analyst_pt = 2 methods the field still forms, and 'implied' is absent (never entered as 0)."""
+    _seed_analogs(db)
+    _patch_seams(monkeypatch)
+    out = await builder.build(
+        db, kb.hash_embed, _verdict(confidence=0.62), CAT, entry=100.0,
+        options_provider=lambda t, d: None, assumptions_provider=_assumptions_provider(),
+    )
+    fd = out.expected_move_field
+    assert fd is not None
+    assert "implied" not in fd["method_labels"]
+    assert set(fd["method_labels"]) == {"analog", "analyst_pt"}
