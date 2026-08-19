@@ -531,6 +531,20 @@ async def run_diligence(
         "hedge_revalidation": hedge_context(conn, embed, input, **md["hedge"]) if md.get("hedge") else None,
     }
     dimension_context = {k: v for k, v in prep.items() if v}
+
+    # DD's INDEPENDENT expected move (FF-05): the same straddle/iv-implied move options_context renders
+    # into the prompt, emitted as a structured number for the builder-vs-DD cross_check. ABSTAINS (None)
+    # when options are illiquid/absent — reuses options.implied_move (no new math, no fabrication).
+    dd_expected_move = None
+    if md.get("options") and options_liquid(md["options"]["quote"], params=params):
+        q = md["options"]["quote"]
+        dd_expected_move = implied_move(
+            md["options"]["underlying_price"],
+            call_mid=(q["call_bid"] + q["call_ask"]) / 2,
+            put_mid=(q["put_bid"] + q["put_ask"]) / 2,
+            days_to_event=md["options"]["days_to_event"],
+        ).value
+
     liquidity_zero = zero_liquidity(md["liquidity_quote"]) if md.get("liquidity_quote") else True
     # A money-touching dim with no raw-data seam value CANNOT be grounded -> force NO-GO (no false GO
     # from a hallucinated finding; mirrors the zero-liquidity hard-fail, keeps the LLM out of money).
@@ -544,4 +558,5 @@ async def run_diligence(
         verdict = "no_go"
     narrative = await _narrative(findings, verdict)
     dossier = assemble_dossier(findings, verdict, narrative, liquidity_zero=liquidity_zero, params=params)
-    return await enforce_dossier(conn, dossier, signals=findings)
+    dossier = await enforce_dossier(conn, dossier, signals=findings)
+    return dossier.model_copy(update={"dd_expected_move": dd_expected_move})

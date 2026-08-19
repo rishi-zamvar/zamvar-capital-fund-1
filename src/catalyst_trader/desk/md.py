@@ -45,6 +45,7 @@ def cross_check(
     *,
     catalyst_id: str,
     min_tradeable_size: float,
+    move_discrepancy_tol: float | None = None,
 ) -> dict:
     """Deterministic consistency diff across WF-1/2/3. No LLM, no arithmetic-by-agent, no conn/kb.
 
@@ -53,6 +54,9 @@ def cross_check(
     min_tradeable_size: the builder size floor, threaded from reconcile (kb.load_params) so the
       net-long-held-through check has a real data source with NO magic number and cross_check stays
       a pure function (no conn/kb inside).
+    move_discrepancy_tol: the builder-field-vs-DD relative move gap tolerance, threaded from reconcile
+      (kb.load_params()['field']). None = the check is DISABLED (default, so existing callers are
+      byte-for-byte); the check also ABSTAINS when either move is absent (FF-05).
     Returns structured booleans + the offending items; the MD interprets the flags.
     """
     # --- catalyst_id consistency: the verdict has none, so the threaded id is authoritative;
@@ -88,6 +92,18 @@ def cross_check(
         and dossier.trade.holds_through_catalyst
     )
 
+    # --- builder-field-vs-DD expected-move discrepancy (FF-05 loopback). Both moves must be present
+    #     and the tol threaded in; abstains (no flag) when either is None or the check is disabled. ---
+    fd = dossier.trade.expected_move_field
+    builder_move = fd.get("point_estimate") if fd else None
+    dd_move = dd.dd_expected_move
+    move_discrepant = (
+        move_discrepancy_tol is not None
+        and builder_move is not None
+        and dd_move not in (None, 0)
+        and abs(builder_move - dd_move) / dd_move > move_discrepancy_tol
+    )
+
     clean = (
         catalyst_id_consistent
         and direction_consistent
@@ -95,6 +111,7 @@ def cross_check(
         and not uncovered_red_flags
         and not dd_vs_risk_residuals
         and not sizing_vs_survival
+        and not move_discrepant
     )
 
     return {
@@ -107,6 +124,8 @@ def cross_check(
         "uncovered_red_flags": uncovered_red_flags,
         "dd_vs_risk_residuals": dd_vs_risk_residuals,
         "sizing_vs_survival": sizing_vs_survival,
+        "move_discrepant": move_discrepant,
+        "expected_moves": {"builder": builder_move, "diligence": dd_move},
     }
 
 
@@ -290,9 +309,12 @@ async def reconcile(conn, embed, item, *, max_rounds: int = 3,
     run_structured(MDDecision); convergence/oscillation/cascade/cap/act-or-log are deterministic.
     """
     verdict, dossier, dd = item["verdict"], item["dossier"], item["dd"]
-    # Threaded cross_check inputs (loaded ONCE, pre-loop): the authoritative catalyst_id + the size floor.
+    # Threaded cross_check inputs (loaded ONCE, pre-loop): the authoritative catalyst_id + the size
+    # floor + the builder-field-vs-DD move tolerance. No magic number inside cross_check.
     catalyst_id = item["catalyst"]["catalyst_id"]
-    min_tradeable_size = kb.load_params(conn, item["catalyst"]["catalyst_type"])["builder"]["min_tradeable_size"]
+    _params = kb.load_params(conn, item["catalyst"]["catalyst_type"])
+    min_tradeable_size = _params["builder"]["min_tradeable_size"]
+    move_discrepancy_tol = _params["field"]["move_discrepancy_tol"]
     incoming_flags = list(item.get("incoming_flags", []))
 
     rounds: list[ReconciliationRound] = []
@@ -301,7 +323,8 @@ async def reconcile(conn, embed, item, *, max_rounds: int = 3,
 
     for round_n in range(1, max_rounds + 1):
         sheet = cross_check(verdict, dossier, dd, catalyst_id=catalyst_id,
-                            min_tradeable_size=min_tradeable_size)
+                            min_tradeable_size=min_tradeable_size,
+                            move_discrepancy_tol=move_discrepancy_tol)
         packet = {"verdict": verdict, "dossier": dossier, "dd": dd}
         review = await run_structured(_md_review_prompt(packet, sheet, incoming_flags),
                                       MDReview, model="opus")

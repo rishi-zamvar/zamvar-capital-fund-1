@@ -621,3 +621,46 @@ async def test_run_diligence_money_dim_without_raw_data_is_no_go(db, monkeypatch
 
     dossier = await diligence.run_diligence(db, DiligenceInput(**DD_INPUT), market_data=md)
     assert dossier.verdict == "no_go"
+
+
+# ---------------------------------------------------------------------------
+# quick-260818-q7f Task 3 — DD independent dd_expected_move (abstaining, FF-05)
+# ---------------------------------------------------------------------------
+
+
+async def test_dd_expected_move_set_when_options_liquid(db, monkeypatch, load_fixture):
+    """Options present + liquid -> dd_expected_move is the straddle-implied move (reuses
+    quant.options.implied_move over the SAME quote options_context uses)."""
+    from catalyst_trader.desk import diligence
+
+    _mock_valid_hedge(monkeypatch)
+    _patch_dd_seam(monkeypatch, _dd_router(load_fixture, []))
+    dossier = await diligence.run_diligence(
+        db, DiligenceInput(**DD_INPUT), market_data=_full_market_data()
+    )
+    # _DD_OPTS: call_mid=(2.0+2.2)/2=2.1, put_mid=2.1, underlying 100 -> (2.1+2.1)/100 = 0.042
+    assert dossier.dd_expected_move == pytest.approx(0.042)
+
+
+async def test_dd_expected_move_abstains_when_options_absent(db, monkeypatch, load_fixture):
+    """No options seam -> dd_expected_move is None (abstain — never fabricated)."""
+    from catalyst_trader.desk import diligence
+
+    _mock_valid_hedge(monkeypatch)
+    _patch_dd_seam(monkeypatch, _dd_router(load_fixture, []))
+    md = _full_market_data()
+    del md["options"]
+    dossier = await diligence.run_diligence(db, DiligenceInput(**DD_INPUT), market_data=md)
+    assert dossier.dd_expected_move is None
+
+
+async def test_dd_expected_move_abstains_when_options_illiquid(db, monkeypatch, load_fixture):
+    """Illiquid options -> dd_expected_move is None (the same liquidity gate options_context uses)."""
+    from catalyst_trader.desk import diligence
+
+    _mock_valid_hedge(monkeypatch)
+    _patch_dd_seam(monkeypatch, _dd_router(load_fixture, []))
+    md = _full_market_data()
+    md["options"]["quote"] = dict(_ILLIQUID_OPTS)
+    dossier = await diligence.run_diligence(db, DiligenceInput(**DD_INPUT), market_data=md)
+    assert dossier.dd_expected_move is None

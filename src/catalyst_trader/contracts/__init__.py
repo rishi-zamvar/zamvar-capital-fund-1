@@ -206,6 +206,7 @@ class DiligenceDossier(BaseModel):
     strongest_disconfirming_evidence: str
     all_evidence_refs: list[str] = []
     residual_risks: list[str] = []  # mirrors RiskAssessment.residual_risks
+    dd_expected_move: float | None = None  # FF-05 independent straddle/iv-implied move; None when options illiquid/absent (abstain)
 
 
 class RetriggerFlag(BaseModel):

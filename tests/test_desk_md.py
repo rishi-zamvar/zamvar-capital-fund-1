@@ -247,6 +247,56 @@ def test_cross_check_all_clean_still_clean():
     assert out["clean"] is True
 
 
+# --- quick-260818-q7f Task 3: builder-field-vs-DD expected-move discrepancy (FF-05) ---
+
+
+def _trade_with_field(point_estimate):
+    return _trade().model_copy(update={"expected_move_field": {"point_estimate": point_estimate}})
+
+
+def test_cross_check_move_discrepancy_flagged():
+    # |0.50 - 0.20| / 0.20 = 1.5 > tol 0.35 -> flagged, not clean.
+    dossier = _dossier(trade=_trade_with_field(0.50))
+    dd = _dd().model_copy(update={"dd_expected_move": 0.20})
+    out = cross_check(_verdict(), dossier, dd, catalyst_id="cat-1",
+                      min_tradeable_size=0.01, move_discrepancy_tol=0.35)
+    assert out["move_discrepant"] is True
+    assert out["clean"] is False
+    assert out["expected_moves"] == {"builder": 0.50, "diligence": 0.20}
+
+
+def test_cross_check_move_within_tol_no_flag():
+    # |0.22 - 0.20| / 0.20 = 0.10 < tol 0.35 -> no flag, clean.
+    dossier = _dossier(trade=_trade_with_field(0.22))
+    dd = _dd().model_copy(update={"dd_expected_move": 0.20})
+    out = cross_check(_verdict(), dossier, dd, catalyst_id="cat-1",
+                      min_tradeable_size=0.01, move_discrepancy_tol=0.35)
+    assert out["move_discrepant"] is False
+    assert out["clean"] is True
+
+
+def test_cross_check_move_abstains_when_either_none():
+    # builder move absent -> abstain (no flag), even with a DD move + tol.
+    dd = _dd().model_copy(update={"dd_expected_move": 0.20})
+    out = cross_check(_verdict(), _dossier(), dd, catalyst_id="cat-1",
+                     min_tradeable_size=0.01, move_discrepancy_tol=0.35)
+    assert out["move_discrepant"] is False
+    assert out["clean"] is True
+    # DD move absent -> abstain.
+    out2 = cross_check(_verdict(), _dossier(trade=_trade_with_field(0.50)), _dd(),
+                       catalyst_id="cat-1", min_tradeable_size=0.01, move_discrepancy_tol=0.35)
+    assert out2["move_discrepant"] is False
+
+
+def test_cross_check_move_check_disabled_by_default():
+    # No tol threaded (default None) -> the check is DISABLED (byte-for-byte for existing callers).
+    dossier = _dossier(trade=_trade_with_field(0.50))
+    dd = _dd().model_copy(update={"dd_expected_move": 0.20})
+    out = cross_check(_verdict(), dossier, dd, catalyst_id="cat-1", min_tradeable_size=0.01)
+    assert out["move_discrepant"] is False
+    assert out["clean"] is True
+
+
 # ============================================================================
 # Plan 04 — reconcile loop + general flag router + escalation (RECON-01..08)
 # ============================================================================
