@@ -179,6 +179,7 @@ class TradeProposal(BaseModel):
     expected_move_field: dict | None = None  # FF-05 field detail (point_estimate/dispersion/agreement/refs); None when < min_methods
     retrieval_confidence: str | None = None  # analog retrieval confidence label ("thin"/"ok") surfaced for field weighting
     exit_plan: ExitPlan | None = None  # Tier-3 deterministic Exit Plan authored at entry; None => pre-Tier-3 constructions stay valid
+    hedge_profile: dict | None = None  # out-of-band hedge facts (HEDGE-CORR-1c); CONTEXT only, never a ranking signal — attached at construction, absent from every scoring/sizing path
 
 
 class RiskAssessment(BaseModel):

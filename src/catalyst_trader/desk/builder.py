@@ -157,6 +157,10 @@ async def build(conn, embed, verdict, catalyst, *, entry: float,
     analogs = res["analogs"]
     retrieval_confidence = res["retrieval_confidence"]  # captured for downstream field weighting
     candidate = _candidate_peer(conn, target)
+    # OUT-OF-BAND (HEDGE-CORR-1c): pull the ticker's stored hedge_profile alongside retrieval. It is
+    # CONTEXT attached at construction ONLY — it MUST NOT be referenced by _split_moves, the methods[]
+    # football field, size_for_survival, or any score/estimate path (design decision 4).
+    hp = kb.hedge_profile(conn, target)
 
     # 1. Estimate the catalyst payoff distribution (param-driven, cited). p_positive comes from the
     #    verdict; the estimate + sizing + hold-vs-exit + SL/TP are ALL deterministic tool outputs.
@@ -284,4 +288,5 @@ async def build(conn, embed, verdict, catalyst, *, entry: float,
         expected_move_field=field_detail,          # FF-05 field detail (None when < min_methods)
         retrieval_confidence=retrieval_confidence,
         exit_plan=exit_plan,                       # Tier-3 deterministic Exit Plan (authored at entry)
+        hedge_profile=hp,                          # out-of-band hedge facts (CONTEXT only, never scored)
     )
