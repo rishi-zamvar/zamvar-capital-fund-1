@@ -303,7 +303,8 @@ Decimal phases appear between their surrounding integers in numeric order.
   1. An internal simulated ledger prices positions against live quotes, tracks P&L per leg, and uses pessimistic fills consistent with the Phase 7 backtest
   2. Each resolved trade produces a P&L attribution decomposing catalyst effect vs. beta drift vs. hedge leg vs. sizing, plus a good-decision/bad-luck post-mortem written into the KB and updating base-rate priors
   3. The go-live gate is sample-based (sufficient catalyst count / statistical significance), never calendar-based
-**Plans**: TBD
+**Plans**: 1 plan (ledger core; attribution + post-mortem + go-live gate follow)
+- [ ] 07.8/slice4/SLICE4-PLAN.md — paper ledger (migration 015) + open/mark/close lifecycle + inviolable operator-approval gate + paper_run harness (EXEC-01; forward paper trading begins)
 
 ### Phase 8.5: Intra-Week Position Monitor (BUILD DEFERRED)
 **Goal**: A light, fast, event-triggered watchdog on the open book through the week — monitor by exception, defend on genuine trouble, propose adjustments up to the MD. Cheap enough to run all day.
