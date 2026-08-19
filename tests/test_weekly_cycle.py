@@ -145,3 +145,36 @@ def test_module_contains_no_opener_or_broker_call():
     src = Path(wc.__file__).read_text()
     for forbidden in ("approve_pending", "_open_paper_position", "place_equity_order"):
         assert forbidden not in src, f"{forbidden} must never appear in weekly_cycle.py"
+
+
+# --------------------------------------------------------------- Task 3: --status, --dry-run, timing
+
+
+def test_status_four_section_summary_offline():
+    conn = _conn()
+    with freeze_time("2026-08-19T12:00:00Z"):
+        _seed_catalyst(conn, "2026-08-21", ticker="UPCM")  # 2 days out -> in the status window
+        _seed_catalyst(conn, "2026-12-01", ticker="FARM")  # far out -> excluded from the window
+        _enqueue(conn, "QVRX", "2026-09-05")
+        out = wc.status(conn, as_of="2026-08-19")
+    assert out == {"open": 0, "pending": 0, "upcoming": 1, "queued": 1}
+
+
+def test_dry_run_full_loop_gate_held():
+    conn = _conn()
+    out = wc.dry_run(conn)
+    assert out["fired"] == 1
+    assert out["drain"] == {"drained": 1, "submitted": 1, "errors": 0}
+    # the whole point (B1): pending written, ZERO positions opened.
+    assert out["pending"] > 0 and out["open_positions"] == 0
+    assert pl.get_open_positions(conn) == []
+    # B1: dry_run stops at GATE HELD — it must NOT approve/open (no closed position, no approve tail).
+    assert conn.execute("SELECT COUNT(*) c FROM paper_position").fetchone()["c"] == 0
+
+
+def test_drain_desk_logs_per_catalyst_elapsed(caplog):
+    conn = _conn()
+    _enqueue(conn, "VRTX")
+    with caplog.at_level("INFO", logger="scripts.weekly_cycle"):
+        wc.drain_desk(conn, desk_fn=_fake_enter_fn, as_of="2026-08-14")
+    assert any("elapsed=" in r.message for r in caplog.records)
