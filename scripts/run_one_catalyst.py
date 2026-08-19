@@ -85,6 +85,18 @@ async def run_one(conn, embed, ticker, *, live, run_desk_fn=run_desk, context_ho
 
     verdict = await run_desk_fn(conn, cat)
     mc = await hook(conn, ticker, cat, as_of)
+    # Always surface what the live desk actually decided (the walking-skeleton hand-check),
+    # even on an honest skip / zero-trade — otherwise the reasoning is discarded.
+    ri = mc.get("risk_inputs", {})
+    print("=" * 72)
+    print(f"CATALYST         {ticker}  {cat.get('type')}  event={cat.get('event_date')}  as_of={as_of}")
+    print(f"VERDICT          direction={verdict.direction}  confidence={verdict.confidence}")
+    print(f"  thesis         {verdict.thesis}")
+    print(f"  bull strongest {verdict.bull_strongest_point}")
+    print(f"  bear strongest {verdict.bear_strongest_point}")
+    print(f"  kill_criteria  {verdict.kill_criteria}")
+    print(f"CONTEXT          entry={mc['entry']}  p_loss={ri.get('p_loss')}  gap={ri.get('gap')}  "
+          f"analog_gaps={ri.get('analog_gaps')}")
     if mc["entry"] is None:
         print(f"no entry price for {ticker} — leg skipped (honest degrade, no fabricated fill).")
         return None
