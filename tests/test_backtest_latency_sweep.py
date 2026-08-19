@@ -32,6 +32,11 @@ def _bar(day, o, h, lo, c, vol=1_000_000.0, **extra):
     return {"week_end": day, "open": o, "high": h, "low": lo, "close": c, "volume": vol, **extra}
 
 
+def _plus(iso, days):
+    from datetime import date, timedelta
+    return (date.fromisoformat(iso) + timedelta(days=days)).isoformat()
+
+
 def _conn():
     conn = _db.connect(":memory:")
     _db.migrate(conn)
@@ -90,13 +95,14 @@ def test_default_latency_is_t0():
 
 
 def _trend_provider(ticker, week_start, week_end):
-    # entry at the first bar's open; a monotonic slide so each later exit open differs
+    # POST-M1: run_layer_a drives catalyst legs held_through=True, so they hold to the TIME barrier
+    # (== week_end == exit_by). exit_latency shifts the time-barrier fill down the monotonic slide
     # -> each latency yields a distinct fill -> a distinct distribution (degradation visible).
     return [
-        _bar(week_start, 10.0, 10.1, 4.9, 5.0),   # entry open 10, close 5 -> band breach
-        _bar("2024-02-06", 7.0, 7.1, 6.9, 7.0),   # T+0 exit
-        _bar("2024-02-07", 6.0, 6.1, 5.9, 6.0),   # T+1 exit
-        _bar("2024-02-08", 5.0, 5.1, 4.9, 5.0),   # T+2 exit
+        _bar(week_start, 10.0, 10.1, 9.9, 10.0),         # entry (inside band, held through)
+        _bar(week_end, 7.0, 7.1, 6.9, 7.0),              # time barrier -> T+0 exit open
+        _bar(_plus(week_end, 1), 6.0, 6.1, 5.9, 6.0),    # T+1 exit open
+        _bar(_plus(week_end, 2), 5.0, 5.1, 4.9, 5.0),    # T+2 exit open
     ]
 
 
@@ -126,13 +132,21 @@ def test_off_map_leg_carries_flag():
     conn = _conn()
     weeks = _seed_std(conn)
 
-    def collapse(ticker, week_start, week_end):
-        return [_bar(week_start, 5.0, 5.0, 0.01, 0.01), _bar(week_end, 0.02, 0.03, 0.01, 0.02)]
+    # POST-M1: run_layer_a always drives catalyst legs held_through=True, and a hold-through leg's
+    # band-excess off_map is suppressed — the ONLY remaining off_map seam is a HALT roll. Drive the
+    # time-barrier bar halted so the fill rolls forward -> off_map still surfaces on the leg.
+    def halt_roll(ticker, week_start, week_end):
+        return [
+            _bar(week_start, 10.0, 10.1, 9.9, 10.0),            # inside band, held through
+            _bar(week_end, 0.0, 0.0, 0.0, 0.0, vol=0.0),        # time-barrier bar HALTED -> roll
+            _bar(_plus(week_end, 1), 9.0, 9.1, 8.9, 9.0),       # next available open (the fill)
+        ]
 
     results, _dist = run_layer_a(conn, None, start=weeks[5], end=weeks[5],
-                                 granularity="daily", daily_bars_provider=collapse)
+                                 granularity="daily", daily_bars_provider=halt_roll)
     cat = [l for wk in results for l in wk.legs if l.ticker == "CAT" and l.is_catalyst]
     assert cat and cat[0].off_map is True
+    assert cat[0].exit_reason == "halt"
 
 
 # ============================== Task B — DEFERRED (xfail) ============================

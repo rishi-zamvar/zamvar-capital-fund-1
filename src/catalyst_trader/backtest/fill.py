@@ -136,6 +136,7 @@ def reflex_exit(
     slippage: float,
     off_map_mult: float,
     exit_latency_bars: int = 0,
+    held_through: bool = False,
 ) -> dict | None:
     """The intraweek DAILY reflex (Tier-3 Task A): the FIRST triggered exit, filled honestly.
 
@@ -161,6 +162,10 @@ def reflex_exit(
     `exit_latency_bars` (default 0 = T+0) shifts the EXIT fill by that many bars BEYOND the base
     next-open bar (signal-at-close -> next-bar-open, no same-bar-fill bias); a latency past the
     in-window bars degrades to the LAST available open (honest, never look-ahead).
+
+    `held_through` (default False = byte-for-byte the prior behaviour) — M1 whole-hold suppression:
+    when True the leg is IN the binary event, so NO band/stop/tp price exit fires for the entire
+    hold; the leg exits ONLY at the TIME barrier (which still halt-rolls and sets off_map on a halt).
     """
     if not daily_bars:
         return None
@@ -182,6 +187,11 @@ def reflex_exit(
 
         if _skip(bar):
             continue  # can't read a real price off a halted bar; its halt only matters as a fill bar
+
+        if held_through:
+            continue  # M1: a leg held THROUGH the binary fires NO band/stop/tp price exit — it is in
+                      # the event it came for. It exits ONLY via the TIME barrier above (still halt-
+                      # rolls + sets off_map on a halt). The +12.68% weekly baseline is this hold.
 
         reason = None
         if bar["close"] < lo or bar["close"] > hi:

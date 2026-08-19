@@ -224,7 +224,7 @@ def _fill_leg(conn, ticker, as_of, exit_by, *, held_through, slippage, apply_cos
                          stop=sltp.detail["stop"], target=sltp.detail["target"],
                          time_barrier=exit_by, slippage=slippage,
                          off_map_mult=EXIT_PARAMS["off_map_mult"],
-                         exit_latency_bars=exit_latency_bars)
+                         exit_latency_bars=exit_latency_bars, held_through=held_through)
         if rx is None:
             return None
         return entry, rx["fill"], _net_return(entry, rx["fill"], apply_costs), rx
