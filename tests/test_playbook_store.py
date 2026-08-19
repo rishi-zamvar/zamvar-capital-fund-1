@@ -6,6 +6,8 @@ directly AND via the kb.analog_query round-trip, so the write shape and the read
 proven. No live model is ever invoked (the extractor's complete_fn seam is not exercised here).
 """
 
+import json
+
 from catalyst_trader import kb
 from catalyst_trader.kb import hash_embed
 from catalyst_trader.playbook.schema import (
@@ -18,6 +20,7 @@ from catalyst_trader.playbook.schema import (
 )
 from catalyst_trader.playbook.store import (
     assert_embedder_consistency,
+    backfill_outcome_fields,
     insert_catalyst_record,
 )
 
@@ -194,6 +197,100 @@ def test_given_mismatched_embedder_when_insert_then_refuses_to_corrupt_corpus(db
     insert_catalyst_record(db, _record(cid=1), embed=hash_embed)
     with pytest.raises(ValueError, match="embedder"):
         insert_catalyst_record(db, _record(cid=2), embed=fake_local)  # would poison the KNN
+
+
+# ── FIX A: backfill_outcome_fields re-stamps the two new keys onto EXISTING outcome nodes ──
+
+def _outcome_id(conn, cat_id):
+    return conn.execute(
+        "SELECT dst_id FROM kb_edge WHERE src_id=? AND rel='RESULTED_IN'", (cat_id,)
+    ).fetchone()["dst_id"]
+
+
+def _null_new_keys(conn, out_id):
+    """Simulate a pre-FIX-A outcome node that predates the two new keys."""
+    attrs = json.loads(conn.execute(
+        "SELECT attrs_json FROM kb_node WHERE id=?", (out_id,)).fetchone()["attrs_json"])
+    attrs.pop("market_reaction", None)
+    attrs.pop("clinical_regulatory_outcome", None)
+    conn.execute("UPDATE kb_node SET attrs_json=? WHERE id=?", (json.dumps(attrs), out_id))
+    conn.commit()
+
+
+def _outcome_attrs(conn, out_id):
+    return json.loads(conn.execute(
+        "SELECT attrs_json FROM kb_node WHERE id=?", (out_id,)).fetchone()["attrs_json"])
+
+
+def test_given_populated_outcome_when_backfill_then_both_fields_written(db):
+    cat_id = insert_catalyst_record(db, _record(cid=901, move=+0.20), embed=hash_embed)
+    out_id = _outcome_id(db, cat_id)
+    _null_new_keys(db, out_id)
+
+    n = backfill_outcome_fields(db)
+    assert n >= 1
+
+    got = _outcome_attrs(db, out_id)
+    assert "market_reaction" in got and "clinical_regulatory_outcome" in got
+    assert got["market_reaction"] == "surged"  # +0.20 >= BIG_MOVE_BAND, derived from the SIGNED move
+
+
+def test_given_pdufa_approved_narrative_when_backfill_without_classifier_then_outcome_approved(db):
+    """DETERMINISTIC POSITIVE PATH: fails if backfill reads attrs.get('catalyst_type') (-> None ->
+    outcome None) instead of attrs['type']. NO classifier stub — a stub would mask the bug."""
+    import json as _json
+    from catalyst_trader.playbook import schema
+
+    rec = _record(cid=902, ctype="pdufa", move=+0.20)
+    rec.narrative_after.what_happened = "The FDA approved the therapy on the PDUFA date."
+    cat_id = insert_catalyst_record(db, rec, embed=hash_embed)
+    out_id = _outcome_id(db, cat_id)
+    _null_new_keys(db, out_id)
+
+    # sanity: the catalyst node really stores the type under "type", NOT "catalyst_type"
+    cat_attrs = _json.loads(db.execute(
+        "SELECT attrs_json FROM kb_node WHERE id=?", (cat_id,)).fetchone()["attrs_json"])
+    assert cat_attrs["type"] == "pdufa"
+    assert cat_attrs.get("catalyst_type") is None
+
+    n = backfill_outcome_fields(db)  # NO classifier_fn — purely deterministic
+    assert n >= 1
+
+    got = _outcome_attrs(db, out_id)
+    assert got["clinical_regulatory_outcome"] == "approved"
+    assert got["market_reaction"] == "surged"
+    # cross-check: the deterministic parser agrees off the stored type key
+    assert schema.clinical_regulatory_outcome(
+        cat_attrs["type"], rec.narrative_after.what_happened, rec.narrative_after.why_narrative
+    ) == "approved"
+
+
+def test_given_unreliable_narrative_when_backfill_with_classifier_then_llm_fills_none(db):
+    from catalyst_trader.playbook import schema
+
+    rec = _record(cid=903, ctype="pdufa", move=+0.20)
+    rec.narrative_after.what_happened = "The company issued a general regulatory update."
+    rec.narrative_after.why_narrative = "no specific outcome was disclosed"
+    cat_id = insert_catalyst_record(db, rec, embed=hash_embed)
+    out_id = _outcome_id(db, cat_id)
+    _null_new_keys(db, out_id)
+
+    # the deterministic parse yields None on this ambiguous narrative
+    assert schema.clinical_regulatory_outcome(
+        "pdufa", rec.narrative_after.what_happened, rec.narrative_after.why_narrative) is None
+
+    calls = []
+
+    def stub_classifier(catalyst_type, what_happened, why_narrative):
+        calls.append((catalyst_type, what_happened, why_narrative))
+        return "approved"
+
+    n = backfill_outcome_fields(db, classifier_fn=stub_classifier)
+    assert n >= 1
+    assert calls and calls[0][0] == "pdufa"  # the injected fn saw the real type from attrs["type"]
+
+    got = _outcome_attrs(db, out_id)
+    assert got["clinical_regulatory_outcome"] == "approved"  # the None was filled by the injected fn
 
 
 # ── build_playbooks driver: offline --run loop (injected complete_fn, no LLM/network) ──

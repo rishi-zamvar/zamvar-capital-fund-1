@@ -21,6 +21,76 @@ Pure module: no kb/db/network/LLM import. The writer (Plan 04) picks kb_node kin
 
 from pydantic import BaseModel, ConfigDict, model_validator
 
+# Reaction bands over the SIGNED move (FIX A). INLINE_BAND is the canonical home of what extract.py
+# historically called _EARNINGS_INLINE_BAND (extract now imports it here — single source of truth).
+# BIG_MOVE_BAND echoes the weekly falling-knife magnitude but is (re)defined HERE so schema.py stays
+# import-free (a pure module: no kb/db/network/quant import).
+INLINE_BAND = 0.03
+BIG_MOVE_BAND = 0.15
+
+
+def market_reaction(signed_move: float | None) -> str:
+    """The deterministic MARKET reaction banded purely from the SIGNED move — decoupled from the
+    real clinical/regulatory result (a drug can be approved while the stock crashes). None -> unknown."""
+    if signed_move is None:
+        return "unknown"
+    m = signed_move
+    if m <= -BIG_MOVE_BAND:
+        return "crashed"
+    if m < -INLINE_BAND:
+        return "faded"
+    if m <= INLINE_BAND:
+        return "flat"
+    if m < BIG_MOVE_BAND:
+        return "popped"
+    return "surged"
+
+
+def clinical_regulatory_outcome(
+    catalyst_type: str | None, what_happened: str | None, why_narrative: str | None
+) -> str | None:
+    """The REAL result parsed deterministically from the narrative, per-type enum:
+      pdufa   -> approved | crl | delayed
+      readout -> hit | miss | mixed
+      earnings-> beat | miss | inline
+      adcom   -> favorable | unfavorable
+    Returns None when no reliable keyword matches (the main-dir LLM pass backfills Nones). Checks are
+    ordered so a SPECIFIC phrase wins over a bare one (e.g. 'did not meet'->miss before 'met'->hit)."""
+    text = f"{what_happened or ''} {why_narrative or ''}".lower()
+    t = catalyst_type
+    if t == "pdufa":
+        if "complete response letter" in text or "crl" in text:
+            return "crl"
+        if "extended" in text or "delayed" in text or "delay" in text:
+            return "delayed"
+        if "approv" in text:
+            return "approved"
+        return None
+    if t in ("trial_readout", "readout"):
+        if "mixed" in text or ("secondary" in text and "missed primary" in text):
+            return "mixed"
+        if "did not meet" in text or "failed to meet" in text or "missed the primary" in text or "failed" in text:
+            return "miss"
+        if "met the primary" in text or "met primary" in text or "primary endpoint met" in text:
+            return "hit"
+        return None
+    if t == "earnings":
+        if "in line" in text or "in-line" in text or "inline" in text:
+            return "inline"
+        if "beat" in text:
+            return "beat"
+        if "miss" in text:
+            return "miss"
+        return None
+    if t == "adcom":
+        if "unfavorable" in text or "voted against" in text:
+            return "unfavorable"
+        if "favorable" in text or "voted in favor" in text or "recommend" in text:
+            return "favorable"
+        return None
+    return None
+
+
 # outcome_label -> expected sign of the realized move. A record whose label implies a direction the
 # signed move contradicts is flagged (not rejected — the disagreement is itself a signal to surface).
 _POSITIVE_LABELS = frozenset({"approve", "approval", "hit", "beat", "positive", "win"})
@@ -170,9 +240,16 @@ def to_outcome_attrs(record: CatalystRecord) -> dict:
     decimal — the exact contract desk/builder.py:69 `_split_moves` consumes (`a["outcome"]["move"]`,
     split into up/down by sign). Never abs, never renamed."""
     return {
-        "label": record.outcome_label,
+        "label": record.outcome_label,  # legacy — retained for back-compat (do NOT remove)
         "move": record.signed_move,  # SIGNED — builder.py:69 contract
         "move_window": record.move_window,
         "confidence": record.confidence,
         "read_only": True,
+        # FIX A — two honest, decoupled fields:
+        "market_reaction": market_reaction(record.signed_move),
+        "clinical_regulatory_outcome": clinical_regulatory_outcome(
+            record.catalyst_type,
+            record.narrative_after.what_happened,
+            record.narrative_after.why_narrative,
+        ),
     }

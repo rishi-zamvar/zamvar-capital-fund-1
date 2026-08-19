@@ -21,10 +21,12 @@ MONEY / LEAK invariants:
 """
 
 import hashlib
+import json
 
 from catalyst_trader import kb
 from catalyst_trader.dates import now_iso
 from catalyst_trader.kb import EvidenceSource, KBNode, add_edge, insert_claim
+from catalyst_trader.playbook import schema
 from catalyst_trader.playbook.schema import (
     CatalystRecord,
     compose_card,
@@ -108,3 +110,45 @@ def insert_catalyst_record(conn, record: CatalystRecord, embed) -> int:
     add_edge(conn, cat_id, "RESULTED_IN", out_id)
     conn.commit()
     return cat_id
+
+
+def backfill_outcome_fields(conn, classifier_fn=None) -> int:
+    """Re-stamp the two FIX-A honest fields (market_reaction + clinical_regulatory_outcome) onto
+    EXISTING outcome nodes. Required because content_sha idempotency is over the RECORD, so re-running
+    insert_catalyst_record does NOT re-write already-populated outcome nodes.
+
+    For each outcome node: market_reaction is derived from its stored SIGNED `move`. The catalyst
+    type + narrative_after come from the parent catalyst node reached via the reverse RESULTED_IN edge.
+    CRITICAL: the type is stored under the TOP-LEVEL key "type" (to_catalyst_attrs / schema.py:152),
+    NOT "catalyst_type" — reading attrs.get("catalyst_type") returns None for every node and silently
+    Nones the clinical outcome. If the deterministic parse is None and classifier_fn is provided, the
+    (LLM) classifier fills it. Returns the count of outcome nodes updated.
+    """
+    rows = conn.execute("SELECT id, attrs_json FROM kb_node WHERE kind='outcome'").fetchall()
+    updated = 0
+    for row in rows:
+        attrs = json.loads(row["attrs_json"]) if row["attrs_json"] else {}
+        attrs["market_reaction"] = schema.market_reaction(attrs.get("move"))
+
+        cro = None
+        edge = conn.execute(
+            "SELECT src_id FROM kb_edge WHERE rel='RESULTED_IN' AND dst_id=?", (row["id"],)
+        ).fetchone()
+        if edge is not None:
+            cat = conn.execute(
+                "SELECT attrs_json FROM kb_node WHERE id=?", (edge["src_id"],)
+            ).fetchone()
+            if cat is not None and cat["attrs_json"]:
+                cattrs = json.loads(cat["attrs_json"])
+                ctype = cattrs.get("type")  # TOP-LEVEL "type", NOT "catalyst_type" (see docstring)
+                na = cattrs.get("narrative_after") or {}
+                what, why = na.get("what_happened"), na.get("why_narrative")
+                cro = schema.clinical_regulatory_outcome(ctype, what, why)
+                if cro is None and classifier_fn is not None:
+                    cro = classifier_fn(ctype, what, why)
+        attrs["clinical_regulatory_outcome"] = cro
+
+        conn.execute("UPDATE kb_node SET attrs_json=? WHERE id=?", (json.dumps(attrs), row["id"]))
+        updated += 1
+    conn.commit()
+    return updated

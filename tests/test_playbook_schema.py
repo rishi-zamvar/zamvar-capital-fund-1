@@ -13,13 +13,17 @@ import pytest
 from pydantic import ValidationError
 
 from catalyst_trader.playbook.schema import (
+    BIG_MOVE_BAND,
+    INLINE_BAND,
     Citation,
     CatalystRecord,
     DriverClaim,
     NarrativeAfter,
     NarrativeBefore,
+    clinical_regulatory_outcome,
     compose_card,
     compute_move_consistency,
+    market_reaction,
     to_catalyst_attrs,
     to_outcome_attrs,
 )
@@ -245,6 +249,96 @@ def test_given_hit_label_with_negative_move_when_built_then_flag_true():
 def test_given_agreeing_direction_when_built_then_flag_false():
     assert _pdufa(outcome_label="approve", signed_move=0.3).move_consistency_flag is False
     assert _pdufa(outcome_label="CRL", signed_move=-0.3).move_consistency_flag is False
+
+
+# --- FIX A: market_reaction (deterministic from the SIGNED move) --------------------------------
+
+
+@pytest.mark.parametrize(
+    "move,expected",
+    [
+        (-0.30, "crashed"),
+        (-BIG_MOVE_BAND, "crashed"),  # edge: <= -0.15 is crashed
+        (-0.08, "faded"),
+        (0.00, "flat"),
+        (-INLINE_BAND, "flat"),  # edge: |move| <= 0.03 is flat
+        (INLINE_BAND, "flat"),
+        (0.02, "flat"),
+        (0.08, "popped"),
+        (BIG_MOVE_BAND, "surged"),  # edge: >= 0.15 is surged
+        (0.30, "surged"),
+        (None, "unknown"),
+    ],
+)
+def test_given_signed_moves_when_market_reaction_then_banded(move, expected):
+    assert market_reaction(move) == expected
+
+
+# --- FIX A: clinical_regulatory_outcome (the REAL result parsed from the narrative) --------------
+
+
+@pytest.mark.parametrize(
+    "what_happened,expected",
+    [
+        ("The FDA approved the therapy on the PDUFA date.", "approved"),
+        ("The company received a complete response letter.", "crl"),
+        ("FDA issued a CRL citing manufacturing issues.", "crl"),
+        ("The PDUFA date was extended by three months.", "delayed"),
+        ("The decision was delayed pending more data.", "delayed"),
+        ("The company provided a general corporate update.", None),
+    ],
+)
+def test_given_pdufa_narrative_when_clinical_outcome_then_approved_crl_delayed(what_happened, expected):
+    assert clinical_regulatory_outcome("pdufa", what_happened, "") == expected
+
+
+@pytest.mark.parametrize(
+    "what_happened,expected",
+    [
+        ("The trial met the primary endpoint with p<0.001.", "hit"),
+        ("The study failed to meet its primary endpoint.", "miss"),
+        ("The trial did not meet the primary endpoint.", "miss"),
+        ("Results were mixed across the cohorts.", "mixed"),
+        ("The trial met secondary but missed primary endpoints.", "mixed"),
+        ("The company gave a pipeline update.", None),
+    ],
+)
+def test_given_readout_narrative_when_clinical_outcome_then_hit_miss_mixed(what_happened, expected):
+    assert clinical_regulatory_outcome("trial_readout", what_happened, "") == expected
+
+
+@pytest.mark.parametrize(
+    "what_happened,expected",
+    [
+        ("The company beat estimates on revenue and EPS.", "beat"),
+        ("Quarterly results missed estimates.", "miss"),
+        ("Results came in line with expectations.", "inline"),
+        ("The company reported quarterly results.", None),
+    ],
+)
+def test_given_earnings_narrative_when_clinical_outcome_then_beat_miss_inline(what_happened, expected):
+    assert clinical_regulatory_outcome("earnings", what_happened, "") == expected
+
+
+def test_given_ambiguous_narrative_when_clinical_outcome_then_none():
+    assert clinical_regulatory_outcome("pdufa", "", "") is None
+    assert clinical_regulatory_outcome("trial_readout", "no clear result", "") is None
+
+
+# --- FIX A: to_outcome_attrs carries both new fields AND the legacy label ------------------------
+
+
+def test_given_record_when_to_outcome_attrs_then_carries_both_new_fields_and_legacy_label():
+    rec = _pdufa(signed_move=-0.20, outcome_label="CRL",
+                 narrative_after=_after(what_happened="The company received a complete response letter."))
+    attrs = to_outcome_attrs(rec)
+    # both NEW honest fields present
+    assert attrs["market_reaction"] == "crashed"  # -0.20 <= -0.15
+    assert attrs["clinical_regulatory_outcome"] == "crl"
+    # legacy fields UNCHANGED (SIGNED move, legacy label)
+    assert attrs["label"] == "CRL"
+    assert attrs["move"] == -0.20  # SIGNED, not abs, not renamed
+    assert attrs["read_only"] is True
 
 
 @pytest.mark.parametrize(

@@ -28,6 +28,7 @@ from bs4 import BeautifulSoup
 
 from catalyst_trader.config import settings
 from catalyst_trader.playbook.schema import (
+    INLINE_BAND,
     CatalystRecord,
     Citation,
     DriverClaim,
@@ -40,7 +41,7 @@ from catalyst_trader.providers._http import _key, _safe_name, load_snapshot
 _CIK_RE = re.compile(r"/data/(\d+)/")
 _DISAGREE_PENALTY = 0.5       # move/text sign disagreement -> halve confidence (research B §3.4)
 _MONTH_PRECISION_PENALTY = 0.7  # no move to corroborate against -> reduce confidence (research B §4)
-_EARNINGS_INLINE_BAND = 0.03    # |move| <= 3% => earnings reaction is "inline" (else beat/miss)
+_EARNINGS_INLINE_BAND = INLINE_BAND  # single source of truth (schema.INLINE_BAND); |move|<=3% => inline
 _REPO_ROOT = Path(__file__).resolve().parents[3]
 
 
