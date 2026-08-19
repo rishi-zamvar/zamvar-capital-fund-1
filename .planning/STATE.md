@@ -3,8 +3,8 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: verifying
-stopped_at: Completed 07.8-slice1 (awaiting live hand-check checkpoint)
-last_updated: "2026-08-19T19:40:21.178Z"
+stopped_at: 07.8-slice4 Tasks 1-3 shipped (paper ledger + lifecycle + harness); awaiting Task-4 operator hand-check
+last_updated: "2026-08-19T21:29:01.080Z"
 last_activity: 2026-08-18
 progress:
   total_phases: 19
@@ -281,6 +281,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-08-19T19:40:21.124Z
-Stopped at: Completed 07.8-slice1 (awaiting live hand-check checkpoint)
+Last session: 2026-08-19T21:29:01.069Z
+Stopped at: 07.8-slice4 Tasks 1-3 shipped (paper ledger + lifecycle + harness); awaiting Task-4 operator hand-check
 Resume file: None
