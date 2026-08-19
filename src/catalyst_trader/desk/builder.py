@@ -32,6 +32,7 @@ from ..quant.field import expected_move_field
 from ..quant.sizing import adaptive_sl_tp_levels
 from ..quant.valuation import analyst_pt_move, pipeline_value, rnpv
 from . import evidence, risk
+from .exit_plan import build_exit_plan
 from .assumptions_adapter import assumptions_snapshot_provider
 from .options_adapter import implied_move_from_provider
 from ..playbook.store import assert_embedder_consistency
@@ -255,6 +256,15 @@ async def build(conn, embed, verdict, catalyst, *, entry: float,
         BuilderNarrative, model="sonnet",
     )
 
+    # 7. Author the deterministic Exit Plan (Tier-3 Task A) from the football-field/verdict numbers
+    #    ALREADY computed above — PURE, no agent, no re-sizing (size_for_survival stays the owner).
+    exit_plan = build_exit_plan(
+        entry=entry, up_move=up_move, down_move=down_move, p_positive=p_positive,
+        holds_through=holds_through, stop=sl_tp.detail["stop"], target=sl_tp.detail["target"],
+        exit_by_date=exit_by_date, kill_criteria=verdict.kill_criteria,
+        direction=verdict.direction, has_hedge=candidate is not None,
+    )
+
     return TradeProposal(
         target_long=target,
         hedge=None,  # the builder NEVER validates — Risk owns validation (05-07 reconciles the object)
@@ -273,4 +283,5 @@ async def build(conn, embed, verdict, catalyst, *, entry: float,
         sl_advisory=sl_advisory,
         expected_move_field=field_detail,          # FF-05 field detail (None when < min_methods)
         retrieval_confidence=retrieval_confidence,
+        exit_plan=exit_plan,                       # Tier-3 deterministic Exit Plan (authored at entry)
     )

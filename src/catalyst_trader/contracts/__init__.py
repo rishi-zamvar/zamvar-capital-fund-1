@@ -113,6 +113,52 @@ class EstimateVetting(BaseModel):
     uncertainty_widened: bool = False  # cold-start shrink-to-base-rate applied
 
 
+class ScenarioRow(BaseModel):
+    """One row of the pre-committed exit scenario table (Tier-3 Exit Plan). `target` is the
+    football-field price for the branch; `action` is the deterministic pre-decided response."""
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+    scenario: Literal["approval", "rejection", "mixed", "delay"]
+    probability: float
+    target: float  # football-field target PRICE for this branch
+    action: Literal["hold_and_trail", "exit_on_open", "exit_half", "lean_hedge"]
+
+
+class ThesisInvalidation(BaseModel):
+    """The typed thesis-invalidation leg: the branch that FALSIFIES the thesis, the down-move
+    magnitude floor it must clear, and the disqualifying news (verdict kill_criteria)."""
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+    outcome: str  # the falsifying branch ("rejection" for a positive trade, "approval" for negative)
+    magnitude_floor: float
+    disqualifying_news: list[str]
+
+
+class EvFlipGuard(BaseModel):
+    """Stored EV-flip inputs so the reflex can recompute remaining_upside*p - downside*(1-p)
+    against `threshold` at the CURRENT price (a flip => trim-or-exit)."""
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+    upside: float
+    downside: float
+    p: float
+    threshold: float
+
+
+class ExitPlan(BaseModel):
+    """The deterministic Exit Plan authored at ENTRY (no agent in the hot path): a no-stop
+    expectation band, a pre-committed scenario table, a typed thesis-invalidation, a hard TIME
+    barrier, and the EV-flip guard inputs — all computed from the football-field/verdict numbers
+    the desk already produced. The intraweek reflex + the exit review both read it."""
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+    expectation_band: tuple[float, float]  # (entry*(1-down_move), entry*(1+up_move)) — the no-stop zone
+    scenario_table: list[ScenarioRow]
+    thesis_invalidation: ThesisInvalidation
+    time_barrier: str  # hard triple-barrier TIME leg (== exit_by_date)
+    ev_flip: EvFlipGuard
+
+
 class TradeProposal(BaseModel):
     model_config = ConfigDict(extra="forbid")
     target_long: str
@@ -132,6 +178,7 @@ class TradeProposal(BaseModel):
     sl_advisory: bool  # True whenever holds_through_catalyst (mirrors sl_tp_levels advisory)
     expected_move_field: dict | None = None  # FF-05 field detail (point_estimate/dispersion/agreement/refs); None when < min_methods
     retrieval_confidence: str | None = None  # analog retrieval confidence label ("thin"/"ok") surfaced for field weighting
+    exit_plan: ExitPlan | None = None  # Tier-3 deterministic Exit Plan authored at entry; None => pre-Tier-3 constructions stay valid
 
 
 class RiskAssessment(BaseModel):
