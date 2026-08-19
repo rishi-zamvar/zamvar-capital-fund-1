@@ -26,5 +26,11 @@ Each slice runs ONE real catalyst end-to-end and is independently verified befor
 ## Biggest risks
 1. Live-LLM seam divergence from the mocks (Slice 0 resolves). 2. Cost/latency: ~30-40 calls/catalyst, several opus (measure in Slice 0). 3. Orphaned DD/MD integration untested end-to-end (Slice 2). 4. `biased_optimistic` — only the forward paper month validates the desk; the backtest cannot. 5. Prompt duplication `desk/*.py` (source of truth) vs `.claude/agents/*.md` (parity docs) — drift risk.
 
+## Progress
+- 2026-08-19 **Slice 0 PASS** (SLICE0-RESULT.md): live LLM seam validated under Max/inside-CC, no API key — structured output + in-process quant MCP tool-calling both work (full-precision match), ~10-11s/call. Load-bearing unknown retired. Commit 048cef2.
+- 2026-08-19 **Followup 1 DONE**: free weekly-bar backfill (price_backfill_free) → 73/76 tradeable-universe names now hedge-profiled (3 gaps = delisted BXRXQ/CMRX/LIANY, honest skip). Data-only, reused existing tooling.
+- 2026-08-19 **Followup 2 DONE** (quick-pf2, 3/3, suite 1658): book_to_portfolio_inputs adapter + auto-attach whole-book PortfolioOutcome (target-leg risk read) onto promoted dossiers via PortfolioContext.portfolio_outcome; conn-guard keeps offline suites green; money path byte-for-byte. Commit 309bf69.
+- NEXT: **Slice 1** — bind live catalyst_context + run ONE real upcoming catalyst through run_desk→run_portfolio LIVE → hand-checked dossier. Then **Slice 2** — attach the orphaned run_diligence + md.reconcile.
+
 ## Reuse (do not rebuild)
 `desk/runtime.run_structured`, `desk/orchestrator.run_desk/run_portfolio`, `desk/diligence.run_diligence`, `desk/md.reconcile`, `calendar/refresh`, `serving.asof`, `providers/robinhood` (read-only), `desk/portfolio_builder.build_portfolio`, `kb.hedge_profile`.
