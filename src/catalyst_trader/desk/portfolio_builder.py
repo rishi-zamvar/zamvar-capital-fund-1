@@ -18,6 +18,7 @@ Two honest PROXIES, both overridable and both LABELLED in the outcome:
     factor and residuals are uncorrelated (used only when no mutual peer corr is available).
 """
 
+import itertools
 import math
 
 from pydantic import BaseModel, ConfigDict
@@ -166,6 +167,136 @@ def _covariance(tickers, weights, sigmas, corr_fn):
     return variance, math.sqrt(max(variance, 0.0)), rho_source
 
 
+# ── scenario P&L + portfolio risk (reuse conditional_payoff / performance / risk_of_ruin) ───────
+def _position_branches(pos, assumptions, weights_by_ticker):
+    """[(return, prob)] for one name. A hedged position routes target+peer through
+    quant.conditional_payoff and takes its 2×2 matrix cells verbatim (no re-derived payoff math)."""
+    ticker = pos["ticker"]
+    mv = _move(assumptions, ticker)
+    w = weights_by_ticker[ticker]
+    p_up = _p_positive(mv)
+    up, down = float(mv["expected_move"]), -_down_move(mv)
+
+    hedge = pos.get("hedge")
+    if not hedge:
+        return [(w * up, p_up), (w * down, 1.0 - p_up)]
+
+    peer = hedge["peer"]
+    peer_mv = _move(assumptions, peer)
+    peer_sign = 1.0 if hedge.get("side", "long") == "long" else -1.0
+    w_peer = peer_sign * float(hedge["size_pct"])
+    peer_up, peer_down = float(peer_mv["expected_move"]), -_down_move(peer_mv)
+    p_peer = _p_positive(peer_mv)
+    m = quant.conditional_payoff(up, down, peer_up, peer_down, w, w_peer).detail["matrix"]
+    return [
+        (m["target_up_peer_up"], p_up * p_peer),
+        (m["target_up_peer_down"], p_up * (1.0 - p_peer)),
+        (m["target_down_peer_up"], (1.0 - p_up) * p_peer),
+        (m["target_down_peer_down"], (1.0 - p_up) * (1.0 - p_peer)),
+    ]
+
+
+def _sector_shock_pnl(positions, weights_by_ticker, corr_fn, sector_shock):
+    """Σ signed_weightᵢ · βᵢ · sector_shock. β from corr_source xbi.full.beta; missing β -> 0."""
+    total, missing = 0.0, []
+    for p in positions:
+        t = p["ticker"]
+        prof = corr_fn(t)
+        beta = (prof or {}).get("xbi", {}).get("full", {}).get("beta")
+        if beta is None:
+            missing.append(t)
+            continue
+        total += weights_by_ticker[t] * float(beta) * sector_shock
+    return total, missing
+
+
+def _book_scenarios(positions, assumptions, weights_by_ticker):
+    """Joint branch cross-product -> worst/expected/best + the raw returns list for the perf
+    primitives. Guards O(2^n) blow-up: beyond PARAMS['max_scenario_names'] names it degrades to a
+    MARGINAL (independent) roll-up — exact worst/expected/best by linearity, per-name expected as
+    the returns proxy — sets a visible `truncated` flag and drops NO positions.
+
+    # ponytail: full cross-product is O(2^n) (4^n with hedges); the cap keeps a fat book finite.
+    """
+    per_pos = {p["ticker"]: _position_branches(p, assumptions, weights_by_ticker) for p in positions}
+
+    if len(positions) > PARAMS["max_scenario_names"]:
+        worst = sum(min(r for r, _ in br) for br in per_pos.values())
+        best = sum(max(r for r, _ in br) for br in per_pos.values())
+        marg_exp = {t: sum(r * pr for r, pr in br) for t, br in per_pos.items()}
+        expected = sum(marg_exp.values())
+        returns = list(marg_exp.values())              # per-name cross-section (proxy series)
+        p_loss = sum(1 for v in marg_exp.values() if v < 0) / len(marg_exp)
+        return {
+            "worst_case": worst, "expected_case": expected, "best_case": best,
+            "per_position": _dump_branches(per_pos), "truncated": True,
+            "n_branches": len(positions),
+            "note": (f"joint enumeration skipped: {len(positions)} names exceed cap "
+                     f"{PARAMS['max_scenario_names']}; metrics are a marginal/independent roll-up"),
+        }, returns, p_loss
+
+    tickers = list(per_pos)
+    returns, worst, best, expected, p_loss = [], math.inf, -math.inf, 0.0, 0.0
+    for combo in itertools.product(*(per_pos[t] for t in tickers)):
+        ret = sum(r for r, _ in combo)
+        prob = math.prod(pr for _, pr in combo)
+        returns.append(ret)
+        worst, best = min(worst, ret), max(best, ret)
+        expected += prob * ret
+        if ret < 0:
+            p_loss += prob
+    return {
+        "worst_case": worst, "expected_case": expected, "best_case": best,
+        "per_position": _dump_branches(per_pos), "truncated": False, "n_branches": len(returns),
+    }, returns, p_loss
+
+
+def _dump_branches(per_pos):
+    return {t: [{"return": r, "prob": pr} for r, pr in br] for t, br in per_pos.items()}
+
+
+def _perf(fn, returns, **kw):
+    """Call a performance primitive, returning None (not a crash) when it would RAISE —
+    the BaselineDistribution None discipline: never a fabricated number over an undefined series."""
+    try:
+        return fn(returns, **kw).value
+    except ValueError:
+        return None
+
+
+def _risk_block(returns, worst_case, p_loss, periods_per_year):
+    """Sharpe/Sortino/maxDD over the scenario cross-section + a portfolio risk-of-ruin.
+
+    CONCERN 1 (economic correctness): worst_case is ALREADY a bankroll-fraction book loss
+    (Σ signed_weightᵢ·moveᵢ). Mapping it as size_pct=gross, gap=|worst_case| would DOUBLE-COUNT
+    exposure and understate ruin. Instead size_pct=1.0 (the whole book is the stake for a
+    portfolio-level ruin calc) and gap=clamp(|worst_case|,(0,1]) — so size_pct·gap reconstructs the
+    ACTUAL worst book-loss fraction. This is a MODELLED portfolio-ruin assumption, labelled below.
+    """
+    sharpe = _perf(quant.sharpe, returns, periods_per_year=periods_per_year)
+    sortino = _perf(quant.sortino, returns, periods_per_year=periods_per_year)
+    max_dd = _perf(quant.max_drawdown, returns)
+
+    loss_frac = abs(worst_case)
+    if loss_frac <= 0.0:
+        # no modelled scenario loses money -> portfolio ruin is not defined for this book
+        return {
+            "sharpe": sharpe, "sortino": sortino, "max_drawdown": max_dd,
+            "risk_of_ruin": None, "ruin_p_loss": p_loss, "ruin_size_pct": None, "ruin_gap": None,
+            "ruin_loss_fraction": None,
+            "ruin_mapping_note": "no negative-return scenario -> portfolio ruin undefined",
+        }
+    gap = min(loss_frac, 1.0)
+    ror = quant.risk_of_ruin(p_loss, 1.0, gap=gap, n_trades=PARAMS["default_n_trades"]).value
+    return {
+        "sharpe": sharpe, "sortino": sortino, "max_drawdown": max_dd,
+        "risk_of_ruin": ror, "ruin_p_loss": p_loss, "ruin_size_pct": 1.0, "ruin_gap": gap,
+        "ruin_loss_fraction": 1.0 * gap,   # == |worst_case| (clamped): the loss the ruin calc sees
+        "ruin_mapping_note": ("portfolio-ruin assumption: size_pct=1 (whole book is the stake), "
+                              "gap=|worst_case| (the modelled worst book-loss fraction)"),
+    }
+
+
 # ── the engine ───────────────────────────────────────────────────────────────────────────────
 def _validate(positions, assumptions):
     if not positions:
@@ -208,9 +339,14 @@ def build_portfolio(positions: list[dict], assumptions: dict) -> PortfolioOutcom
             proxy_names.append(t)
     variance, vol, rho_source = _covariance(tickers, weights, sigmas, corr_fn)
 
-    # scenario / stress P&L + portfolio risk are populated in Task 2 (contract fields already exist).
-    scen: dict = {}
-    risk: dict = {}
+    # scenario / stress P&L + portfolio risk.
+    sector_shock = float(assumptions.get("sector_shock", 0.0))
+    scen, returns, p_loss = _book_scenarios(positions, assumptions, weights_by_ticker)
+    shock_pnl, missing_beta = _sector_shock_pnl(positions, weights_by_ticker, corr_fn, sector_shock)
+    scen["sector_shock_pnl"] = shock_pnl
+    scen["sector_shock_missing_beta"] = missing_beta   # labelled: names with no β contributed 0
+    ppy = int(assumptions.get("periods_per_year", PARAMS["default_periods_per_year"]))
+    risk = _risk_block(returns, scen["worst_case"], p_loss, ppy)
 
     return PortfolioOutcome(
         gross_exposure=exp.value,
