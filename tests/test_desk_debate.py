@@ -99,6 +99,26 @@ async def test_verdict_names_losing_side(monkeypatch, load_fixture):
     assert out.bear_strongest_point.strip()   # the moderator names the LOSING side too
 
 
+async def test_each_thesis_reaches_both_sides_and_moderator(monkeypatch, load_fixture):
+    """CALL-01 consumption: each analyst's stated thesis is surfaced to the BULL prompt, the BEAR
+    prompt, AND the moderator prompt — so the debate argues the four stated per-dimension reads,
+    not just the raw findings. Additive: the isolation guarantees above still hold."""
+    bull, bear, verdict = _fixtures(load_fixture)
+    calls = []
+    monkeypatch.setattr(debate, "run_structured", _seam(bull, bear, verdict, calls))
+
+    await debate.run(SIGNALS, CATALYST, rounds=2)
+
+    bull_prompts = [c["prompt"] for c in calls if c["schema"] is Argument and "You are the BULL" in c["prompt"]]
+    bear_prompts = [c["prompt"] for c in calls if c["schema"] is Argument and "You are the BEAR" in c["prompt"]]
+    mod_prompt = next(c["prompt"] for c in calls if c["schema"] is DebateVerdict)
+
+    for s in SIGNALS:
+        assert all(s.thesis in p for p in bull_prompts)  # every bull round sees each stated thesis
+        assert all(s.thesis in p for p in bear_prompts)  # ...and every bear round
+        assert s.thesis in mod_prompt                    # ...and the moderator synthesis
+
+
 async def test_confidence_is_grounded(monkeypatch, load_fixture):
     bull, bear, verdict = _fixtures(load_fixture)
     calls = []

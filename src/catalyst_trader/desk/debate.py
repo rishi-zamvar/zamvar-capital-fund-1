@@ -38,7 +38,8 @@ def _evidence_context(signals: list[AnalystSignal]) -> str:
     sides reason over. Findings keep their evidence_ref so arguments stay grounded."""
     lines = []
     for s in signals:
-        lines.append(f"[{s.dimension}] score={s.score:+.2f} confidence={s.confidence:.2f}")
+        lines.append(f"[{s.dimension}] THESIS: {s.thesis}")
+        lines.append(f"  score={s.score:+.2f} confidence={s.confidence:.2f}")
         for f in s.key_findings:
             lines.append(f"  - {f.claim}  (cite: {f.evidence_ref})")
         for u in s.unknowns:
