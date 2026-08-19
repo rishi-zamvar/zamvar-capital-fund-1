@@ -133,7 +133,7 @@ def test_v1_analog_query_returns_list_shape_unchanged(db):
 
 # ── builder wiring ────────────────────────────────────────────────────────────
 
-def test_builder_uses_analog_query_v2_and_captures_confidence(db, monkeypatch):
+async def test_builder_uses_analog_query_v2_and_captures_confidence(db, monkeypatch):
     from catalyst_trader.desk import builder, verifier
     from catalyst_trader.contracts import DebateVerdict
 
@@ -168,9 +168,7 @@ def test_builder_uses_analog_query_v2_and_captures_confidence(db, monkeypatch):
            "event_date_end": "2026-11-22", "catalyst_id": "cat-1",
            "disease_area": "nephrology", "mechanism_class": "april-blys-baff-fusion"}
 
-    import asyncio
-    asyncio.get_event_loop().run_until_complete(
-        builder.build(db, kb.hash_embed, v, cat, entry=100.0))
+    await builder.build(db, kb.hash_embed, v, cat, entry=100.0)
 
     # the builder threaded the catalyst's OWN axes into v2 recall (multi-axis, not setup-only)
     assert captured["ctype"] == "pdufa"

@@ -116,13 +116,18 @@ async def build(conn, embed, verdict, catalyst, *, entry: float,
     # Refuse to KNN a corpus populated with a DIFFERENT embedder — a mismatch is silent garbage
     # (Plan 04 stamps the embedder on every catalyst node; this is the warm-retrieval guard).
     assert_embedder_consistency(conn, embed)
-    # SETUP-aware retrieval: tag the query event, then filter on setups (thinness-gated) so setup-
-    # matched precedents in OTHER indications are reachable. Falls back to type-only when the cohort
-    # is thin (setup_filters), so the KNN is never starved.
+    # MULTI-AXIS retrieval v2 (quick-260818-oto): inclusive UNION recall over the catalyst's OWN
+    # axes (type + setups + disease_area + mechanism_class) + rarity-weighted rerank + confidence.
+    # A fresh live catalyst not yet classified degrades to type+setups recall (still inclusive) —
+    # a query-side LLM classifier is YAGNI (the stress test reads the re-tagged node's stored axes).
     q_setups = tagger.tag_setups({"thesis": verdict.thesis, "indication": _get(catalyst, "indication"),
                                   "modality": _get(catalyst, "modality")})
-    filters = kb.setup_filters(conn, ctype, q_setups)
-    analogs = kb.analog_query(conn, embed, context, filters=filters, k=5, as_of=as_of)
+    q_disease = _get(catalyst, "disease_area")     # None -> that axis just doesn't constrain recall
+    q_mech = _get(catalyst, "mechanism_class")
+    res = kb.analog_query_v2(conn, embed, context, ctype=ctype, disease_area=q_disease,
+                             mechanism_class=q_mech, setups=q_setups, k=5, as_of=as_of)
+    analogs = res["analogs"]
+    retrieval_confidence = res["retrieval_confidence"]  # captured for downstream field weighting
     candidate = _candidate_peer(conn, target)
 
     # 1. Estimate the catalyst payoff distribution (param-driven, cited). p_positive comes from the
@@ -154,7 +159,9 @@ async def build(conn, embed, verdict, catalyst, *, entry: float,
 
     # 5. VET the estimate assumptions BEFORE finalize — a reject blocks the trade (pass / no proposal).
     est_ref = evidence.tool_ref(est)
-    analog_ref = evidence.tool_ref_for("analog_query", {"context": context, "filters": filters, "k": 5, "as_of": as_of})
+    analog_ref = evidence.tool_ref_for("analog_query_v2", {
+        "context": context, "ctype": ctype, "disease_area": q_disease,
+        "mechanism_class": q_mech, "setups": q_setups, "k": 5, "as_of": as_of})
     estimate_inputs = [
         {"input": "p_positive", "ref": est_ref, "value": p_positive},
         {"input": "up_move", "ref": est_ref, "value": up_move},
@@ -174,6 +181,7 @@ async def build(conn, embed, verdict, catalyst, *, entry: float,
     narrative = await run_structured(
         _narrative_prompt(verdict, target, candidate, ctype,
                           extra=f"HOLD-VS-EXIT   {hv.detail['decision']} (cite {evidence.tool_ref(hv)})"
+                                + f"\nRETRIEVAL      analog confidence: {retrieval_confidence}"
                                 + (f"\nMD RE-TRIGGER: {extra_context}" if extra_context else "")),
         BuilderNarrative, model="sonnet",
     )

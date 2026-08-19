@@ -261,6 +261,123 @@ def analog_query(conn, embed, context: str, filters: dict, k: int = 5, as_of: st
     return [_with_outcome(conn, r["node_id"], r["distance"]) for r in ranked]
 
 
+# Retrieval-v2 rerank knobs (quick-260818-oto). Named module-level, not magic-in-loop — tunable.
+# ponytail: disease_area/mechanism_class carry more transfer signal than a common setup, so they
+#           outweigh a single setup share; semantic distance is the tiebreak. Refit in Phase 9.
+W_SETUP = 1.0       # weight on the SUM of rarity-weighted shared-setup IDFs
+W_DISEASE = 2.0     # same-disease_area is a strong precedent signal
+W_MECH = 1.5        # same-mechanism_class is a strong precedent signal
+W_SEMANTIC = 1.0    # narrative closeness (1 - cosine distance), the tiebreak
+MIN_SHARED_AXES = 1.5   # top-k mean matched-axis count below this -> "thin"
+MAX_MEAN_DIST = 0.9     # top-k mean cosine distance above this -> "thin"
+
+
+def _rarity_weights(conn, key: str = "setups") -> dict:
+    """IDF over the live corpus for every distinct value of `key` on catalyst nodes.
+
+    idf = log(N / (1 + count)) where N = catalyst-node count, count = nodes carrying that value
+    (json_each over $.key covers both a scalar and a list attr). Rarer value -> higher weight; a
+    value present in ~all nodes -> ~0 (clamped at 0 so a near-ubiquitous shared setup is never a
+    PENALTY). Deterministic. This is why common setups stop dominating the rerank (quick-260818-oto).
+    """
+    import math
+
+    rows = conn.execute("SELECT attrs_json FROM kb_node WHERE kind='catalyst'").fetchall()
+    n = len(rows)
+    counts: dict = {}
+    for r in rows:
+        attrs = json.loads(r["attrs_json"]) if r["attrs_json"] else {}
+        val = attrs.get(key)
+        if val is None:
+            continue
+        vals = val if isinstance(val, (list, tuple)) else [val]
+        for v in set(vals):
+            counts[v] = counts.get(v, 0) + 1
+    return {v: max(0.0, math.log(n / (1 + c))) for v, c in counts.items()}
+
+
+def analog_query_v2(conn, embed, context: str, *, ctype, disease_area=None, mechanism_class=None,
+                    setups=None, k: int = 5, as_of: str | None = None) -> dict:
+    """Retrieval v2 (quick-260818-oto): inclusive UNION recall + rarity-weighted multi-axis rerank
+    + a thin/ok confidence flag. Returns {"analogs":[...], "retrieval_confidence": str, "n_candidates": int}.
+
+    RECALL (ALL-INCLUSIVE, CEO-locked): the candidate pool is the UNION of _structural_filter results
+    for EACH provided axis — {type}, {disease_area}, {mechanism_class}, {setups}. A None/empty axis
+    contributes nothing (never shrinks the union). A candidate sharing even ONE axis is NEVER
+    hard-excluded. Empty union -> thin / n_candidates=0.
+
+    RERANK: over-fetch the WHOLE vec set (like analog_query's list-branch), intersect with the union,
+    and score each candidate:
+        score = W_SETUP*sum(rarity[s] for shared setups) + W_DISEASE*(disease match)
+              + W_MECH*(mechanism match) + W_SEMANTIC*(1 - distance)
+    so a rarer shared setup outranks a common one on equal semantic distance. Each analog is a
+    _with_outcome dict augmented with "matched_axes" (concrete shared axes) + "score".
+
+    CONFIDENCE: "thin" when the top-k mean matched-axis count < MIN_SHARED_AXES OR the top-k mean
+    distance > MAX_MEAN_DIST (few shared axes / semantically far), else "ok".
+
+    v1 analog_query + _with_outcome are untouched; this is a NEW function (backward-compat).
+    """
+    setups = list(setups) if setups else []
+    union: set[int] = set()
+    if ctype:
+        union |= _structural_filter(conn, {"type": ctype}, as_of=as_of)
+    if disease_area:
+        union |= _structural_filter(conn, {"disease_area": disease_area}, as_of=as_of)
+    if mechanism_class:
+        union |= _structural_filter(conn, {"mechanism_class": mechanism_class}, as_of=as_of)
+    if setups:
+        union |= _structural_filter(conn, {"setups": setups}, as_of=as_of)
+    if not union:
+        return {"analogs": [], "retrieval_confidence": "thin", "n_candidates": 0}
+
+    rw = _rarity_weights(conn, "setups")
+    q = serialize_float32(embed(context))
+    overfetch = conn.execute("SELECT COUNT(*) AS c FROM kb_vec").fetchone()["c"] or k * 4
+    rows = conn.execute(
+        "SELECT node_id, distance FROM kb_vec WHERE embedding MATCH ? ORDER BY distance LIMIT ?",
+        (q, overfetch),
+    ).fetchall()
+
+    scored: list[dict] = []
+    for r in rows:
+        if r["node_id"] not in union:
+            continue
+        node = get_node(conn, r["node_id"])
+        cattrs = node["attrs"] if node else {}
+        cand_setups = cattrs.get("setups") or []
+        if isinstance(cand_setups, str):
+            cand_setups = [cand_setups]
+        shared = [s for s in cand_setups if s in setups]
+
+        matched: list[str] = []
+        score = W_SEMANTIC * (1.0 - r["distance"])
+        if shared:
+            score += W_SETUP * sum(rw.get(s, 0.0) for s in shared)
+            matched += [f"setup:{s}" for s in shared]
+        if disease_area and cattrs.get("disease_area") == disease_area:
+            score += W_DISEASE
+            matched.append("disease_area")
+        if mechanism_class and cattrs.get("mechanism_class") == mechanism_class:
+            score += W_MECH
+            matched.append("mechanism_class")
+
+        result = _with_outcome(conn, r["node_id"], r["distance"])
+        result["matched_axes"] = matched
+        result["score"] = score
+        scored.append(result)
+
+    scored.sort(key=lambda a: a["score"], reverse=True)
+    top = scored[:k]
+    if top:
+        mean_axes = sum(len(a["matched_axes"]) for a in top) / len(top)
+        mean_dist = sum(a["distance"] for a in top) / len(top)
+        confidence = "ok" if (mean_axes >= MIN_SHARED_AXES and mean_dist <= MAX_MEAN_DIST) else "thin"
+    else:
+        confidence = "thin"
+    return {"analogs": top, "retrieval_confidence": confidence, "n_candidates": len(union)}
+
+
 def _get_or_create_company(conn, ticker: str) -> int:
     """Company nodes are reference nodes (not claims) so they need no citation. Get-or-create by ticker."""
     row = conn.execute(
