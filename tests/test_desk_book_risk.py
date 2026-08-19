@@ -371,3 +371,35 @@ async def test_run_weekly_book_carries_outcome(db):
     promoted = [d for d in dossiers if d.decision == "promote"]
     assert promoted, "every week produces a book"
     assert all(isinstance(d.portfolio_context.portfolio_outcome, dict) for d in promoted)
+
+
+# ---------------------------------------------------------------------------
+# Task 3 — backward-compat + no-magic-number guard sweep
+# ---------------------------------------------------------------------------
+
+
+def test_no_magic_sector_shock(monkeypatch):
+    # the default sector_shock is READ from BOOK_RISK_PARAMS — no literal baked into the path.
+    monkeypatch.setitem(BOOK_RISK_PARAMS, "default_sector_shock", -0.33)
+    prop = _statistical_proposal("ACME", expected=0.03, size=0.02)
+    _, assumptions = book_to_portfolio_inputs([_dossier(prop)])
+    assert assumptions["sector_shock"] == -0.33   # the patched knob flows through
+
+
+def test_params_missing_key_raises(monkeypatch):
+    # direct-subscript discipline: a missing knob is LOUD (KeyError), never a silent 0.
+    monkeypatch.delitem(BOOK_RISK_PARAMS, "default_sector_shock")
+    prop = _statistical_proposal("ACME", expected=0.03, size=0.02)
+    with pytest.raises(KeyError):
+        book_to_portfolio_inputs([_dossier(prop)])   # default path -> missing key raises
+
+
+def test_existing_portfolio_context_constructions_still_valid():
+    # the additive field breaks no existing caller: construction WITHOUT portfolio_outcome validates.
+    ctx = PortfolioContext(concentration=0.4, corr_to_open_positions=[0.1, 0.2],
+                           weekly_budget_remaining=0.05)
+    assert ctx.portfolio_outcome is None
+    # and a value round-trips through model_copy (the exact attach mechanism run_portfolio uses).
+    updated = ctx.model_copy(update={"portfolio_outcome": {"gross_exposure": 0.04}})
+    assert updated.portfolio_outcome == {"gross_exposure": 0.04}
+    assert ctx.portfolio_outcome is None   # original untouched (copy semantics)
