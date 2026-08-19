@@ -171,3 +171,124 @@ def reject_pending(conn: sqlite3.Connection, pending_id: int) -> None:
     except Exception:
         conn.rollback()
         raise
+
+
+# --- lifecycle: dossier->params, mark/close pass, cited outcome feedback (Task 2) ------------
+# REUSES the backtest fill discipline verbatim (fill_price + _net_return + half_spread_pct via
+# _net_return) so a paper fill is byte-identical to a backtest fill — NO live-vs-backtest drift.
+
+
+def position_params_from_decision(result: dict, *, as_of: str) -> dict | None:
+    """Map an APPROVED-shaped decision result to open-position params, or None for a non-'enter'.
+
+    Only ``result['decision'].decision == 'enter'`` yields params; 'pass'/'escalate'/None -> None
+    (nothing opens). Params carry the dossier's OWN trade fields + `opened_at=as_of` (the decision
+    week — the C1 close-guard compares the exit-by action bar's week_end against it) + `direction`
+    (provenance; side is always 'long', the desk is long-only) + the decision's evidence refs (cited
+    on close). `decision_ref` back-references the authoring catalyst.
+    """
+    dec = result.get("decision")
+    if dec is None or getattr(dec, "decision", None) != "enter":
+        return None
+    t = result["dossier"].trade
+    return {
+        "ticker": t.target_long,
+        "entry": t.entry,
+        "size_pct": t.size_pct,
+        "side": "long",                       # desk is long-only; direction carried for provenance
+        "opened_at": as_of,                   # the decision week — the C1 no-drift close guard
+        "exit_by": t.exit_by_date,
+        "held_through": t.holds_through_catalyst,
+        "direction": t.direction,
+        "catalyst_id": t.catalyst_id,
+        "decision_ref": f"catalyst:{t.catalyst_id}",
+        "evidence_refs": list(result["dossier"].all_evidence_refs),
+    }
+
+
+def _rh_quote(ticker: str, *, mcp_call=None) -> float | None:
+    """Live mark fallback: robinhood.quotes_rt 'last' for one ticker, degrade-to-None. Only called
+    when the point-in-time bars are empty (frugality: cache/bars first). Offline default is None."""
+    from catalyst_trader.providers import robinhood
+
+    quotes = robinhood.quotes_rt([ticker], mcp_call=mcp_call)
+    return (quotes or {}).get(ticker, {}).get("last")
+
+
+def mark_open_positions(conn: sqlite3.Connection, as_of: str, *, quotes_fn=None, embed=None) -> dict:
+    """Mark every open position at the point-in-time quote and CLOSE any whose exit_by <= as_of.
+
+    Returns {marked, closed, held}. No-look-ahead: marks read ONLY serving.asof(conn, as_of); a
+    close reads the exit-by action bar at serving.asof(conn, exit_by).bars(ticker, exit_by) — so a
+    LATE mark (run a week+ after exit_by) still fills at the exit-by action bar (C1, no drift). A
+    missing mark quote / halted action bar / no-hold-week bar -> HOLD (never a fabricated price).
+    quotes_fn(ticker)->last|None is the live fallback (default None = bars-only, offline).
+    """
+    from catalyst_trader import serving
+    from catalyst_trader.backtest.engine import _net_return
+    from catalyst_trader.backtest.fill import fill_price
+
+    marked = closed = held = 0
+    for pos in get_open_positions(conn):
+        ticker, entry = pos["ticker"], pos["entry_price"]
+        if pos["exit_by"] <= as_of:
+            # --- CLOSE at the EXIT-BY action bar (mirror engine._fill_leg — byte-identical) ---
+            exit_bars = serving.asof(conn, pos["exit_by"]).bars(ticker, pos["exit_by"])
+            if not exit_bars or exit_bars[-1]["week_end"] <= pos["opened_at"]:
+                held += 1                      # no hold-week bar yet -> unmeasurable, do not fabricate
+                continue
+            fill = fill_price(exit_bars, side=pos["side"], held_through=pos["held_through"],
+                              slippage=0.0)    # C2: slippage=0.0, the backtest's effective value
+            if fill is None:
+                held += 1                      # halted / delisted / zero-vol action bar -> HOLD
+                continue
+            realized = _net_return(entry, fill, apply_costs=True)  # half-spread paid BOTH sides
+            close_paper_position(conn, pos["id"], close_price=fill, realized_ret=realized)
+            if pos["evidence_refs"]:           # C3: cite-or-drop — empty evidence closes but drops
+                record_paper_outcome(conn, pos, realized, embed=embed)
+            closed += 1
+        else:
+            # --- MARK at the point-in-time quote (cache-first bars, then live quote, else HOLD) ---
+            bars = serving.asof(conn, as_of).bars(ticker, as_of)
+            mark_price, source = (bars[-1]["close"], "bars") if bars else (None, None)
+            if mark_price is None and quotes_fn is not None:
+                q = quotes_fn(ticker)
+                if q is not None:
+                    mark_price, source = q, "quotes_rt"
+            if mark_price is None:
+                held += 1                      # no knowable mark -> HOLD, never fabricate
+                continue
+            unreal = _net_return(entry, mark_price, apply_costs=False)  # a mark is not a round-trip
+            mark_paper_position(conn, pos["id"], as_of, mark_price, unreal, source=source)
+            marked += 1
+    return {"marked": marked, "closed": closed, "held": held}
+
+
+def record_paper_outcome(conn: sqlite3.Connection, position: dict, realized_ret: float, *,
+                         embed=None) -> int:
+    """Persist ONE cited KB 'outcome' claim for a closed paper leg, citing the decision's OWN FIRST
+    evidence ref (cite-or-drop — the caller only calls this when evidence_refs is non-empty).
+
+    Handles BOTH ref shapes (C4): ``tool:fn#hash`` (snippet_hash = the post-# hash) and ``kb:<id>``
+    (no '#' -> snippet_hash = a stable hash of the whole ref). Does NOT reuse record_weekly_outcome
+    (which forces a weekly_base_rate citation a catalyst leg does not have — that would fabricate a
+    mismatched ref).
+    """
+    from catalyst_trader import kb
+
+    ref = position["evidence_refs"][0]
+    snippet_hash = ref.split("#", 1)[1] if "#" in ref else hashlib.sha256(ref.encode()).hexdigest()
+    ev = kb.EvidenceSource(
+        url=ref, retrieved_at=now_iso(), snippet_hash=snippet_hash,
+        quote=f"paper leg {position['ticker']} realized_ret={realized_ret}",
+    )
+    node = kb.KBNode(kind="outcome", attrs={
+        "kind": "paper_leg",
+        "ticker": position["ticker"],
+        "direction": position.get("direction"),
+        "size": position.get("size_pct"),
+        "realized_ret": realized_ret,
+        "win": realized_ret > 0,
+    })
+    return kb.insert_claim(conn, node, [ev], embed=embed,
+                           embed_text=f"paper leg {position['ticker']}" if embed else None)
