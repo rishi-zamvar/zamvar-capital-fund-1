@@ -25,6 +25,71 @@ from ..quant.portfolio import concentration, exposure
 from .runtime import run_structured
 
 
+# No magic literals: the sector-shock default lives here, read by DIRECT SUBSCRIPT so a missing
+# key RAISES (mirrors portfolio_builder.PARAMS / quant correlations PARAMS).
+BOOK_RISK_PARAMS = {"default_sector_shock": -0.10}  # XBI down-shock magnitude for the stress read
+
+
+def _leg_moves(t: TradeProposal):
+    """(per-name assumption dict, from_exit_plan). A catalyst leg's up/down/p come straight off the
+    RECONCILED proposal's exit_plan.ev_flip (what the desk ALREADY computed); a statistical/defensive
+    leg has no exit_plan, so only expected_return_pct is available and the engine defaults down_move/p."""
+    if t.exit_plan is not None:
+        f = t.exit_plan.ev_flip
+        return {"expected_move": f.upside, "down_move": f.downside, "p_positive": f.p}, True
+    return {"expected_move": t.expected_return_pct}, False
+
+
+def book_to_portfolio_inputs(book, *, corr_source=None, sector_shock=None):
+    """Map the assembled promoted book (list[StrategyDossier] OR list[TradeProposal]) into
+    build_portfolio's (positions, assumptions). PURE: no conn, no network, no LLM.
+
+    Per-name moves come from what the desk ALREADY computed (see `_leg_moves`). Only the TARGET legs
+    are mapped as positions — the committed weekly book == the target sizes (select_book budgets
+    targets, never peers), so a targets-only read IS the correct TARGET-LEG exposure/concentration.
+    The hedge's diversification enters through corr_source (kb.hedge_profile: peer corr + XBI beta ->
+    correlation-adjusted vol + sector-shock beta). The attached outcome is therefore a TARGET-LEG risk
+    read, NOT a whole-book gross: the long/long hedge peer is real deployed capital but carries no
+    size_pct/move this phase, so it is correctly excluded (fabricating peer notional would violate
+    no-fabrication).
+
+    A ticker appearing in two promoted legs (e.g. a catalyst leg + a statistical-sleeve leg on the same
+    name) AGGREGATES its size_pct into ONE position — build_portfolio's weights_by_ticker dict would
+    otherwise silently keep only the LAST leg and under-count exposure.
+
+    # ponytail: no fabricated peer move distribution — the desk carries none this phase. Upgrade path
+    #           needs BOTH a peer move estimate AND a peer size_pct; then add pos["hedge"] +
+    #           assumptions[peer] ADDITIVELY (targets-only stays correct until both land).
+    """
+    trades = [d.trade if isinstance(d, StrategyDossier) else d for d in book]
+    positions: list[dict] = []
+    pos_by_ticker: dict[str, dict] = {}
+    assumptions: dict = {}
+    from_exit: dict[str, bool] = {}
+    for t in trades:
+        ticker = t.target_long
+        moves, is_exit = _leg_moves(t)
+        if ticker in pos_by_ticker:
+            pos_by_ticker[ticker]["size_pct"] += t.size_pct           # aggregate duplicate legs
+            if is_exit and not from_exit[ticker]:
+                assumptions[ticker] = moves                           # richer exit_plan moves win
+                from_exit[ticker] = True
+            continue
+        side = "long" if t.direction == "positive" else "short"
+        pos = {"ticker": ticker, "side": side, "size_pct": t.size_pct}
+        pos_by_ticker[ticker] = pos
+        positions.append(pos)
+        assumptions[ticker] = moves
+        from_exit[ticker] = is_exit
+
+    assumptions["sector_shock"] = (
+        sector_shock if sector_shock is not None else BOOK_RISK_PARAMS["default_sector_shock"]
+    )
+    if corr_source is not None:
+        assumptions["corr_source"] = corr_source
+    return positions, assumptions
+
+
 @dataclass
 class Candidate:
     """A survivable leg offered to `select_book`. `size_pct` is the RECONCILED survival size

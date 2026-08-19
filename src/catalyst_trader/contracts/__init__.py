@@ -206,6 +206,9 @@ class PortfolioContext(BaseModel):
     concentration: float
     corr_to_open_positions: list[float]
     weekly_budget_remaining: float
+    portfolio_outcome: dict | None = None  # whole-book build_portfolio risk read (TARGET-LEG scope — the
+    # long/long hedge peer carries no size this phase); None until attached post-select_book. Additive:
+    # existing constructions omit it -> None (mirrors TradeProposal.hedge_profile optional-additive).
 
 
 class StrategyDossier(BaseModel):
