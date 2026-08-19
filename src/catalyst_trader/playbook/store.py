@@ -112,6 +112,35 @@ def insert_catalyst_record(conn, record: CatalystRecord, embed) -> int:
     return cat_id
 
 
+def stamp_axes(conn, cid, *, setups, disease_area, mechanism_class) -> int:
+    """Stamp the three retrieval-v2 axes (setups[] + disease_area + mechanism_class) onto the
+    catalyst node whose ref_id==cid, returning its node id (quick-260818-oto Task 1).
+
+    Mirrors backfill_outcome_fields' UPDATE discipline: SELECT the node -> json.loads(attrs_json)
+    -> overwrite the three axis keys -> UPDATE kb_node SET attrs_json -> commit. These axes are NOT
+    CatalystRecord fields, so content_sha never re-fires and insert_catalyst_record will not re-write
+    an already-populated node — an explicit UPDATE writer is REQUIRED (see module docstring).
+
+    Idempotent BY CONSTRUCTION: it overwrites (never appends), so re-stamping the same values leaves
+    attrs identical and never creates a second node. NEVER re-embeds (structural axes, not vectors)
+    and NEVER touches outcome/edge/citation rows. Raises ValueError on a missing cid — a re-tag wave
+    must not silently no-op a node that isn't there.
+    """
+    row = conn.execute(
+        "SELECT id, attrs_json FROM kb_node WHERE kind='catalyst' AND ref_id=? ORDER BY id DESC LIMIT 1",
+        (cid,),
+    ).fetchone()
+    if row is None:
+        raise ValueError(f"no catalyst node with ref_id={cid!r} to stamp axes onto (re-tag can't no-op)")
+    attrs = json.loads(row["attrs_json"]) if row["attrs_json"] else {}
+    attrs["setups"] = list(setups or [])
+    attrs["disease_area"] = disease_area
+    attrs["mechanism_class"] = mechanism_class
+    conn.execute("UPDATE kb_node SET attrs_json=? WHERE id=?", (json.dumps(attrs), row["id"]))
+    conn.commit()
+    return row["id"]
+
+
 def backfill_outcome_fields(conn, classifier_fn=None) -> int:
     """Re-stamp the two FIX-A honest fields (market_reaction + clinical_regulatory_outcome) onto
     EXISTING outcome nodes. Required because content_sha idempotency is over the RECORD, so re-running
