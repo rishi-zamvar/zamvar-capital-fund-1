@@ -340,6 +340,94 @@ def bars_asof(
     return out
 
 
+# --- daily price bars (quick-260819-p1x) ----------------------------------------------------
+# The intraweek-reflex backtest cache. A SEPARATE table from price_bar (migration 014): daily bars
+# key `trade_date` on the RAW trade date, so a same-Friday daily row must never collide with the
+# weekly price_bar substrate (UNIQUE(ticker, week_end)). Close mirrors of upsert_bars/bars_asof but
+# keyed + windowed on trade_date. Bars arrive in the get_daily_bars shape (week_end == trade date);
+# we map week_end -> trade_date on write and emit `week_end` on read so the reflex reads the SAME
+# key it always has. Storage only — no money math, no literals.
+
+
+def upsert_daily_bars(
+    conn: sqlite3.Connection,
+    ticker: str,
+    bars: list[dict],
+    *,
+    source: str = "fixture",
+    source_grade: str | None = None,
+    agreeing_sources: str | None = None,
+) -> int:
+    """UPSERT daily OHLCV bars for one ticker into daily_bar; return the count written.
+
+    Each dict = the get_daily_bars shape {"week_end"(=raw trade date),"open","high","low","close",
+    "volume", ...}. Idempotent on (ticker, trade_date): an existing date is UPDATED in place, never
+    duplicated (mirrors upsert_bars). Atomic — the whole batch commits or rolls back. Writes ONLY
+    daily_bar, never price_bar (the weekly substrate stays untouched — migration 014 isolation).
+    """
+    now = now_iso()
+    try:
+        for b in bars:
+            trade_date = b["week_end"]  # get_daily_bars keys the raw trade date in week_end
+            existing = conn.execute(
+                "SELECT id FROM daily_bar WHERE ticker=? AND trade_date=?",
+                (ticker, trade_date),
+            ).fetchone()
+            if existing is not None:
+                conn.execute(
+                    "UPDATE daily_bar SET open=?, high=?, low=?, close=?, volume=?, "
+                    "source=?, source_grade=?, agreeing_sources=?, retrieved_at=? WHERE id=?",
+                    (b.get("open"), b.get("high"), b.get("low"), b["close"], b.get("volume"),
+                     b.get("source", source), b.get("source_grade", source_grade),
+                     _agreeing(b, agreeing_sources), now, existing["id"]),
+                )
+            else:
+                conn.execute(
+                    "INSERT INTO daily_bar "
+                    "(ticker, trade_date, open, high, low, close, volume, source, "
+                    "source_grade, agreeing_sources, retrieved_at) "
+                    "VALUES (?,?,?,?,?,?,?,?,?,?,?)",
+                    (ticker, trade_date, b.get("open"), b.get("high"), b.get("low"),
+                     b["close"], b.get("volume"), b.get("source", source),
+                     b.get("source_grade", source_grade), _agreeing(b, agreeing_sources), now),
+                )
+        conn.commit()
+        return len(bars)
+    except Exception:
+        conn.rollback()
+        raise
+
+
+def _agreeing(bar: dict, default: str | None) -> str | None:
+    """get_daily_bars emits `agreeing_sources` as a set; store it comma-joined (or the caller default)."""
+    a = bar.get("agreeing_sources")
+    if a is None:
+        return default
+    return ",".join(sorted(a)) if isinstance(a, (set, frozenset, list, tuple)) else str(a)
+
+
+def daily_bars_asof(
+    conn: sqlite3.Connection,
+    ticker: str,
+    start: str,
+    end: str,
+) -> list[dict]:
+    """Point-in-time DAILY OHLCV read: bars for `ticker` windowed `start <= trade_date <= end`,
+    chronological. Mirrors bars_asof but on the daily_bar table + trade_date key. Emits `week_end`
+    (== trade_date) so the reflex/engine reads the same key it always has. The no-look-ahead window
+    is enforced by the caller (the provider's strict `as_of < week_end <= exec_hi` filter)."""
+    rows = conn.execute(
+        "SELECT trade_date, open, high, low, close, volume FROM daily_bar "
+        "WHERE ticker=? AND trade_date >= ? AND trade_date <= ? ORDER BY trade_date",
+        (ticker, start, end),
+    ).fetchall()
+    return [
+        {"week_end": r["trade_date"], "open": r["open"], "high": r["high"], "low": r["low"],
+         "close": r["close"], "volume": r["volume"]}
+        for r in rows
+    ]
+
+
 # --- company cards + scan-flag ledger (SCAN-01/02) ------------------------------------------
 # The per-company weekly vetting card substrate + the scan-flag audit ledger. Mirrors the
 # price-bar store verbatim: write-once per (ticker, week_end), read point-in-time via card_asof
