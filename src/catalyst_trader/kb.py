@@ -393,6 +393,40 @@ def _get_or_create_company(conn, ticker: str) -> int:
     ).lastrowid
 
 
+def stamp_hedge_profile(conn, ticker: str, profile: dict) -> int:
+    """Stamp the computed hedge_profile blob onto `ticker`'s company node, returning its node id
+    (HEDGE-CORR-1b). Mirrors playbook/store.stamp_axes' UPDATE discipline (NOT the catalyst-record
+    path): _get_or_create_company -> SELECT attrs_json -> json.loads -> overwrite the "hedge_profile"
+    key -> UPDATE kb_node -> commit.
+
+    Idempotent BY CONSTRUCTION: it overwrites (never appends), so re-stamping the same profile leaves
+    attrs identical and never creates a second node. Preserves existing keys (e.g. "ticker"). NEVER
+    re-embeds (company nodes carry no vector) and NEVER touches catalyst/outcome/edge/citation rows.
+    content_sha-safe: company nodes are not sha-gated, so an explicit UPDATE writer is REQUIRED — the
+    insert_catalyst_record path must never be used here.
+    """
+    node_id = _get_or_create_company(conn, ticker)
+    row = conn.execute("SELECT attrs_json FROM kb_node WHERE id=?", (node_id,)).fetchone()
+    attrs = json.loads(row["attrs_json"]) if row["attrs_json"] else {}
+    attrs["hedge_profile"] = profile
+    conn.execute("UPDATE kb_node SET attrs_json=? WHERE id=?", (json.dumps(attrs), node_id))
+    conn.commit()
+    return node_id
+
+
+def hedge_profile(conn, ticker: str) -> dict | None:
+    """Read back `ticker`'s stored hedge_profile blob (or None if unstamped). Mirrors the hedge_peers
+    reader shape: SELECT the company node by ticker, return attrs['hedge_profile'] or None."""
+    row = conn.execute(
+        "SELECT attrs_json FROM kb_node WHERE kind='company' "
+        "AND json_extract(attrs_json,'$.ticker')=?",
+        (ticker,),
+    ).fetchone()
+    if row is None:
+        return None
+    return json.loads(row["attrs_json"]).get("hedge_profile")
+
+
 def insert_hedge_peer(conn, name, peer, mechanism, payoff_direction, weight, evidence) -> int:
     """Store a hedge relationship for `name` as a CITED hedge_peer claim (KB-04).
 
