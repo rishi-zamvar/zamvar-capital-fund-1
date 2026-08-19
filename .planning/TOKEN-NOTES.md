@@ -301,3 +301,16 @@ Fable universe + pairs-discovery agents (event studies, FMP/yfinance metrics). T
 2. **Prefer live-verified real-data checks at phase close** for data/money-touching phases (the shakedown remains the highest-value verification; 6.9/6.10/6.11 all agree).
 3. **Don't babysit multi-minute live processes** (6.10 lesson): launch + signal + return; orchestrator owns the wait. (Not stressed in 6.11's fast run, but stands.)
 4. Prior directives still hold: Graphify graph-first, reuse-vs-new verdict up front, narrow per-phase research, tight files_to_read, plan-check ON for money phases, `.venv/bin/python -m pytest`, sequential-on-main execution, no-LLM-dates / cite-or-drop on any date-bearing extraction.
+
+### Phase 7.8 Slice 2.5 — Live Money-Dim Sourcing (financials + Form-4 ownership) (Tasks 1-2 done; Task 3 = human checkpoint)
+- **Executor spend:** single lean executor (2 code tasks). Exact subagent-token count is orchestrator-reported on completion, not self-measured here — tally line to be filled by the orchestrator.
+- **The plan-check pre-flight earned its cost again** (9th straight money slice): C1 (FINRA default lambda referencing an out-of-scope `as_of` → NameError at factory level) and C2 (short_interest_pct = si/shares-out, not float) were both flagged BEFORE execution and folded straight into the build — zero rework, zero re-run. C1 in particular is a bug TDD would have hit only at first live call. Resolving the finra default INSIDE the closure (where as_of binds) is the whole fix.
+- **The "already-a-free-seam / verify-the-API-is-real" pattern held:** edgartools Form-4 (`get_ownership_summary().net_change`) was verified against the installed 5.49.0 by the plan-checker BEFORE planning, so `insider_net` was built once against the real typed surface — no live-shakedown surprise. The offline fakes mirror that surface (per the 6.9 fixture directive).
+- **Single-fetch reuse (frugality) baked into the wiring:** one `edgar.fundamentals` call feeds BOTH the financials dim (cash/burn) AND the ownership dim (shares_outstanding) — no double EDGAR hit per candidate.
+- **Cost lever confirmed:** the whole slice was thin plumbing over already-built machinery (edgar.fundamentals, finra.fetch, recent_si_settlement, make_diligence_inputs) + one small new fetcher — reuse-vs-new verdict up front kept net-new code to `_monthly_burn` + `insider_net` + the closure sourcing block.
+
+### Directives carried to Slice 3/4 + Phase 8 (append to agent prompts)
+1. **Verify a 3rd-party API surface against the INSTALLED version before planning** (edgartools Form-4 was real on 5.49.0 → clean build). Pairs with the "real fixture shape" directive.
+2. **Resolve as_of-dependent provider defaults INSIDE the closure, never at factory level** (C1) — a default lambda capturing a name that only exists in the inner scope NameErrors; the offline suite won't catch it if the default is never exercised.
+3. **Money-dim assembly is whole-dict-or-omit** — a partial dict passed to a direct-subscript consumer (diligence.py:269) KeyErrors; omit the whole key + flag. 0.0 is a real grounding datum, only None/absent degrades.
+4. All prior directives still hold (real fixtures, live check at close, don't babysit long-running live steps, Graphify graph-first, reuse-vs-new, plan-check ON for money, `.venv/bin/python -m pytest`).
