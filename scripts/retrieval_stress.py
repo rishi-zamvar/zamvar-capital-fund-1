@@ -26,6 +26,11 @@ _REPORT_DEFAULT = (
     / "260818-l64-situational-setup-taxonomy-derive-tag-47" / "retrieval_stress.json"
 )
 
+_REPORT_V2_DEFAULT = (
+    Path(__file__).resolve().parents[1] / ".planning" / "quick"
+    / "260818-oto-retrieval-v2-llm-re-tag-470-setups-disea" / "retrieval_stress_v2.json"
+)
+
 
 # ── pure math (unit-tested offline, no DB) ────────────────────────────────────
 
@@ -54,9 +59,24 @@ def _aggregate(per_cid: list[dict]) -> dict:
             per.append(sum(overlaps) / len(overlaps))
         return sum(per) / len(per) if per else 0.0
 
+    def _cohort_matched_mean(records: list[dict]) -> float:
+        """Mean matched-axis count over the AFTER cohort (v2). Each after-result may carry a
+        "matched_axes" list (v2); v1-shaped records without it contribute 0.0 — the headline that
+        proves v2 retrieves MORE shared axes than v1's setup-only overlap. Pure, no DB."""
+        per = []
+        for rec in records:
+            results = rec.get("after") or []
+            if not results:
+                per.append(0.0)
+                continue
+            counts = [len(r.get("matched_axes") or []) for r in results]
+            per.append(sum(counts) / len(counts))
+        return sum(per) / len(per) if per else 0.0
+
     return {
         "mean_overlap_before": _cohort_mean(per_cid, "before"),
         "mean_overlap_after": _cohort_mean(per_cid, "after"),
+        "mean_matched_axes_after": _cohort_matched_mean(per_cid),
         "n": len(per_cid),
     }
 
@@ -86,6 +106,62 @@ def _result_row(with_outcome: dict) -> dict:
         "indication": cat.get("indication"),
         "setups": cat.get("setups") or [],
     }
+
+
+def _result_row_v2(with_outcome: dict) -> dict:
+    """Trim a v2 analog_query_v2 result to the report shape, adding the v2 axes + matched_axes."""
+    row = _result_row(with_outcome)
+    cat = with_outcome.get("catalyst") or {}
+    row["disease_area"] = cat.get("disease_area")
+    row["mechanism_class"] = cat.get("mechanism_class")
+    row["matched_axes"] = with_outcome.get("matched_axes") or []
+    return row
+
+
+def _run_one_v2(conn, kb, embed, cid: int, k: int) -> dict | None:
+    """One held-out cid, v2 (quick-260818-oto): read the node's OWN stored axes
+    (setups/disease_area/mechanism_class), run BEFORE = v1 type-only analog_query and AFTER = v2
+    inclusive multi-axis analog_query_v2, return the per-cid record — or None if the node is absent."""
+    row = conn.execute(
+        "SELECT id, attrs_json FROM kb_node WHERE kind='catalyst' AND ref_id=? ORDER BY id DESC LIMIT 1",
+        (cid,),
+    ).fetchone()
+    if row is None:
+        return None
+    attrs = json.loads(row["attrs_json"]) if row["attrs_json"] else {}
+    ctype = attrs.get("type")
+    thesis = (attrs.get("narrative_before") or {}).get("thesis", "")
+    context = f"{ctype} catalyst: {thesis}"  # the builder's query context (no ticker)
+    q_setups = attrs.get("setups") or []
+    q_disease = attrs.get("disease_area")
+    q_mech = attrs.get("mechanism_class")
+
+    before = kb.analog_query(conn, embed, context, filters={"type": ctype}, k=k)
+    res = kb.analog_query_v2(conn, embed, context, ctype=ctype, disease_area=q_disease,
+                             mechanism_class=q_mech, setups=q_setups, k=k)
+    return {
+        "cid": cid,
+        "query_setups": q_setups,
+        "query_disease_area": q_disease,
+        "query_mechanism_class": q_mech,
+        "retrieval_confidence": res["retrieval_confidence"],
+        "n_candidates": res["n_candidates"],
+        "before": [_result_row(r) for r in before],
+        "after": [_result_row_v2(r) for r in res["analogs"]],
+    }
+
+
+def _default_cids_v2() -> list[int]:
+    """Held-out cids drawn from the v2 vocab's per-setup example_cids (data/setup_taxonomy_v2.json)."""
+    vocab_path = Path(__file__).resolve().parents[1] / "data" / "setup_taxonomy_v2.json"
+    vocab = json.loads(vocab_path.read_text())
+    seen, out = set(), []
+    for s in vocab["setups"]:
+        for cid in (s.get("example_cids") or [])[:2]:
+            if cid not in seen:
+                seen.add(cid)
+                out.append(cid)
+    return out
 
 
 def _run_one(conn, kb, embed, cid: int, k: int) -> dict | None:
@@ -118,32 +194,41 @@ def main(argv=None) -> dict:
     ap.add_argument("--cids", help="comma-separated held-out catalyst ids (default: taxonomy example_cids)")
     ap.add_argument("--k", type=int, default=5, help="analogs per query (default 5)")
     ap.add_argument("--db", default=None, help="sqlite path (default: settings.db_path)")
-    ap.add_argument("--out", default=str(_REPORT_DEFAULT), help="JSON report output path")
+    ap.add_argument("--v2", action="store_true",
+                    help="AFTER cohort = v2 inclusive multi-axis recall (analog_query_v2) on the "
+                         "node's stored setups/disease_area/mechanism_class (quick-260818-oto)")
+    ap.add_argument("--out", default=None, help="JSON report output path (default depends on --v2)")
     args = ap.parse_args(argv)
 
     # DB + heavy imports are lazy so `--help` (and the offline unit tests) never open a DB.
     from catalyst_trader import db as _db
     from catalyst_trader import kb
 
-    cids = [int(c) for c in args.cids.split(",")] if args.cids else _default_cids()
+    if args.cids:
+        cids = [int(c) for c in args.cids.split(",")]
+    else:
+        cids = _default_cids_v2() if args.v2 else _default_cids()
+    runner = _run_one_v2 if args.v2 else _run_one
     conn = _db.connect(args.db)  # open the EXISTING live DB (no migrate)
     embed = kb.default_embedder()
     try:
         per_cid, missing = [], []
         for cid in cids:
-            rec = _run_one(conn, kb, embed, cid, args.k)
+            rec = runner(conn, kb, embed, cid, args.k)
             (per_cid if rec is not None else missing).append(rec if rec is not None else cid)
     finally:
         conn.close()
 
     report = {"aggregate": _aggregate(per_cid), "missing_cids": missing, "per_cid": per_cid}
-    out = Path(args.out)
+    out = Path(args.out) if args.out else (_REPORT_V2_DEFAULT if args.v2 else _REPORT_DEFAULT)
     out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text(json.dumps(report, indent=2, default=str))
     agg = report["aggregate"]
     print(f"held-out cids: {len(per_cid)} present, {len(missing)} missing")
     print(f"mean setup-overlap  BEFORE={agg['mean_overlap_before']:.3f}  "
           f"AFTER={agg['mean_overlap_after']:.3f}  (n={agg['n']})")
+    if args.v2:
+        print(f"mean matched-axes   AFTER={agg['mean_matched_axes_after']:.3f}")
     print(f"report: {out}")
     return report
 
