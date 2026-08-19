@@ -263,6 +263,7 @@ None yet.
 |---|-------------|------|--------|--------|-----------|
 | 260818-l64 | Situational-setup taxonomy: derive, tag 470 nodes, wire into analog retrieval, re-run stress test | 2026-08-18 | ef796ef | Verified (v1 held all 5 desk grades — foundation, not yet a win; see FINDINGS) | [260818-l64](./quick/260818-l64-situational-setup-taxonomy-derive-tag-47/) |
 | 260818-n98 | Tier-1 data-integrity: de-conflate labels (clinical vs market reaction, ~10 crl→approved) + verify moves (0 divergences, corpus sound) + clean catalyst_source (324 pruned) | 2026-08-19 | 59a0c04 | Verified 6/6 | [260818-n98](./quick/260818-n98-tier-1-data-integrity-de-conflate-labels/) |
+| 260818-oto | Tier-2a retrieval v2: LLM re-tag 470 (setups+disease_area+mechanism_class) + inclusive-recall/multi-axis rarity rerank + confidence. Stress test: 2 OK→STRONG, both WEAK→OK (SRRK/VERA flipped), 0 regressions | 2026-08-19 | 865987e | Verified 7/7 | [260818-oto](./quick/260818-oto-retrieval-v2-llm-re-tag-470-setups-disea/) |
 
 ### Blockers/Concerns
 

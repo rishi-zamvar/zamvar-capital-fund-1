@@ -1,0 +1,579 @@
+[
+ {
+  "query_cid": 855,
+  "ticker": "SRRK",
+  "type": "trial_readout",
+  "disease_area": "neuromuscular",
+  "mechanism_class": "monoclonal-antibody",
+  "setups": [
+   "pivotal-company-defining-binary",
+   "first-in-class-no-approved-therapy-whitespace"
+  ],
+  "retrieval_confidence": "ok",
+  "actual": {
+   "clin": "hit",
+   "mkt": "surged",
+   "move": 2.743
+  },
+  "analogs": [
+   {
+    "ticker": "ANNX",
+    "da": "immunology-inflammation",
+    "mech": "monoclonal-antibody",
+    "matched_axes": [
+     "setup:pivotal-company-defining-binary",
+     "setup:first-in-class-no-approved-therapy-whitespace",
+     "mechanism_class"
+    ],
+    "clin": "hit",
+    "mkt": "surged",
+    "move": 0.286
+   },
+   {
+    "ticker": "SVRA",
+    "da": "respiratory",
+    "mech": "recombinant-protein-enzyme-biologic",
+    "matched_axes": [
+     "setup:pivotal-company-defining-binary",
+     "setup:first-in-class-no-approved-therapy-whitespace"
+    ],
+    "clin": "mixed",
+    "mkt": "flat",
+    "move": 0.027
+   },
+   {
+    "ticker": "DNLI",
+    "da": "rare-genetic-metabolic",
+    "mech": "recombinant-protein-enzyme-biologic",
+    "matched_axes": [
+     "setup:first-in-class-no-approved-therapy-whitespace",
+     "setup:pivotal-company-defining-binary"
+    ],
+    "clin": "beat",
+    "mkt": "popped",
+    "move": 0.089
+   },
+   {
+    "ticker": "ATNM",
+    "da": "oncology-heme",
+    "mech": "adc-radioconjugate",
+    "matched_axes": [
+     "setup:pivotal-company-defining-binary",
+     "setup:first-in-class-no-approved-therapy-whitespace"
+    ],
+    "clin": "hit",
+    "mkt": "surged",
+    "move": 0.481
+   },
+   {
+    "ticker": "KRYS",
+    "da": "dermatology",
+    "mech": "gene-therapy",
+    "matched_axes": [
+     "setup:pivotal-company-defining-binary",
+     "setup:first-in-class-no-approved-therapy-whitespace"
+    ],
+    "clin": "hit",
+    "mkt": "surged",
+    "move": 0.75
+   },
+   {
+    "ticker": "TRVI",
+    "da": "dermatology",
+    "mech": "small-molecule-cns",
+    "matched_axes": [
+     "setup:pivotal-company-defining-binary",
+     "setup:first-in-class-no-approved-therapy-whitespace"
+    ],
+    "clin": "hit",
+    "mkt": "surged",
+    "move": 0.446
+   },
+   {
+    "ticker": "KRYS",
+    "da": "dermatology",
+    "mech": "gene-therapy",
+    "matched_axes": [
+     "setup:pivotal-company-defining-binary",
+     "setup:first-in-class-no-approved-therapy-whitespace"
+    ],
+    "clin": "approved",
+    "mkt": "popped",
+    "move": 0.052
+   },
+   {
+    "ticker": "INSM",
+    "da": "respiratory",
+    "mech": "small-molecule-enzyme-receptor",
+    "matched_axes": [
+     "setup:pivotal-company-defining-binary",
+     "setup:first-in-class-no-approved-therapy-whitespace"
+    ],
+    "clin": "mixed",
+    "mkt": "surged",
+    "move": 1.59
+   }
+  ]
+ },
+ {
+  "query_cid": 706,
+  "ticker": "VERA",
+  "type": "trial_readout",
+  "disease_area": "nephrology",
+  "mechanism_class": "april-blys-baff-fusion",
+  "setups": [
+   "early-mid-stage-single-asset-signal"
+  ],
+  "retrieval_confidence": "thin",
+  "actual": {
+   "clin": "hit",
+   "mkt": "crashed",
+   "move": -0.711
+  },
+  "analogs": [
+   {
+    "ticker": "TVTX",
+    "da": "nephrology",
+    "mech": "small-molecule-enzyme-receptor",
+    "matched_axes": [
+     "disease_area"
+    ],
+    "clin": "miss",
+    "mkt": "flat",
+    "move": -0.025
+   },
+   {
+    "ticker": "PLX",
+    "da": "nephrology",
+    "mech": "recombinant-protein-enzyme-biologic",
+    "matched_axes": [
+     "disease_area"
+    ],
+    "clin": "hit",
+    "mkt": "surged",
+    "move": 0.486
+   },
+   {
+    "ticker": "ARDX",
+    "da": "nephrology",
+    "mech": "small-molecule-enzyme-receptor",
+    "matched_axes": [
+     "disease_area"
+    ],
+    "clin": "miss",
+    "mkt": "crashed",
+    "move": -0.211
+   },
+   {
+    "ticker": "ARDX",
+    "da": "nephrology",
+    "mech": "small-molecule-enzyme-receptor",
+    "matched_axes": [
+     "disease_area"
+    ],
+    "clin": "beat",
+    "mkt": "surged",
+    "move": 0.195
+   },
+   {
+    "ticker": "ELOX",
+    "da": "nephrology",
+    "mech": "small-molecule-other",
+    "matched_axes": [
+     "disease_area"
+    ],
+    "clin": "miss",
+    "mkt": "unknown",
+    "move": null
+   },
+   {
+    "ticker": "ARDX",
+    "da": "nephrology",
+    "mech": "small-molecule-enzyme-receptor",
+    "matched_axes": [
+     "disease_area"
+    ],
+    "clin": "mixed",
+    "mkt": "surged",
+    "move": 0.171
+   },
+   {
+    "ticker": "LONA",
+    "da": "neurodegeneration",
+    "mech": "small-molecule-cns",
+    "matched_axes": [
+     "setup:early-mid-stage-single-asset-signal"
+    ],
+    "clin": "miss",
+    "mkt": "crashed",
+    "move": -0.676
+   },
+   {
+    "ticker": "BIVI",
+    "da": "neurodegeneration",
+    "mech": "small-molecule-other",
+    "matched_axes": [
+     "setup:early-mid-stage-single-asset-signal"
+    ],
+    "clin": "hit",
+    "mkt": "flat",
+    "move": 0.019
+   }
+  ]
+ },
+ {
+  "query_cid": 793,
+  "ticker": "GOSS",
+  "type": "earnings",
+  "disease_area": "cardiovascular",
+  "mechanism_class": "small-molecule-other",
+  "setups": [
+   "no-new-information-nonevent"
+  ],
+  "retrieval_confidence": "ok",
+  "actual": {
+   "clin": "inline",
+   "mkt": "flat",
+   "move": -0.009
+  },
+  "analogs": [
+   {
+    "ticker": "BBIO",
+    "da": "cardiovascular",
+    "mech": "small-molecule-other",
+    "matched_axes": [
+     "setup:no-new-information-nonevent",
+     "disease_area",
+     "mechanism_class"
+    ],
+    "clin": "inline",
+    "mkt": "flat",
+    "move": -0.029
+   },
+   {
+    "ticker": "BBIO",
+    "da": "cardiovascular",
+    "mech": "small-molecule-other",
+    "matched_axes": [
+     "setup:no-new-information-nonevent",
+     "disease_area",
+     "mechanism_class"
+    ],
+    "clin": "inline",
+    "mkt": "flat",
+    "move": -0.004
+   },
+   {
+    "ticker": "BBIO",
+    "da": "cardiovascular",
+    "mech": "small-molecule-other",
+    "matched_axes": [
+     "disease_area",
+     "mechanism_class"
+    ],
+    "clin": "hit",
+    "mkt": "surged",
+    "move": 0.891
+   },
+   {
+    "ticker": "TBPH",
+    "da": "cardiovascular",
+    "mech": "small-molecule-other",
+    "matched_axes": [
+     "disease_area",
+     "mechanism_class"
+    ],
+    "clin": "mixed",
+    "mkt": "faded",
+    "move": -0.116
+   },
+   {
+    "ticker": "GOSS",
+    "da": "cardiovascular",
+    "mech": "small-molecule-kinase-targeted-onc",
+    "matched_axes": [
+     "setup:no-new-information-nonevent",
+     "disease_area"
+    ],
+    "clin": "mixed",
+    "mkt": "popped",
+    "move": 0.04
+   },
+   {
+    "ticker": "IONS",
+    "da": "cardiovascular",
+    "mech": "antisense-oligonucleotide",
+    "matched_axes": [
+     "setup:no-new-information-nonevent",
+     "disease_area"
+    ],
+    "clin": "miss",
+    "mkt": "faded",
+    "move": -0.05
+   },
+   {
+    "ticker": "CYTK",
+    "da": "cardiovascular",
+    "mech": "small-molecule-enzyme-receptor",
+    "matched_axes": [
+     "setup:no-new-information-nonevent",
+     "disease_area"
+    ],
+    "clin": "inline",
+    "mkt": "flat",
+    "move": 0.009
+   },
+   {
+    "ticker": "ALNY",
+    "da": "cardiovascular",
+    "mech": "sirna-rnai",
+    "matched_axes": [
+     "setup:no-new-information-nonevent",
+     "disease_area"
+    ],
+    "clin": "beat",
+    "mkt": "flat",
+    "move": -0.014
+   }
+  ]
+ },
+ {
+  "query_cid": 476,
+  "ticker": "INSM",
+  "type": "pdufa",
+  "disease_area": "respiratory",
+  "mechanism_class": "small-molecule-enzyme-receptor",
+  "setups": [
+   "first-in-class-no-approved-therapy-whitespace",
+   "priced-in-derisked-readout"
+  ],
+  "retrieval_confidence": "ok",
+  "actual": {
+   "clin": "approved",
+   "mkt": "popped",
+   "move": 0.132
+  },
+  "analogs": [
+   {
+    "ticker": "INSM",
+    "da": "respiratory",
+    "mech": "small-molecule-enzyme-receptor",
+    "matched_axes": [
+     "setup:first-in-class-no-approved-therapy-whitespace",
+     "disease_area",
+     "mechanism_class"
+    ],
+    "clin": "mixed",
+    "mkt": "surged",
+    "move": 1.59
+   },
+   {
+    "ticker": "TVTX",
+    "da": "nephrology",
+    "mech": "small-molecule-enzyme-receptor",
+    "matched_axes": [
+     "setup:priced-in-derisked-readout",
+     "setup:first-in-class-no-approved-therapy-whitespace",
+     "mechanism_class"
+    ],
+    "clin": "hit",
+    "mkt": "flat",
+    "move": 0.028
+   },
+   {
+    "ticker": "MDGL",
+    "da": "gastroenterology-hepatology",
+    "mech": "small-molecule-enzyme-receptor",
+    "matched_axes": [
+     "setup:priced-in-derisked-readout",
+     "setup:first-in-class-no-approved-therapy-whitespace",
+     "mechanism_class"
+    ],
+    "clin": "hit",
+    "mkt": "flat",
+    "move": -0.006
+   },
+   {
+    "ticker": "INSM",
+    "da": "respiratory",
+    "mech": "small-molecule-enzyme-receptor",
+    "matched_axes": [
+     "setup:priced-in-derisked-readout",
+     "disease_area",
+     "mechanism_class"
+    ],
+    "clin": "inline",
+    "mkt": "flat",
+    "move": -0.008
+   },
+   {
+    "ticker": "TRVI",
+    "da": "respiratory",
+    "mech": "reformulation-delivery-device",
+    "matched_axes": [
+     "setup:first-in-class-no-approved-therapy-whitespace",
+     "disease_area"
+    ],
+    "clin": "hit",
+    "mkt": "surged",
+    "move": 0.465
+   },
+   {
+    "ticker": "SVRA",
+    "da": "respiratory",
+    "mech": "recombinant-protein-enzyme-biologic",
+    "matched_axes": [
+     "setup:first-in-class-no-approved-therapy-whitespace",
+     "disease_area"
+    ],
+    "clin": "mixed",
+    "mkt": "flat",
+    "move": 0.027
+   },
+   {
+    "ticker": "KRYS",
+    "da": "dermatology",
+    "mech": "gene-therapy",
+    "matched_axes": [
+     "setup:first-in-class-no-approved-therapy-whitespace",
+     "setup:priced-in-derisked-readout"
+    ],
+    "clin": "approved",
+    "mkt": "popped",
+    "move": 0.052
+   },
+   {
+    "ticker": "SNDX",
+    "da": "oncology-heme",
+    "mech": "monoclonal-antibody",
+    "matched_axes": [
+     "setup:priced-in-derisked-readout",
+     "setup:first-in-class-no-approved-therapy-whitespace"
+    ],
+    "clin": "hit",
+    "mkt": "popped",
+    "move": 0.108
+   }
+  ]
+ },
+ {
+  "query_cid": 347,
+  "ticker": "DNLI",
+  "type": "earnings",
+  "disease_area": "rare-genetic-metabolic",
+  "mechanism_class": "recombinant-protein-enzyme-biologic",
+  "setups": [
+   "pivotal-company-defining-binary",
+   "no-new-information-nonevent"
+  ],
+  "retrieval_confidence": "ok",
+  "actual": {
+   "clin": "beat",
+   "mkt": "popped",
+   "move": 0.061
+  },
+  "analogs": [
+   {
+    "ticker": "DNLI",
+    "da": "rare-genetic-metabolic",
+    "mech": "recombinant-protein-enzyme-biologic",
+    "matched_axes": [
+     "setup:pivotal-company-defining-binary",
+     "disease_area",
+     "mechanism_class"
+    ],
+    "clin": "beat",
+    "mkt": "popped",
+    "move": 0.089
+   },
+   {
+    "ticker": "SYRE",
+    "da": "rare-genetic-metabolic",
+    "mech": "recombinant-protein-enzyme-biologic",
+    "matched_axes": [
+     "setup:pivotal-company-defining-binary",
+     "disease_area",
+     "mechanism_class"
+    ],
+    "clin": "mixed",
+    "mkt": "crashed",
+    "move": -0.417
+   },
+   {
+    "ticker": "DNLI",
+    "da": "rare-genetic-metabolic",
+    "mech": "recombinant-protein-enzyme-biologic",
+    "matched_axes": [
+     "setup:no-new-information-nonevent",
+     "disease_area",
+     "mechanism_class"
+    ],
+    "clin": "inline",
+    "mkt": "faded",
+    "move": -0.098
+   },
+   {
+    "ticker": "SVRA",
+    "da": "respiratory",
+    "mech": "recombinant-protein-enzyme-biologic",
+    "matched_axes": [
+     "setup:pivotal-company-defining-binary",
+     "setup:no-new-information-nonevent",
+     "mechanism_class"
+    ],
+    "clin": "mixed",
+    "mkt": "flat",
+    "move": 0.027
+   },
+   {
+    "ticker": "SVRA",
+    "da": "respiratory",
+    "mech": "recombinant-protein-enzyme-biologic",
+    "matched_axes": [
+     "setup:no-new-information-nonevent",
+     "setup:pivotal-company-defining-binary",
+     "mechanism_class"
+    ],
+    "clin": "mixed",
+    "mkt": "flat",
+    "move": -0.016
+   },
+   {
+    "ticker": "DNLI",
+    "da": "rare-genetic-metabolic",
+    "mech": "recombinant-protein-enzyme-biologic",
+    "matched_axes": [
+     "disease_area",
+     "mechanism_class"
+    ],
+    "clin": "miss",
+    "mkt": "surged",
+    "move": 0.171
+   },
+   {
+    "ticker": "CTXR",
+    "da": "oncology-heme",
+    "mech": "recombinant-protein-enzyme-biologic",
+    "matched_axes": [
+     "setup:pivotal-company-defining-binary",
+     "mechanism_class"
+    ],
+    "clin": "crl",
+    "mkt": "faded",
+    "move": -0.036
+   },
+   {
+    "ticker": "PLX",
+    "da": "nephrology",
+    "mech": "recombinant-protein-enzyme-biologic",
+    "matched_axes": [
+     "setup:pivotal-company-defining-binary",
+     "mechanism_class"
+    ],
+    "clin": "hit",
+    "mkt": "surged",
+    "move": 0.486
+   }
+  ]
+ }
+]

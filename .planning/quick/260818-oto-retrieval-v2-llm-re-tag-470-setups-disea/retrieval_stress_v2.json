@@ -1,0 +1,879 @@
+{
+  "aggregate": {
+    "mean_overlap_before": 1.2,
+    "mean_overlap_after": 1.7333333333333334,
+    "mean_matched_axes_after": 3.5,
+    "n": 6
+  },
+  "missing_cids": [],
+  "per_cid": [
+    {
+      "cid": 139,
+      "query_setups": [
+        "no-new-information-nonevent",
+        "early-mid-stage-single-asset-signal"
+      ],
+      "query_disease_area": "immunology-inflammation",
+      "query_mechanism_class": "april-blys-baff-fusion",
+      "retrieval_confidence": "ok",
+      "n_candidates": 358,
+      "before": [
+        {
+          "node_id": 205,
+          "ticker": "ZURA",
+          "indication": "Hidradenitis suppurativa and systemic sclerosis (autoimmune/inflammatory)",
+          "setups": [
+            "no-new-information-nonevent",
+            "first-in-class-no-approved-therapy-whitespace"
+          ]
+        },
+        {
+          "node_id": 308,
+          "ticker": "ZURA",
+          "indication": "Hidradenitis suppurativa and systemic sclerosis (autoimmune/inflammatory)",
+          "setups": [
+            "no-new-information-nonevent",
+            "early-mid-stage-single-asset-signal"
+          ]
+        },
+        {
+          "node_id": 462,
+          "ticker": "ZURA",
+          "indication": "Hidradenitis suppurativa and systemic sclerosis (autoimmune/inflammatory)",
+          "setups": [
+            "no-new-information-nonevent",
+            "strategic-transaction-capital-injection",
+            "early-mid-stage-single-asset-signal"
+          ]
+        },
+        {
+          "node_id": 258,
+          "ticker": "ZURA",
+          "indication": "Hidradenitis suppurativa and systemic sclerosis (autoimmune/inflammatory)",
+          "setups": [
+            "early-mid-stage-single-asset-signal",
+            "financing-overhang-going-concern"
+          ]
+        },
+        {
+          "node_id": 399,
+          "ticker": "ZURA",
+          "indication": "Hidradenitis suppurativa and systemic sclerosis (autoimmune/inflammatory)",
+          "setups": [
+            "early-mid-stage-single-asset-signal",
+            "no-new-information-nonevent"
+          ]
+        }
+      ],
+      "after": [
+        {
+          "node_id": 308,
+          "ticker": "ZURA",
+          "indication": "Hidradenitis suppurativa and systemic sclerosis (autoimmune/inflammatory)",
+          "setups": [
+            "no-new-information-nonevent",
+            "early-mid-stage-single-asset-signal"
+          ],
+          "disease_area": "immunology-inflammation",
+          "mechanism_class": "april-blys-baff-fusion",
+          "matched_axes": [
+            "setup:no-new-information-nonevent",
+            "setup:early-mid-stage-single-asset-signal",
+            "disease_area",
+            "mechanism_class"
+          ]
+        },
+        {
+          "node_id": 462,
+          "ticker": "ZURA",
+          "indication": "Hidradenitis suppurativa and systemic sclerosis (autoimmune/inflammatory)",
+          "setups": [
+            "no-new-information-nonevent",
+            "strategic-transaction-capital-injection",
+            "early-mid-stage-single-asset-signal"
+          ],
+          "disease_area": "immunology-inflammation",
+          "mechanism_class": "april-blys-baff-fusion",
+          "matched_axes": [
+            "setup:no-new-information-nonevent",
+            "setup:early-mid-stage-single-asset-signal",
+            "disease_area",
+            "mechanism_class"
+          ]
+        },
+        {
+          "node_id": 399,
+          "ticker": "ZURA",
+          "indication": "Hidradenitis suppurativa and systemic sclerosis (autoimmune/inflammatory)",
+          "setups": [
+            "early-mid-stage-single-asset-signal",
+            "no-new-information-nonevent"
+          ],
+          "disease_area": "immunology-inflammation",
+          "mechanism_class": "april-blys-baff-fusion",
+          "matched_axes": [
+            "setup:early-mid-stage-single-asset-signal",
+            "setup:no-new-information-nonevent",
+            "disease_area",
+            "mechanism_class"
+          ]
+        },
+        {
+          "node_id": 362,
+          "ticker": "ZURA",
+          "indication": "Hidradenitis suppurativa and systemic sclerosis (autoimmune/inflammatory)",
+          "setups": [
+            "no-new-information-nonevent",
+            "early-mid-stage-single-asset-signal"
+          ],
+          "disease_area": "immunology-inflammation",
+          "mechanism_class": "april-blys-baff-fusion",
+          "matched_axes": [
+            "setup:no-new-information-nonevent",
+            "setup:early-mid-stage-single-asset-signal",
+            "disease_area",
+            "mechanism_class"
+          ]
+        },
+        {
+          "node_id": 258,
+          "ticker": "ZURA",
+          "indication": "Hidradenitis suppurativa and systemic sclerosis (autoimmune/inflammatory)",
+          "setups": [
+            "early-mid-stage-single-asset-signal",
+            "financing-overhang-going-concern"
+          ],
+          "disease_area": "immunology-inflammation",
+          "mechanism_class": "april-blys-baff-fusion",
+          "matched_axes": [
+            "setup:early-mid-stage-single-asset-signal",
+            "disease_area",
+            "mechanism_class"
+          ]
+        }
+      ]
+    },
+    {
+      "cid": 201,
+      "query_setups": [
+        "pivotal-company-defining-binary",
+        "first-in-class-no-approved-therapy-whitespace"
+      ],
+      "query_disease_area": "immunology-inflammation",
+      "query_mechanism_class": "monoclonal-antibody",
+      "retrieval_confidence": "ok",
+      "n_candidates": 324,
+      "before": [
+        {
+          "node_id": 555,
+          "ticker": "ANNX",
+          "indication": "Guillain-Barr\u00e9 Syndrome (GBS)",
+          "setups": [
+            "pivotal-company-defining-binary",
+            "first-in-class-no-approved-therapy-whitespace"
+          ]
+        },
+        {
+          "node_id": 509,
+          "ticker": "ANNX",
+          "indication": "Guillain-Barr\u00e9 Syndrome (GBS)",
+          "setups": [
+            "first-in-class-no-approved-therapy-whitespace",
+            "pivotal-company-defining-binary"
+          ]
+        },
+        {
+          "node_id": 127,
+          "ticker": "ADCT",
+          "indication": "2L+ diffuse large B-cell lymphoma (confirmatory combination with rituximab)",
+          "setups": [
+            "os-miss-despite-soft-endpoint-hit",
+            "single-asset-going-concern-binary",
+            "financing-overhang-going-concern"
+          ]
+        },
+        {
+          "node_id": 420,
+          "ticker": "PLX",
+          "indication": "Fabry disease (adult patients with deteriorating renal function; ERT-experienced switch population)",
+          "setups": [
+            "pivotal-company-defining-binary",
+            "cmc-manufacturing-regulatory-risk"
+          ]
+        },
+        {
+          "node_id": 1154,
+          "ticker": "BXRXQ",
+          "indication": "Acute pain (legacy) / procedural neuromuscular blockade",
+          "setups": [
+            "financing-overhang-going-concern"
+          ]
+        }
+      ],
+      "after": [
+        {
+          "node_id": 555,
+          "ticker": "ANNX",
+          "indication": "Guillain-Barr\u00e9 Syndrome (GBS)",
+          "setups": [
+            "pivotal-company-defining-binary",
+            "first-in-class-no-approved-therapy-whitespace"
+          ],
+          "disease_area": "immunology-inflammation",
+          "mechanism_class": "monoclonal-antibody",
+          "matched_axes": [
+            "setup:pivotal-company-defining-binary",
+            "setup:first-in-class-no-approved-therapy-whitespace",
+            "disease_area",
+            "mechanism_class"
+          ]
+        },
+        {
+          "node_id": 509,
+          "ticker": "ANNX",
+          "indication": "Guillain-Barr\u00e9 Syndrome (GBS)",
+          "setups": [
+            "first-in-class-no-approved-therapy-whitespace",
+            "pivotal-company-defining-binary"
+          ],
+          "disease_area": "immunology-inflammation",
+          "mechanism_class": "monoclonal-antibody",
+          "matched_axes": [
+            "setup:first-in-class-no-approved-therapy-whitespace",
+            "setup:pivotal-company-defining-binary",
+            "disease_area",
+            "mechanism_class"
+          ]
+        },
+        {
+          "node_id": 1678,
+          "ticker": "ZBIO",
+          "indication": "IgG4-related disease (BLA filed); SLE; multiple sclerosis",
+          "setups": [
+            "no-new-information-nonevent",
+            "first-in-class-no-approved-therapy-whitespace"
+          ],
+          "disease_area": "immunology-inflammation",
+          "mechanism_class": "monoclonal-antibody",
+          "matched_axes": [
+            "setup:first-in-class-no-approved-therapy-whitespace",
+            "disease_area",
+            "mechanism_class"
+          ]
+        },
+        {
+          "node_id": 952,
+          "ticker": "SRRK",
+          "indication": "Spinal muscular atrophy (Types 2/3, nonambulatory, on standard-of-care nusinersen or risdiplam)",
+          "setups": [
+            "pivotal-company-defining-binary",
+            "first-in-class-no-approved-therapy-whitespace"
+          ],
+          "disease_area": "neuromuscular",
+          "mechanism_class": "monoclonal-antibody",
+          "matched_axes": [
+            "setup:pivotal-company-defining-binary",
+            "setup:first-in-class-no-approved-therapy-whitespace",
+            "mechanism_class"
+          ]
+        },
+        {
+          "node_id": 324,
+          "ticker": "RZLT",
+          "indication": "Tumor hyperinsulinism (ersodetug pivotal)",
+          "setups": [
+            "pivotal-company-defining-binary",
+            "first-in-class-no-approved-therapy-whitespace"
+          ],
+          "disease_area": "endocrine-obesity",
+          "mechanism_class": "monoclonal-antibody",
+          "matched_axes": [
+            "setup:pivotal-company-defining-binary",
+            "setup:first-in-class-no-approved-therapy-whitespace",
+            "mechanism_class"
+          ]
+        }
+      ]
+    },
+    {
+      "cid": 131,
+      "query_setups": [
+        "pivotal-company-defining-binary",
+        "no-new-information-nonevent"
+      ],
+      "query_disease_area": "psychiatry-cns",
+      "query_mechanism_class": "small-molecule-cns",
+      "retrieval_confidence": "ok",
+      "n_candidates": 403,
+      "before": [
+        {
+          "node_id": 153,
+          "ticker": "LBRX",
+          "indication": "Schizophrenia",
+          "setups": [
+            "pivotal-company-defining-binary",
+            "no-new-information-nonevent"
+          ]
+        },
+        {
+          "node_id": 205,
+          "ticker": "ZURA",
+          "indication": "Hidradenitis suppurativa and systemic sclerosis (autoimmune/inflammatory)",
+          "setups": [
+            "no-new-information-nonevent",
+            "first-in-class-no-approved-therapy-whitespace"
+          ]
+        },
+        {
+          "node_id": 258,
+          "ticker": "ZURA",
+          "indication": "Hidradenitis suppurativa and systemic sclerosis (autoimmune/inflammatory)",
+          "setups": [
+            "early-mid-stage-single-asset-signal",
+            "financing-overhang-going-concern"
+          ]
+        },
+        {
+          "node_id": 43,
+          "ticker": "NBIX",
+          "indication": "Schizophrenia",
+          "setups": [
+            "priced-for-perfection-crowded-benchmark",
+            "validated-mechanism-derisked",
+            "stat-hit-magnitude-or-benchmark-miss"
+          ]
+        },
+        {
+          "node_id": 225,
+          "ticker": "MPLT",
+          "indication": "Schizophrenia (also Alzheimer's disease psychosis)",
+          "setups": [
+            "early-mid-stage-single-asset-signal",
+            "priced-for-perfection-crowded-benchmark",
+            "stat-hit-magnitude-or-benchmark-miss"
+          ]
+        }
+      ],
+      "after": [
+        {
+          "node_id": 153,
+          "ticker": "LBRX",
+          "indication": "Schizophrenia",
+          "setups": [
+            "pivotal-company-defining-binary",
+            "no-new-information-nonevent"
+          ],
+          "disease_area": "psychiatry-cns",
+          "mechanism_class": "small-molecule-cns",
+          "matched_axes": [
+            "setup:pivotal-company-defining-binary",
+            "setup:no-new-information-nonevent",
+            "disease_area",
+            "mechanism_class"
+          ]
+        },
+        {
+          "node_id": 1417,
+          "ticker": "LBRX",
+          "indication": "Acute schizophrenia (Phase 3 NOVA-2), bipolar 1 depression (Phase 2 ILLUMINATE-1), adjunctive MDD (Phase 2 planned)",
+          "setups": [
+            "pivotal-company-defining-binary",
+            "no-new-information-nonevent"
+          ],
+          "disease_area": "psychiatry-cns",
+          "mechanism_class": "small-molecule-cns",
+          "matched_axes": [
+            "setup:pivotal-company-defining-binary",
+            "setup:no-new-information-nonevent",
+            "disease_area",
+            "mechanism_class"
+          ]
+        },
+        {
+          "node_id": 425,
+          "ticker": "DFTX",
+          "indication": "major depressive disorder (MDD)",
+          "setups": [
+            "pivotal-company-defining-binary",
+            "trial-graveyard-high-placebo-indication"
+          ],
+          "disease_area": "psychiatry-cns",
+          "mechanism_class": "small-molecule-cns",
+          "matched_axes": [
+            "setup:pivotal-company-defining-binary",
+            "disease_area",
+            "mechanism_class"
+          ]
+        },
+        {
+          "node_id": 765,
+          "ticker": "VTGN",
+          "indication": "Social anxiety disorder (acute)",
+          "setups": [
+            "pivotal-company-defining-binary",
+            "primary-miss-subgroup-salvage",
+            "trial-graveyard-high-placebo-indication"
+          ],
+          "disease_area": "psychiatry-cns",
+          "mechanism_class": "small-molecule-cns",
+          "matched_axes": [
+            "setup:pivotal-company-defining-binary",
+            "disease_area",
+            "mechanism_class"
+          ]
+        },
+        {
+          "node_id": 1257,
+          "ticker": "MPLT",
+          "indication": "Schizophrenia (also Alzheimer's disease psychosis)",
+          "setups": [
+            "no-new-information-nonevent",
+            "early-mid-stage-single-asset-signal"
+          ],
+          "disease_area": "psychiatry-cns",
+          "mechanism_class": "small-molecule-cns",
+          "matched_axes": [
+            "setup:no-new-information-nonevent",
+            "disease_area",
+            "mechanism_class"
+          ]
+        }
+      ]
+    },
+    {
+      "cid": 137,
+      "query_setups": [
+        "no-new-information-nonevent",
+        "first-in-class-no-approved-therapy-whitespace"
+      ],
+      "query_disease_area": "immunology-inflammation",
+      "query_mechanism_class": "april-blys-baff-fusion",
+      "retrieval_confidence": "ok",
+      "n_candidates": 367,
+      "before": [
+        {
+          "node_id": 205,
+          "ticker": "ZURA",
+          "indication": "Hidradenitis suppurativa and systemic sclerosis (autoimmune/inflammatory)",
+          "setups": [
+            "no-new-information-nonevent",
+            "first-in-class-no-approved-therapy-whitespace"
+          ]
+        },
+        {
+          "node_id": 258,
+          "ticker": "ZURA",
+          "indication": "Hidradenitis suppurativa and systemic sclerosis (autoimmune/inflammatory)",
+          "setups": [
+            "early-mid-stage-single-asset-signal",
+            "financing-overhang-going-concern"
+          ]
+        },
+        {
+          "node_id": 308,
+          "ticker": "ZURA",
+          "indication": "Hidradenitis suppurativa and systemic sclerosis (autoimmune/inflammatory)",
+          "setups": [
+            "no-new-information-nonevent",
+            "early-mid-stage-single-asset-signal"
+          ]
+        },
+        {
+          "node_id": 462,
+          "ticker": "ZURA",
+          "indication": "Hidradenitis suppurativa and systemic sclerosis (autoimmune/inflammatory)",
+          "setups": [
+            "no-new-information-nonevent",
+            "strategic-transaction-capital-injection",
+            "early-mid-stage-single-asset-signal"
+          ]
+        },
+        {
+          "node_id": 399,
+          "ticker": "ZURA",
+          "indication": "Hidradenitis suppurativa and systemic sclerosis (autoimmune/inflammatory)",
+          "setups": [
+            "early-mid-stage-single-asset-signal",
+            "no-new-information-nonevent"
+          ]
+        }
+      ],
+      "after": [
+        {
+          "node_id": 205,
+          "ticker": "ZURA",
+          "indication": "Hidradenitis suppurativa and systemic sclerosis (autoimmune/inflammatory)",
+          "setups": [
+            "no-new-information-nonevent",
+            "first-in-class-no-approved-therapy-whitespace"
+          ],
+          "disease_area": "immunology-inflammation",
+          "mechanism_class": "april-blys-baff-fusion",
+          "matched_axes": [
+            "setup:no-new-information-nonevent",
+            "setup:first-in-class-no-approved-therapy-whitespace",
+            "disease_area",
+            "mechanism_class"
+          ]
+        },
+        {
+          "node_id": 1678,
+          "ticker": "ZBIO",
+          "indication": "IgG4-related disease (BLA filed); SLE; multiple sclerosis",
+          "setups": [
+            "no-new-information-nonevent",
+            "first-in-class-no-approved-therapy-whitespace"
+          ],
+          "disease_area": "immunology-inflammation",
+          "mechanism_class": "monoclonal-antibody",
+          "matched_axes": [
+            "setup:no-new-information-nonevent",
+            "setup:first-in-class-no-approved-therapy-whitespace",
+            "disease_area"
+          ]
+        },
+        {
+          "node_id": 2026,
+          "ticker": "CABA",
+          "indication": "autoimmune diseases (dermatomyositis/antisynthetase syndrome, systemic sclerosis, myasthenia gravis, lupus, pemphigus vulgaris)",
+          "setups": [
+            "no-new-information-nonevent",
+            "first-in-class-no-approved-therapy-whitespace"
+          ],
+          "disease_area": "immunology-inflammation",
+          "mechanism_class": "cell-therapy",
+          "matched_axes": [
+            "setup:no-new-information-nonevent",
+            "setup:first-in-class-no-approved-therapy-whitespace",
+            "disease_area"
+          ]
+        },
+        {
+          "node_id": 308,
+          "ticker": "ZURA",
+          "indication": "Hidradenitis suppurativa and systemic sclerosis (autoimmune/inflammatory)",
+          "setups": [
+            "no-new-information-nonevent",
+            "early-mid-stage-single-asset-signal"
+          ],
+          "disease_area": "immunology-inflammation",
+          "mechanism_class": "april-blys-baff-fusion",
+          "matched_axes": [
+            "setup:no-new-information-nonevent",
+            "disease_area",
+            "mechanism_class"
+          ]
+        },
+        {
+          "node_id": 462,
+          "ticker": "ZURA",
+          "indication": "Hidradenitis suppurativa and systemic sclerosis (autoimmune/inflammatory)",
+          "setups": [
+            "no-new-information-nonevent",
+            "strategic-transaction-capital-injection",
+            "early-mid-stage-single-asset-signal"
+          ],
+          "disease_area": "immunology-inflammation",
+          "mechanism_class": "april-blys-baff-fusion",
+          "matched_axes": [
+            "setup:no-new-information-nonevent",
+            "disease_area",
+            "mechanism_class"
+          ]
+        }
+      ]
+    },
+    {
+      "cid": 143,
+      "query_setups": [
+        "early-mid-stage-single-asset-signal",
+        "no-new-information-nonevent"
+      ],
+      "query_disease_area": "immunology-inflammation",
+      "query_mechanism_class": "april-blys-baff-fusion",
+      "retrieval_confidence": "ok",
+      "n_candidates": 358,
+      "before": [
+        {
+          "node_id": 399,
+          "ticker": "ZURA",
+          "indication": "Hidradenitis suppurativa and systemic sclerosis (autoimmune/inflammatory)",
+          "setups": [
+            "early-mid-stage-single-asset-signal",
+            "no-new-information-nonevent"
+          ]
+        },
+        {
+          "node_id": 258,
+          "ticker": "ZURA",
+          "indication": "Hidradenitis suppurativa and systemic sclerosis (autoimmune/inflammatory)",
+          "setups": [
+            "early-mid-stage-single-asset-signal",
+            "financing-overhang-going-concern"
+          ]
+        },
+        {
+          "node_id": 462,
+          "ticker": "ZURA",
+          "indication": "Hidradenitis suppurativa and systemic sclerosis (autoimmune/inflammatory)",
+          "setups": [
+            "no-new-information-nonevent",
+            "strategic-transaction-capital-injection",
+            "early-mid-stage-single-asset-signal"
+          ]
+        },
+        {
+          "node_id": 205,
+          "ticker": "ZURA",
+          "indication": "Hidradenitis suppurativa and systemic sclerosis (autoimmune/inflammatory)",
+          "setups": [
+            "no-new-information-nonevent",
+            "first-in-class-no-approved-therapy-whitespace"
+          ]
+        },
+        {
+          "node_id": 308,
+          "ticker": "ZURA",
+          "indication": "Hidradenitis suppurativa and systemic sclerosis (autoimmune/inflammatory)",
+          "setups": [
+            "no-new-information-nonevent",
+            "early-mid-stage-single-asset-signal"
+          ]
+        }
+      ],
+      "after": [
+        {
+          "node_id": 399,
+          "ticker": "ZURA",
+          "indication": "Hidradenitis suppurativa and systemic sclerosis (autoimmune/inflammatory)",
+          "setups": [
+            "early-mid-stage-single-asset-signal",
+            "no-new-information-nonevent"
+          ],
+          "disease_area": "immunology-inflammation",
+          "mechanism_class": "april-blys-baff-fusion",
+          "matched_axes": [
+            "setup:early-mid-stage-single-asset-signal",
+            "setup:no-new-information-nonevent",
+            "disease_area",
+            "mechanism_class"
+          ]
+        },
+        {
+          "node_id": 462,
+          "ticker": "ZURA",
+          "indication": "Hidradenitis suppurativa and systemic sclerosis (autoimmune/inflammatory)",
+          "setups": [
+            "no-new-information-nonevent",
+            "strategic-transaction-capital-injection",
+            "early-mid-stage-single-asset-signal"
+          ],
+          "disease_area": "immunology-inflammation",
+          "mechanism_class": "april-blys-baff-fusion",
+          "matched_axes": [
+            "setup:no-new-information-nonevent",
+            "setup:early-mid-stage-single-asset-signal",
+            "disease_area",
+            "mechanism_class"
+          ]
+        },
+        {
+          "node_id": 308,
+          "ticker": "ZURA",
+          "indication": "Hidradenitis suppurativa and systemic sclerosis (autoimmune/inflammatory)",
+          "setups": [
+            "no-new-information-nonevent",
+            "early-mid-stage-single-asset-signal"
+          ],
+          "disease_area": "immunology-inflammation",
+          "mechanism_class": "april-blys-baff-fusion",
+          "matched_axes": [
+            "setup:no-new-information-nonevent",
+            "setup:early-mid-stage-single-asset-signal",
+            "disease_area",
+            "mechanism_class"
+          ]
+        },
+        {
+          "node_id": 362,
+          "ticker": "ZURA",
+          "indication": "Hidradenitis suppurativa and systemic sclerosis (autoimmune/inflammatory)",
+          "setups": [
+            "no-new-information-nonevent",
+            "early-mid-stage-single-asset-signal"
+          ],
+          "disease_area": "immunology-inflammation",
+          "mechanism_class": "april-blys-baff-fusion",
+          "matched_axes": [
+            "setup:no-new-information-nonevent",
+            "setup:early-mid-stage-single-asset-signal",
+            "disease_area",
+            "mechanism_class"
+          ]
+        },
+        {
+          "node_id": 258,
+          "ticker": "ZURA",
+          "indication": "Hidradenitis suppurativa and systemic sclerosis (autoimmune/inflammatory)",
+          "setups": [
+            "early-mid-stage-single-asset-signal",
+            "financing-overhang-going-concern"
+          ],
+          "disease_area": "immunology-inflammation",
+          "mechanism_class": "april-blys-baff-fusion",
+          "matched_axes": [
+            "setup:early-mid-stage-single-asset-signal",
+            "disease_area",
+            "mechanism_class"
+          ]
+        }
+      ]
+    },
+    {
+      "cid": 249,
+      "query_setups": [
+        "early-mid-stage-single-asset-signal",
+        "trial-graveyard-high-placebo-indication"
+      ],
+      "query_disease_area": "neurodegeneration",
+      "query_mechanism_class": "small-molecule-cns",
+      "retrieval_confidence": "ok",
+      "n_candidates": 303,
+      "before": [
+        {
+          "node_id": 1061,
+          "ticker": "CGTX",
+          "indication": "Mild-to-moderate Alzheimer's disease",
+          "setups": [
+            "early-mid-stage-single-asset-signal",
+            "trial-graveyard-high-placebo-indication"
+          ]
+        },
+        {
+          "node_id": 721,
+          "ticker": "AXSM",
+          "indication": "Alzheimer's disease agitation (AXS-05)",
+          "setups": [
+            "trial-graveyard-high-placebo-indication",
+            "contested-efficacy-adcom-risk"
+          ]
+        },
+        {
+          "node_id": 262,
+          "ticker": "LONA",
+          "indication": "Mild-to-moderate Alzheimer's disease (fosgonimeton)",
+          "setups": [
+            "pivotal-company-defining-binary",
+            "trial-graveyard-high-placebo-indication"
+          ]
+        },
+        {
+          "node_id": 296,
+          "ticker": "LONA",
+          "indication": "Mild-to-moderate Alzheimer's disease (fosgonimeton)",
+          "setups": [
+            "early-mid-stage-single-asset-signal",
+            "trial-graveyard-high-placebo-indication",
+            "primary-miss-subgroup-salvage"
+          ]
+        },
+        {
+          "node_id": 488,
+          "ticker": "ABOS",
+          "indication": "Early Alzheimer's disease (ACU193)",
+          "setups": [
+            "early-mid-stage-single-asset-signal",
+            "validated-mechanism-derisked"
+          ]
+        }
+      ],
+      "after": [
+        {
+          "node_id": 1061,
+          "ticker": "CGTX",
+          "indication": "Mild-to-moderate Alzheimer's disease",
+          "setups": [
+            "early-mid-stage-single-asset-signal",
+            "trial-graveyard-high-placebo-indication"
+          ],
+          "disease_area": "neurodegeneration",
+          "mechanism_class": "small-molecule-cns",
+          "matched_axes": [
+            "setup:early-mid-stage-single-asset-signal",
+            "setup:trial-graveyard-high-placebo-indication",
+            "disease_area",
+            "mechanism_class"
+          ]
+        },
+        {
+          "node_id": 296,
+          "ticker": "LONA",
+          "indication": "Mild-to-moderate Alzheimer's disease (fosgonimeton)",
+          "setups": [
+            "early-mid-stage-single-asset-signal",
+            "trial-graveyard-high-placebo-indication",
+            "primary-miss-subgroup-salvage"
+          ],
+          "disease_area": "neurodegeneration",
+          "mechanism_class": "small-molecule-cns",
+          "matched_axes": [
+            "setup:early-mid-stage-single-asset-signal",
+            "setup:trial-graveyard-high-placebo-indication",
+            "disease_area",
+            "mechanism_class"
+          ]
+        },
+        {
+          "node_id": 1107,
+          "ticker": "BIVI",
+          "indication": "Alzheimer's disease (mild-to-moderate) / neuroinflammation (also Parkinson's)",
+          "setups": [
+            "early-mid-stage-single-asset-signal",
+            "trial-graveyard-high-placebo-indication",
+            "no-new-information-nonevent"
+          ],
+          "disease_area": "neurodegeneration",
+          "mechanism_class": "small-molecule-other",
+          "matched_axes": [
+            "setup:early-mid-stage-single-asset-signal",
+            "setup:trial-graveyard-high-placebo-indication",
+            "disease_area"
+          ]
+        },
+        {
+          "node_id": 1531,
+          "ticker": "ABOS",
+          "indication": "Early Alzheimer's disease",
+          "setups": [
+            "early-mid-stage-single-asset-signal",
+            "trial-graveyard-high-placebo-indication"
+          ],
+          "disease_area": "neurodegeneration",
+          "mechanism_class": "monoclonal-antibody",
+          "matched_axes": [
+            "setup:early-mid-stage-single-asset-signal",
+            "setup:trial-graveyard-high-placebo-indication",
+            "disease_area"
+          ]
+        },
+        {
+          "node_id": 161,
+          "ticker": "QURE",
+          "indication": "Huntington's disease",
+          "setups": [
+            "early-mid-stage-single-asset-signal",
+            "trial-graveyard-high-placebo-indication",
+            "first-in-class-no-approved-therapy-whitespace"
+          ],
+          "disease_area": "neurodegeneration",
+          "mechanism_class": "gene-therapy",
+          "matched_axes": [
+            "setup:early-mid-stage-single-asset-signal",
+            "setup:trial-graveyard-high-placebo-indication",
+            "disease_area"
+          ]
+        }
+      ]
+    }
+  ]
+}
