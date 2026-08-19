@@ -98,14 +98,15 @@ def fill_price(
     return _worsen(base, side, slippage)
 
 
-def _resolve_fill(daily_bars: list[dict], fill_idx: int, side: str,
-                  slippage: float) -> tuple[float | None, str | None, bool]:
+def _resolve_fill(daily_bars: list[dict], fill_idx: int, side: str, slippage: float,
+                  *, degrade_to_last: bool = False) -> tuple[float | None, str | None, bool]:
     """Roll forward from `fill_idx` to the first NON-skipped bar and fill at its open.
 
     Returns (fill, exit_date, halted) — `halted` is True iff a halted (_skip) bar was rolled
     past to reach the fill (the fill-at-next-available-open discipline). No fillable bar in the
-    remaining window -> (None, None, halted): an honest unfillable skip (never a fabricated fill).
-    Reuses _worsen so the far-side slippage haircut is identical to fill_price's.
+    remaining window -> (None, None, halted): an honest unfillable skip (never a fabricated fill),
+    UNLESS `degrade_to_last` (a latency shift overshot the window) — then fall back to the LAST
+    available open (honest, still no look-ahead). Reuses _worsen for the far-side slippage haircut.
     """
     halted = False
     j = fill_idx
@@ -116,6 +117,10 @@ def _resolve_fill(daily_bars: list[dict], fill_idx: int, side: str,
             j += 1
             continue
         return _worsen(bar["open"], side, slippage), bar["week_end"], halted
+    if degrade_to_last:
+        for bar in reversed(daily_bars):
+            if not _skip(bar):
+                return _worsen(bar["open"], side, slippage), bar["week_end"], halted
     return None, None, halted
 
 
@@ -130,6 +135,7 @@ def reflex_exit(
     time_barrier: str,
     slippage: float,
     off_map_mult: float,
+    exit_latency_bars: int = 0,
 ) -> dict | None:
     """The intraweek DAILY reflex (Tier-3 Task A): the FIRST triggered exit, filled honestly.
 
@@ -151,6 +157,10 @@ def reflex_exit(
     slippage-worsened on the far side. off_map (the Task-B escalation seam) is True when the move is
     outside the band by more than max(up,down)*off_map_mult (a move no scenario-table branch covers)
     OR a halt forced the fill to roll — the reflex still exits deterministically; off_map only MARKS.
+
+    `exit_latency_bars` (default 0 = T+0) shifts the EXIT fill by that many bars BEYOND the base
+    next-open bar (signal-at-close -> next-bar-open, no same-bar-fill bias); a latency past the
+    in-window bars degrades to the LAST available open (honest, never look-ahead).
     """
     if not daily_bars:
         return None
@@ -158,11 +168,13 @@ def reflex_exit(
     up_frac = hi / entry - 1.0
     down_frac = 1.0 - lo / entry
     ref = max(up_frac, down_frac)
+    degrade = exit_latency_bars > 0  # a latency overshoot degrades to the last open (not None)
 
     for i, bar in enumerate(daily_bars):
         # hard TIME barrier: the first bar at/after time_barrier exits at its OWN open.
         if bar["week_end"] >= time_barrier:
-            fill, exit_date, halted = _resolve_fill(daily_bars, i, side, slippage)
+            fill, exit_date, halted = _resolve_fill(daily_bars, i + exit_latency_bars, side,
+                                                    slippage, degrade_to_last=degrade)
             if fill is None:
                 return None
             return {"fill": fill, "exit": exit_date,
@@ -181,7 +193,8 @@ def reflex_exit(
         if reason is None:
             continue
 
-        fill, exit_date, halted = _resolve_fill(daily_bars, i + 1, side, slippage)
+        fill, exit_date, halted = _resolve_fill(daily_bars, i + 1 + exit_latency_bars, side,
+                                                slippage, degrade_to_last=degrade)
         if fill is None:
             return None  # triggered but no fillable bar in-window -> honest unfillable skip
 

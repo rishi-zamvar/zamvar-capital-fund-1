@@ -37,7 +37,7 @@ from ..quant.performance import (
 from ..desk.exit_plan import EXIT_PARAMS
 from ..quant.sizing import adaptive_sl_tp_levels
 from .events import build_event_set
-from .fill import fill_price, half_spread_pct, reflex_exit
+from .fill import _skip, fill_price, half_spread_pct, reflex_exit
 
 # validate_hedge needs analog gaps + prices; the synthetic fixture seeds no hedge peers, so the
 # call returns None before it ever reads these (honest single-leg fallback, HEDGE-04). Kept as an
@@ -185,7 +185,7 @@ def _net_return(entry, fill, apply_costs):
 
 def _fill_leg(conn, ticker, as_of, exit_by, *, held_through, slippage, apply_costs=True,
               granularity="weekly", daily_bars_provider=None, up_move=None, vol_move=None,
-              params=None):
+              params=None, exit_latency_bars=0):
     """Enter at the decision-week close, exit via the pessimistic fill (07-02). Returns
     (entry, fill, realized_ret, reflex) or None when the leg cannot be entered/exited honestly.
     `reflex` is None on the WEEKLY path and the reflex_exit dict on the DAILY path.
@@ -210,6 +210,12 @@ def _fill_leg(conn, ticker, as_of, exit_by, *, held_through, slippage, apply_cos
         daily_bars = daily_bars_provider(ticker, as_of, exit_by)
         if not daily_bars:
             return None
+        # ENTRY fills at the NEXT bar open (signal-at-as_of-close -> next-bar-open, no same-bar bias):
+        # the first tradeable daily bar in the window. Entries AND exits are next-open (Task 3).
+        entry_open = next((b["open"] for b in daily_bars if not _skip(b)), None)
+        if not entry_open or entry_open <= 0:
+            return None
+        entry = float(entry_open)
         # REUSE adaptive_sl_tp_levels for the stop/target prices; the band is the est-move no-stop zone.
         sltp = adaptive_sl_tp_levels(entry, up_move=up_move, vol_move=vol_move, params=params,
                                      holds_through_catalyst=held_through)
@@ -217,7 +223,8 @@ def _fill_leg(conn, ticker, as_of, exit_by, *, held_through, slippage, apply_cos
         rx = reflex_exit(daily_bars, entry=entry, side="long", band=band,
                          stop=sltp.detail["stop"], target=sltp.detail["target"],
                          time_barrier=exit_by, slippage=slippage,
-                         off_map_mult=EXIT_PARAMS["off_map_mult"])
+                         off_map_mult=EXIT_PARAMS["off_map_mult"],
+                         exit_latency_bars=exit_latency_bars)
         if rx is None:
             return None
         return entry, rx["fill"], _net_return(entry, rx["fill"], apply_costs), rx
@@ -263,7 +270,8 @@ def _cash_leg(ticker, exit_by, size_pct):
 def run_layer_a(conn, embed, *, start, end, params=None, target_weekly=0.01,
                 direction_proxy="base_rate", slippage=0.0, latency_cfg=None,
                 weekly_budget=0.10, heat_cap=1.0, periods_per_year=52,
-                busted_lookback_days=56, granularity="weekly", daily_bars_provider=None):
+                busted_lookback_days=56, granularity="weekly", daily_bars_provider=None,
+                exit_latency_bars=0):
     """The deterministic weekly mechanical backtest of the CORRECTED strategy (BACK-02).
 
     Iterates the 07-02 point-in-time event set; for each week re-expresses the shipped cadence
@@ -305,7 +313,8 @@ def run_layer_a(conn, embed, *, start, end, params=None, target_weekly=0.01,
                   else _base_rate_ev(tk, as_of, conn, params, target_weekly, store_view=view))
             filled = _fill_leg(conn, tk, as_of, exit_by, held_through=True, slippage=slippage,
                                granularity=granularity, daily_bars_provider=daily_bars_provider,
-                               up_move=ev, vol_move=stat_gap, params=params)
+                               up_move=ev, vol_move=stat_gap, params=params,
+                               exit_latency_bars=exit_latency_bars)
             if filled is None:
                 continue
             entry, fill, ret, reflex = filled
@@ -368,6 +377,26 @@ def run_layer_a(conn, embed, *, start, end, params=None, target_weekly=0.01,
         results.append(BacktestResult(week=as_of, legs=legs))
 
     return results, baseline_distribution(results, periods_per_year=periods_per_year)
+
+
+def latency_sweep(conn, embed, *, start, end, daily_bars_provider, delays=(0, 1, 2), **run_kwargs):
+    """Re-run the DAILY-granularity backtest once per exit-latency delay and collect the baseline.
+
+    Returns [{"latency": d, "distribution": BaselineDistribution}, ...] so degradation-with-delay is
+    reportable: an edge that only survives at T+0 (no execution lag) is fragile. Pure composition over
+    run_layer_a — no new money math (the Task-2 daily reflex + the exit_latency_bars knob do the work).
+
+    # ponytail: thin re-run-and-collect over the one run_layer_a seam; **run_kwargs pass through the
+    #           usual knobs (params/slippage/weekly_budget/...). off_map surfaces on each run's legs;
+    #           NO reasoning agent is invoked here (Task B's off-map brain is deferred).
+    """
+    out = []
+    for d in delays:
+        _results, dist = run_layer_a(conn, embed, start=start, end=end, granularity="daily",
+                                     daily_bars_provider=daily_bars_provider,
+                                     exit_latency_bars=d, **run_kwargs)
+        out.append({"latency": d, "distribution": dist})
+    return out
 
 
 def _safe(fn, rets, periods_per_year):
