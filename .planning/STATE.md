@@ -3,8 +3,8 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: verifying
-stopped_at: Completed 07.5-05-PLAN.md
-last_updated: "2026-08-18T19:43:00.274Z"
+stopped_at: Completed 07.8-slice1 (awaiting live hand-check checkpoint)
+last_updated: "2026-08-19T19:40:21.178Z"
 last_activity: 2026-08-18
 progress:
   total_phases: 19
@@ -252,6 +252,7 @@ Recent decisions affecting current work:
 - [Phase 07.5]: PLAY-06 writer lives in playbook/store.py routing through kb.insert_claim (no raw kb_node SQL); kb.py stays leak-gate-owned
 - [Phase 07.5]: Embedder identity stamped on catalyst nodes; assert_embedder_consistency guards both write + Plan-05 query paths (NIT 2)
 - [Phase 07.5-warm-playbook]: Generalization writes free-form {type}:{slug} scenario playbooks with a runtime assert they never hit the reserved fitted_params: namespace (load_params seam untouched)
+- [Phase 07.8]: Slice-1 live catalyst_context hook: single-leg by honest degrade (no stored peer co-moves); every risk_input point-in-time-sourced or honestly degraded
 
 ### Pending Todos
 
@@ -280,6 +281,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-08-18T19:42:49.751Z
-Stopped at: Completed 07.5-05-PLAN.md
+Last session: 2026-08-19T19:40:21.124Z
+Stopped at: Completed 07.8-slice1 (awaiting live hand-check checkpoint)
 Resume file: None
