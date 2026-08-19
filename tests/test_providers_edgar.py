@@ -168,6 +168,36 @@ def test_fundamentals_shares_and_runway(_sec_ua, _patch_edgar):
     assert out["provenance"]["source_url"] and out["provenance"]["fetch_ts"]
 
 
+def test_fundamentals_exposes_cash_and_burn(_sec_ua, _patch_edgar):
+    # Slice 2.5: additive money-dim keys reusing the SAME burn derivation _runway_months uses.
+    out = edgar.fundamentals("KURA")
+    assert out["cash_usd"] == 300000000.0
+    assert out["monthly_burn_usd"] == pytest.approx(15000000.0)  # 90M OCF over Q2=6mo
+    # backward-compat: existing keys unchanged
+    assert out["shares_outstanding"] == 65000000.0
+    assert out["cash_runway_months"] == pytest.approx(20.0, abs=0.1)
+
+
+def test_fundamentals_not_burning_burn_none(_sec_ua, monkeypatch, load_fixture):
+    data = load_fixture("edgar_facts")
+    data["facts"]["operating_cash_flow"]["value"] = 12000000.0  # OCF positive, not burning
+    monkeypatch.setattr(edgar_lib, "set_identity", lambda ua: None)
+    monkeypatch.setattr(edgar_lib, "Company", lambda t, *a, **k: _company_from_fixture(data))
+    out = edgar.fundamentals("KURA")
+    assert out["monthly_burn_usd"] is None       # never a fabricated/negative burn
+    assert out["cash_usd"] == 300000000.0        # cash still emitted
+
+
+def test_fundamentals_missing_cash_cash_usd_none(_sec_ua, monkeypatch, load_fixture):
+    data = load_fixture("edgar_facts")
+    del data["facts"]["cash_and_equivalents"]    # shares still present -> not a full degrade
+    monkeypatch.setattr(edgar_lib, "set_identity", lambda ua: None)
+    monkeypatch.setattr(edgar_lib, "Company", lambda t, *a, **k: _company_from_fixture(data))
+    out = edgar.fundamentals("KURA")
+    assert out["cash_usd"] is None
+    assert out["monthly_burn_usd"] == pytest.approx(15000000.0)  # burn independent of cash
+
+
 def test_fundamentals_not_burning_runway_none(_sec_ua, monkeypatch, load_fixture):
     data = load_fixture("edgar_facts")
     data["facts"]["operating_cash_flow"]["value"] = 12000000.0  # cash-flow POSITIVE, not burning
@@ -199,3 +229,89 @@ def test_fundamentals_missing_identity_raises(monkeypatch):
     monkeypatch.setattr(settings, "sec_user_agent", None)
     with pytest.raises(RuntimeError):
         edgar.fundamentals("KURA")
+
+
+# --- Task: insider_net() — free EDGAR Form-4 net-insider over a window (offline) ---------------
+
+
+class _FakeSummary:
+    """Mirrors edgar.ownership.TransactionSummary: .net_change (int shares), .net_value (USD|None)."""
+
+    def __init__(self, net_change, net_value=None):
+        self.net_change = net_change
+        self.net_value = net_value
+
+
+class _FakeForm4:
+    """Mirrors edgar.ownership.Form4.get_ownership_summary() -> TransactionSummary."""
+
+    def __init__(self, summary):
+        self._summary = summary
+
+    def get_ownership_summary(self):
+        return self._summary
+
+
+class _FakeForm4Filing:
+    """A Form-4 EntityFiling whose .obj() -> Form4 (or raises for the unparseable case)."""
+
+    def __init__(self, net_change=None, obj_raises=False):
+        self._net = net_change
+        self._raises = obj_raises
+
+    def obj(self):
+        if self._raises:
+            raise ValueError("unparseable Form-4")
+        return _FakeForm4(_FakeSummary(self._net))
+
+
+class _FakeForm4Company:
+    def __init__(self, filings):
+        self.cik = 1770787
+        self._filings = filings
+
+    def get_filings(self, form=None, filing_date=None, **kw):
+        return list(self._filings)  # fake ignores server-side date filtering; tests inject the set
+
+
+def _patch_form4(monkeypatch, filings):
+    monkeypatch.setattr(edgar_lib, "set_identity", lambda ua: None)
+    monkeypatch.setattr(edgar_lib, "Company", lambda t, *a, **k: _FakeForm4Company(filings))
+
+
+_SINCE, _UNTIL = "2026-05-21", "2026-08-19"
+
+
+def test_insider_net_sums_net_change(_sec_ua, monkeypatch):
+    _patch_form4(monkeypatch, [_FakeForm4Filing(1000), _FakeForm4Filing(-3000)])
+    assert edgar.insider_net("KURA", since=_SINCE, until=_UNTIL) == -2000.0  # net selling
+
+
+def test_insider_net_quiet_tape_is_zero(_sec_ua, monkeypatch):
+    _patch_form4(monkeypatch, [])  # no Form-4 in the window
+    assert edgar.insider_net("KURA", since=_SINCE, until=_UNTIL) == 0.0  # a REAL 0, not a miss
+
+
+def test_insider_net_company_error_degrades(_sec_ua, monkeypatch):
+    def _raise(ticker, *a, **k):
+        raise edgar_lib.CompanyNotFoundError(f"Company not found: {ticker!r}")
+
+    monkeypatch.setattr(edgar_lib, "set_identity", lambda ua: None)
+    monkeypatch.setattr(edgar_lib, "Company", _raise)
+    assert edgar.insider_net("ZZZZ", since=_SINCE, until=_UNTIL) is None  # degrade, no exception
+
+
+def test_insider_net_all_unparseable_degrades(_sec_ua, monkeypatch):
+    _patch_form4(monkeypatch, [_FakeForm4Filing(obj_raises=True), _FakeForm4Filing(obj_raises=True)])
+    assert edgar.insider_net("KURA", since=_SINCE, until=_UNTIL) is None  # all-fail -> None
+
+
+def test_insider_net_partial_fail_sums_good(_sec_ua, monkeypatch):
+    _patch_form4(monkeypatch, [_FakeForm4Filing(1500), _FakeForm4Filing(obj_raises=True)])
+    assert edgar.insider_net("KURA", since=_SINCE, until=_UNTIL) == 1500.0  # skip bad, keep good
+
+
+def test_insider_net_missing_identity_raises(monkeypatch):
+    monkeypatch.setattr(settings, "sec_user_agent", None)
+    with pytest.raises(RuntimeError):
+        edgar.insider_net("KURA", since=_SINCE, until=_UNTIL)
