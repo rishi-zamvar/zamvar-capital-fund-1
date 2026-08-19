@@ -28,6 +28,8 @@ from datetime import date
 from catalyst_trader import db as _db
 from catalyst_trader import kb, serving
 from catalyst_trader.desk.catalyst_context import make_catalyst_context
+from catalyst_trader.desk.diligence_inputs import make_diligence_inputs
+from catalyst_trader.desk.live_desk import run_one_catalyst_decision
 from catalyst_trader.desk.orchestrator import run_desk, run_portfolio
 from catalyst_trader.desk.weekly import _catalyst_dict
 from catalyst_trader.providers import robinhood
@@ -108,6 +110,61 @@ async def run_one(conn, embed, ticker, *, live, run_desk_fn=run_desk, context_ho
     return dossiers
 
 
+def _print_decision(result) -> None:
+    """Print the --with-dd MDDecision block: DiligenceDossier go/no-go + per-dim + red/degrade flags,
+    the MDDecision (enter/pass/escalate) + round count/dispositions, or the honest no-trade reason."""
+    print("=" * 72)
+    if result.get("reason"):
+        print(f"NO DECISION      {result['reason']}")
+        for f in result.get("degraded_flags", []):
+            print(f"  degraded       {f}")
+        print("=" * 72)
+        return
+    cat, dd, dec = result["catalyst"], result["dd"], result["decision"]
+    print(f"CATALYST         {cat['ticker']}  {cat['catalyst_type']}  event={cat['event_date']}")
+    print(f"DILIGENCE        verdict={dd.verdict}")
+    for d in dd.per_dimension:
+        print(f"  dim            {d.get('dimension')}: passed={d.get('passed')} "
+              f"score={d.get('score')} conf={d.get('confidence')}")
+    print(f"  red_flags      {dd.red_flags}")
+    print(f"  disconfirming  {dd.strongest_disconfirming_evidence}")
+    for f in result.get("degraded_flags", []):
+        print(f"  degraded       {f}")
+    print(f"MD_DECISION      {dec.decision}")
+    print(f"  rationale      {dec.rationale}")
+    print(f"  rounds         {len(dec.round_log)}")
+    for r in dec.round_log:
+        print(f"    round {r.round}: disposition={r.disposition}")
+    print("=" * 72)
+
+
+def _fake_decision_seams():
+    """The --dry-run --with-dd offline extension: an offline dd_inputs_fn (CBOE seam -> None sentinel,
+    no network) + a canned DiligenceDossier + a canned MDDecision, so the DD + MD wire runs with ZERO
+    LLM / network on top of _fake_desk_and_context's canned promoted dossier."""
+    from catalyst_trader.contracts import DiligenceDossier, MDDecision, ReconciliationRound
+
+    dd_inputs_fn = make_diligence_inputs(options_source=lambda t: None, trial_source=lambda t: None)
+
+    async def _dil(conn, dd_input, *, market_data, embed=None):
+        return DiligenceDossier(
+            verdict="no_go",
+            per_dimension=[{"dimension": "options_move", "catalyst_id": dd_input.catalyst.get("catalyst_id"),
+                            "passed": True, "score": 0.1, "confidence": 0.6}],
+            red_flags=["DRY-RUN: ownership + financials ungrounded (Slice 2.5 gap)"],
+            strongest_disconfirming_evidence="DRY-RUN canned disconfirming evidence",
+            all_evidence_refs=[], residual_risks=[],
+        )
+
+    async def _recon(conn, embed, item):
+        rnd = ReconciliationRound(round=1, response_delta="DRY-RUN clean",
+                                  convergence={"cross_check_clean": True}, cross_check={"clean": True},
+                                  disposition="converged")
+        return MDDecision(decision="pass", rationale="DRY-RUN canned decision", round_log=[rnd])
+
+    return dd_inputs_fn, _dil, _recon
+
+
 def _fake_desk_and_context():
     """The --dry-run offline seam: a canned verdict + context + a canned dossier from run_portfolio,
     so the wiring runs with ZERO live LLM / network (C1 — run_portfolio would otherwise fire LLM)."""
@@ -155,13 +212,32 @@ def main():
     ap.add_argument("ticker")
     ap.add_argument("--live", action="store_true",
                     help="real run_desk + real hook (operator-gated LLM run). Default = --dry-run.")
+    ap.add_argument("--dry-run", action="store_true",
+                    help="explicit offline default (fake LLM seams, no network) — the inverse of --live.")
+    ap.add_argument("--with-dd", action="store_true",
+                    help="run DD + MD reconciliation -> MDDecision (7.8-S2). Composes with --live/--dry-run.")
     ap.add_argument("--db", default="catalyst.db", help="catalyst.db path (default: catalyst.db)")
     args = ap.parse_args()
 
     conn = _db.connect(args.db)
     _db.migrate(conn)
     try:
-        if args.live:
+        if args.with_dd:
+            as_of = date.today().isoformat()
+            if args.live:
+                embed = kb.default_embedder()
+                hook = make_catalyst_context(embed=embed, cutoff=None, quote_override=_rh_quote_override)
+                result = asyncio.run(run_one_catalyst_decision(
+                    conn, embed, args.ticker, as_of=as_of, live=True, context_hook=hook))
+            else:
+                desk, context, portfolio = _fake_desk_and_context()
+                dd_inputs_fn, run_dil, recon = _fake_decision_seams()
+                result = asyncio.run(run_one_catalyst_decision(
+                    conn, None, args.ticker, as_of=as_of, live=False, run_desk_fn=desk,
+                    context_hook=context, run_portfolio_fn=portfolio, dd_inputs_fn=dd_inputs_fn,
+                    run_diligence_fn=run_dil, reconcile_fn=recon))
+            _print_decision(result)
+        elif args.live:
             embed = kb.default_embedder()
             asyncio.run(run_one(conn, embed, args.ticker, live=True))
         else:
