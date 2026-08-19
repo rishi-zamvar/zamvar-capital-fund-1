@@ -12,8 +12,12 @@ Every number is an existing point-in-time tool output or the shipped honest degr
   - p_loss:  1 - P(positive) from the base-rate direction proxy (the INDEPENDENT risk prior, NOT the
              analyst's verdict). No measured cell (None / ValueError / KeyError) -> entry=None honest
              skip — never a coin-flip p_loss = 1 - None.
-  - gap:     median of the catalyst analogs' DOWN moves, else abs(params hard_veto_drop) — the SAME
-             stat_gap the statistical sleeve + backtest use (no new magic number).
+  - gap:     BINARY catalysts (pdufa/adcom/trial_readout) size against the TAIL down-move via
+             quant.sizing.binary_survival_gap (max(high-pctile analog down-move, binary_gap_default))
+             — a CRL/trial miss is a tail event, so the ~8.5% median would drastically under-size
+             (BGAP-01). NON-binary (earnings/conference) keep the SAME stat_gap the statistical
+             sleeve + backtest use: median of the analogs' DOWN moves, else abs(hard_veto_drop).
+             All knobs are params (missing key RAISES — no new magic number).
   - analog_gaps: a COPY of engine._NO_ANALOG_GAPS with target_up/target_down overwritten from the
              analogs (split like builder._split_moves). peer_up/peer_down/w_peer stay the 0.0 honest
              default: the KB stores no peer conditional co-moves (hedge_peers carries only
@@ -32,6 +36,7 @@ from statistics import median
 
 from .. import kb, serving
 from ..backtest.engine import _NO_ANALOG_GAPS, resolve_direction_proxy
+from ..quant.sizing import binary_survival_gap
 from ..quant.weekly import as_of_view
 from .builder import _split_moves
 
@@ -113,7 +118,13 @@ def make_catalyst_context(*, price_source=None, analog_source=None, proxy_fn=Non
         # --- analogs -> gap + target up/down branch magnitudes (split like builder._split_moves) ---
         analogs = analog_source(conn, ticker, catalyst, as_of)
         up_moves, down_moves = _split_moves(analogs)
-        gap = median(down_moves) if down_moves else abs(p["weekly"]["hard_veto_drop"])
+        w = p["weekly"]
+        if catalyst["catalyst_type"] in w["binary_catalyst_types"]:
+            # BINARY (BGAP-01): a CRL/trial miss is a TAIL event -> size against the tail/prior, not median.
+            gap = binary_survival_gap(down_moves, percentile=w["binary_gap_percentile"],
+                                      default=w["binary_gap_default"])
+        else:
+            gap = median(down_moves) if down_moves else abs(w["hard_veto_drop"])
         analog_gaps = dict(_NO_ANALOG_GAPS)             # honest single-leg default (peer branches 0.0)
         analog_gaps["target_up"] = median(up_moves) if up_moves else 0.0
         analog_gaps["target_down"] = -median(down_moves) if down_moves else 0.0
