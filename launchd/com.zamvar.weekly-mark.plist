@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN"
+  "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+  Fund 1 weekly mark/close pass — the HEADLESS half of the auto-cadence (7.8-S5).
+
+  Runs `weekly_cycle.py --mark`: marks every open paper position at its point-in-time quote and
+  CLOSES any past its exit_by at the byte-identical Slice-4 fill. This is a DATA pass — NO LLM, no
+  API key needed — so it is safe to schedule headlessly. The DESK/decision pass (--desk) is NOT
+  scheduled here: it calls the LLM and can only run inside a Claude Code session (see
+  docs/operator-weekly-cycle.md for the honest headless-vs-CC split).
+
+  StartCalendarInterval : weekly, Sunday (Weekday=0) 18:00 local — an after-close hour on a
+                          non-trading day so the week's action bars are settled. This is a SCHEDULE
+                          config value (edit to taste), not a code literal.
+  KeepAlive             : restart ONLY on a non-zero exit (a crash), never on a clean one-shot exit.
+  RunAtLoad             : false — deliberate, this is a calendar-anchored job, not a boot job.
+
+  Install (paths are absolute — edit WorkingDirectory / ProgramArguments to this checkout, then):
+    cp launchd/com.zamvar.weekly-mark.plist ~/Library/LaunchAgents/
+    launchctl load  ~/Library/LaunchAgents/com.zamvar.weekly-mark.plist   # start
+    launchctl start com.zamvar.weekly-mark                                 # run one now
+    launchctl unload ~/Library/LaunchAgents/com.zamvar.weekly-mark.plist  # stop
+  Logs: logs/weekly-mark.out.log / logs/weekly-mark.err.log.
+-->
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string>com.zamvar.weekly-mark</string>
+
+  <key>WorkingDirectory</key>
+  <string>/Users/rishizamvar/Documents/Projects/Zamvar Capital/Fund 1 Strategy</string>
+
+  <key>ProgramArguments</key>
+  <array>
+    <string>/Users/rishizamvar/Documents/Projects/Zamvar Capital/Fund 1 Strategy/.venv/bin/python</string>
+    <string>scripts/weekly_cycle.py</string>
+    <string>--mark</string>
+  </array>
+
+  <key>StartCalendarInterval</key>
+  <dict>
+    <key>Weekday</key>
+    <integer>0</integer>
+    <key>Hour</key>
+    <integer>18</integer>
+    <key>Minute</key>
+    <integer>0</integer>
+  </dict>
+
+  <key>KeepAlive</key>
+  <dict>
+    <key>SuccessfulExit</key>
+    <false/>
+  </dict>
+
+  <key>RunAtLoad</key>
+  <false/>
+
+  <key>StandardOutPath</key>
+  <string>/Users/rishizamvar/Documents/Projects/Zamvar Capital/Fund 1 Strategy/logs/weekly-mark.out.log</string>
+  <key>StandardErrorPath</key>
+  <string>/Users/rishizamvar/Documents/Projects/Zamvar Capital/Fund 1 Strategy/logs/weekly-mark.err.log</string>
+</dict>
+</plist>
