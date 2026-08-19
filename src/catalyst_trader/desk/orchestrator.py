@@ -15,6 +15,7 @@ so the whole pipeline runs offline under test with zero live API.
 
 import asyncio
 
+from .. import kb
 from ..contracts import DebateVerdict, PortfolioContext, StrategyDossier
 from ..quant.portfolio import concentration
 from . import MAX_ROUNDS, analysts, builder, debate, risk, verifier
@@ -22,10 +23,12 @@ from .portfolio import (
     Candidate,
     author_memo,
     author_pre_mortem,
+    book_to_portfolio_inputs,
     build_weekly_leg_dossier,
     pm_decide,
     select_book,
 )
+from .portfolio_builder import build_portfolio
 from .tools import build_quant_server
 
 DIMENSIONS = list(analysts.PROMPTS)  # clinical, regulatory, financial, market_sentiment
@@ -83,6 +86,7 @@ async def run_portfolio(
     weekly_budget: float = 0.10, heat_cap: float = 1.0, target_weekly: float = 0.01,
     target_return: float | None = None, defensive_book=None, extra_candidates=None,
     statistical_sleeve_cap: float | None = None, extra_context: str | None = None,
+    attach_book_risk: bool = True,
 ) -> list[StrategyDossier]:
     """Workflow-1b entry point: turn the week's calls into ONE recommended portfolio (PORT-01).
 
@@ -179,4 +183,22 @@ async def run_portfolio(
                 cand, concentration_val=book_conc, weekly_budget=weekly_budget,
                 budget_used=budget_used, promoted_weights=promoted_weights,
             ))
+
+    # WHOLE-BOOK RISK READ (7.8-pf2): run build_portfolio ONCE over the promoted book and hang the
+    # resulting PortfolioOutcome on each promoted dossier's portfolio_context. This is a READ appended
+    # AFTER select_book + every pm_decide/build_weekly_leg_dossier call, so the money path (selection
+    # + sizing) is byte-for-byte unchanged — the outcome never resizes or reorders a leg.
+    if attach_book_risk:
+        promoted_dossiers = [d for d in dossiers if d.decision == "promote"]
+        if promoted_dossiers:
+            # corr_source mirrors the MCP tool (tools.py) — kb.hedge_profile bound to conn. With
+            # conn=None (offline callers) bind None instead so the engine falls back to idiosyncratic
+            # correlation; kb.hedge_profile(None, t) would AttributeError on None.execute(...).
+            corr_source = (lambda t: kb.hedge_profile(conn, t)) if conn is not None else None
+            positions, assumptions = book_to_portfolio_inputs(
+                promoted_dossiers, corr_source=corr_source)
+            outcome = build_portfolio(positions, assumptions).model_dump()
+            for d in promoted_dossiers:
+                d.portfolio_context = d.portfolio_context.model_copy(
+                    update={"portfolio_outcome": outcome})
     return dossiers
