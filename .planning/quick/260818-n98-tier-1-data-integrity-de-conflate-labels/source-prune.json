@@ -1,0 +1,2270 @@
+[
+  {
+    "id": 119,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/1743881/000114036126029291/ef20078442_ex99-1.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 62,
+    "ticker": "AMGN"
+  },
+  {
+    "id": 120,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/1743881/000114036126022979/ef20074977_ex99-1.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 63,
+    "ticker": "AMGN"
+  },
+  {
+    "id": 121,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/1818794/000119312526323940/dyn-ex99_1.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 64,
+    "ticker": "AMGN"
+  },
+  {
+    "id": 122,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/1689548/000168954826000082/praxisq22026pr.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 65,
+    "ticker": "AMGN"
+  },
+  {
+    "id": 2350,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/879169/000155837021013984/incy-20211102xex99d1.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 136,
+    "ticker": "ZURA"
+  },
+  {
+    "id": 2581,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/1743881/000114036126029291/ef20078442_ex99-1.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 324,
+    "ticker": "RYTM"
+  },
+  {
+    "id": 2582,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/1743881/000114036126022979/ef20074977_ex99-1.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 325,
+    "ticker": "GNLX"
+  },
+  {
+    "id": 2598,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/1711279/000171127922000052/fdaacceptskrystalbiotech.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 334,
+    "ticker": "RCUS"
+  },
+  {
+    "id": 2599,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/1711279/000171127922000061/a2022-3q22prasdistributedf.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 335,
+    "ticker": "RCUS"
+  },
+  {
+    "id": 2628,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/1347178/000162828025054225/vnda8-k11282025exhibit991.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 357,
+    "ticker": "ACHV"
+  },
+  {
+    "id": 2629,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/1347178/000162828025043489/vnda8-k1012025exhibit991.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 358,
+    "ticker": "EWTX"
+  },
+  {
+    "id": 2630,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/1347178/000162828026031241/vnda8-k562026exhibit991.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 359,
+    "ticker": "EWTX"
+  },
+  {
+    "id": 2631,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/1347178/000162828026053308/vnda8-k852026exhibit991.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 360,
+    "ticker": "EWTX"
+  },
+  {
+    "id": 2632,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/1347178/000162828026007256/vnda8-k2112026exhibit991.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 361,
+    "ticker": "TECX"
+  },
+  {
+    "id": 2633,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/1347178/000162828025055393/vnda8-k1242025exhibit991.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 362,
+    "ticker": "TECX"
+  },
+  {
+    "id": 2634,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/1347178/000162828024021658/vnda8-k582024exhibit991.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 363,
+    "ticker": "TECX"
+  },
+  {
+    "id": 2635,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/1347178/000162828024033743/vnda8-k7312024exhibit991.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 364,
+    "ticker": "TECX"
+  },
+  {
+    "id": 2649,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/1356090/000095010325006004/dp228863_ex9901.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 374,
+    "ticker": "CRNX"
+  },
+  {
+    "id": 2677,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/939767/000093976725000004/exel20250112exhibit991.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 392,
+    "ticker": "IONS"
+  },
+  {
+    "id": 2700,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/1714899/000171489925000167/ex991pressreleaseq22025.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 407,
+    "ticker": "IONS"
+  },
+  {
+    "id": 2701,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/1714899/000171489925000146/exhibit991pressrelease7720.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 408,
+    "ticker": "IONS"
+  },
+  {
+    "id": 2733,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/1658247/000095017025066939/crnx-ex99_1.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 424,
+    "ticker": "SUPN"
+  },
+  {
+    "id": 2734,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/1658247/000119312525175494/crnx-ex99_1.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 425,
+    "ticker": "SUPN"
+  },
+  {
+    "id": 2771,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/1395937/000095017025101974/sndx-ex99_2.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 438,
+    "ticker": "MNOV"
+  },
+  {
+    "id": 2780,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/1356576/000135657624000053/ex99108-19x2024.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 443,
+    "ticker": "BIIB"
+  },
+  {
+    "id": 2782,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/1356576/000135657623000066/ex99111-02x2023.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 444,
+    "ticker": "BIIB"
+  },
+  {
+    "id": 2791,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/1232524/000119312525046226/d927269dex991.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 449,
+    "ticker": "SGIOF"
+  },
+  {
+    "id": 2818,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/1689548/000168954826000082/praxisq22026pr.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 470,
+    "ticker": "TARA"
+  },
+  {
+    "id": 2843,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/1048477/000104847722000030/earningsrelease-26oct22ex9.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 474,
+    "ticker": "INSM"
+  },
+  {
+    "id": 2844,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/1048477/000104847723000016/earningsrelease-26apr23ex9.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 475,
+    "ticker": "INSM"
+  },
+  {
+    "id": 2845,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/1048477/000104847723000005/earningsrelease-27feb23ex9.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 476,
+    "ticker": "INSM"
+  },
+  {
+    "id": 2846,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/1048477/000104847721000029/bmrn-21xoct27xex991.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 477,
+    "ticker": "INSM"
+  },
+  {
+    "id": 2850,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/1104506/000114036125029343/ef20053237_ex99-1.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 481,
+    "ticker": "MDGL"
+  },
+  {
+    "id": 2851,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/1104506/000114036125017858/ef20048527_ex99-1.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 482,
+    "ticker": "MDGL"
+  },
+  {
+    "id": 2852,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/1104506/000114036125005190/ef20043928_ex99-1.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 483,
+    "ticker": "DCTH"
+  },
+  {
+    "id": 2853,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/1104506/000114036125005570/ef20044166_ex99-1.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 484,
+    "ticker": "SPTX"
+  },
+  {
+    "id": 2854,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/1104506/000114036125003266/ef20043003_ex99-1.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 485,
+    "ticker": "SPTX"
+  },
+  {
+    "id": 2938,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/1579428/000119312526304039/axsm-ex99_1.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 535,
+    "ticker": "OLMA"
+  },
+  {
+    "id": 2939,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/1579428/000119312526341206/axsm-ex99_1.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 536,
+    "ticker": "BMEA"
+  },
+  {
+    "id": 2940,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/1579428/000119312526062421/axsm-ex99_1.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 537,
+    "ticker": "BMEA"
+  },
+  {
+    "id": 2026,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/1439222/000143922225000034/agio-050125xfyxex991earnin.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 541,
+    "ticker": "AXSM"
+  },
+  {
+    "id": 2049,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/1055726/000105572626000024/ino-63026x8kex991.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 564,
+    "ticker": "AGIO"
+  },
+  {
+    "id": 2050,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/1055726/000119312525332322/d78035dex991.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 565,
+    "ticker": "OCUL"
+  },
+  {
+    "id": 2051,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/1055726/000105572626000019/ino-33126x8kex991.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 566,
+    "ticker": "OCUL"
+  },
+  {
+    "id": 2052,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/1055726/000105572626000009/ino-123125x8kex991.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 567,
+    "ticker": "LTRN"
+  },
+  {
+    "id": 2059,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/1438533/000143853325000002/aex991_2024q4xearningsprex.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 574,
+    "ticker": "OCGN"
+  },
+  {
+    "id": 2060,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/1438533/000143853325000045/a2025q2_8-kxex991.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 575,
+    "ticker": "OCGN"
+  },
+  {
+    "id": 2061,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/1438533/000143853325000025/a2025q1_8-kxex991.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 576,
+    "ticker": "LRMR"
+  },
+  {
+    "id": 2062,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/1438533/000143853325000008/aex991_2024q4x10xkearnings.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 577,
+    "ticker": "ARCT"
+  },
+  {
+    "id": 2063,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/1438533/000143853325000030/a2025q1_8-kxex991.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 578,
+    "ticker": "ARCT"
+  },
+  {
+    "id": 2064,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/1438533/000143853324000030/a2024q2_8-kxex991.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 579,
+    "ticker": "ARCT"
+  },
+  {
+    "id": 2065,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/1438533/000143853324000019/a2024q1_8-kxex991.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 580,
+    "ticker": "IDYA"
+  },
+  {
+    "id": 2066,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/1438533/000119312523004120/d436263dex991.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 581,
+    "ticker": "IDYA"
+  },
+  {
+    "id": 2067,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/1438533/000143853322000049/a2022q3_8-kxex991.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 582,
+    "ticker": "IDYA"
+  },
+  {
+    "id": 2068,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/1438533/000119312522211796/d371832dex991.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 583,
+    "ticker": "IDYA"
+  },
+  {
+    "id": 2093,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/1783183/000119312522209506/d251850dex991.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 608,
+    "ticker": "TVTX"
+  },
+  {
+    "id": 2094,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/1783183/000119312521322361/d237375dex991.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 609,
+    "ticker": "TVTX"
+  },
+  {
+    "id": 2112,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/899460/000119312526243074/mnkd-20260527.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 627,
+    "ticker": "TLSA"
+  },
+  {
+    "id": 2126,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/1668243/000119312524251712/d910412dex991.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 641,
+    "ticker": "PHAT"
+  },
+  {
+    "id": 2127,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/1668243/000143774925006757/ex_785682.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 642,
+    "ticker": "PHAT"
+  },
+  {
+    "id": 2128,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/1668243/000143774925015955/ex_815371.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 643,
+    "ticker": "PHAT"
+  },
+  {
+    "id": 2130,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/1819790/000181979023000004/exhibit991tarsus3132023pre.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 645,
+    "ticker": "PHAT"
+  },
+  {
+    "id": 2131,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/1819790/000181979022000039/exhibit991tarsus1192022pre.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 646,
+    "ticker": "PHAT"
+  },
+  {
+    "id": 2132,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/1819790/000181979023000028/exhibit991tarsus592023pres.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 647,
+    "ticker": "PHAT"
+  },
+  {
+    "id": 2135,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/1671858/000095017023041294/spry-ex99_1.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 650,
+    "ticker": "PHAT"
+  },
+  {
+    "id": 2140,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/1341235/000119312525319638/aldx-ex99_1.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 655,
+    "ticker": "TGTX"
+  },
+  {
+    "id": 2141,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/1341235/000121390025064869/ea024925701ex99-1_aldeyra.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 656,
+    "ticker": "TGTX"
+  },
+  {
+    "id": 2142,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/1341235/000119312523256532/d760002d8k.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 657,
+    "ticker": "FDMT"
+  },
+  {
+    "id": 2146,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/1831828/000119312526210351/vera-ex99_1.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 661,
+    "ticker": "BEAM"
+  },
+  {
+    "id": 2147,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/1831828/000119312526073421/vera-ex99_1.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 662,
+    "ticker": "DMAC"
+  },
+  {
+    "id": 2159,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/1133869/000110465926025657/capr-20260310xex99d1.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 674,
+    "ticker": "SYRE"
+  },
+  {
+    "id": 2160,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/1133869/000110465926059380/capr-20260512xex99d1.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 675,
+    "ticker": "ONCY"
+  },
+  {
+    "id": 2161,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/1133869/000110465926027037/capr-20260312xex99d1.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 676,
+    "ticker": "CPIX"
+  },
+  {
+    "id": 2162,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/1133869/000110465926087891/capr-20260729xex99d1.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 677,
+    "ticker": "GLMD"
+  },
+  {
+    "id": 2163,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/1133869/000110465926057221/capr-20260507xex99d2.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 678,
+    "ticker": "MGTX"
+  },
+  {
+    "id": 2164,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/1133869/000155837025002097/capr-20250304xex99d1.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 679,
+    "ticker": "ERAS"
+  },
+  {
+    "id": 2165,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/1133869/000155837025007574/capr-20250513xex99d1.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 680,
+    "ticker": "IMNN"
+  },
+  {
+    "id": 2169,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/1766140/000121390024097145/ea022088901ex99-1_unicycive.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 684,
+    "ticker": "URGN"
+  },
+  {
+    "id": 2170,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/1766140/000121390025042967/ea024208101ex99-1_unicycive.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 685,
+    "ticker": "TARS"
+  },
+  {
+    "id": 2171,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/1472012/000119312526344577/imnm-ex99_1.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 686,
+    "ticker": "SLS"
+  },
+  {
+    "id": 2172,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/1590750/000119312526205010/d149508dex991.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 687,
+    "ticker": "SPRY"
+  },
+  {
+    "id": 2173,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/1590750/000119312526073391/d105707dex991.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 688,
+    "ticker": "SPRY"
+  },
+  {
+    "id": 2174,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/1590750/000119312526205099/d20977dex991.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 689,
+    "ticker": "SPRY"
+  },
+  {
+    "id": 2175,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/1590750/000119312526130433/d27955dex991.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 690,
+    "ticker": "SPRY"
+  },
+  {
+    "id": 2176,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/1789972/000119312526210290/cgem-ex99_1.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 691,
+    "ticker": "SPRY"
+  },
+  {
+    "id": 2177,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/1933414/000193341426000048/mlys202603068kex991.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 692,
+    "ticker": "COGT"
+  },
+  {
+    "id": 2178,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/1861560/000119312526073304/nuvl-ex99_1.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 693,
+    "ticker": "FBRX"
+  },
+  {
+    "id": 2179,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/1861560/000119312526012243/nuvl-ex99_1.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 694,
+    "ticker": "COYA"
+  },
+  {
+    "id": 2180,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/1861560/000186156026000020/nuvl-ex99_1.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 695,
+    "ticker": "ALDX"
+  },
+  {
+    "id": 2181,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/1818794/000119312526323940/dyn-ex99_1.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 696,
+    "ticker": "ALDX"
+  },
+  {
+    "id": 2182,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/1720893/000110465926061773/tm2614679d1_ex99-1.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 697,
+    "ticker": "ALDX"
+  },
+  {
+    "id": 2183,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/1953926/000110465926095437/tm2622871d1_ex99-1.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 698,
+    "ticker": "ALDX"
+  },
+  {
+    "id": 2184,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/1649989/000110465926074346/tm2618010d1_ex99-1.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 699,
+    "ticker": "ALDX"
+  },
+  {
+    "id": 2185,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/1398733/000139873325000016/adcompressrelease-9x3x25.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 700,
+    "ticker": "ALDX"
+  },
+  {
+    "id": 2186,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/1398733/000162828025031455/prndaacceptancedraft6-13.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 701,
+    "ticker": "TNYA"
+  },
+  {
+    "id": 2187,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/1398733/000162828025034890/aqst-healthcanadaupcomin.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 702,
+    "ticker": "BIOA"
+  },
+  {
+    "id": 2188,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/1398733/000139873325000012/aquestive_corppresentati.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 703,
+    "ticker": "VERA"
+  },
+  {
+    "id": 2189,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/1398733/000114036125031374/ef20053945_ex99-1.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 704,
+    "ticker": "VERA"
+  },
+  {
+    "id": 2190,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/1398733/000162828023037923/corporatepresentationq3.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 705,
+    "ticker": "VERA"
+  },
+  {
+    "id": 2191,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/1398733/000162828023037096/q323supplementalearnings.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 706,
+    "ticker": "VERA"
+  },
+  {
+    "id": 2192,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/1398733/000162828024009005/aqst-q423xex991earningsrel.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 707,
+    "ticker": "VERA"
+  },
+  {
+    "id": 2193,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/1815776/000181577625000054/a991q225pressrelease.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 708,
+    "ticker": "CERS"
+  },
+  {
+    "id": 2194,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/1815776/000181577625000030/a991q125pressrelease.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 709,
+    "ticker": "CERS"
+  },
+  {
+    "id": 2195,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/1815776/000181577625000017/a991q424pressrelease.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 710,
+    "ticker": "VYGR"
+  },
+  {
+    "id": 2196,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/1815776/000181577624000069/a991q324pressrelease.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 711,
+    "ticker": "BCDA"
+  },
+  {
+    "id": 2197,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/1422143/000095017025105024/kura-ex99_1.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 712,
+    "ticker": "BCDA"
+  },
+  {
+    "id": 2198,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/1710340/000143774924033729/ex_743588.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 713,
+    "ticker": "TVRD"
+  },
+  {
+    "id": 2199,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/1697532/000095017024122796/aplt-ex99_1.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 714,
+    "ticker": "TVRD"
+  },
+  {
+    "id": 2200,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/1697532/000110465924031273/tm248059d1_ex99-1.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 715,
+    "ticker": "SKYE"
+  },
+  {
+    "id": 2201,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/1697532/000110465924059107/tm2413888d2_ex99-1.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 716,
+    "ticker": "TTIPF"
+  },
+  {
+    "id": 2202,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/1117480/000110465925019497/tm258043d1_8k.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 717,
+    "ticker": "KYMR"
+  },
+  {
+    "id": 2203,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/1117480/000110465925020599/tm258308d1_ex99-1.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 718,
+    "ticker": "TELO"
+  },
+  {
+    "id": 2204,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/1604950/000119312524257295/d860903dex991.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 719,
+    "ticker": "IXHL"
+  },
+  {
+    "id": 2205,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/318306/000149315224044514/ex99-1.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 720,
+    "ticker": "IXHL"
+  },
+  {
+    "id": 2206,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/318306/000149315225010981/ex99-1.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 721,
+    "ticker": "SIGA"
+  },
+  {
+    "id": 2207,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/318306/000149315224045338/ex99-1.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 722,
+    "ticker": "ENTA"
+  },
+  {
+    "id": 2208,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/318306/000149315224001660/ex99-1.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 723,
+    "ticker": "CAPR"
+  },
+  {
+    "id": 2209,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/318306/000149315223042711/ex99-1.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 724,
+    "ticker": "CAPR"
+  },
+  {
+    "id": 2210,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/318306/000149315224010206/ex99-1.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 725,
+    "ticker": "CAPR"
+  },
+  {
+    "id": 2211,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/882796/000117184325003152/exh_991.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 726,
+    "ticker": "CAPR"
+  },
+  {
+    "id": 2212,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/882796/000117184325004091/f8k_062525.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 727,
+    "ticker": "CAPR"
+  },
+  {
+    "id": 2213,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/1080014/000110465925074730/tm2522376d1_ex99-1.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 728,
+    "ticker": "CAPR"
+  },
+  {
+    "id": 2214,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/1730463/000173046324000110/autlex-991cp260924.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 729,
+    "ticker": "CAPR"
+  },
+  {
+    "id": 2215,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/1730463/000173046324000104/autlex-991pr190924.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 730,
+    "ticker": "IMNM"
+  },
+  {
+    "id": 2216,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/1730463/000173046324000021/autlpr14mar24.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 731,
+    "ticker": "IMNM"
+  },
+  {
+    "id": 2217,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/1730463/000173046324000059/pressrelease17may2024.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 732,
+    "ticker": "VRDN"
+  },
+  {
+    "id": 2218,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/1730463/000173046324000088/autlex-991pr080824.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 733,
+    "ticker": "VRDN"
+  },
+  {
+    "id": 2219,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/1730463/000173046324000070/pressrelease31may2024a01.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 734,
+    "ticker": "VRDN"
+  },
+  {
+    "id": 2220,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/1062822/000106282224000057/pressreleaseearningsq311-1.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 735,
+    "ticker": "VRDN"
+  },
+  {
+    "id": 2221,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/1604464/000095017024125334/atra-ex99_1.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 736,
+    "ticker": "VRDN"
+  },
+  {
+    "id": 2222,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/1348911/000119312524250223/d904891dex991.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 737,
+    "ticker": "CGEM"
+  },
+  {
+    "id": 2223,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/1430306/000199937125005877/ex99-01.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 738,
+    "ticker": "CGEM"
+  },
+  {
+    "id": 2224,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/1657312/000165731223000021/vrnaq32023pressrelease.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 739,
+    "ticker": "CGEM"
+  },
+  {
+    "id": 2225,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/1657312/000165731224000011/a20240509vrna-10xqq1xpress.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 740,
+    "ticker": "MLYS"
+  },
+  {
+    "id": 2226,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/1657312/000165731224000005/vrna10k2023pressrelease.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 741,
+    "ticker": "MLYS"
+  },
+  {
+    "id": 2227,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/1657312/000110465924000015/tm2333838d1_ex99-1.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 742,
+    "ticker": "MLYS"
+  },
+  {
+    "id": 2229,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/1845337/000119312523265699/d546603d8k.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 744,
+    "ticker": "DYN"
+  },
+  {
+    "id": 2230,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/1845337/000095017023059451/dawn-ex99_1.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 745,
+    "ticker": "ZBIO"
+  },
+  {
+    "id": 2231,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/1845337/000095017024020196/dawn-ex99_2.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 746,
+    "ticker": "ZBIO"
+  },
+  {
+    "id": 2232,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/1845337/000119312524003964/d109855dex992.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 747,
+    "ticker": "ZBIO"
+  },
+  {
+    "id": 2233,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/1845337/000119312523279309/d949336dex992.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 748,
+    "ticker": "ZBIO"
+  },
+  {
+    "id": 2234,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/1506251/000121390024042966/ea020608601ex99-1_citius.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 749,
+    "ticker": "ZBIO"
+  },
+  {
+    "id": 2235,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/1506251/000121390024023483/ea0202010ex99-1_citius.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 750,
+    "ticker": "ZBIO"
+  },
+  {
+    "id": 2236,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/1506251/000121390022076878/ea169519ex99-1_citiuspharma.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 751,
+    "ticker": "ZBIO"
+  },
+  {
+    "id": 2237,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/1506251/000121390022082228/ea170685ex99-1_citius.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 752,
+    "ticker": "OTLK"
+  },
+  {
+    "id": 2238,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/1621227/000155837024001756/adap-20240226xex99d1.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 753,
+    "ticker": "AQST"
+  },
+  {
+    "id": 2239,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/1494650/000149465024000017/a20240307q4earningsprese.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 754,
+    "ticker": "AQST"
+  },
+  {
+    "id": 2240,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/1494650/000149465023000094/a20231109q3earningsprese.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 755,
+    "ticker": "AQST"
+  },
+  {
+    "id": 2241,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/1494650/000149465023000077/a2023082earningspresenta.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 756,
+    "ticker": "AQST"
+  },
+  {
+    "id": 2242,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/1682639/000110465924003908/tm243285d1_8k.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 757,
+    "ticker": "AQST"
+  },
+  {
+    "id": 2243,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/1410098/000121390023086937/ea188304ex99-1_cormedix.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 758,
+    "ticker": "AQST"
+  },
+  {
+    "id": 2244,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/1787306/000178730624000078/pressreleaseex991q12024.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 759,
+    "ticker": "AQST"
+  },
+  {
+    "id": 2245,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/1651407/000110465923117329/tm2330556d1_ex99-1.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 760,
+    "ticker": "ANAB"
+  },
+  {
+    "id": 2246,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/1651407/000110465923027655/tm238273d1_ex99-1.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 761,
+    "ticker": "ANAB"
+  },
+  {
+    "id": 2247,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/1651407/000110465923060812/tm2315558d1_ex99-1.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 762,
+    "ticker": "ANAB"
+  },
+  {
+    "id": 2248,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/1651407/000110465923091410/tm2323037d1_ex99-1.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 763,
+    "ticker": "ANAB"
+  },
+  {
+    "id": 2249,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/1651407/000110465923039492/tm2311018d1_ex99-1.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 764,
+    "ticker": "QNCX"
+  },
+  {
+    "id": 2250,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/1609809/000119312522275406/d377816dex991.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 765,
+    "ticker": "QNCX"
+  },
+  {
+    "id": 2251,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/1609809/000119312523004111/d439121dex991.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 766,
+    "ticker": "DFTX"
+  },
+  {
+    "id": 2252,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/1674416/000095017023027129/crsp-ex99_1.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 767,
+    "ticker": "DFTX"
+  },
+  {
+    "id": 2253,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/1674416/000095017023039057/crsp-ex99_1.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 768,
+    "ticker": "DFTX"
+  },
+  {
+    "id": 2254,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/1802768/000180276823000005/rprx-20221231rpplcpressx.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 769,
+    "ticker": "DFTX"
+  },
+  {
+    "id": 2255,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/1267813/000110465921119858/tm2124617d4_ex99-1.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 770,
+    "ticker": "DFTX"
+  },
+  {
+    "id": 2256,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/764195/000149315221027457/ex99-1.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 771,
+    "ticker": "ADCT"
+  },
+  {
+    "id": 2257,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/1422142/000119312521325243/d249085dex991.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 772,
+    "ticker": "MPLT"
+  },
+  {
+    "id": 2258,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/1567514/000119312521323807/d253417dex991.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 773,
+    "ticker": "MPLT"
+  },
+  {
+    "id": 2259,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/1535955/000149315222003057/ex99-1.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 774,
+    "ticker": "MPLT"
+  },
+  {
+    "id": 2260,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/1211583/000110465921144174/tm2134077d1_ex99-1.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 775,
+    "ticker": "MPLT"
+  },
+  {
+    "id": 2261,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/1211583/000110465921144897/tm2134244d1_ex99-1.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 776,
+    "ticker": "MPLT"
+  },
+  {
+    "id": 2262,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/1178879/000110465921120517/tm2128727d1_ex99-4.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 777,
+    "ticker": "MPLT"
+  },
+  {
+    "id": 2263,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/1401914/000140191421000125/ex991_093021.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 778,
+    "ticker": "MPLT"
+  },
+  {
+    "id": 2264,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/1293971/000129397122000047/exhibit99120220804.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 779,
+    "ticker": "EYPT"
+  },
+  {
+    "id": 2287,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/872589/000087258925000017/exhibit991q22025.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 780,
+    "ticker": "EYPT"
+  },
+  {
+    "id": 2302,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/914475/000091447524000199/nbix2024828-exhibit991.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 781,
+    "ticker": "RZLT"
+  },
+  {
+    "id": 2303,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/914475/000091447525000157/q2-2025xearningsrelease.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 782,
+    "ticker": "RZLT"
+  },
+  {
+    "id": 2304,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/914475/000091447522000021/nbix-2022331exhibit991.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 783,
+    "ticker": "RZLT"
+  },
+  {
+    "id": 2305,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/914475/000091447522000009/nbix-20211231exhibit991.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 784,
+    "ticker": "RZLT"
+  },
+  {
+    "id": 2323,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/318154/000031815425000070/amgn-20250930earningsrelea.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 785,
+    "ticker": "RZLT"
+  },
+  {
+    "id": 2324,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/318154/000031815426000003/amgn-20251231earningsrelea.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 786,
+    "ticker": "RZLT"
+  },
+  {
+    "id": 2325,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/318154/000031815424000033/amgn-20240630earningsrelea.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 787,
+    "ticker": "RZLT"
+  },
+  {
+    "id": 2326,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/318154/000031815423000061/amgn-2023930earningsrelease.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 788,
+    "ticker": "RZLT"
+  },
+  {
+    "id": 2327,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/318154/000031815422000053/amgn-2022930earningsrelease.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 789,
+    "ticker": "RZLT"
+  },
+  {
+    "id": 2331,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/1759425/000119312525310611/d46722dex992.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 790,
+    "ticker": "RAPP"
+  },
+  {
+    "id": 2332,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/1759425/000175942526000036/mirm-20260506xexx991.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 791,
+    "ticker": "RAPP"
+  },
+  {
+    "id": 2347,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/879169/000087916925000053/incy-q12025xexx991.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 792,
+    "ticker": "RAPP"
+  },
+  {
+    "id": 2348,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/879169/000087916924000169/incy-q32024xexx991.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 793,
+    "ticker": "GOSS"
+  },
+  {
+    "id": 2349,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/879169/000087916922000007/incy-q32022xexx991.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 794,
+    "ticker": "GOSS"
+  },
+  {
+    "id": 2383,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/1551152/000155115225000047/abbv-20250930xexhibit991.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 795,
+    "ticker": "GOSS"
+  },
+  {
+    "id": 2384,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/1551152/000155115226000023/abbv-20260630xexhibit991.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 796,
+    "ticker": "GOSS"
+  },
+  {
+    "id": 2385,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/1551152/000155115225000036/abbv-20250630xexhibit991.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 797,
+    "ticker": "VTGN"
+  },
+  {
+    "id": 2386,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/1551152/000155115225000011/abbv-20241231xexhibit991.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 798,
+    "ticker": "VTGN"
+  },
+  {
+    "id": 2387,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/1551152/000155115224000036/abbv-20240930xexhibit991.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 799,
+    "ticker": "VTGN"
+  },
+  {
+    "id": 2388,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/1551152/000155115223000040/abbv-20230930xexhibit991.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 800,
+    "ticker": "VTGN"
+  },
+  {
+    "id": 2389,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/1551152/000155115223000019/abbv-20230331xexhibit991.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 801,
+    "ticker": "VTGN"
+  },
+  {
+    "id": 2390,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/1551152/000155115221000028/abbv-20210930xexhibit991.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 802,
+    "ticker": "VTGN"
+  },
+  {
+    "id": 2391,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/1551152/000155115222000026/abbv-20220630xexhibit991.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 803,
+    "ticker": "VTGN"
+  },
+  {
+    "id": 2429,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/78003/000007800325000136/pfe-06292025xex99.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 804,
+    "ticker": "VTGN"
+  },
+  {
+    "id": 2431,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/1691082/000119312526311357/d173035dex991.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 805,
+    "ticker": "CRMD"
+  },
+  {
+    "id": 2432,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/1691082/000119312526126223/d129775dex991.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 806,
+    "ticker": "QTTB"
+  },
+  {
+    "id": 2435,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/1855644/000110465926097526/tm2623351d1_ex99-1.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 807,
+    "ticker": "QTTB"
+  },
+  {
+    "id": 2436,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/1855644/000185564426000007/corporatedeck_zurabiox11.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 808,
+    "ticker": "QTTB"
+  },
+  {
+    "id": 2437,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/1855644/000110465925087286/tm2525151d1_ex99-1.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 809,
+    "ticker": "QTTB"
+  },
+  {
+    "id": 2438,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/1855644/000110465926012935/tm265932d1_ex99-1.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 810,
+    "ticker": "ALT"
+  },
+  {
+    "id": 2439,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/1855644/000110465926002688/tm262894d1_ex99-1.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 811,
+    "ticker": "MNPR"
+  },
+  {
+    "id": 2440,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/1855644/000110465926025520/tm268344d1_ex99-1.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 812,
+    "ticker": "MNPR"
+  },
+  {
+    "id": 2441,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/1855644/000110465926032077/tm269296d1_ex99-2.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 813,
+    "ticker": "EDSA"
+  },
+  {
+    "id": 2442,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/1855644/000162828026031701/corporatedeck_zurabiox07.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 814,
+    "ticker": "UPB"
+  },
+  {
+    "id": 2443,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/1855644/000110465926079538/tm2619483d1_ex99-1.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 815,
+    "ticker": "PTCT"
+  },
+  {
+    "id": 2444,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/1855644/000110465925056205/tm2516644d1_ex99-1.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 816,
+    "ticker": "PTCT"
+  },
+  {
+    "id": 2511,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/1528115/000119312524279038/d909577dex991.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 817,
+    "ticker": "PTCT"
+  },
+  {
+    "id": 2512,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/1528115/000119312524153625/d838099dex992.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 818,
+    "ticker": "QURE"
+  },
+  {
+    "id": 2516,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/879407/000087940725000007/a9912025-09x10arrowheadc.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 819,
+    "ticker": "QURE"
+  },
+  {
+    "id": 2517,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/879407/000087940726000058/arwr-202608048kex991.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 820,
+    "ticker": "QURE"
+  },
+  {
+    "id": 2518,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/879407/000162828025024675/arwr-202505128kex991.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 821,
+    "ticker": "CABA"
+  },
+  {
+    "id": 2519,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/879407/000162828025004637/arwr-202502108kex991.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 822,
+    "ticker": "CABA"
+  },
+  {
+    "id": 2526,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/1520262/000119312525276161/alks-20251112.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 823,
+    "ticker": "EVMN"
+  },
+  {
+    "id": 2527,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/1520262/000119312526003453/alks-ex99_1.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 824,
+    "ticker": "EVMN"
+  },
+  {
+    "id": 2528,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/1520262/000095017025113379/alks-ex99_1.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 825,
+    "ticker": "HRMY"
+  },
+  {
+    "id": 2529,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/1520262/000095017025097323/alks-ex99_1.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 826,
+    "ticker": "HRMY"
+  },
+  {
+    "id": 2530,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/1520262/000095017024042791/alks-ex99_1.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 827,
+    "ticker": "BHC"
+  },
+  {
+    "id": 2536,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/1503802/000119312526326995/d71318d8k.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 828,
+    "ticker": "KALA"
+  },
+  {
+    "id": 2548,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/1526119/000155837022000218/vstm-20220111xex99d2.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 829,
+    "ticker": "ETON"
+  },
+  {
+    "id": 2564,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/882095/000088209524000020/exhibit991earningspressrel.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 830,
+    "ticker": "ETON"
+  },
+  {
+    "id": 2571,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/1455365/000110465924038686/tm249736d1_ex99-1.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 832,
+    "ticker": "ABEO"
+  },
+  {
+    "id": 2572,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/1455365/000110465924057711/tm2413335d1_ex99-1.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 833,
+    "ticker": "ABEO"
+  },
+  {
+    "id": 2573,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/1455365/000110465923075552/tm2319819d2_ex99-2.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 834,
+    "ticker": "ABEO"
+  },
+  {
+    "id": 2574,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/1455365/000110465923088580/tm2322819d1_ex99-1.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 835,
+    "ticker": "ABEO"
+  },
+  {
+    "id": 2578,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/1974640/000110465925065926/tm2519512d2_ex99-2.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 836,
+    "ticker": "ABEO"
+  },
+  {
+    "id": 2579,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/1974640/000110465924088029/tm2421302d1_ex99-2.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 837,
+    "ticker": "ABEO"
+  },
+  {
+    "id": 2583,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/1743881/000174388125000010/bbio-20250930xex991.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 838,
+    "ticker": "BCRX"
+  },
+  {
+    "id": 2584,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/1743881/000174388126000008/bbio-20251231xex9911.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 839,
+    "ticker": "BCRX"
+  },
+  {
+    "id": 2585,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/1743881/000174388126000018/bbio-2026331xex991.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 840,
+    "ticker": "AUTL"
+  },
+  {
+    "id": 2586,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/1743881/000114036126004995/ef20065539_ex99-1.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 841,
+    "ticker": "AUTL"
+  },
+  {
+    "id": 2587,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/1743881/000095017025102985/bbio-ex99_1.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 842,
+    "ticker": "AUTL"
+  },
+  {
+    "id": 2588,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/1743881/000114036123034684/brhc20055953_ex99-2.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 843,
+    "ticker": "AUTL"
+  },
+  {
+    "id": 2593,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/1827635/000182763526000023/exhibit991datarelease1.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 844,
+    "ticker": "AUTL"
+  },
+  {
+    "id": 2600,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/1711279/000119312521342256/d217944dex991.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 845,
+    "ticker": "AUTL"
+  },
+  {
+    "id": 2638,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/1035354/000110465922118535/tm2230297d1_ex99-1.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 853,
+    "ticker": "SRRK"
+  },
+  {
+    "id": 2639,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/1035354/000110465921140321/tm2133239d1_ex99-1.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 854,
+    "ticker": "SRRK"
+  },
+  {
+    "id": 2640,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/1035354/000110465922091222/tm2223461d1_ex99-1.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 855,
+    "ticker": "SRRK"
+  },
+  {
+    "id": 2656,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/1515673/000119312526206368/rare-ex99_1.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 856,
+    "ticker": "BHVN"
+  },
+  {
+    "id": 2657,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/1515673/000095017025064473/rare-ex99_1.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 857,
+    "ticker": "BHVN"
+  },
+  {
+    "id": 2659,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/1488039/000095017024124655/atos-ex99_1.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 858,
+    "ticker": "BHVN"
+  },
+  {
+    "id": 2662,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/1776111/000095017024122824/mbx-ex99_1.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 860,
+    "ticker": "PHGE"
+  },
+  {
+    "id": 2663,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/1776111/000095017025039837/mbx-ex99_1.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 861,
+    "ticker": "PHGE"
+  },
+  {
+    "id": 2664,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/1776111/000095017025104602/mbx-ex99_1.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 862,
+    "ticker": "PHGE"
+  },
+  {
+    "id": 2666,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/907654/000121390026047743/ea0287782-8k_oruka.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 863,
+    "ticker": "PHGE"
+  },
+  {
+    "id": 2669,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/1649904/000162828026018211/ex991rytm20260616emanatepr.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 864,
+    "ticker": "PHGE"
+  },
+  {
+    "id": 2670,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/1649904/000110465922043012/tm2211767d1_ex99-1.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 865,
+    "ticker": "PHGE"
+  },
+  {
+    "id": 2687,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/1468748/000119312526134854/kod-ex99_1.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 866,
+    "ticker": "PTGX"
+  },
+  {
+    "id": 2688,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/1468748/000095017024037608/kod-ex99_1.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 867,
+    "ticker": "PTGX"
+  },
+  {
+    "id": 2689,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/1468748/000095017023033933/kod-20230724.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 868,
+    "ticker": "PTGX"
+  },
+  {
+    "id": 2690,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/1468748/000095017022023842/kod-ex99_1.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 869,
+    "ticker": "PTGX"
+  },
+  {
+    "id": 2691,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/1468748/000095017023022193/kod-ex99_1.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 870,
+    "ticker": "PTGX"
+  },
+  {
+    "id": 2692,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/1468748/000095017023010303/kod-ex99_1.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 871,
+    "ticker": "PTGX"
+  },
+  {
+    "id": 2693,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/1468748/000095017022015232/kod-20220808.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 872,
+    "ticker": "PTGX"
+  },
+  {
+    "id": 2694,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/1468748/000095017022002538/kod-ex99_1.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 873,
+    "ticker": "PTGX"
+  },
+  {
+    "id": 2702,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/1714899/000171489925000104/ex991pressreleaseq12025.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 874,
+    "ticker": "PTGX"
+  },
+  {
+    "id": 2703,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/1714899/000171489925000072/dnli-20250305.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 875,
+    "ticker": "PTN"
+  },
+  {
+    "id": 2704,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/1714899/000171489925000007/exhibit991pressrelease10625.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 876,
+    "ticker": "PTN"
+  },
+  {
+    "id": 2705,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/1714899/000171489924000065/dnli-20240216.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 877,
+    "ticker": "TRVI"
+  },
+  {
+    "id": 2706,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/1714899/000171489924000120/ex991pressreleaseq12024.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 878,
+    "ticker": "TRVI"
+  },
+  {
+    "id": 2707,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/1714899/000171489924000076/ex991pressreleaseq42023.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 879,
+    "ticker": "TRVI"
+  },
+  {
+    "id": 2710,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/949858/000095017023023533/achv-ex99_1.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 880,
+    "ticker": "TRVI"
+  },
+  {
+    "id": 2714,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/1710072/000115752321001387/a52527144ex99_1.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 881,
+    "ticker": "TRVI"
+  },
+  {
+    "id": 2716,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/1681087/000119312526076843/tecx-ex99_1.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 882,
+    "ticker": "TRVI"
+  },
+  {
+    "id": 2717,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/1681087/000119312526338000/d114671dex991.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 883,
+    "ticker": "TRVI"
+  },
+  {
+    "id": 2718,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/1681087/000119312525269573/tecx-ex99_1.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 884,
+    "ticker": "TRVI"
+  },
+  {
+    "id": 2719,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/1681087/000119312525256958/d30823dex992.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 885,
+    "ticker": "KROS"
+  },
+  {
+    "id": 2720,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/1681087/000119312526266040/d124600dex991.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 886,
+    "ticker": "KROS"
+  },
+  {
+    "id": 2721,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/1681087/000119312525175567/d36621dex991.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 887,
+    "ticker": "PROK"
+  },
+  {
+    "id": 2722,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/1681087/000095017025066932/tecx-ex99_1.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 888,
+    "ticker": "ACTU"
+  },
+  {
+    "id": 2723,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/1681087/000119312524188881/d783068dex991.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 889,
+    "ticker": "NKTR"
+  },
+  {
+    "id": 2735,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/1658247/000095017025003801/crnx-ex99_1.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 890,
+    "ticker": "CELC"
+  },
+  {
+    "id": 2739,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/1658247/000119312524153075/d823838dex992.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 894,
+    "ticker": "GYRE"
+  },
+  {
+    "id": 2740,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/1658247/000095017022019537/crnx-ex99_1.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 895,
+    "ticker": "MBOT"
+  },
+  {
+    "id": 2743,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/1437402/000162828022010063/ardx-20220425.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 896,
+    "ticker": "SPRO"
+  },
+  {
+    "id": 2751,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/874015/000114036125041225/ef20058520_8k.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 897,
+    "ticker": "SPRO"
+  },
+  {
+    "id": 2752,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/874015/000114036125033541/ef20054942_ex99-1.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 898,
+    "ticker": "SPRO"
+  },
+  {
+    "id": 2753,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/874015/000114036126015801/ef20071051_8k.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 899,
+    "ticker": "SPRO"
+  },
+  {
+    "id": 2754,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/874015/000114036126026232/ef20076807_ex99-1.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 900,
+    "ticker": "SPRO"
+  },
+  {
+    "id": 2761,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/874015/000114036122040624/brhc10043925_ex99-1.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 907,
+    "ticker": "GRCE"
+  },
+  {
+    "id": 2772,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/1395937/000095017024089235/sndx-ex99_1.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 914,
+    "ticker": "DBVT"
+  },
+  {
+    "id": 2781,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/1356576/000135657624000058/ex-991xsupnspnx820phase2ar.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 918,
+    "ticker": "PRTA"
+  },
+  {
+    "id": 2789,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/1649094/000095017022008507/pcvx-ex99_1.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 922,
+    "ticker": "CTXR"
+  },
+  {
+    "id": 2792,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/1232524/000123252422000045/a3q22financialpr.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 923,
+    "ticker": "CTXR"
+  },
+  {
+    "id": 2793,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/1232524/000123252422000034/a2q22financialpr.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 924,
+    "ticker": "CTXR"
+  },
+  {
+    "id": 2805,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/875045/000087504524000030/exhibit991-q32024pressrele.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 925,
+    "ticker": "CTXR"
+  },
+  {
+    "id": 2806,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/875045/000087504522000028/exhibit991-q32022pressrele.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 926,
+    "ticker": "CTXR"
+  },
+  {
+    "id": 2817,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/1689548/000168954826000031/prax-20260406.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 928,
+    "ticker": "GRAL"
+  },
+  {
+    "id": 2819,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/1689548/000168954826000028/praxisye2025pr.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 929,
+    "ticker": "TNXP"
+  },
+  {
+    "id": 2820,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/1689548/000168954825000056/praxisq12025pr.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 930,
+    "ticker": "TNXP"
+  },
+  {
+    "id": 2821,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/1689548/000168954825000062/praxiscorporatedeckmay_2.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 931,
+    "ticker": "TNXP"
+  },
+  {
+    "id": 2822,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/1689548/000168954824000098/praxisq32024pr.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 932,
+    "ticker": "TNXP"
+  },
+  {
+    "id": 2823,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/1689548/000168954825000037/praxisye2024pr.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 933,
+    "ticker": "TNXP"
+  },
+  {
+    "id": 2824,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/1689548/000168954825000021/a8-kexhibit991.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 934,
+    "ticker": "TNXP"
+  },
+  {
+    "id": 2825,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/1689548/000168954825000094/radianttopline_final.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 935,
+    "ticker": "TNXP"
+  },
+  {
+    "id": 2826,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/1689548/000168954824000035/praxiscorporatedeckmarch.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 936,
+    "ticker": "TNXP"
+  },
+  {
+    "id": 2827,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/1689548/000168954824000058/praxisq12024pr.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 937,
+    "ticker": "TNXP"
+  },
+  {
+    "id": 2828,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/1689548/000168954824000086/praxisq22024pr.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 938,
+    "ticker": "TNXP"
+  },
+  {
+    "id": 2829,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/1689548/000168954822000124/praxis_3q22earningspressre.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 939,
+    "ticker": "ROIV"
+  },
+  {
+    "id": 2830,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/1689548/000168954823000043/praxis_4qfy22earningsprfin.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 940,
+    "ticker": "ROIV"
+  },
+  {
+    "id": 2831,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/1689548/000168954823000084/praxis_1q23earningsprclean.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 941,
+    "ticker": "ROIV"
+  },
+  {
+    "id": 2832,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/1689548/000168954823000126/praxisaugust2023corporat.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 942,
+    "ticker": "ROIV"
+  },
+  {
+    "id": 2834,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/1689548/000168954823000056/prax-20230303.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 944,
+    "ticker": "RANI"
+  },
+  {
+    "id": 2835,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/1689548/000168954822000037/praxis_1q22earningspressre.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 945,
+    "ticker": "RANI"
+  },
+  {
+    "id": 2836,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/1689548/000168954822000013/praxex-991q42021.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 946,
+    "ticker": "RANI"
+  },
+  {
+    "id": 2837,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/1689548/000168954821000093/praxex-991q32021.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 947,
+    "ticker": "RANI"
+  },
+  {
+    "id": 2838,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/1689548/000168954822000110/praxis_2q22earningspressre.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 948,
+    "ticker": "RANI"
+  },
+  {
+    "id": 2840,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/1768446/000095017022009922/elym-ex99_1.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 949,
+    "ticker": "DARE"
+  },
+  {
+    "id": 2855,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/1104506/000114036125022023/ef20050418_8k.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 950,
+    "ticker": "DARE"
+  },
+  {
+    "id": 2861,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/1157601/000119312523234385/d475156dex991.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 954,
+    "ticker": "LENZ"
+  },
+  {
+    "id": 2862,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/1157601/000119312523270884/d583670dex991.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 955,
+    "ticker": "GPCR"
+  },
+  {
+    "id": 2887,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/1061983/000095017025064432/cytk-ex99_1.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 962,
+    "ticker": "LPCN"
+  },
+  {
+    "id": 2889,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/1061983/000095017023037924/cytk-ex99.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 963,
+    "ticker": "LPCN"
+  },
+  {
+    "id": 2906,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/1576885/000157688525000102/acumen_ncxcorporatexdeck.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 964,
+    "ticker": "LPCN"
+  },
+  {
+    "id": 2907,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/1576885/000162828026033868/abos-20260512xexx991.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 965,
+    "ticker": "LPCN"
+  },
+  {
+    "id": 2908,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/1576885/000162828026055940/abos-20260812xexx991.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 966,
+    "ticker": "BDTX"
+  },
+  {
+    "id": 2909,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/1576885/000162828026021189/acumen_ncxcorporatexdeck.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 967,
+    "ticker": "AMLX"
+  },
+  {
+    "id": 2910,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/1576885/000162828026017885/acumen_ncxcorporatexdeck.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 968,
+    "ticker": "AMLX"
+  },
+  {
+    "id": 2918,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/1576885/000157688523000023/acumen_ncxcorporatexdeck.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 976,
+    "ticker": "AVTX"
+  },
+  {
+    "id": 2923,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/1178670/000115752323001622/a53737945_ex991.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 977,
+    "ticker": "AVTX"
+  },
+  {
+    "id": 2932,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/1840439/000119312524283008/d827448dex992.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 982,
+    "ticker": "NTIP"
+  },
+  {
+    "id": 2942,
+    "source_url": "https://www.sec.gov/Archives/edgar/data/1579428/000095017024124546/axsm-ex99_1.htm",
+    "reason": "cross_filer",
+    "catalyst_id": 985,
+    "ticker": "LIANY"
+  }
+]
