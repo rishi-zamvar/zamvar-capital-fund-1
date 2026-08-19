@@ -116,6 +116,11 @@ def main():
     logging.basicConfig(level=logging.INFO)
     conn = _db.connect()
     _db.migrate(conn)
+    # Register the real T-2 launcher ONCE (after migrate, before any detect_and_fire): a fired T-2
+    # catalyst now ENQUEUES a desk-run request for a later CC-gated desk pass. refresh() itself stays
+    # pure (no register) so existing suites that call it directly are unaffected. No LLM here.
+    from catalyst_trader.desk import desk_queue
+    desk_queue.register(conn)
     try:
         tickers = _load_tickers(conn)
         pdufa_csv = str(_DATA_DIR / "pdufa_curated.csv")
