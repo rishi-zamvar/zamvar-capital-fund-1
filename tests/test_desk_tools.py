@@ -136,6 +136,35 @@ async def test_query_playbooks_cited_as_resolvable_tool_ref(db):
     assert evidence.resolve(db, ref) is not None
 
 
+async def test_build_portfolio_is_in_the_analyst_tool_surface(db):
+    assert "build_portfolio" in _handlers(db)   # backward-compat: purely additive
+
+
+async def test_build_portfolio_handler_returns_structured_outcome(db):
+    out = await _handlers(db)["build_portfolio"].handler({
+        "positions": [{"ticker": "AAA", "side": "long", "size_pct": 0.5},
+                      {"ticker": "BBB", "side": "short", "size_pct": 0.4}],
+        "assumptions": {"AAA": {"expected_move": 0.2, "p_positive": 0.6},
+                        "BBB": {"expected_move": 0.1, "p_positive": 0.55}},
+    })
+    p = _payload(out)
+    assert p["gross_exposure"] == 0.9          # |0.5| + |-0.4|
+    assert p["portfolio_vol"] is not None
+    assert "worst_case" in p["scenarios"]
+    assert "risk_of_ruin" in p["risk"]
+
+
+async def test_build_portfolio_defaults_to_stored_hedge_profiles_offline(db):
+    # No corr_source supplied -> the closure binds kb.hedge_profile(conn, .). An unstamped ticker
+    # degrades to idiosyncratic (profile None) with NO crash, proving the offline default binding.
+    out = await _handlers(db)["build_portfolio"].handler({
+        "positions": [{"ticker": "NOSUCH", "side": "long", "size_pct": 0.5}],
+        "assumptions": {"NOSUCH": {"expected_move": 0.2}},
+    })
+    p = _payload(out)
+    assert p["portfolio_variance"] == 0.5**2 * 0.2**2   # own sigma, zero off-diagonal
+
+
 async def test_analog_ref_is_stable_for_same_inputs(db, monkeypatch):
     monkeypatch.setenv("CT_EMBEDDER", "hash")
     _seed_analog(db)

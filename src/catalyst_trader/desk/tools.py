@@ -94,7 +94,19 @@ def build_quant_tools(conn) -> list:
     async def _correlation_beta(args):
         return _result_content(quant.correlation_beta(args["asset_returns"], args["market_returns"]))
 
-    return [_base_rate, _analog_query, _query_playbooks, _rnpv, _cash_runway, _implied_move, _correlation_beta]
+    @tool("build_portfolio",
+          "What-if a weekly book: exposure, concentration, correlation-adjusted vol, scenario P&L, risk",
+          {"positions": list, "assumptions": dict})
+    async def _build_portfolio(args):
+        from .portfolio_builder import build_portfolio
+        assumptions = dict(args["assumptions"])
+        # the ONLY place conn binds: default correlation source = the stored hedge_profiles.
+        # A PortfolioOutcome is not a ToolResult -> plain _content, not _result_content.
+        assumptions.setdefault("corr_source", lambda t: kb.hedge_profile(conn, t))
+        return _content(build_portfolio(args["positions"], assumptions).model_dump())
+
+    return [_base_rate, _analog_query, _query_playbooks, _rnpv, _cash_runway, _implied_move,
+            _correlation_beta, _build_portfolio]
 
 
 def build_quant_server(conn):
