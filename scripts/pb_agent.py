@@ -19,17 +19,17 @@ def _conn():
     return c
 
 
-def cmd_prompt(cid):
+def cmd_prompt(cid, own_cik=None):
     c = _conn()
-    b = build_bundle(c, cid)
+    b = build_bundle(c, cid, own_cik=own_cik)
     if b is None:
         print("SKIP_NO_BUNDLE"); return
     print(build_prompt(b))
 
 
-def cmd_insert(cid, json_path):
+def cmd_insert(cid, json_path, own_cik=None):
     c = _conn()
-    b = build_bundle(c, cid)
+    b = build_bundle(c, cid, own_cik=own_cik)
     if b is None:
         print("SKIP_NO_BUNDLE"); return
     txt = open(json_path, encoding="utf-8").read()
@@ -42,17 +42,22 @@ def cmd_insert(cid, json_path):
     print(f"INSERTED cid={cid} node={nid} label={rec.outcome_label} move={rec.signed_move}")
 
 
-if __name__ == "__main__":
+def main(argv=None):
     ap = argparse.ArgumentParser()
     ap.add_argument("--prompt", type=int)
     ap.add_argument("--insert", type=int)
     ap.add_argument("--json")
-    a = ap.parse_args()
+    ap.add_argument("--own_cik", type=int)  # pin the filer CIK -> build_bundle(own_cik=)
+    a = ap.parse_args(argv)
     if a.prompt is not None:
-        cmd_prompt(a.prompt)
+        cmd_prompt(a.prompt, own_cik=a.own_cik)
     elif a.insert is not None:
         if not a.json:
             sys.exit("--insert requires --json <path>")
-        cmd_insert(a.insert, a.json)
+        cmd_insert(a.insert, a.json, own_cik=a.own_cik)
     else:
         sys.exit("use --prompt <cid> or --insert <cid> --json <path>")
+
+
+if __name__ == "__main__":
+    main()

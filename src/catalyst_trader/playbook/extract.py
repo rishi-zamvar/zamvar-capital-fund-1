@@ -55,6 +55,38 @@ def cik_filter_exhibits(urls, own_cik) -> list[str]:
     return [u for u in urls if (m := _CIK_RE.search(u or "")) and str(int(m.group(1))) == own]
 
 
+def prune_cross_filer_sources(conn, catalyst_id, own_cik) -> list[dict]:
+    """FIX C — delete cross-filer (wrong-CIK) EDGAR contamination from catalyst_source and dedupe
+    exact-duplicate own-CIK EDGAR urls (keep the lowest id). ct.gov / non-EDGAR rows are left
+    untouched. Reuses cik_filter_exhibits for the keep-set (no re-written CIK regex). own_cik=None ->
+    no-op (no guess). Returns the dropped rows [{id, source_url, reason}] for the prune artifact."""
+    if own_cik is None:
+        return []
+    rows = conn.execute(
+        "SELECT id, source_url FROM catalyst_source "
+        "WHERE catalyst_id=? AND source_url IS NOT NULL ORDER BY id",
+        (catalyst_id,),
+    ).fetchall()
+    edgar = [r for r in rows if "sec.gov/Archives" in (r["source_url"] or "")]
+    keep = set(cik_filter_exhibits([r["source_url"] for r in edgar], own_cik))
+
+    dropped: list[dict] = []
+    seen: set[str] = set()
+    for r in edgar:
+        url = r["source_url"]
+        if url not in keep:
+            reason = "cross_filer"
+        elif url in seen:
+            reason = "duplicate"
+        else:
+            seen.add(url)
+            continue
+        conn.execute("DELETE FROM catalyst_source WHERE id=?", (r["id"],))
+        dropped.append({"id": r["id"], "source_url": url, "reason": reason})
+    conn.commit()
+    return dropped
+
+
 # ── cached-lake retrieval join (research B §1.2) ─────────────────────────────
 
 def _resolve_lake_file(url: str, lake_dir: str) -> Path | None:

@@ -286,3 +286,83 @@ def test_earnings_label_move_anchored_reproducible():
     assert _anchor_label("earnings", "whatever", 0.08) == "beat"
     assert _anchor_label("earnings", "whatever", 0.01) == "inline"  # muted -> inline
     assert _anchor_label("earnings", "x", None) == "x"              # no move -> fall back to llm
+
+
+# ── FIX C: prune_cross_filer_sources (reuses cik_filter_exhibits) ─────────────
+
+_OWN_CIK = 111
+_OWN_EDGAR = "https://www.sec.gov/Archives/edgar/data/111/000111000/own_8k.htm"
+_CROSS_EDGAR = "https://www.sec.gov/Archives/edgar/data/222/000222000/other_8k.htm"
+_CTGOV = "https://clinicaltrials.gov/study/NCT01234567"
+
+
+def _urls_for(conn, cid):
+    return {r["source_url"] for r in conn.execute(
+        "SELECT source_url FROM catalyst_source WHERE catalyst_id=?", (cid,)).fetchall()}
+
+
+def test_given_own_and_cross_cik_edgar_sources_when_prune_then_only_own_kept(db):
+    from catalyst_trader.playbook.extract import prune_cross_filer_sources
+    cid = _seed_catalyst(db)
+    _seed_source(db, cid, _OWN_EDGAR)
+    _seed_source(db, cid, _CROSS_EDGAR)  # wrong-CIK contamination
+    _seed_source(db, cid, _CTGOV)        # non-EDGAR — must be untouched
+
+    dropped = prune_cross_filer_sources(db, cid, _OWN_CIK)
+
+    assert _urls_for(db, cid) == {_OWN_EDGAR, _CTGOV}  # cross-CIK EDGAR gone, ct.gov kept
+    assert [d["source_url"] for d in dropped] == [_CROSS_EDGAR]
+
+
+def test_given_duplicate_own_cik_sources_when_prune_then_deduped(db):
+    from catalyst_trader.playbook.extract import prune_cross_filer_sources
+    cid = _seed_catalyst(db)
+    _seed_source(db, cid, _OWN_EDGAR)
+    _seed_source(db, cid, _OWN_EDGAR)  # exact-duplicate own-CIK url
+
+    dropped = prune_cross_filer_sources(db, cid, _OWN_CIK)
+
+    n = db.execute(
+        "SELECT COUNT(*) AS c FROM catalyst_source WHERE catalyst_id=? AND source_url=?",
+        (cid, _OWN_EDGAR)).fetchone()["c"]
+    assert n == 1  # collapsed to one
+    assert [d["source_url"] for d in dropped] == [_OWN_EDGAR]  # the dropped duplicate is reported
+
+
+def test_given_no_contamination_when_prune_then_noop_returns_empty(db):
+    from catalyst_trader.playbook.extract import prune_cross_filer_sources
+    cid = _seed_catalyst(db)
+    _seed_source(db, cid, _OWN_EDGAR)
+    _seed_source(db, cid, _CTGOV)
+
+    assert prune_cross_filer_sources(db, cid, _OWN_CIK) == []
+    assert _urls_for(db, cid) == {_OWN_EDGAR, _CTGOV}
+
+
+def test_given_own_cik_none_when_prune_then_noop(db):
+    from catalyst_trader.playbook.extract import prune_cross_filer_sources
+    cid = _seed_catalyst(db)
+    _seed_source(db, cid, _CROSS_EDGAR)
+    assert prune_cross_filer_sources(db, cid, None) == []  # no CIK -> no guess, no deletion
+    assert _urls_for(db, cid) == {_CROSS_EDGAR}
+
+
+# ── FIX C: pb_agent --own_cik passthrough (offline; monkeypatched _conn, no stray catalyst.db) ──
+
+def test_given_own_cik_arg_when_parsed_then_threaded_to_build_bundle(db, monkeypatch):
+    import scripts.pb_agent as pb
+
+    captured = {}
+
+    def fake_build_bundle(conn, cid, **kw):
+        captured["cid"] = cid
+        captured.update(kw)
+        return None  # None -> cmd_prompt prints SKIP_NO_BUNDLE and returns (no further work)
+
+    monkeypatch.setattr(pb, "build_bundle", fake_build_bundle)
+    monkeypatch.setattr(pb, "_conn", lambda: db)  # in-memory conn -> NO stray catalyst.db in CWD
+
+    pb.main(["--prompt", "271", "--own_cik", "111"])
+
+    assert captured["cid"] == 271
+    assert captured.get("own_cik") == 111
