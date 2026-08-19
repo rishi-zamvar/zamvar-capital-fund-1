@@ -1,0 +1,386 @@
+<title>Zamvar Capital · Fund 1</title>
+<style>
+  :root{
+    --bg:#f5f3ec; --paper:#fbfaf5; --panel:#f0ede3; --panel2:#e9e5d8; --line:#ddd7c6; --line2:#cbc3ac;
+    --ink:#16201c; --body:#33413a; --mut:#5f6d63; --faint:#8a9186;
+    --accent:#1f6f5c; --accent2:#2f9077; --accent-soft:#dcece6;
+    --pos:#2f7d4d; --neg:#b0463b; --warn:#a9781a; --gold:#9a7b2e;
+    --serif:"Iowan Old Style","Palatino Linotype",Palatino,Georgia,"Times New Roman",serif;
+    --sans:system-ui,-apple-system,"Segoe UI",Helvetica,Arial,sans-serif;
+    --mono:"SF Mono",ui-monospace,Menlo,"Cascadia Code",monospace;
+  }
+  @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+    --bg:#0e1512; --paper:#131c18; --panel:#17211c; --panel2:#1d2822; --line:#283630; --line2:#3a4c43;
+    --ink:#eef2ea; --body:#c7d1c9; --mut:#95a29a; --faint:#6f7c74;
+    --accent:#5cba9f; --accent2:#78d3b8; --accent-soft:#12332a;
+    --pos:#6ec28a; --neg:#e0736b; --warn:#e0b24a; --gold:#d4af6a;
+  }}
+  :root[data-theme="dark"]{
+    --bg:#0e1512; --paper:#131c18; --panel:#17211c; --panel2:#1d2822; --line:#283630; --line2:#3a4c43;
+    --ink:#eef2ea; --body:#c7d1c9; --mut:#95a29a; --faint:#6f7c74;
+    --accent:#5cba9f; --accent2:#78d3b8; --accent-soft:#12332a;
+    --pos:#6ec28a; --neg:#e0736b; --warn:#e0b24a; --gold:#d4af6a;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--body);font-family:var(--sans);line-height:1.62;-webkit-font-smoothing:antialiased;font-size:16px}
+  .wrap{max-width:900px;margin:0 auto;padding:0 26px}
+  .rule{max-width:900px;margin:0 auto;border:0;border-top:1px solid var(--line)}
+  a{color:var(--accent)}
+  h1,h2,h3,h4{color:var(--ink);text-wrap:balance}
+  /* header */
+  header{max-width:900px;margin:0 auto;padding:44px 26px 8px}
+  .brandrow{display:flex;justify-content:space-between;align-items:baseline;border-bottom:2px solid var(--ink);padding-bottom:12px;flex-wrap:wrap;gap:8px}
+  .brand{font-family:var(--serif);font-size:24px;font-weight:600;letter-spacing:.01em;color:var(--ink)}
+  .brand .fund{color:var(--accent);font-style:italic}
+  .brandtag{font-family:var(--mono);font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--mut)}
+  .hero{padding:50px 0 26px}
+  .kicker{font-family:var(--mono);font-size:11.5px;letter-spacing:.26em;text-transform:uppercase;color:var(--accent);margin:0 0 18px}
+  h1{font-family:var(--serif);font-size:clamp(34px,6vw,56px);line-height:1.04;margin:0 0 22px;font-weight:600;letter-spacing:-.01em}
+  h1 em{font-style:italic;color:var(--accent)}
+  .lede{font-size:20px;color:var(--mut);margin:0;max-width:64ch;line-height:1.5}
+  .lede b{color:var(--ink);font-weight:600}
+  .stagechip{display:inline-flex;align-items:center;gap:8px;margin-top:24px;font-family:var(--mono);font-size:12px;letter-spacing:.06em;color:var(--gold);border:1px solid color-mix(in srgb,var(--gold) 45%,transparent);background:color-mix(in srgb,var(--gold) 10%,transparent);padding:7px 13px;border-radius:20px}
+  .dot{width:7px;height:7px;border-radius:50%;background:var(--gold);box-shadow:0 0 7px var(--gold)}
+  /* section scaffolding */
+  section{max-width:900px;margin:0 auto;padding:20px 26px}
+  .sechead{display:flex;align-items:baseline;gap:14px;margin:44px 0 8px;padding-top:26px;border-top:1px solid var(--line)}
+  .secnum{font-family:var(--mono);font-size:12px;color:var(--accent);letter-spacing:.1em}
+  h2{font-family:var(--serif);font-size:clamp(24px,3.6vw,32px);margin:0;font-weight:600;letter-spacing:-.01em}
+  .subhead{font-size:17px;color:var(--mut);margin:2px 0 20px;max-width:70ch}
+  p{margin:14px 0;max-width:68ch}
+  strong{color:var(--ink);font-weight:640}
+  .pull{font-family:var(--serif);font-size:23px;font-style:italic;line-height:1.42;color:var(--ink);border-left:3px solid var(--accent);padding:6px 0 6px 22px;margin:26px 0;max-width:60ch}
+  /* exec summary */
+  .exec{background:var(--paper);border:1px solid var(--line);border-radius:16px;padding:26px 28px;margin:14px 0 8px}
+  .exec h3{font-family:var(--mono);font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:var(--accent);margin:0 0 14px}
+  .execgrid{display:grid;grid-template-columns:1fr 1fr;gap:20px 32px}
+  @media(max-width:680px){.execgrid{grid-template-columns:1fr}}
+  .execgrid h4{font-family:var(--serif);font-size:18px;margin:0 0 4px}
+  .execgrid p{font-size:14.5px;margin:0;color:var(--mut);max-width:none}
+  .statrow{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--line);border:1px solid var(--line);border-radius:12px;overflow:hidden;margin:26px 0 6px}
+  @media(max-width:680px){.statrow{grid-template-columns:repeat(2,1fr)}}
+  .statrow .c{background:var(--paper);padding:16px 16px 14px}
+  .statrow .v{font-family:var(--mono);font-size:26px;color:var(--accent);line-height:1;font-variant-numeric:tabular-nums}
+  .statrow .l{font-size:12px;color:var(--mut);margin-top:6px;line-height:1.35}
+  /* generic cards */
+  .cards{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:20px 0}
+  @media(max-width:680px){.cards{grid-template-columns:1fr}}
+  .card{background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:18px 20px}
+  .card h4{font-family:var(--serif);font-size:18px;margin:0 0 6px}
+  .card p{font-size:14.5px;color:var(--mut);margin:0;max-width:none}
+  .card .tag{font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--accent);display:block;margin-bottom:6px}
+  /* diagram frame */
+  .fig{background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:22px;margin:24px 0;overflow-x:auto}
+  .fig .cap{font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--faint);margin-bottom:16px}
+  /* flow diagram */
+  .flow{display:flex;align-items:stretch;gap:0;min-width:640px}
+  .flow .node{flex:1;background:var(--panel);border:1px solid var(--line2);border-radius:10px;padding:13px 12px;text-align:center;position:relative}
+  .flow .node .t{font-weight:640;color:var(--ink);font-size:14px}
+  .flow .node .d{font-size:12px;color:var(--mut);margin-top:3px;line-height:1.35}
+  .flow .arrow{display:flex;align-items:center;color:var(--accent);font-size:18px;padding:0 8px;flex:0 0 auto}
+  .flow.accent .node{background:var(--accent-soft);border-color:color-mix(in srgb,var(--accent) 40%,var(--line))}
+  /* desk pipeline (vertical-ish) */
+  .pipe{display:flex;flex-direction:column;gap:10px;min-width:min(100%,560px)}
+  .pipe .row{display:grid;grid-template-columns:150px 1fr;gap:14px;align-items:center;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:12px 14px}
+  .pipe .role{font-family:var(--mono);font-size:11.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--accent);font-weight:600}
+  .pipe .row.gate{border-color:color-mix(in srgb,var(--gold) 50%,var(--line));background:color-mix(in srgb,var(--gold) 8%,var(--panel))}
+  .pipe .row.gate .role{color:var(--gold)}
+  .pipe .desc{font-size:14px;color:var(--body)}
+  .pipe .desc b{color:var(--ink)}
+  /* football field */
+  .ff{min-width:560px}
+  .ff .track{display:grid;grid-template-columns:130px 1fr;gap:10px;align-items:center;margin:7px 0;font-size:13px}
+  .ff .mname{font-family:var(--mono);font-size:11.5px;color:var(--mut);text-align:right}
+  .ff .bar{position:relative;height:22px;background:var(--panel2);border-radius:5px}
+  .ff .seg{position:absolute;height:100%;background:color-mix(in srgb,var(--accent) 30%,transparent);border:1px solid var(--accent);border-radius:5px}
+  .ff .pt{position:absolute;top:-3px;width:2px;height:28px;background:var(--ink)}
+  .ff .conv{margin-top:10px;border-top:1px dashed var(--line2);padding-top:10px;display:grid;grid-template-columns:130px 1fr;gap:10px;align-items:center}
+  .ff .conv .mname{color:var(--accent);font-weight:600}
+  .ff .convbar{position:relative;height:26px}
+  .ff .convmark{position:absolute;top:0;transform:translateX(-50%);background:var(--accent);color:#fff;font-family:var(--mono);font-size:11px;padding:3px 8px;border-radius:5px;white-space:nowrap}
+  :root[data-theme="dark"] .ff .convmark, :root:not([data-theme="light"]) .ff .convmark{color:#0e1512}
+  @media(prefers-color-scheme:dark){:root:not([data-theme="light"]) .ff .convmark{color:#0e1512}}
+  /* histogram */
+  .hist{display:flex;align-items:flex-end;gap:5px;height:180px;min-width:560px}
+  .hist .b{flex:1;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;gap:6px;height:100%}
+  .hist .bar{width:100%;border-radius:4px 4px 0 0;min-height:3px}
+  .hist .cnt{font-family:var(--mono);font-size:11px;color:var(--mut)}
+  .hist .lab{font-family:var(--mono);font-size:9px;color:var(--faint);writing-mode:vertical-rl;transform:rotate(180deg);height:46px}
+  .leg{display:flex;gap:18px;flex-wrap:wrap;margin-top:14px;font-size:12.5px;color:var(--mut)}
+  .leg i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:6px;vertical-align:middle}
+  /* cadence */
+  .cad{display:flex;gap:0;min-width:640px;align-items:stretch}
+  .cad .day{flex:1;background:var(--panel);border:1px solid var(--line);border-right:0;padding:13px 12px}
+  .cad .day:last-child{border-right:1px solid var(--line);border-radius:0 10px 10px 0}
+  .cad .day:first-child{border-radius:10px 0 0 10px}
+  .cad .dn{font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--accent);font-weight:600}
+  .cad .dt{font-size:13px;color:var(--body);margin-top:5px;line-height:1.4}
+  /* universe bars */
+  .uni{display:flex;flex-direction:column;gap:6px;min-width:min(100%,520px)}
+  .uni .r{display:grid;grid-template-columns:180px 1fr 34px;gap:10px;align-items:center;font-size:13px}
+  .uni .nm{color:var(--body);text-align:right;font-size:12.5px}
+  .uni .track{height:14px;background:var(--panel2);border-radius:4px;overflow:hidden}
+  .uni .fillb{height:100%;background:var(--accent);opacity:.8}
+  .uni .n{font-family:var(--mono);font-size:11px;color:var(--mut);text-align:right}
+  /* timeline */
+  .tl{display:flex;gap:0;min-width:600px;align-items:stretch}
+  .tl .st{flex:1;padding:16px 14px;border-top:3px solid var(--line2);margin-right:2px;background:var(--panel)}
+  .tl .st.now{border-top-color:var(--accent)}
+  .tl .st.next{border-top-color:var(--gold)}
+  .tl .ph{font-family:var(--mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--mut)}
+  .tl .st.now .ph{color:var(--accent)} .tl .st.next .ph{color:var(--gold)}
+  .tl .tt{font-family:var(--serif);font-size:16px;color:var(--ink);margin:5px 0 3px}
+  .tl .td{font-size:12.5px;color:var(--mut);line-height:1.4}
+  /* risk list */
+  .risk{display:flex;flex-direction:column;gap:12px;margin:20px 0}
+  .risk .r{display:grid;grid-template-columns:1fr 1fr;gap:16px;background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:15px 18px}
+  @media(max-width:680px){.risk .r{grid-template-columns:1fr;gap:6px}}
+  .risk .q{font-weight:640;color:var(--ink);font-size:14.5px}
+  .risk .a{font-size:14px;color:var(--mut)}
+  .risk .a b{color:var(--accent)}
+  /* faq */
+  .faq details{background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:0 18px;margin:10px 0}
+  .faq summary{cursor:pointer;padding:15px 0;font-family:var(--serif);font-size:17px;color:var(--ink);font-weight:600;list-style:none;display:flex;justify-content:space-between;align-items:center;gap:12px}
+  .faq summary::-webkit-details-marker{display:none}
+  .faq summary::after{content:"+";color:var(--accent);font-family:var(--mono);font-size:20px;flex:0 0 auto}
+  .faq details[open] summary::after{content:"\2013"}
+  .faq details p{margin:0 0 16px;font-size:14.5px;color:var(--body)}
+  .callout{background:var(--accent-soft);border:1px solid color-mix(in srgb,var(--accent) 30%,var(--line));border-radius:12px;padding:18px 22px;margin:22px 0}
+  .callout .k{font-family:var(--mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--accent);display:block;margin-bottom:7px}
+  .callout p{margin:0;color:var(--body)}
+  .honest{border-left:3px solid var(--gold);background:color-mix(in srgb,var(--gold) 7%,transparent);border-radius:0 10px 10px 0;padding:16px 20px;margin:22px 0}
+  .honest .k{font-family:var(--mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--gold);display:block;margin-bottom:6px}
+  .honest p{margin:0;font-size:14.5px;color:var(--body)}
+  footer{max-width:900px;margin:40px auto 0;padding:26px;border-top:2px solid var(--ink)}
+  .disc{font-size:12px;color:var(--faint);line-height:1.6;max-width:none}
+  .footbrand{font-family:var(--serif);font-size:18px;color:var(--ink);margin-bottom:10px}
+</style>
+
+<header>
+  <div class="brandrow">
+    <div class="brand">Zamvar Capital <span class="fund">· Fund 1</span></div>
+    <div class="brandtag">Confidential · For Prospective Partners</div>
+  </div>
+  <div class="hero">
+    <p class="kicker">Event-Driven Biotech · An AI-Operated Research Desk</p>
+    <h1>A machine that trades the week <em>around biotech catalysts</em> — with a memory that compounds.</h1>
+    <p class="lede">Every week, a team of AI analysts studies the biotech companies about to hit a make-or-break moment — an FDA decision, a trial result — and builds a small, hedged, one-week portfolio. Every trade is checked by an independent second opinion and approved by a human before any money moves. <b>This document explains exactly how the system works, why we believe it has an edge, and precisely how we intend to prove it.</b></p>
+    <div class="stagechip"><span class="dot"></span> Stage: pre-launch — system built &amp; validated; live proving period next</div>
+  </div>
+</header>
+
+<section>
+  <div class="exec">
+    <h3>Executive Summary</h3>
+    <div class="execgrid">
+      <div><h4>The opportunity</h4><p>Biotech stocks make their largest, most structured moves on scheduled catalysts. Those moves are violent, mostly downward, and driven as much by expectation as by the result itself — a setup most investors handle badly.</p></div>
+      <div><h4>The approach</h4><p>An AI research desk turns each catalyst into a disciplined, hedged one-week trade: it judges direction, estimates the likely size of the move several independent ways, and refuses trades that don't survive an independent review.</p></div>
+      <div><h4>The edge thesis</h4><p>Three things at once, where most get one: the right <b>direction</b>, an honest <b>magnitude</b> from converging methods, and unbreakable <b>downside discipline</b> — all sharpened by a growing memory of past catalysts.</p></div>
+      <div><h4>The stage &amp; the ask</h4><p>The system and its memory are built and validated for correctness. The next step is a live paper-trading proving period on our own capital. We are raising to fund that proof and the build-out to managed capital.</p></div>
+    </div>
+  </div>
+  <div class="statrow">
+    <div class="c"><div class="v">~73</div><div class="l">names in the universe, chosen by proven catalyst volatility</div></div>
+    <div class="c"><div class="v">470</div><div class="l">historical catalysts studied &amp; stored as a searchable memory</div></div>
+    <div class="c"><div class="v">5</div><div class="l">independent methods converge to size every expected move</div></div>
+    <div class="c"><div class="v">1&nbsp;wk</div><div class="l">hold period — enter Monday, exit by Friday, learn, repeat</div></div>
+  </div>
+  <p class="honest" style="margin-top:22px"><span class="k">A note on honesty, up front</span><p>This is a pre-launch system. We have <b>not</b> traded live capital, and nothing here is a return forecast or a track record. What we have is a fully-built, independently-reviewed system, a validated testing pipeline, and a clear, measurable plan to prove — or disprove — the edge before a dollar of partner capital is ever at risk. We think that honesty is the most important thing an investor can know about a manager.</p></p>
+</section>
+
+<div class="sechead"><span class="secnum">01</span><h2>Why the edge exists</h2></div>
+<section>
+  <p class="subhead">An opportunity is only real if there's a reason others leave it on the table. Here's the reason.</p>
+  <p>When a biotech company approaches a scheduled catalyst — a regulator's approval decision, a clinical trial's headline result — its stock is priced on a guess about a binary outcome. When the answer arrives, the price re-rates hard. These are among the most reliably <strong>large</strong> moves in public markets. But three features make them genuinely hard to trade, and that difficulty is the opportunity:</p>
+  <div class="cards">
+    <div class="card"><span class="tag">Fat-tailed</span><h4>The move is rarely small</h4><p>Across the catalysts we studied, the typical event moved the stock more than any normal week — and roughly one in five moved it 70%+ in a single window. The middle is a coin flip; the tails are the whole game.</p></div>
+    <div class="card"><span class="tag">Skewed down</span><h4>More often bad than good</h4><p>Slightly more than half of these events resolved <em>against</em> the stock. Simply "buying the exciting story" is a losing strategy before costs — direction has to be earned, not assumed.</p></div>
+    <div class="card"><span class="tag">Expectation-driven</span><h4>Good news can still fall</h4><p>A drug can succeed and the stock still drops, because the success was already priced in. Reading what the market already expects is as important as reading the science.</p></div>
+    <div class="card"><span class="tag">Structural gap</span><h4>Who's on the other side</h4><p>Retail chases the narrative; generalist funds lack the reference library to judge each event; specialists rarely apply systematic, repeatable discipline. We aim to sit precisely in that gap.</p></div>
+  </div>
+  <p class="pull">The edge is never "which stock." It's "which direction, how big, and is it already in the price" — answered the same disciplined way, every week, with a memory that gets better.</p>
+</section>
+
+<div class="sechead"><span class="secnum">02</span><h2>What we trade — and why these names</h2></div>
+<section>
+  <p class="subhead">The universe isn't a hype list. It's an empirically-chosen set of names that actually move on their events and can be traded cleanly.</p>
+  <p>We built the universe backwards from evidence. We looked at five years of catalysts for public biotech companies and measured, name by name, <strong>how much each stock actually moved on its own catalysts</strong> — how often it made a big move, and how big. We kept the names with a proven history of tradeable movement, then filtered for the practical necessities: enough liquidity to get in and out at fair prices, and listed options so the market's own expectations are visible. The result is roughly 73 companies spanning the breadth of therapeutic areas.</p>
+  <div class="fig">
+    <div class="cap">The catalyst landscape our universe spans (illustrative breadth, by therapeutic area)</div>
+    <div class="uni">
+      <div class="r"><div class="nm">Psychiatry &amp; CNS</div><div class="track"><div class="fillb" style="width:100%"></div></div><div class="n">high</div></div>
+      <div class="r"><div class="nm">Cardiovascular / metabolic</div><div class="track"><div class="fillb" style="width:72%"></div></div><div class="n">high</div></div>
+      <div class="r"><div class="nm">Immunology &amp; inflammation</div><div class="track"><div class="fillb" style="width:66%"></div></div><div class="n">high</div></div>
+      <div class="r"><div class="nm">Neurodegeneration</div><div class="track"><div class="fillb" style="width:60%"></div></div><div class="n">med</div></div>
+      <div class="r"><div class="nm">Oncology (solid &amp; blood)</div><div class="track"><div class="fillb" style="width:76%"></div></div><div class="n">high</div></div>
+      <div class="r"><div class="nm">Rare / genetic disease</div><div class="track"><div class="fillb" style="width:44%"></div></div><div class="n">med</div></div>
+      <div class="r"><div class="nm">Dermatology · Respiratory · Nephrology · others</div><div class="track"><div class="fillb" style="width:82%"></div></div><div class="n">broad</div></div>
+    </div>
+  </div>
+  <p>Breadth matters for two reasons. It keeps us diversified across independent scientific risks — one disease area's bad month doesn't sink the book. And it gives our memory (Section 05) a rich library of analogous situations to reason from when a new event arrives.</p>
+</section>
+
+<div class="sechead"><span class="secnum">03</span><h2>The data engine</h2></div>
+<section>
+  <p class="subhead">Good decisions need clean inputs. Two disciplines here matter more to an investor than any single data source.</p>
+  <p>The desk runs on authoritative, mostly-free public information: regulatory filings from the SEC, the government clinical-trials registry, market-data and options feeds, and the brokerage itself. We follow a strict <strong>cheapest-reliable-source-first</strong> rule — we never pay for, or over-call, data we can get accurately for free — which keeps the operation lean and scalable.</p>
+  <div class="fig">
+    <div class="cap">How information becomes a decision</div>
+    <div class="flow">
+      <div class="node"><div class="t">Sources</div><div class="d">Filings · trial registry · market &amp; options data</div></div>
+      <div class="arrow">→</div>
+      <div class="node"><div class="t">Ingest &amp; verify</div><div class="d">deduped, dated, source-stamped</div></div>
+      <div class="arrow">→</div>
+      <div class="node"><div class="t">Memory</div><div class="d">the searchable playbook of catalysts</div></div>
+      <div class="arrow">→</div>
+      <div class="node"><div class="t">The desk</div><div class="d">agents reason &amp; decide</div></div>
+    </div>
+  </div>
+  <p>The two disciplines that matter most:</p>
+  <div class="cards">
+    <div class="card"><span class="tag">Provenance</span><h4>Every fact carries its source</h4><p>Nothing enters the system without a citation to where it came from. A claim the desk can't source is dropped, not guessed. That makes every decision auditable back to a primary document.</p></div>
+    <div class="card"><span class="tag">No look-ahead</span><h4>The system can't cheat with hindsight</h4><p>Every fact is time-stamped with when it became knowable, so when we test the strategy on history it can only ever use what was truly available at the time. This is the single most important safeguard for honest testing — and the easiest one for a manager to get quietly wrong.</p></div>
+  </div>
+</section>
+
+<div class="sechead"><span class="secnum">04</span><h2>The desk — how a decision is made</h2></div>
+<section>
+  <p class="subhead">Four specialist roles plus a human gate. No single voice can put on a trade.</p>
+  <p>Each week the desk works like a disciplined investment committee, staffed by AI analysts with defined roles. Crucially, the analyst that <em>wants</em> to make a trade is not the one that <em>approves</em> it — an independent reviewer forms its own opinion, and a human signs off before anything trades.</p>
+  <div class="fig">
+    <div class="cap">The decision pipeline — every trade passes through all of it</div>
+    <div class="pipe">
+      <div class="row"><div class="role">Catalyst Desk</div><div class="desc">Reads the event and the company and calls the <b>direction</b> — is this more likely to go up or down, and why.</div></div>
+      <div class="row"><div class="role">Trade Builder</div><div class="desc">Estimates <b>how big</b> the move should be — using the "football field" (Section 05): several independent methods, not one guess.</div></div>
+      <div class="row"><div class="role">Due Diligence</div><div class="desc">An <b>independent</b> second desk that re-derives its own number from scratch — a genuine check, not a rubber stamp.</div></div>
+      <div class="row"><div class="role">Managing Director</div><div class="desc">Compares the two. If the Builder and DD disagree beyond tolerance, it's <b>sent back</b> to be re-worked before it can proceed.</div></div>
+      <div class="row gate"><div class="role">Human Gate</div><div class="desc"><b>A person approves every trade</b> after reviewing the dossier. No live trade happens without it — a hard rule, not a setting.</div></div>
+      <div class="row"><div class="role">Execution</div><div class="desc">Approved trades route through the brokerage's sanctioned agent-trading system, with a per-trade notification to the human.</div></div>
+    </div>
+  </div>
+  <p>And it runs on a fixed weekly rhythm, so the process is repeatable and never rushed:</p>
+  <div class="fig">
+    <div class="cap">The weekly cadence</div>
+    <div class="cad">
+      <div class="day"><div class="dn">Sunday</div><div class="dt">Analyze the week's catalysts; build the proposed book.</div></div>
+      <div class="day"><div class="dn">Monday</div><div class="dt">Enter approved trades at the open.</div></div>
+      <div class="day"><div class="dn">Mon–Fri</div><div class="dt">Monitor; take profit or cut losses on adaptive triggers.</div></div>
+      <div class="day"><div class="dn">Friday</div><div class="dt">Close the book — no positions held over the weekend's unknowns.</div></div>
+      <div class="day"><div class="dn">Saturday</div><div class="dt">Post-mortem: record what happened &amp; why; update every company's profile.</div></div>
+    </div>
+  </div>
+</section>
+
+<div class="sechead"><span class="secnum">05</span><h2>How we generate edge</h2></div>
+<section>
+  <p class="subhead">This is the heart of it — three ideas working together.</p>
+  <h3 style="font-family:var(--serif);font-size:20px;margin:22px 0 4px">1 · A memory that compounds</h3>
+  <p>The desk reasons the way a seasoned analyst does — from precedent. We built a <strong>playbook of hundreds of past catalysts</strong>, each stored not just as a number but as a short case study: what the setup was, what happened, and <em>why</em> the stock moved the way it did. When a new event arrives, the desk pulls up the past situations that genuinely rhyme with it — same kind of disease, same kind of drug, same kind of setup (for example, "a well-liked result that was already priced in") — and reasons from what actually happened to those. Every week adds new cases, so the memory sharpens over time. This is the asset that grows.</p>
+  <h3 style="font-family:var(--serif);font-size:20px;margin:26px 0 4px">2 · The football field — magnitude from convergence</h3>
+  <p>To size the expected move, we never trust a single model. We compute it several independent ways and look for where they <strong>agree</strong> — the way an appraiser triangulates a home's value from comparable sales, replacement cost, and income. When the methods converge, conviction is high; when they scatter, the system flags low confidence and steps back.</p>
+  <div class="fig">
+    <div class="cap">The football field — five independent estimates converge to one honest range</div>
+    <div class="ff">
+      <div class="track"><div class="mname">History (analogs)</div><div class="bar"><div class="seg" style="left:18%;width:34%"></div></div></div>
+      <div class="track"><div class="mname">Scenario valuation</div><div class="bar"><div class="seg" style="left:26%;width:26%"></div></div></div>
+      <div class="track"><div class="mname">Analyst targets</div><div class="bar"><div class="seg" style="left:30%;width:22%"></div></div></div>
+      <div class="track"><div class="mname">Sum-of-the-parts</div><div class="bar"><div class="seg" style="left:22%;width:24%"></div></div></div>
+      <div class="track"><div class="mname">Options-implied</div><div class="bar"><div class="seg" style="left:34%;width:18%"></div></div></div>
+      <div class="conv"><div class="mname">Convergence →</div><div class="convbar"><div class="convmark" style="left:40%">the desk's sized estimate</div></div></div>
+    </div>
+  </div>
+  <p style="font-size:13.5px;color:var(--mut)">Options-implied — what the market itself is pricing for the move — is read directly from the broker's own options data, at no added cost.</p>
+  <h3 style="font-family:var(--serif);font-size:20px;margin:26px 0 4px">3 · Ruthless downside discipline</h3>
+  <p>The tails cut both ways, so survival comes first. Positions are sized so that no single event can seriously hurt the book; the desk actively avoids "falling knives" (broken stories that keep falling); and the long-only mandate is hedged with paired positions rather than naked bets. The goal is to be <em>around</em> for the winners — you cannot compound if you blow up.</p>
+</section>
+
+<div class="sechead"><span class="secnum">06</span><h2>How we know it works — testing &amp; honesty</h2></div>
+<section>
+  <p class="subhead">This is where a serious manager separates from a hopeful one. We test the way a skeptic would demand.</p>
+  <p>The shape of the opportunity is real and measurable. Here is the actual distribution of outcomes across the catalysts we studied — the fat tails and the downward skew that define the strategy:</p>
+  <div class="fig">
+    <div class="cap">Distribution of the one-week move across 268 core catalysts</div>
+    <div class="hist">
+      <div class="b"><div class="bar" style="height:36%;background:var(--neg)"></div><div class="cnt">27</div><div class="lab">&lt;−50%</div></div>
+      <div class="b"><div class="bar" style="height:12%;background:var(--neg)"></div><div class="cnt">9</div><div class="lab">−50/−30</div></div>
+      <div class="b"><div class="bar" style="height:29%;background:var(--neg)"></div><div class="cnt">22</div><div class="lab">−30/−15</div></div>
+      <div class="b"><div class="bar" style="height:52%;background:color-mix(in srgb,var(--neg) 65%,var(--warn))"></div><div class="cnt">40</div><div class="lab">−15/−5</div></div>
+      <div class="b"><div class="bar" style="height:100%;background:var(--warn)"></div><div class="cnt">89</div><div class="lab">−5/+5</div></div>
+      <div class="b"><div class="bar" style="height:40%;background:color-mix(in srgb,var(--pos) 65%,var(--warn))"></div><div class="cnt">31</div><div class="lab">+5/+15</div></div>
+      <div class="b"><div class="bar" style="height:23%;background:var(--pos)"></div><div class="cnt">17</div><div class="lab">+15/+30</div></div>
+      <div class="b"><div class="bar" style="height:15%;background:var(--pos)"></div><div class="cnt">11</div><div class="lab">+30/+50</div></div>
+      <div class="b"><div class="bar" style="height:14%;background:var(--pos)"></div><div class="cnt">10</div><div class="lab">+50/+100</div></div>
+      <div class="b"><div class="bar" style="height:17%;background:var(--accent)"></div><div class="cnt">12</div><div class="lab">&gt;+100%</div></div>
+    </div>
+    <div class="leg"><span><i style="background:var(--neg)"></i>down (~54%)</span><span><i style="background:var(--warn)"></i>±5% coin-flip center</span><span><i style="background:var(--pos)"></i>up (~46%)</span><span><i style="background:var(--accent)"></i>moonshots &gt;+100%</span></div>
+  </div>
+  <p>To test whether the <em>strategy</em> works, we use the disciplines a professional allocator expects:</p>
+  <div class="cards">
+    <div class="card"><span class="tag">Walk-forward</span><h4>Test only on the untouched future</h4><p>We build on the past, then test on a later period the system never saw, and roll forward. Combined with the no-look-ahead time-stamping, this prevents the classic self-deception of a strategy that only "works" in hindsight.</p></div>
+    <div class="card"><span class="tag">Real costs</span><h4>Priced as if traded</h4><p>Every simulated trade pays realistic transaction costs (the spread you actually cross). A strategy that only works before costs isn't a strategy.</p></div>
+    <div class="card"><span class="tag">Benchmarked</span><h4>Measured against biotech itself</h4><p>Returns are judged against the biotech index — beating a rising tide, not riding it.</p></div>
+    <div class="card"><span class="tag">Deflated</span><h4>Penalized for luck</h4><p>We use a performance measure that explicitly discounts for the many strategy variations tried — so we don't mistake a lucky configuration for genuine skill.</p></div>
+  </div>
+  <div class="honest">
+    <span class="k">What our first backtest showed — and what it did NOT</span>
+    <p>A 52-week walk-forward turned a simulated $10,000 into ~$11,800, with positions correctly entering and exiting on the weekly cadence, net of costs. <b>We treat this as system-validation — proof that the machinery works end-to-end — and explicitly NOT as a return forecast or evidence of skill.</b> On the luck-adjusted measure, the result is not yet distinguishable from chance. That is the honest read, and it's exactly why the next step is a live proving period, not a capital raise on a backtest.</p>
+  </div>
+</section>
+
+<div class="sechead"><span class="secnum">07</span><h2>Risk management</h2></div>
+<section>
+  <p class="subhead">Binary events demand that risk control be structural, not discretionary.</p>
+  <div class="risk">
+    <div class="r"><div class="q">A single event goes catastrophically wrong</div><div class="a"><b>Survival-first sizing.</b> No position is large enough that one bad binary meaningfully impairs the book. We size to stay in the game.</div></div>
+    <div class="r"><div class="q">A "cheap" broken stock keeps falling</div><div class="a"><b>Falling-knife avoidance.</b> The desk specifically screens out distressed, single-asset stories where a miss tends to spiral — and never buys the bounce.</div></div>
+    <div class="r"><div class="q">We're long-only but want to express downside</div><div class="a"><b>Paired hedging.</b> Instead of shorting, we pair a long with a correlated counter-position, keeping the book market-aware and within a safe mandate.</div></div>
+    <div class="r"><div class="q">The model is confidently wrong</div><div class="a"><b>Independent review + human gate.</b> A second desk must agree, disagreements are reconciled, and a human approves — a model can't unilaterally act.</div></div>
+    <div class="r"><div class="q">The strategy gets too big to trade</div><div class="a"><b>Capacity awareness.</b> The universe is liquidity-screened and the strategy is small-and-nimble by design; we grow only within what the names can absorb.</div></div>
+    <div class="r"><div class="q">Weekend / overnight surprises</div><div class="a"><b>Weekly flatness.</b> The book is closed each Friday, so we don't carry unmanaged exposure through periods we can't react to.</div></div>
+  </div>
+</section>
+
+<div class="sechead"><span class="secnum">08</span><h2>Technology &amp; operations</h2></div>
+<section>
+  <p class="subhead">Institutional-grade capability, run lean — no black-box third parties in the decision path.</p>
+  <div class="cards">
+    <div class="card"><span class="tag">The desk</span><h4>Frontier AI analysts</h4><p>The analyst roles are run by frontier AI models under fixed, auditable instructions — giving a small team the research throughput of a much larger one, at a fraction of the cost.</p></div>
+    <div class="card"><span class="tag">Execution rail</span><h4>Sanctioned agent trading</h4><p>Trades route through the brokerage's official, terms-of-service-approved agent-trading system: a segregated account, per-trade notifications, and the human approval gate — not an unofficial back door.</p></div>
+    <div class="card"><span class="tag">The memory</span><h4>A private, owned knowledge base</h4><p>The playbook lives in our own local database — a proprietary, growing asset we control, not a rented service that could change or disappear.</p></div>
+    <div class="card"><span class="tag">Discipline</span><h4>Everything is tested &amp; versioned</h4><p>The money-critical logic ships with an exhaustive automated test suite, and every change is tracked — the same engineering rigor an institution would expect.</p></div>
+  </div>
+</section>
+
+<div class="sechead"><span class="secnum">09</span><h2>Where we are &amp; the path forward</h2></div>
+<section>
+  <p class="subhead">The build is done. The proof is next. Capital funds the proof.</p>
+  <div class="fig">
+    <div class="cap">The road to managed capital</div>
+    <div class="tl">
+      <div class="st"><div class="ph">Complete</div><div class="tt">System &amp; memory built</div><div class="td">The full desk, the data engine, the playbook of catalysts, and the multi-method sizing — built and independently reviewed.</div></div>
+      <div class="st now"><div class="ph">Now</div><div class="tt">Validated for correctness</div><div class="td">End-to-end testing confirms the machinery works: honest, no-look-ahead, cost-aware.</div></div>
+      <div class="st next"><div class="ph">Next</div><div class="tt">Live paper-trading month</div><div class="td">Run the desk on live data in real time — the true, look-ahead-free proof of edge, on our own capital.</div></div>
+      <div class="st"><div class="ph">Then</div><div class="tt">Managed capital</div><div class="td">On validated live results, open to partner capital with a defined structure.</div></div>
+    </div>
+  </div>
+  <div class="callout">
+    <span class="k">The ask</span>
+    <p>We are raising to fund the live proving period and the operational build-out to managed capital. Partners get transparent, real-time visibility into the proof as it happens — you will see the same results we do, as they're generated, before any commitment to scale.</p>
+  </div>
+</section>
+
+<div class="sechead"><span class="secnum">10</span><h2>Questions you're probably asking</h2></div>
+<section class="faq">
+  <details><summary>Isn't this just an AI guessing at stocks?</summary><p>No. The AI doesn't "predict" — it runs a disciplined process: judge direction from evidence, size the move from five independent methods that must converge, and pass an independent review plus a human gate. The intelligence is in the <em>structure</em> and the growing memory of real precedents, not a black-box hunch. Every decision is traceable to sourced facts.</p></details>
+  <details><summary>How do you know this isn't just overfit to the past?</summary><p>Two safeguards. First, time-stamping: the system can only ever use information that was actually available before each event, so it can't secretly peek at answers. Second, walk-forward testing on periods it never saw, judged by a luck-adjusted measure that penalizes trying many variations. And ultimately, the honest answer is that the <em>forward</em> paper-trading month — brand-new data, in real time — is the test that can't be overfit, and we run it before scaling.</p></details>
+  <details><summary>What's your edge versus a big fund with a PhD biotech team?</summary><p>We're not trying to out-science them on any single drug. Our edge is <em>process and breadth</em>: a systematic, unemotional weekly discipline applied across the whole universe, backed by a memory of hundreds of catalysts that no individual analyst holds in their head — and a fraction of the cost structure. We compete on consistency and reference class, not on being the world's best expert on one molecule.</p></details>
+  <details><summary>Why would a playbook built from history work on the future?</summary><p>Because we use it the way a doctor uses case history — as reference, not prophecy. The desk retrieves past situations that genuinely resemble the new one and reasons from them, applying judgment; it doesn't blindly replay a rule. History rhymes in this space (priced-in reactions, benchmark misses, distressed dynamics recur), and the memory keeps updating with every new week.</p></details>
+  <details><summary>What happens in a drawdown?</summary><p>The strategy is built to make drawdowns survivable: small per-event sizing, weekly flat books (no weekend exposure), falling-knife screens, and a hard stop on any single position dominating the portfolio. We optimize to stay solvent and in the game — the precondition for compounding — rather than to maximize any single week.</p></details>
+  <details><summary>What's the capacity — can this scale?</summary><p>It's deliberately a small, nimble strategy. The universe is screened for liquidity, and we size to what the names can absorb without moving them. This is a high-discipline, capacity-aware strategy, not an unlimited-AUM one — and we'd rather protect returns than chase size.</p></details>
+  <details><summary>What's the single biggest risk?</summary><p>That the edge, once live, proves thinner than the system suggests. We take that seriously — which is exactly why we insist on a real-money-adjacent proving period with full transparency <em>before</em> raising to scale, rather than asking anyone to trust a backtest.</p></details>
+</section>
+
+<footer>
+  <div class="footbrand">Zamvar Capital · Fund 1</div>
+  <p class="disc">This document is a confidential informational overview provided to prospective partners for discussion purposes only. It is not an offer to sell or a solicitation of an offer to buy any security, nor investment, legal, or tax advice. The strategy described is pre-launch: it has not traded live capital, has no track record, and any simulated or backtested figures shown are hypothetical system-validation results, are not indicative of future results, and are explicitly not a performance forecast. Hypothetical and backtested performance has inherent limitations. Investing involves risk, including the possible loss of principal; event-driven biotech strategies carry particular risk from binary outcomes. Any offering would be made only to qualified investors via definitive offering documents. Figures are illustrative and subject to change.</p>
+</footer>
