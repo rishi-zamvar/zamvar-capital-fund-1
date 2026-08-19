@@ -1,0 +1,205 @@
+<title>How the Desk Decides</title>
+<style>
+  :root {
+    --bg:#ecefe9; --surface:#fff; --surface-2:#f5f7f2; --ink:#191c18; --muted:#5f655c; --faint:#99a094;
+    --border:#d6dbcf; --border-strong:#c2c8b8;
+    --accent:#8a6a12; --accent-bg:#f3ecd8;
+    --bull:#1f7a4d; --bull-bg:#e4f2e9; --bear:#b23b30; --bear-bg:#f6e5e3;
+    --tool:#2b6a93; --tool-bg:#e2edf4; --monitor:#6b4bc0; --monitor-bg:#ece5f7; --kb:#147a72; --kb-bg:#dff1ef;
+    --shadow:0 1px 2px rgba(20,25,18,.06),0 4px 14px rgba(20,25,18,.05);
+    --mono:ui-monospace,"SF Mono","JetBrains Mono",Menlo,Consolas,monospace;
+    --sans:system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,sans-serif;
+  }
+  @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+    --bg:#101310; --surface:#191d18; --surface-2:#20241e; --ink:#e8ece4; --muted:#9aa192; --faint:#6b7365;
+    --border:#2c322a; --border-strong:#3a4136; --accent:#d8b45a; --accent-bg:#2a2412;
+    --bull:#4cc585; --bull-bg:#14271c; --bear:#ef7365; --bear-bg:#2c1714;
+    --tool:#6fb0d8; --tool-bg:#12252f; --monitor:#a68ce8; --monitor-bg:#1e1830; --kb:#4fbcb0; --kb-bg:#102b28;
+    --shadow:0 1px 2px rgba(0,0,0,.3),0 6px 20px rgba(0,0,0,.35);
+  }}
+  :root[data-theme="dark"]{
+    --bg:#101310; --surface:#191d18; --surface-2:#20241e; --ink:#e8ece4; --muted:#9aa192; --faint:#6b7365;
+    --border:#2c322a; --border-strong:#3a4136; --accent:#d8b45a; --accent-bg:#2a2412;
+    --bull:#4cc585; --bull-bg:#14271c; --bear:#ef7365; --bear-bg:#2c1714;
+    --tool:#6fb0d8; --tool-bg:#12252f; --monitor:#a68ce8; --monitor-bg:#1e1830; --kb:#4fbcb0; --kb-bg:#102b28;
+    --shadow:0 1px 2px rgba(0,0,0,.3),0 6px 20px rgba(0,0,0,.35);
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);line-height:1.6;font-size:16px;-webkit-font-smoothing:antialiased;}
+  .wrap{max-width:900px;margin:0 auto;padding:3.5rem 1.5rem 5rem;}
+  .eyebrow{font-family:var(--mono);font-size:.72rem;letter-spacing:.16em;text-transform:uppercase;color:var(--accent);font-weight:600;}
+  h1{font-size:2.3rem;line-height:1.1;margin:.5rem 0 .5rem;letter-spacing:-.02em;text-wrap:balance;}
+  .sub{color:var(--muted);font-size:1.08rem;margin:0;max-width:60ch;}
+  .meta{font-family:var(--mono);font-size:.75rem;color:var(--faint);margin-top:1rem;}
+  h2{font-size:1.35rem;margin:3.2rem 0 .4rem;letter-spacing:-.01em;padding-top:1.5rem;border-top:1px solid var(--border);}
+  h2 .n{font-family:var(--mono);color:var(--accent);font-size:.9rem;margin-right:.5rem;}
+  h3{font-size:1rem;margin:1.6rem 0 .3rem;}
+  p{margin:.7rem 0;} .lede{font-size:1.1rem;}
+  strong{font-weight:650;} code{font-family:var(--mono);font-size:.85em;background:var(--surface-2);padding:.1em .38em;border-radius:4px;border:1px solid var(--border);}
+  /* catalyst hero */
+  .cat{background:var(--surface);border:1px solid var(--border-strong);border-radius:14px;padding:1.5rem 1.6rem;box-shadow:var(--shadow);margin:1.6rem 0;}
+  .cat h3{margin-top:0;font-size:1.15rem;}
+  .catgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:.9rem;margin-top:1.1rem;}
+  .stat .k{font-family:var(--mono);font-size:.64rem;letter-spacing:.08em;text-transform:uppercase;color:var(--faint);}
+  .stat .v{font-size:1.45rem;font-weight:680;letter-spacing:-.02em;font-variant-numeric:tabular-nums;}
+  .stat .v.bad{color:var(--bear);} .stat .d{font-size:.76rem;color:var(--muted);}
+  /* pipeline */
+  .pipe{display:flex;flex-direction:column;gap:0;margin:1.4rem 0;}
+  .stage{background:var(--surface);border:1px solid var(--border);border-left:4px solid var(--edge,var(--accent));border-radius:12px;padding:1.15rem 1.3rem;box-shadow:var(--shadow);}
+  .stage .lbl{font-family:var(--mono);font-size:.68rem;letter-spacing:.1em;text-transform:uppercase;color:var(--edge,var(--accent));font-weight:700;}
+  .stage .name{font-size:1.12rem;font-weight:650;margin:.15rem 0 .1rem;}
+  .stage .role{color:var(--muted);font-size:.92rem;margin:0 0 .7rem;}
+  .io{display:grid;grid-template-columns:1fr 1fr;gap:.7rem;margin-top:.6rem;}
+  .io .box{background:var(--surface-2);border:1px solid var(--border);border-radius:8px;padding:.55rem .7rem;}
+  .io .t{font-family:var(--mono);font-size:.6rem;letter-spacing:.1em;text-transform:uppercase;color:var(--faint);font-weight:600;margin-bottom:.2rem;}
+  .io .c{font-size:.83rem;line-height:1.45;}
+  .io .c b{font-weight:640;}
+  .ex{margin-top:.75rem;background:var(--accent-bg);border-radius:8px;padding:.6rem .8rem;font-size:.83rem;border:1px solid var(--border);}
+  .ex .t{font-family:var(--mono);font-size:.6rem;letter-spacing:.1em;text-transform:uppercase;color:var(--accent);font-weight:700;}
+  .arrow{align-self:center;color:var(--faint);font-size:1.3rem;line-height:1;padding:.35rem 0;}
+  .agents{display:flex;flex-wrap:wrap;gap:.35rem;margin:.5rem 0 .2rem;}
+  .chip{font-family:var(--mono);font-size:.68rem;padding:.18em .55em;border-radius:5px;background:var(--edge-bg,var(--accent-bg));color:var(--edge,var(--accent));font-weight:600;border:1px solid var(--border);}
+  .tag{display:inline-block;font-family:var(--mono);font-size:.68rem;letter-spacing:.04em;text-transform:uppercase;padding:.16em .5em;border-radius:5px;font-weight:700;}
+  .tag.neg{background:var(--bear-bg);color:var(--bear);} .tag.pos{background:var(--bull-bg);color:var(--bull);} .tag.hold{background:var(--monitor-bg);color:var(--monitor);}
+  .callout{border-left:3px solid var(--accent);background:var(--accent-bg);border-radius:0 10px 10px 0;padding:1rem 1.2rem;margin:1.3rem 0;}
+  .callout .l{font-family:var(--mono);font-size:.68rem;letter-spacing:.12em;text-transform:uppercase;font-weight:700;color:var(--accent);}
+  ul.clean{padding-left:1.1rem;} ul.clean li{margin:.35rem 0;}
+  .legend{display:flex;flex-wrap:wrap;gap:.9rem;font-family:var(--mono);font-size:.7rem;color:var(--muted);margin:1rem 0 0;}
+  .legend span{display:inline-flex;align-items:center;gap:.35rem;} .dot{width:.7rem;height:.7rem;border-radius:3px;display:inline-block;}
+  .foot{margin-top:3rem;padding-top:1.4rem;border-top:1px solid var(--border);font-size:.8rem;color:var(--faint);font-family:var(--mono);}
+  .decision{background:var(--surface);border:2px solid var(--bear);border-radius:14px;padding:1.4rem 1.5rem;box-shadow:var(--shadow);margin:1.4rem 0;}
+  @media (max-width:620px){.catgrid{grid-template-columns:1fr 1fr;}.io{grid-template-columns:1fr;}h1{font-size:1.8rem;}}
+</style>
+
+<div class="wrap">
+  <div class="eyebrow">Zamvar Capital · Fund 1 · Live worked example</div>
+  <h1>How the Desk Decides</h1>
+  <p class="sub">Every AI agent in the trading desk, what each one takes in and hands to the next, and how it all rolls up into one decision — traced through a real catalyst the desk analyzed this week.</p>
+  <div class="meta">Worked example: CAPR (Capricor) FDA decision, 22 Aug 2026 · run live 19 Aug 2026 · agents on Claude, no numbers invented by a model</div>
+
+  <h2><span class="n">01</span>The catalyst this week — CAPR</h2>
+  <p class="lede">Capricor Therapeutics faces an FDA approval decision (a "PDUFA date") on <strong>22 August 2026</strong> for <strong>deramiocel</strong>, a cell therapy for the heart damage in Duchenne muscular dystrophy. It's a classic single-drug binary event — the kind the desk is built to trade.</p>
+  <div class="cat">
+    <h3>Why this one is treacherous</h3>
+    <p style="margin-top:.3rem">The company's confirmatory trial (HOPE-3) actually <em>hit</em> its goals in Dec 2025 (54% slowing of muscle decline, 91% slowing of heart decline). But on <strong>29 July 2026 an FDA advisory panel voted 3–9 against</strong> the drug's effectiveness — after seeing that very data. The stock, once $22.43, had crashed to ~$4 and then bounced ~79% to $6.65 — but that bounce was short-sellers covering (27% of the float was short), not a vote of confidence.</p>
+    <div class="catgrid">
+      <div class="stat"><div class="k">FDA decision</div><div class="v">Aug 22</div><div class="d">PDUFA date</div></div>
+      <div class="stat"><div class="k">AdCom vote</div><div class="v bad">3–9</div><div class="d">against effectiveness</div></div>
+      <div class="stat"><div class="k">Entry price</div><div class="v">$6.65</div><div class="d">down ~67% from pre-panel</div></div>
+      <div class="stat"><div class="k">Cash runway</div><div class="v">2.1 mo</div><div class="d">$20.9M cash, $10.1M/mo burn</div></div>
+    </div>
+  </div>
+
+  <h2><span class="n">02</span>The pipeline — every agent, in and out</h2>
+  <p>The desk is five agent frameworks in series. Each one takes a defined input and produces a defined output that the next consumes. <strong>The agents reason and cite; they never do the arithmetic</strong> — every number comes from a deterministic tool the agents are required to call and quote.</p>
+  <div class="legend">
+    <span><span class="dot" style="background:var(--tool)"></span>analysts</span>
+    <span><span class="dot" style="background:var(--accent)"></span>debate / build / MD</span>
+    <span><span class="dot" style="background:var(--kb)"></span>tools &amp; data</span>
+    <span><span class="dot" style="background:var(--monitor)"></span>diligence firewall</span>
+    <span><span class="dot" style="background:var(--bull)"></span>execution</span>
+  </div>
+
+  <div class="pipe">
+
+    <div class="stage" style="--edge:var(--kb);--edge-bg:var(--kb-bg)">
+      <div class="lbl">Shared substrate · deterministic, no LLM</div>
+      <div class="name">Data &amp; tools</div>
+      <p class="role">The ground truth every agent reads from — never the model's memory.</p>
+      <div class="io">
+        <div class="box"><div class="t">In</div><div class="c">Free feeds: FDA/EDGAR filings, ClinicalTrials.gov, prices, short interest, insider Form-4, options — all point-in-time (no peeking at the future).</div></div>
+        <div class="box"><div class="t">Out</div><div class="c">A cited fact library + quant tools (base rates, rNPV, cash-runway, implied move, nearest-past-catalysts) the agents must call.</div></div>
+      </div>
+    </div>
+    <div class="arrow">↓</div>
+
+    <div class="stage" style="--edge:var(--tool);--edge-bg:var(--tool-bg)">
+      <div class="lbl">Workflow 1a · Catalyst Call</div>
+      <div class="name">Four analyst agents</div>
+      <p class="role">Four specialists examine the event in parallel, each in isolation, each citing tools (cite-or-drop — an uncited claim is discarded).</p>
+      <div class="agents"><span class="chip">clinical</span><span class="chip">regulatory</span><span class="chip">financial</span><span class="chip">market-sentiment</span></div>
+      <div class="io">
+        <div class="box"><div class="t">In</div><div class="c">The catalyst (ticker, type, date) + the quant/fact tools.</div></div>
+        <div class="box"><div class="t">Out</div><div class="c">4 <b>AnalystSignals</b> — each a score, a confidence, and cited findings.</div></div>
+      </div>
+      <div class="ex"><span class="t">CAPR — real</span><br>Regulatory flagged the 3–9 panel vote as the single most information-dense read. Clinical noted the confirmatory data hit. Financial: 2.1-month runway. Market: the +79% bounce was short-covering, not conviction.</div>
+    </div>
+    <div class="arrow">↓</div>
+
+    <div class="stage" style="--edge:var(--accent)">
+      <div class="lbl">Workflow 1a · adversarial debate</div>
+      <div class="name">Bull vs. Bear + Moderator</div>
+      <p class="role">A bull agent and a bear agent argue over the four signals in private (their scratchpads never leak to each other); a moderator agent weighs the exchange, then a verifier gates out any claim without a source.</p>
+      <div class="agents"><span class="chip">bull</span><span class="chip">bear</span><span class="chip">moderator</span><span class="chip">verifier</span></div>
+      <div class="io">
+        <div class="box"><div class="t">In</div><div class="c">The 4 AnalystSignals.</div></div>
+        <div class="box"><div class="t">Out</div><div class="c">A <b>Verdict</b> — direction, confidence, thesis, each side's strongest point, and typed kill-criteria.</div></div>
+      </div>
+      <div class="ex"><span class="t">CAPR — real verdict</span><br><span class="tag neg">Negative · conf 0.62</span> &nbsp;"The expert body convened to weigh exactly this evidence saw it and rejected it." The desk even <em>discounted its own analysts</em> — noting their clinical/regulatory scores were logged <em>before</em> the July 29 vote, so the positive tilt was stale.</div>
+    </div>
+    <div class="arrow">↓</div>
+
+    <div class="stage" style="--edge:var(--accent)">
+      <div class="lbl">Workflow 1b / 2 · Trade Builder + Risk</div>
+      <div class="name">Builder → Risk Committee → PM</div>
+      <p class="role">If the direction is tradeable, a builder agent sizes the expected move from a "football field" of five independent methods; a three-view risk committee argues sizing and hedging; deterministic tools then <em>overwrite</em> the size with a survival-first cap (you must survive the worst case). A PM agent promotes or kills.</p>
+      <div class="agents"><span class="chip">builder</span><span class="chip">risk ×3</span><span class="chip">PM</span></div>
+      <div class="io">
+        <div class="box"><div class="t">In</div><div class="c">The Verdict + entry price + risk inputs (odds, adverse-gap, analog moves).</div></div>
+        <div class="box"><div class="t">Out</div><div class="c">A <b>Strategy Dossier</b> — direction, survival-capped size, hedge (or none), rationale — or <em>no trade</em>.</div></div>
+      </div>
+      <div class="ex"><span class="t">CAPR — real outcome</span><br>Stopped here: a <em>negative</em> thesis can't be expressed on a long-only account (no shorting) → <span class="tag hold">no trade</span>. The correct, honest outcome — the desk declined rather than force a position.</div>
+    </div>
+    <div class="arrow">↓</div>
+
+    <div class="stage" style="--edge:var(--monitor);--edge-bg:var(--monitor-bg)">
+      <div class="lbl">Workflow 3 · Independent firewall</div>
+      <div class="name">Diligence desk — 8 adversarial dimensions</div>
+      <p class="role">A separate agent framework that never sees the first desk's conclusion — only the raw facts. It stress-tests eight money dimensions and can veto. A missing money fact forces a NO-GO (it won't bless what it can't check).</p>
+      <div class="agents"><span class="chip">options</span><span class="chip">financials</span><span class="chip">ownership</span><span class="chip">short-interest</span><span class="chip">trial-stats</span><span class="chip">hedge</span><span class="chip">+2</span></div>
+      <div class="io">
+        <div class="box"><div class="t">In</div><div class="c">Sealed inputs: the ticker + independently-sourced market data (never the Verdict).</div></div>
+        <div class="box"><div class="t">Out</div><div class="c">A <b>Diligence Dossier</b> — GO / NO-GO, per-dimension pass/fail, red flags.</div></div>
+      </div>
+    </div>
+    <div class="arrow">↓</div>
+
+    <div class="stage" style="--edge:var(--accent)">
+      <div class="lbl">MD / GP reconciliation</div>
+      <div class="name">Managing-Director agent</div>
+      <p class="role">The only agent that sees all three artifacts — the Verdict, the Dossier, and the independent Diligence. It cross-checks them for contradictions and, over a few bounded rounds, can re-trigger the desk with a specific gap until they converge.</p>
+      <div class="agents"><span class="chip">MD review</span><span class="chip">reconcile loop</span></div>
+      <div class="io">
+        <div class="box"><div class="t">In</div><div class="c">Verdict + Strategy Dossier + Diligence Dossier.</div></div>
+        <div class="box"><div class="t">Out</div><div class="c">One <b>MD Decision</b> — <b>enter / pass / escalate</b> — with a round-by-round log.</div></div>
+      </div>
+    </div>
+    <div class="arrow">↓</div>
+
+    <div class="stage" style="--edge:var(--bull);--edge-bg:var(--bull-bg)">
+      <div class="lbl">Human gate · execution</div>
+      <div class="name">Your approval → paper ledger</div>
+      <p class="role">Nothing opens without your explicit approval — the gate is inviolable. On approval, a position opens at the entry price, marks weekly, and closes at the plan's exit, booking real P&amp;L. (Paper only; live trading is deliberately last.)</p>
+      <div class="io">
+        <div class="box"><div class="t">In</div><div class="c">An "enter" MD Decision + your approve/reject.</div></div>
+        <div class="box"><div class="t">Out</div><div class="c">A tracked <b>paper position</b> → weekly mark → close → realized return → back into the knowledge base.</div></div>
+      </div>
+    </div>
+
+  </div>
+
+  <h2><span class="n">03</span>The overarching decision</h2>
+  <p>All five frameworks exist to answer one question honestly: <strong>should we take this one-week trade, and how much?</strong> The chain is deliberately adversarial — analysts can be over-optimistic, so a bear argues back; the first desk can be wrong, so an independent diligence firewall can veto; both can miss something, so the MD reconciles; and none of it moves money without a human.</p>
+  <div class="decision">
+    <div class="eyebrow" style="color:var(--bear)">CAPR — the desk's actual decision this week</div>
+    <p style="margin:.4rem 0 0;font-size:1.05rem"><span class="tag neg">Negative · conf 0.62</span> → <span class="tag hold">No trade</span></p>
+    <p style="margin:.5rem 0 0">The desk read the FDA decision as likely negative — anchored on the 3–9 advisory vote taken <em>with</em> the good data in hand — and, unable to express a bearish view on a long-only book, correctly <strong>declined to trade</strong>. It also flagged, honestly, that no cited base rate exists for how often the FDA overrides its own panel — so it treated "panel said no → FDA says no" as an <em>inference, not a certainty</em>, and made that a kill-criterion.</p>
+  </div>
+
+  <div class="callout">
+    <div class="l">What this shows — and its honest limits</div>
+    <p style="margin:.4rem 0 0">The agents produce genuine, cited, self-critical reasoning — not a black-box score. But two honest caveats: (1) the <strong>desk's edge is still unproven</strong> — the only real test is a forward paper month on events it has never seen; and (2) the desk trades only what it can express — a long-only book skips the many negative-outcome catalysts, taking the ~1-in-3 clean positive setups where the odds and the survival math both line up.</p>
+  </div>
+
+  <div class="foot">Zamvar Capital — Fund 1 · agents run on Claude inside a supervised session · every figure is tool-sourced &amp; point-in-time · paper-first, human-gated · CAPR run 2026-08-19</div>
+</div>
