@@ -1,0 +1,599 @@
+{
+  "version": "2.0",
+  "n_catalysts": 470,
+  "design_notes": "Refinement of setup_taxonomy v1.0. (1) The over-broad single-asset-microcap-binary tag (~half the corpus) is SPLIT into three stage/decisiveness sub-setups so no setup exceeds ~30% of the corpus. (2) Adds two orthogonal single-value controlled vocabularies for retrieval: disease_area (20, one per node) and mechanism_class (19, one per node). Setups stay multi-label; disease_area and mechanism_class are single-label. All 15 other v1 setups are unchanged.",
+  "setups": [
+    {
+      "name": "pivotal-company-defining-binary",
+      "group": "ex-ante",
+      "definition": "A single-asset (or single-lead) company whose value hinges on a PIVOTAL company-defining event now: a Phase 3 topline, an accepted BLA/NDA PDUFA, or the sole-remaining registrational trial. Clinical result and the go/no-go for the whole enterprise resolve at this print. Thin float amplifies the move both ways.",
+      "ex_ante_cues": [
+        "one lead asset carries the valuation AND the catalyst is Phase 3 / PDUFA / registrational",
+        "sole-remaining pivotal after a prior trial",
+        "accepted BLA/NDA with a firm action date",
+        "microcap/small-cap where this readout is 'the company'",
+        "no meaningful going-concern/dilution overhang dominating the tape (else -> going-concern-binary)"
+      ],
+      "ex_ante_taggable": true,
+      "typical_outcome": "Extreme bimodal: multi-bagger on a clean pivotal hit / catastrophic (-50% to -95%) on a miss; the single most decisive binary bucket.",
+      "approx_frequency": 76,
+      "example_cids": [
+        139,
+        201,
+        262,
+        263,
+        273,
+        318,
+        324,
+        350,
+        380,
+        387
+      ]
+    },
+    {
+      "name": "single-asset-going-concern-binary",
+      "group": "ex-ante",
+      "definition": "A single-asset binary where the clinical/regulatory result AND corporate solvency resolve together \u2014 a make-or-break readout landing on a name with short runway, going-concern language, dilution/warrant/reverse-split overhang, or a raise that must clear around the catalyst. The setup is 'data risk stacked on funding risk'. Co-fires with financing-overhang-going-concern.",
+      "ex_ante_cues": [
+        "single lead asset AND runway<~18mo / going-concern / telegraphed punitive raise",
+        "warrants, ATM, registered-direct, reverse split or Q-suffix ticker alongside the binary",
+        "good data can still be faded because a dilutive raise is near-certain",
+        "the raise must precede or ride with the catalyst"
+      ],
+      "ex_ante_taggable": true,
+      "typical_outcome": "Negative-to-bimodal: even hits are muted until the raise clears; misses are terminal. Distinct from pivotal-company-defining-binary because solvency, not just efficacy, is on the line.",
+      "approx_frequency": 70,
+      "example_cids": [
+        131,
+        137,
+        138,
+        140,
+        144,
+        221,
+        286,
+        357,
+        402,
+        414
+      ]
+    },
+    {
+      "name": "early-mid-stage-single-asset-signal",
+      "group": "ex-ante",
+      "definition": "A single-asset name whose current catalyst is an EARLY/MID-stage signal \u2014 Phase 1/2/2b proof-of-concept, dose-finding, or interim/biomarker readout \u2014 decisive for the program's trajectory but not yet the company-defining approval binary. Sets up (or kills) a future pivotal rather than resolving the franchise now.",
+      "ex_ante_cues": [
+        "one lead asset AND catalyst is Phase 1 / Phase 2 / Phase 2b / dose-finding / PoC / interim",
+        "result gates whether a pivotal even gets run",
+        "valuation rests on a single early asset with no approved product yet",
+        "'signal' / 'proof-of-concept' framing rather than registrational"
+      ],
+      "ex_ante_taggable": true,
+      "typical_outcome": "Large but less-terminal moves than a pivotal binary; non-monotonic/single-dose hits often sell off; a clean PoC re-rates the shell, a miss de-funds the next study.",
+      "approx_frequency": 19,
+      "example_cids": [
+        143,
+        249,
+        283,
+        366,
+        425,
+        586,
+        761,
+        762,
+        778,
+        809
+      ]
+    },
+    {
+      "name": "priced-in-derisked-readout",
+      "group": "ex-ante",
+      "unchanged_from_v1": true,
+      "approx_frequency": 171
+    },
+    {
+      "name": "priced-for-perfection-crowded-benchmark",
+      "group": "ex-ante",
+      "unchanged_from_v1": true,
+      "approx_frequency": 135
+    },
+    {
+      "name": "financing-overhang-going-concern",
+      "group": "ex-ante",
+      "unchanged_from_v1": true,
+      "approx_frequency": 180
+    },
+    {
+      "name": "first-in-class-no-approved-therapy-whitespace",
+      "group": "ex-ante",
+      "unchanged_from_v1": true,
+      "approx_frequency": 102
+    },
+    {
+      "name": "validated-mechanism-derisked",
+      "group": "ex-ante",
+      "unchanged_from_v1": true,
+      "approx_frequency": 59
+    },
+    {
+      "name": "trial-graveyard-high-placebo-indication",
+      "group": "ex-ante",
+      "unchanged_from_v1": true,
+      "approx_frequency": 85
+    },
+    {
+      "name": "cmc-manufacturing-regulatory-risk",
+      "group": "ex-ante",
+      "unchanged_from_v1": true,
+      "approx_frequency": 51
+    },
+    {
+      "name": "contested-efficacy-adcom-risk",
+      "group": "ex-ante",
+      "unchanged_from_v1": true,
+      "approx_frequency": 44
+    },
+    {
+      "name": "no-new-information-nonevent",
+      "group": "ex-ante",
+      "unchanged_from_v1": true,
+      "approx_frequency": 124
+    },
+    {
+      "name": "commercial-single-product-quality",
+      "group": "ex-ante",
+      "unchanged_from_v1": true,
+      "approx_frequency": 46
+    },
+    {
+      "name": "strategic-transaction-capital-injection",
+      "group": "ex-ante",
+      "unchanged_from_v1": true,
+      "approx_frequency": 33
+    },
+    {
+      "name": "good-news-faded",
+      "group": "outcome",
+      "unchanged_from_v1": true,
+      "approx_frequency": 39
+    },
+    {
+      "name": "stat-hit-magnitude-or-benchmark-miss",
+      "group": "outcome",
+      "unchanged_from_v1": true,
+      "approx_frequency": 45
+    },
+    {
+      "name": "os-miss-despite-soft-endpoint-hit",
+      "group": "outcome",
+      "unchanged_from_v1": true,
+      "approx_frequency": 8
+    },
+    {
+      "name": "primary-miss-subgroup-salvage",
+      "group": "outcome",
+      "unchanged_from_v1": true,
+      "approx_frequency": 32
+    }
+  ],
+  "disease_areas": [
+    {
+      "name": "psychiatry-cns",
+      "definition": "Mood, psychotic, anxiety, sleep/wake and addiction disorders (schizophrenia, MDD, GAD, bipolar, PPD, narcolepsy/EDS, fibromyalgia, autism, ADHD, substance use).",
+      "approx_frequency": 55,
+      "examples": [
+        "NBIX",
+        "LBRX",
+        "ALKS",
+        "VNDA"
+      ]
+    },
+    {
+      "name": "immunology-inflammation",
+      "definition": "Systemic autoimmune/inflammatory disease (SLE, RA, PsA, IgG4-RD, MS, IBD/UC, systemic sclerosis, myositis, HS, GBS, angioedema).",
+      "approx_frequency": 45,
+      "examples": [
+        "ZURA",
+        "ANNX",
+        "IONS",
+        "MLTX"
+      ]
+    },
+    {
+      "name": "neurodegeneration",
+      "definition": "Progressive CNS degeneration (ALS, Alzheimer's, Parkinson's, Huntington's, ataxias, PSP, Lewy-body, Alexander/Friedreich).",
+      "approx_frequency": 41,
+      "examples": [
+        "NBIX",
+        "CGTX",
+        "DNLI",
+        "IONS"
+      ]
+    },
+    {
+      "name": "dermatology",
+      "definition": "Skin-primary disease (atopic dermatitis, psoriasis, alopecia, seborrheic dermatitis, prurigo, molluscum, epidermolysis bullosa/RDEB, urticaria, GPP, cosmetic).",
+      "approx_frequency": 34,
+      "examples": [
+        "APGE",
+        "MANE",
+        "KRYS",
+        "VRCA"
+      ]
+    },
+    {
+      "name": "respiratory",
+      "definition": "Airway/lung disease (asthma, COPD, bronchiectasis, chronic cough, IPF/ILD, CRS/nasal polyps, MAC/NTM lung, CF-pulmonary, PH-ILD, PAP).",
+      "approx_frequency": 34,
+      "examples": [
+        "INSM",
+        "ARCT",
+        "SVRA",
+        "MNKD"
+      ]
+    },
+    {
+      "name": "cardiovascular",
+      "definition": "Structural/functional cardiovascular disease AND cardiometabolic lipid disorders (ATTR-CM, HCM, HF, PAH/PH, hypertension, stroke/aSAH; plus FCS/severe-HTG/dyslipidemia/ApoC3/ANGPTL3).",
+      "approx_frequency": 32,
+      "examples": [
+        "ARWR",
+        "BBIO",
+        "TECX",
+        "IONS"
+      ]
+    },
+    {
+      "name": "ophthalmology",
+      "definition": "Eye disease (wet AMD, DME, RVO, dry eye, thyroid eye disease, retinitis pigmentosa, PVR, corneal defect, presbyopia).",
+      "approx_frequency": 31,
+      "examples": [
+        "KOD",
+        "CRNX",
+        "IONS",
+        "ALNY"
+      ]
+    },
+    {
+      "name": "oncology-solid",
+      "definition": "Solid tumors (NSCLC, breast, ovarian, GIST, pancreatic, biliary, glioma/GBM, melanoma, endometrial, desmoid, NPC).",
+      "approx_frequency": 28,
+      "examples": [
+        "KPTI",
+        "VSTM",
+        "GILD",
+        "CRNX"
+      ]
+    },
+    {
+      "name": "neurology-epilepsy-migraine-pain",
+      "definition": "Non-degenerative neurology: epilepsy/seizures & DEE, essential tremor/movement, migraine, chronic/neuropathic pain, Long COVID.",
+      "approx_frequency": 27,
+      "examples": [
+        "XENE",
+        "PRAX",
+        "AXSM",
+        "TVRD"
+      ]
+    },
+    {
+      "name": "endocrine-obesity",
+      "definition": "Endocrine & weight/metabolic-hormone disease (obesity, T2D/diabetes, acromegaly, CAH, adrenal insufficiency, hypogonadism/TRT, hypoparathyroidism, hyperinsulinism, osteoporosis).",
+      "approx_frequency": 26,
+      "examples": [
+        "MBX",
+        "RYTM",
+        "CRNX",
+        "BMEA"
+      ]
+    },
+    {
+      "name": "oncology-heme",
+      "definition": "Hematologic malignancy & related (AML, ALL/B-ALL, lymphoma, CTCL, myeloma, AL amyloidosis, GVHD, MDS).",
+      "approx_frequency": 24,
+      "examples": [
+        "MAIA",
+        "SNDX",
+        "CGEM",
+        "ADCT"
+      ]
+    },
+    {
+      "name": "nephrology",
+      "definition": "Kidney disease (IgAN, FSGS, lupus nephritis, CKD, hyperphosphatemia, Alport, Fabry renal).",
+      "approx_frequency": 20,
+      "examples": [
+        "ELOX",
+        "ARDX",
+        "TVTX",
+        "VERA"
+      ]
+    },
+    {
+      "name": "neuromuscular",
+      "definition": "Neuromuscular disease (DMD, SMA, myasthenia gravis, LGMD, FSHD, muscle preservation).",
+      "approx_frequency": 17,
+      "examples": [
+        "BBIO",
+        "RNAC",
+        "CAPR",
+        "DYN"
+      ]
+    },
+    {
+      "name": "gastroenterology-hepatology",
+      "definition": "GI & liver disease (GERD/H. pylori, IBS, hepatic encephalopathy, cholestatic liver, NASH/MASH).",
+      "approx_frequency": 14,
+      "examples": [
+        "MIRM",
+        "ARDX",
+        "MDGL",
+        "PHAT"
+      ]
+    },
+    {
+      "name": "infectious-disease-vaccines",
+      "definition": "Anti-infectives & vaccines (cUTI, CRAB, C. difficile, HBV/HDV, HPV/RRP, fungal, catheter-BSI, pertussis; COVID/pneumococcal/influenza vaccines).",
+      "approx_frequency": 11,
+      "examples": [
+        "MIRM",
+        "PCVX",
+        "ARCT",
+        "ASMB"
+      ]
+    },
+    {
+      "name": "allergy-anaphylaxis",
+      "definition": "Acute allergy/anaphylaxis rescue & desensitization (epinephrine devices, peanut allergy, allergic urticaria).",
+      "approx_frequency": 11,
+      "examples": [
+        "SPRY",
+        "AQST",
+        "DBVT"
+      ]
+    },
+    {
+      "name": "rare-genetic-metabolic",
+      "definition": "Rare monogenic/metabolic disease (PKU, arginase/urea-cycle, Wilson, lysosomal/MPS, nonsense-mutation genetic diseases, achondroplasia, lymphatic malformation).",
+      "approx_frequency": 7,
+      "examples": [
+        "BBIO",
+        "DNLI",
+        "PVLA",
+        "SYRE"
+      ]
+    },
+    {
+      "name": "hematology-nonmalignant",
+      "definition": "Non-malignant blood disease (sickle cell, thalassemia, PK deficiency, polycythemia vera, hemolytic anemia, transfusion products).",
+      "approx_frequency": 6,
+      "examples": [
+        "AGIO",
+        "CERS",
+        "PTGX",
+        "CRSP"
+      ]
+    },
+    {
+      "name": "urology-gynecology",
+      "definition": "Genitourinary & reproductive/sexual health (stress urinary incontinence, dysmenorrhea, female sexual arousal disorder).",
+      "approx_frequency": 5,
+      "examples": [
+        "DARE",
+        "VIVE"
+      ]
+    },
+    {
+      "name": "supportive-procedural-other",
+      "definition": "Oncology-supportive / procedural / recovery indications not tied to a disease-modifying drug (ototoxicity prevention, post-surgical muscle recovery).",
+      "approx_frequency": 2,
+      "examples": [
+        "FENC",
+        "PLUR"
+      ]
+    }
+  ],
+  "mechanism_classes": [
+    {
+      "name": "reformulation-delivery-device",
+      "definition": "Known/known-class drug differentiated by delivery or formulation (sublingual/oral films, intranasal epinephrine, inhaled/dry-powder, apomorphine infusion, ingestible/patch, drug-device combos, 505(b)(2) reformulations).",
+      "approx_frequency": 60,
+      "examples": [
+        "MANE",
+        "VRCA",
+        "SUPN",
+        "INSM"
+      ]
+    },
+    {
+      "name": "monoclonal-antibody",
+      "definition": "Monoclonal antibodies incl. bispecifics, nanobodies/VHH, T-cell engagers and complement mAbs (anti-IL, anti-IGF-1R, anti-VEGF mAb, anti-CD19, anti-C1q, anti-amyloid).",
+      "approx_frequency": 57,
+      "examples": [
+        "MIRM",
+        "ANNX",
+        "APGE",
+        "KOD"
+      ]
+    },
+    {
+      "name": "small-molecule-other",
+      "definition": "Small molecules not otherwise classed: misc oral/topical agents, anti-infective SM (carbapenem, echinocandin, antibiotic lock), chemo (anthracycline), PDE5, hormones, plant-derived.",
+      "approx_frequency": 57,
+      "examples": [
+        "CGTX",
+        "BBIO",
+        "VNDA",
+        "CRNX"
+      ]
+    },
+    {
+      "name": "small-molecule-cns",
+      "definition": "CNS-active small molecules (muscarinic, VMAT2, orexin OX2R, NMDA/dextromethorphan-bupropion, kappa-opioid, ion-channel/Kv7/Nav, NK-1, gamma-secretase, neurosteroid, psychedelic).",
+      "approx_frequency": 56,
+      "examples": [
+        "NBIX",
+        "LBRX",
+        "ALKS",
+        "CGTX"
+      ]
+    },
+    {
+      "name": "small-molecule-enzyme-receptor",
+      "definition": "Small-molecule enzyme/receptor modulators outside CNS/kinase (P-CAB, NHE3, DPP1, aldosterone synthase, THR-beta, SST2, ACTH-R, endothelin/ARB, myosin modulators, PKR activators).",
+      "approx_frequency": 49,
+      "examples": [
+        "MIRM",
+        "ELOX",
+        "CRNX",
+        "ARDX"
+      ]
+    },
+    {
+      "name": "recombinant-protein-enzyme-biologic",
+      "definition": "Recombinant proteins/enzymes/cytokines/toxins incl. enzyme-replacement & brain-penetrant TransportVehicle ERT, GM-CSF, IL-2, immunotoxins, botulinum, recombinant human proteins.",
+      "approx_frequency": 32,
+      "examples": [
+        "DNLI",
+        "IDYA",
+        "AZTR",
+        "SVRA"
+      ]
+    },
+    {
+      "name": "small-molecule-kinase-targeted-onc",
+      "definition": "Targeted-oncology & immune small molecules acting on kinases/nuclear transport (TKIs, RAF/MEK, menin, BTK, JAK/TYK2, XPO1/SINE, GSK-3, MK2, telomere agents).",
+      "approx_frequency": 24,
+      "examples": [
+        "KPTI",
+        "VSTM",
+        "BBIO",
+        "MAIA"
+      ]
+    },
+    {
+      "name": "cell-therapy",
+      "definition": "Cell-based therapeutics (CAR-T, cardiosphere-derived/allogeneic cells, autologous bone-marrow, TCR-Treg, cell-sheet).",
+      "approx_frequency": 23,
+      "examples": [
+        "RNAC",
+        "BCDA",
+        "CAPR",
+        "QNCX"
+      ]
+    },
+    {
+      "name": "antisense-oligonucleotide",
+      "definition": "RNA-targeted antisense oligonucleotides incl. LICA/GalNAc-conjugated ASO (ApoC3, TTR, SOD1, GFAP, prekallikrein, ANGPTL3).",
+      "approx_frequency": 22,
+      "examples": [
+        "IONS",
+        "PRAX",
+        "LYRA"
+      ]
+    },
+    {
+      "name": "april-blys-baff-fusion",
+      "definition": "APRIL/BLyS/BAFF-axis biologics \u2014 dual-pathway fusion proteins and IL-17A/BAFF bispecifics (atacicept, tibulizumab).",
+      "approx_frequency": 13,
+      "examples": [
+        "ZURA",
+        "VERA"
+      ]
+    },
+    {
+      "name": "gene-therapy",
+      "definition": "In-vivo & ex-vivo gene therapy (AAV vectors, HSV-1 topical gene therapy, ex-vivo gene-corrected cell-sheets).",
+      "approx_frequency": 13,
+      "examples": [
+        "KRYS",
+        "OCGN",
+        "QURE",
+        "ABEO"
+      ]
+    },
+    {
+      "name": "peptide-therapeutic",
+      "definition": "Peptide/peptide-mimetic drugs (MC4R setmelanotide, IL-23R peptide, hepcidin mimetic, PTH prodrug, relaxin-adjacent peptides).",
+      "approx_frequency": 12,
+      "examples": [
+        "MBX",
+        "RYTM",
+        "CRNX",
+        "TVRD"
+      ]
+    },
+    {
+      "name": "live-biotherapeutic-microbiome-phage",
+      "definition": "Live/biologic ecosystem therapeutics \u2014 bacteriophage, microbiome/fecal consortia, engineered live bacteria, cell-derived secretome.",
+      "approx_frequency": 12,
+      "examples": [
+        "AZTR",
+        "KALA",
+        "PHGE",
+        "MCRB"
+      ]
+    },
+    {
+      "name": "fusion-protein-fc",
+      "definition": "Engineered Fc-fusion proteins & ligand traps not on the APRIL/BAFF axis (Fc-relaxin RXFP1 agonist, activin ligand traps, FcRn/Fc-engineered).",
+      "approx_frequency": 10,
+      "examples": [
+        "ORKA",
+        "TECX",
+        "EVMN",
+        "KROS"
+      ]
+    },
+    {
+      "name": "adc-radioconjugate",
+      "definition": "Payload-conjugated targeting agents \u2014 antibody-drug conjugates, antibody radioconjugates, muscle-targeting oligo conjugates (FORCE).",
+      "approx_frequency": 8,
+      "examples": [
+        "GILD",
+        "KOD",
+        "IMNM",
+        "DYN"
+      ]
+    },
+    {
+      "name": "sirna-rnai",
+      "definition": "RNAi/siRNA therapeutics incl. GalNAc-conjugated (TTR, ApoC3).",
+      "approx_frequency": 7,
+      "examples": [
+        "ARWR",
+        "ALNY"
+      ]
+    },
+    {
+      "name": "vaccine-dna-mrna",
+      "definition": "Vaccines & nucleic-acid immunotherapies (mRNA/sa-mRNA, conjugate vaccines, DNA-plasmid electroporation).",
+      "approx_frequency": 7,
+      "examples": [
+        "PCVX",
+        "ARCT",
+        "INO",
+        "NTIP"
+      ]
+    },
+    {
+      "name": "device-nondrug",
+      "definition": "Non-drug devices/systems (RF energy device, robotic navigation, pathogen-reduction blood system, photodynamic therapy).",
+      "approx_frequency": 5,
+      "examples": [
+        "HURA",
+        "CERS",
+        "VIVE"
+      ]
+    },
+    {
+      "name": "other-na",
+      "definition": "No single clear mechanism \u2014 diagnostics-led, diversified multi-asset commercial portfolios, or corporate/earnings events without one defining modality.",
+      "approx_frequency": 3,
+      "examples": [
+        "LIANY",
+        "BMRA",
+        "ZLAB"
+      ]
+    }
+  ],
+  "tagging_rubric": "Tag each node with (a) all applicable setups[] (multi-label, mean ~2.5), (b) exactly ONE disease_area, (c) exactly ONE mechanism_class.\n\nSETUPS -- run the v1 rubric UNCHANGED for the 15 retained tags, with ONE change: the old single-asset-microcap-binary is now three mutually-exclusive sub-tags. Pick at most one:\n - Is value in ONE lead asset AND the catalyst a Phase 3 topline / accepted BLA-NDA PDUFA / sole-remaining registrational trial? -> pivotal-company-defining-binary.\n - Same single-asset structure BUT the tape is co-dominated by solvency (runway<~18mo, going-concern, dilution/warrant/reverse-split, raise must clear around the print)? -> single-asset-going-concern-binary (also fire financing-overhang-going-concern).\n - Single asset but the catalyst is Phase 1/2/2b / dose-finding / PoC / interim (sets up a future pivotal, not the franchise binary)? -> early-mid-stage-single-asset-signal.\n Decisiveness/stage picks the bucket: PDUFA-or-Ph3 => pivotal; funding-stacked => going-concern; Ph1/2 signal => early-mid. A commercial single-product name is NOT one of these -> use commercial-single-product-quality. Then add positioning/science/regulatory tags per v1.\n\nDISEASE_AREA (exactly one = the PRIMARY indication driving THIS catalyst). Read the indication field; if multiple, take the lead/catalyst asset's indication. Order of specificity: heme-malignancy & solid-tumor first; then organ system (nephrology, neuromuscular, neurodegeneration, then epilepsy/migraine/pain neuro, then psychiatry-cns); then immunology-inflammation vs dermatology (skin-primary -> dermatology, systemic autoimmune -> immunology); ophthalmology; respiratory; cardiovascular (incl. lipid/cardiometabolic); endocrine-obesity vs rare-genetic-metabolic (monogenic/enzyme-deficiency -> rare-genetic-metabolic); gastroenterology-hepatology; hematology-nonmalignant; infectious-disease-vaccines; allergy-anaphylaxis; urology-gynecology; supportive-procedural-other as last resort.\n\nMECHANISM_CLASS (exactly one = the PRIMARY modality of the lead asset). Precedence when a node names several: live-biotherapeutic/phage > vaccine/DNA-mRNA > ADC/radioconjugate > ASO > siRNA > gene-therapy > cell-therapy > recombinant-protein/enzyme-biologic > Fc-fusion/ligand-trap (APRIL-BAFF axis -> april-blys-baff-fusion) > monoclonal-antibody > peptide > reformulation-delivery-device (only if the DIFFERENTIATION is the delivery, not the molecule) > device-nondrug > small-molecule-kinase-targeted-onc > small-molecule-cns > small-molecule-enzyme-receptor > small-molecule-other. Use other-na only for diagnostics, diversified multi-asset portfolios, or corporate/earnings events with no single defining modality.",
+  "coverage_note": "All 470 nodes receive exactly one disease_area (0 unassigned) and exactly one mechanism_class (only 1 node -> other-na: cid 1041 BMRA, a diagnostics company with no single drug mechanism). Setups remain multi-label; every node still gets >=1 setup under the v1 rubric (v1 coverage ~96-99%). SINGLE-ASSET SPLIT PREVALENCE (keyword estimator over 165 detected single-asset nodes; the original v1 tag hit ~237 under looser matching): pivotal-company-defining-binary 76 (~16% of corpus), single-asset-going-concern-binary 70 (~15%), early-mid-stage-single-asset-signal 19 (~4%). Each is well under the 30% target; even scaled to the full ~237 original members the proportions stay <25%. CEILING: sub-setup counts are a keyword heuristic over free-text (thesis/reference_class/why), not a re-tag; the downstream LLM wave applies the definitions above node-by-node. Ambiguous single-asset nodes with no explicit stage default to pivotal-company-defining-binary, so early-mid is a conservative floor."
+}
