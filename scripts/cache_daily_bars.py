@@ -15,10 +15,10 @@ one-wide-call-per-ticker on a tmp DB with a monkeypatched get_daily_bars — ZER
 
 import argparse
 import os
-import sqlite3
 import sys
 from datetime import date, timedelta
 
+from catalyst_trader import db as _db
 from catalyst_trader import store
 from catalyst_trader.providers import prices
 
@@ -103,13 +103,13 @@ def main(argv=None):
     if args.self_check:
         return _self_check()
 
-    conn = sqlite3.connect(args.db)
-    conn.row_factory = sqlite3.Row  # store.upsert_daily_bars reads existing["id"]
+    conn = _db.connect(args.db)     # row_factory=Row; store.upsert_daily_bars reads existing["id"]
     windows = distinct_ticker_windows(conn, args.start, args.end)
     print_plan(windows, args.start, args.end)
     if args.dry_run:
         print("\nDRY RUN — no network calls made. Re-run with --no-dry-run to pull (operator step).")
         return 0
+    _db.migrate(conn)               # idempotent — ensures migration 014 (daily_bar) before upsert
     live_pull(conn, windows)
     return 0
 
