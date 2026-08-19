@@ -34,8 +34,10 @@ from ..quant.performance import (
     sortino,
     win_rate,
 )
+from ..desk.exit_plan import EXIT_PARAMS
+from ..quant.sizing import adaptive_sl_tp_levels
 from .events import build_event_set
-from .fill import fill_price, half_spread_pct
+from .fill import fill_price, half_spread_pct, reflex_exit
 
 # validate_hedge needs analog gaps + prices; the synthetic fixture seeds no hedge peers, so the
 # call returns None before it ever reads these (honest single-leg fallback, HEDGE-04). Kept as an
@@ -65,6 +67,8 @@ class LegOutcome(BaseModel):
     hedge_ret: float | None = None
     p: float | None = None       # the direction-proxy P(positive) that sized the leg (None = defensive)
     size_pct: float
+    off_map: bool = False         # Tier-3 reflex flag: a move no scenario branch covers (Task-B seam)
+    exit_reason: str | None = None  # daily-reflex exit reason (band/stop/tp/time/halt); None on the weekly path
 
 
 class BacktestResult(BaseModel):
@@ -171,13 +175,29 @@ def _recent_catalyst_tickers(conn, as_of, *, lookback_days):
     return {c.ticker for c in serving.asof(conn, as_of).catalysts() if lo < c.event_date <= as_of}
 
 
-def _fill_leg(conn, ticker, as_of, exit_by, *, held_through, slippage, apply_costs=True):
-    """Enter at the decision-week close, exit via the pessimistic fill (07-02). Returns
-    (entry, fill, realized_ret) or None when the leg cannot be entered/exited honestly.
+def _net_return(entry, fill, apply_costs):
+    """Realized return with the E8 half-spread paid on BOTH sides when apply_costs (RH = $0 comm)."""
+    if apply_costs:
+        hs = half_spread_pct(entry)
+        return (fill * (1 - hs)) / (entry * (1 + hs)) - 1.0
+    return fill / entry - 1.0
 
-    # ponytail: reads through the serving gateway (decision B). Entry bars are knowable at cutoff=as_of;
-    # exit bars at cutoff=exit_by (a future-relative read that is legitimately knowable at exit time).
-    # No lag here (price bars were never latency-shifted in the fill path) — behaviour-preserving.
+
+def _fill_leg(conn, ticker, as_of, exit_by, *, held_through, slippage, apply_costs=True,
+              granularity="weekly", daily_bars_provider=None, up_move=None, vol_move=None,
+              params=None):
+    """Enter at the decision-week close, exit via the pessimistic fill (07-02). Returns
+    (entry, fill, realized_ret, reflex) or None when the leg cannot be entered/exited honestly.
+    `reflex` is None on the WEEKLY path and the reflex_exit dict on the DAILY path.
+
+    granularity="weekly" (default) OR daily_bars_provider is None -> the EXISTING weekly gap-open
+    fill, byte-for-byte. granularity="daily" with a provider -> the intraweek daily reflex: fetch the
+    injected daily bars, derive band/stop/target via the REUSED adaptive_sl_tp_levels (+ est moves
+    up_move/vol_move), and fill via reflex_exit (next-bar-open, gap-open stops, halt handling).
+
+    # ponytail: reads through the serving gateway (decision B). Entry bars knowable at cutoff=as_of;
+    # weekly exit bars at cutoff=exit_by. The daily provider is the injected offline seam (mirrors
+    # verify_moves' bars_provider) — production wiring of providers.prices.get_daily_bars is a later step.
     """
     entry_bars = serving.asof(conn, as_of).bars(ticker, as_of)
     if not entry_bars:
@@ -185,19 +205,30 @@ def _fill_leg(conn, ticker, as_of, exit_by, *, held_through, slippage, apply_cos
     entry = float(entry_bars[-1]["close"])
     if entry <= 0:
         return None
+
+    if granularity == "daily" and daily_bars_provider is not None:
+        daily_bars = daily_bars_provider(ticker, as_of, exit_by)
+        if not daily_bars:
+            return None
+        # REUSE adaptive_sl_tp_levels for the stop/target prices; the band is the est-move no-stop zone.
+        sltp = adaptive_sl_tp_levels(entry, up_move=up_move, vol_move=vol_move, params=params,
+                                     holds_through_catalyst=held_through)
+        band = (entry * (1 - vol_move), entry * (1 + up_move))
+        rx = reflex_exit(daily_bars, entry=entry, side="long", band=band,
+                         stop=sltp.detail["stop"], target=sltp.detail["target"],
+                         time_barrier=exit_by, slippage=slippage,
+                         off_map_mult=EXIT_PARAMS["off_map_mult"])
+        if rx is None:
+            return None
+        return entry, rx["fill"], _net_return(entry, rx["fill"], apply_costs), rx
+
     exit_bars = serving.asof(conn, exit_by).bars(ticker, exit_by)
     if not exit_bars or exit_bars[-1]["week_end"] <= as_of:
         return None  # no hold-week bar yet -> the outcome is unmeasurable, do not fabricate it
     fill = fill_price(exit_bars, side="long", held_through=held_through, slippage=slippage)
     if fill is None:
         return None  # halted / delisted / zero-vol / zero-quote action bar
-    if apply_costs:
-        # E8: pay the half-spread on BOTH sides (buy up at entry, sell down at exit); RH = $0 commission
-        hs = half_spread_pct(entry)
-        eff_entry = entry * (1 + hs)
-        eff_fill = fill * (1 - hs)
-        return entry, fill, eff_fill / eff_entry - 1.0
-    return entry, fill, fill / entry - 1.0
+    return entry, fill, _net_return(entry, fill, apply_costs), None
 
 
 def _honest_hedge(conn, embed, ticker, cat, as_of, exit_by):
@@ -232,7 +263,7 @@ def _cash_leg(ticker, exit_by, size_pct):
 def run_layer_a(conn, embed, *, start, end, params=None, target_weekly=0.01,
                 direction_proxy="base_rate", slippage=0.0, latency_cfg=None,
                 weekly_budget=0.10, heat_cap=1.0, periods_per_year=52,
-                busted_lookback_days=56):
+                busted_lookback_days=56, granularity="weekly", daily_bars_provider=None):
     """The deterministic weekly mechanical backtest of the CORRECTED strategy (BACK-02).
 
     Iterates the 07-02 point-in-time event set; for each week re-expresses the shipped cadence
@@ -266,14 +297,18 @@ def run_layer_a(conn, embed, *, start, end, params=None, target_weekly=0.01,
                 continue  # insufficient history at this as_of -> no directional read (honest skip)
             if side is None or p is None:
                 continue  # no measured trigger cell -> not a coin-flip, just not taken
-            filled = _fill_leg(conn, tk, as_of, exit_by, held_through=True, slippage=slippage)
-            if filled is None:
-                continue
-            entry, fill, ret = filled
+            # Compute ev BEFORE the fill: the daily reflex needs it as up_move for adaptive_sl_tp_levels
+            # (C1). Pure of `filled`, so the weekly value/ordering is unchanged (byte-for-byte).
             # reuse the base-rate mean_next the proxy already computed; long_runup (ev_raw=None)
             # never computes it, so it still sizes via the independent _base_rate_ev recompute.
             ev = (_ev_from_mean_next(ev_raw, target_weekly) if ev_raw is not None
                   else _base_rate_ev(tk, as_of, conn, params, target_weekly, store_view=view))
+            filled = _fill_leg(conn, tk, as_of, exit_by, held_through=True, slippage=slippage,
+                               granularity=granularity, daily_bars_provider=daily_bars_provider,
+                               up_move=ev, vol_move=stat_gap, params=params)
+            if filled is None:
+                continue
+            entry, fill, ret, reflex = filled
             size = size_for_survival(p_loss=1.0 - p, gap=stat_gap,
                                      target_return=target_weekly, expected_move=ev).value
             hedge = _honest_hedge(conn, embed, tk, cat, as_of, exit_by)
@@ -282,9 +317,12 @@ def run_layer_a(conn, embed, *, start, end, params=None, target_weekly=0.01,
                 hf = _fill_leg(conn, hedge.ticker, as_of, exit_by, held_through=True,
                                slippage=slippage)
                 hedge_ret = hf[2] if hf else None
-            out = LegOutcome(ticker=tk, side=side, entry=entry, fill=fill, exit=exit_by,
+            out = LegOutcome(ticker=tk, side=side, entry=entry, fill=fill,
+                             exit=(reflex["exit"] if reflex else exit_by),
                              realized_ret=ret, held_through=True, is_catalyst=True,
-                             hedge_ret=hedge_ret, p=p, size_pct=size)
+                             hedge_ret=hedge_ret, p=p, size_pct=size,
+                             off_map=(reflex["off_map"] if reflex else False),
+                             exit_reason=(reflex["reason"] if reflex else None))
             candidates.append(Candidate(size_pct=size, expected_move=ev, weight=size,
                                         payload={"outcome": out}))
 
@@ -306,7 +344,7 @@ def run_layer_a(conn, embed, *, start, end, params=None, target_weekly=0.01,
                                slippage=slippage)
             if filled is None:
                 continue
-            entry, fill, ret = filled
+            entry, fill, ret, _reflex = filled  # statistical sleeve stays weekly (_reflex is None)
             size = size_for_survival(p_loss=1.0 - r["p"], gap=stat_gap,
                                      target_return=target_weekly,
                                      expected_move=r["mean_next"]).value

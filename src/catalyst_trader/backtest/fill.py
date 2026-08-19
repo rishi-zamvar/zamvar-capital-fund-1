@@ -98,6 +98,105 @@ def fill_price(
     return _worsen(base, side, slippage)
 
 
+def _resolve_fill(daily_bars: list[dict], fill_idx: int, side: str,
+                  slippage: float) -> tuple[float | None, str | None, bool]:
+    """Roll forward from `fill_idx` to the first NON-skipped bar and fill at its open.
+
+    Returns (fill, exit_date, halted) — `halted` is True iff a halted (_skip) bar was rolled
+    past to reach the fill (the fill-at-next-available-open discipline). No fillable bar in the
+    remaining window -> (None, None, halted): an honest unfillable skip (never a fabricated fill).
+    Reuses _worsen so the far-side slippage haircut is identical to fill_price's.
+    """
+    halted = False
+    j = fill_idx
+    while j < len(daily_bars):
+        bar = daily_bars[j]
+        if _skip(bar):
+            halted = True
+            j += 1
+            continue
+        return _worsen(bar["open"], side, slippage), bar["week_end"], halted
+    return None, None, halted
+
+
+def reflex_exit(
+    daily_bars: list[dict],
+    *,
+    entry: float,
+    side: str,
+    band: tuple[float, float],
+    stop: float,
+    target: float,
+    time_barrier: str,
+    slippage: float,
+    off_map_mult: float,
+) -> dict | None:
+    """The intraweek DAILY reflex (Tier-3 Task A): the FIRST triggered exit, filled honestly.
+
+    PURE (no conn/network). `daily_bars` = chronological daily OHLCV, each with week_end=ISO trade
+    date + open/high/low/close/volume (+ optional halted/delisted). Scans bars in order and fires
+    the first triggered exit, modelling the fill at the NEXT bar's open (no same-bar-fill bias):
+
+      * band breach   — a close OUTSIDE `band` (below band[0] / above band[1]) -> exit next open.
+      * adaptive stop — bar low <= stop (long) / high >= stop (short) -> exit next open; if that
+        open GAPS past the stop the fill IS the gap open, never the stop level (fill.py discipline).
+      * take-profit   — bar high >= target (long) / low <= target (short) -> exit next open.
+      * TIME barrier  — the first bar whose date >= time_barrier -> exit at THAT bar's own open
+        (the hard triple-barrier TIME leg; first-to-hit across all four barriers).
+
+    Halt handling: a halted (_skip) bar at the intended fill point rolls forward to the next
+    non-skipped open; no resumption in-window -> return None (unfillable, honest skip).
+
+    Returns {"fill","exit","reason","off_map"} with reason in {band,stop,tp,time,halt}; `fill` is
+    slippage-worsened on the far side. off_map (the Task-B escalation seam) is True when the move is
+    outside the band by more than max(up,down)*off_map_mult (a move no scenario-table branch covers)
+    OR a halt forced the fill to roll — the reflex still exits deterministically; off_map only MARKS.
+    """
+    if not daily_bars:
+        return None
+    lo, hi = band
+    up_frac = hi / entry - 1.0
+    down_frac = 1.0 - lo / entry
+    ref = max(up_frac, down_frac)
+
+    for i, bar in enumerate(daily_bars):
+        # hard TIME barrier: the first bar at/after time_barrier exits at its OWN open.
+        if bar["week_end"] >= time_barrier:
+            fill, exit_date, halted = _resolve_fill(daily_bars, i, side, slippage)
+            if fill is None:
+                return None
+            return {"fill": fill, "exit": exit_date,
+                    "reason": "halt" if halted else "time", "off_map": halted}
+
+        if _skip(bar):
+            continue  # can't read a real price off a halted bar; its halt only matters as a fill bar
+
+        reason = None
+        if bar["close"] < lo or bar["close"] > hi:
+            reason = "band"
+        elif (bar["low"] <= stop) if side == "long" else (bar["high"] >= stop):
+            reason = "stop"
+        elif (bar["high"] >= target) if side == "long" else (bar["low"] <= target):
+            reason = "tp"
+        if reason is None:
+            continue
+
+        fill, exit_date, halted = _resolve_fill(daily_bars, i + 1, side, slippage)
+        if fill is None:
+            return None  # triggered but no fillable bar in-window -> honest unfillable skip
+
+        off_map = halted
+        if reason == "band":
+            c = bar["close"]
+            excess = (lo - c) / entry if c < lo else (c - hi) / entry
+            if excess > ref * off_map_mult:
+                off_map = True
+        return {"fill": fill, "exit": exit_date,
+                "reason": "halt" if halted else reason, "off_map": off_map}
+
+    return None  # nothing triggered and the time barrier was never reached in-window
+
+
 def effective_asof(data_class: str, decision_date: str, latency_cfg: dict) -> str:
     """Shift `decision_date` back by the per-class publication lag (in DAYS).
 
