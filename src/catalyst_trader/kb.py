@@ -598,6 +598,11 @@ BOOTSTRAP_DEFAULT = {
         "defensive_instruments": ["SGOV", "BIL", "XBI"],
         "defensive_max_frac": 1.0,     # defensive book may be the whole book
         "statistical_sleeve_cap": 0.5, # max fraction of the weekly risk budget in statistical legs when catalyst legs exist (research §4.5 knob #4)
+        # BGAP-01: BINARY catalysts (FDA/trial all-or-nothing) size against the TAIL down-move, not
+        # the ~8.5% median analog (which oversizes ~7x -> ruin on a CRL/miss). See quant.sizing.binary_survival_gap.
+        "binary_catalyst_types": ["pdufa", "adcom", "trial_readout"],  # BINARY = all-or-nothing (vs earnings/conference)
+        "binary_gap_percentile": 90,   # UNCALIBRATED — high-pctile of analog down-moves is the survival gap (design choice; only bites when observed history is WORSE than the floor, i.e. strictly more conservative)
+        "binary_gap_default": 0.70,    # canonical binary down-gap floor — matches sizing.py "-70%" + the gap=0.70 risk_of_ruin/size_for_survival defaults (NOT base_rates crl_penalty, which is a probability, not a price move)
     },
     # FF-06: the football-field aggregator / builder / DD / cross_check read EVERY threshold + method
     # weight from here (never a literal in a consumer body). ALL UNCALIBRATED — labeled for Phase-9

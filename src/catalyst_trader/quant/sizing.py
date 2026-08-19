@@ -10,10 +10,27 @@ Monte Carlo — so results are reproducible and testable.
 """
 
 import math
+from statistics import quantiles
 
 from .result import ToolResult
 
 _VERSION = "1.0.0"
+
+
+def binary_survival_gap(down_moves, *, percentile: float, default: float) -> float:
+    """The TAIL adverse down-move a BINARY catalyst must survive (BGAP-01), NOT the median.
+
+    A CRL / trial miss is a tail event (~30-70% gap-down); the median analog down-move (~8.5%)
+    drastically UNDER-sizes the survival gap. Returns max(high-percentile of analog down-move
+    MAGNITUDES, `default`): rich history with a genuinely worse tail can push the gap ABOVE the
+    prior, but thin/optimistic history can NEVER pull it below it. `default` is the honest
+    conservative binary prior (kb binary_gap_default) — NOT base_rates crl_penalty, which is a
+    probability reduction, not a price move (cite-or-drop). Pure: percentile + default injected.
+    """
+    tail = default
+    if len(down_moves) >= 2:  # statistics.quantiles needs >=2 points else raises
+        tail = quantiles(down_moves, n=100, method="inclusive")[int(percentile) - 1]
+    return max(tail, default)
 
 
 def _finite(x: float, name: str) -> float:

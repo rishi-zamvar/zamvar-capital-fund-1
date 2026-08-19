@@ -8,13 +8,16 @@ NaN) rather than emit inf/NaN. risk_of_ruin is deterministic (no RNG) so it is r
 before the logic exists (module absent = RED).
 """
 
+import inspect
 import math
 
 import pytest
 
+from catalyst_trader import kb
 from catalyst_trader.quant.result import ToolResult
 from catalyst_trader.quant.sizing import (
     adaptive_sl_tp_levels,
+    binary_survival_gap,
     fractional_kelly,
     kelly,
     risk_of_ruin,
@@ -346,3 +349,71 @@ def test_adaptive_deterministic_same_inputs_same_result():
     b = adaptive_sl_tp_levels(entry=100.0, up_move=0.2, vol_move=0.1, params=SLTP_PARAMS)
     assert a.value == b.value
     assert a.detail == b.detail
+
+
+# ----------------------------------------------------------------- binary_survival_gap
+#
+# BGAP-01: a BINARY catalyst (PDUFA / AdCom / trial readout) must size against the TAIL
+# adverse down-move — a CRL / trial miss gaps the stock 30-70% down — not the ~8.5% median
+# analog down-move (which oversizes ~7x -> ruin). binary_survival_gap returns
+# max(high-percentile of analog down-move MAGNITUDES, default): a genuinely-worse observed
+# tail can push ABOVE the conservative prior, but thin/optimistic history can NEVER pull below it.
+from statistics import quantiles  # noqa: E402  (local to the BGAP tests, mirrors valuation.py)
+
+
+def test_binary_survival_gap_uses_tail_not_median():
+    # wide down-tail: the 90th pctile is FAR above the ~0.09 median -> the fn must return the tail.
+    down = [0.05, 0.08, 0.10, 0.60]
+    got = binary_survival_gap(down, percentile=90, default=0.01)  # tiny default so the tail shows
+    expected_tail = quantiles(down, n=100, method="inclusive")[89]  # 90th pctile
+    assert got == pytest.approx(expected_tail)
+    assert got > 0.30                               # >> the 0.09 median (never the median)
+
+
+def test_binary_survival_gap_floors_optimistic_history_to_default():
+    # a computed tail BELOW the conservative prior is floored to the prior (can't under-size).
+    down = [0.05, 0.08, 0.10, 0.60]
+    got = binary_survival_gap(down, percentile=90, default=0.70)
+    assert got == pytest.approx(0.70)               # tail (~0.5) < 0.70 -> floored
+
+
+def test_binary_survival_gap_keeps_genuinely_worse_tail_above_default():
+    # rich history whose tail is WORSE than the prior pushes the gap ABOVE the default.
+    down = [0.50, 0.60, 0.80, 0.95]
+    got = binary_survival_gap(down, percentile=90, default=0.70)
+    expected_tail = quantiles(down, n=100, method="inclusive")[89]
+    assert got == pytest.approx(expected_tail)
+    assert got > 0.70                               # kept the genuinely-worse observed tail
+
+
+def test_binary_survival_gap_thin_coverage_falls_back_to_default():
+    # quantiles needs >=2 points: 1 point and 0 points both degrade to the default, never raise.
+    assert binary_survival_gap([0.42], percentile=90, default=0.70) == pytest.approx(0.70)
+    assert binary_survival_gap([], percentile=90, default=0.70) == pytest.approx(0.70)
+
+
+def test_binary_survival_gap_stays_in_open_unit_interval():
+    # safe for risk_of_ruin's gap validator (0 < gap <= 1) given fractional inputs + default in (0,1].
+    for down in ([], [0.1], [0.05, 0.08, 0.10, 0.60], [0.50, 0.60, 0.80, 0.95]):
+        g = binary_survival_gap(down, percentile=90, default=0.70)
+        assert 0.0 < g <= 1.0
+
+
+def test_binary_survival_gap_is_pure_percentile_and_default_injected():
+    # no kb/db/network; percentile + default are ARGS (no magic literal drives the result).
+    params = set(inspect.signature(binary_survival_gap).parameters)
+    assert params == {"down_moves", "percentile", "default"}
+    # same args -> same result (deterministic, no hidden state)
+    a = binary_survival_gap([0.05, 0.08, 0.10, 0.60], percentile=90, default=0.70)
+    b = binary_survival_gap([0.05, 0.08, 0.10, 0.60], percentile=90, default=0.70)
+    assert a == b
+
+
+# -------------------------------------------------------- binary-gap PARAMS (kb, BGAP-01)
+
+
+def test_kb_weekly_params_expose_binary_gap_knobs(db):
+    w = kb.load_params(db, "weekly")["weekly"]
+    assert w["binary_catalyst_types"] == ["pdufa", "adcom", "trial_readout"]
+    assert w["binary_gap_percentile"] == 90
+    assert w["binary_gap_default"] == 0.70
