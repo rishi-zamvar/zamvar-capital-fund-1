@@ -265,6 +265,7 @@ None yet.
 | 260818-n98 | Tier-1 data-integrity: de-conflate labels (clinical vs market reaction, ~10 crl→approved) + verify moves (0 divergences, corpus sound) + clean catalyst_source (324 pruned) | 2026-08-19 | 59a0c04 | Verified 6/6 | [260818-n98](./quick/260818-n98-tier-1-data-integrity-de-conflate-labels/) |
 | 260818-oto | Tier-2a retrieval v2: LLM re-tag 470 (setups+disease_area+mechanism_class) + inclusive-recall/multi-axis rarity rerank + confidence. Stress test: 2 OK→STRONG, both WEAK→OK (SRRK/VERA flipped), 0 regressions | 2026-08-19 | 865987e | Verified 7/7 | [260818-oto](./quick/260818-oto-retrieval-v2-llm-re-tag-470-setups-disea/) |
 | 260818-q7f | Tier-2b football field v1 (FF-05): RH-sourced options-IV adapter (free, no Polygon) + 5-method field assembly in builder (convergence+dispersion) + DD independent number/discrepancy loopback. Live-validated (IONS 3.6% → field converges 4 methods). Backward-compat byte-for-byte | 2026-08-19 | 3f1133b | Verified 5/5 | [260818-q7f](./quick/260818-q7f-football-field-v1-rh-options-iv-plugin-a/) |
+| 260818-r3y | Live-assumption wiring: assumptions_snapshot cache (013) + no-look-ahead-gated provider + pre-event context packer + builder default → feeds field's rNPV/SOP/analyst-target methods. 1535 tests green. Cache population = deferred Task-4 batch (field abstains gracefully) | 2026-08-19 | b4691ec | Verified 6/6 | [260818-r3y](./quick/260818-r3y-live-assumption-estimation-pre-event-con/) |
 
 ### Blockers/Concerns
 
