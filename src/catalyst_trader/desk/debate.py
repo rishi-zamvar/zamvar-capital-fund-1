@@ -17,7 +17,7 @@ naming the losing side. No sizing/positioning here (that is Phase 5).
 
 from pydantic import BaseModel, ConfigDict
 
-from ..contracts import AnalystSignal, DebateVerdict
+from ..contracts import AnalystReportBase, DebateVerdict
 from . import MAX_ROUNDS
 from .runtime import run_structured
 
@@ -33,7 +33,7 @@ class Argument(BaseModel):
     scratchpad: str = ""
 
 
-def _evidence_context(signals: list[AnalystSignal]) -> str:
+def _evidence_context(signals: list[AnalystReportBase]) -> str:
     """Flatten the analyst signals into the shared, citation-carrying context both
     sides reason over. Findings keep their evidence_ref so arguments stay grounded."""
     lines = []
@@ -99,7 +99,7 @@ REQUIREMENTS for the DebateVerdict:
 """
 
 
-async def run(signals: list[AnalystSignal], catalyst, rounds: int = MAX_ROUNDS,
+async def run(signals: list[AnalystReportBase], catalyst, rounds: int = MAX_ROUNDS,
               *, extra_context: str | None = None) -> DebateVerdict:
     """Run a bounded, context-isolated bull/bear debate then a moderator synthesis.
 

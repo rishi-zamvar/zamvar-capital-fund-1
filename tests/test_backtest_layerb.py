@@ -19,19 +19,21 @@ from catalyst_trader.backtest.layerb import (
     run_layer_b,
     sample_catalysts,
 )
-from catalyst_trader.contracts import AnalystSignal, DebateVerdict
+from catalyst_trader.contracts import DebateVerdict
 from catalyst_trader.desk import analysts, debate, diligence, md, orchestrator, verifier
+from catalyst_trader.desk.analysts import REPORT_FOR
 from catalyst_trader.desk.debate import Argument
 from catalyst_trader.desk.guardrails import GuardrailViolation
 from tests.synth_history import seed_history, week_ends
 
 DIMENSIONS = ["clinical", "regulatory", "financial", "market_sentiment"]
+LENS_CLASSES = set(REPORT_FOR.values())  # the 4 lens report classes bound at the analyst seam
 
 
 def _seam(load_fixture):
     """A role-routing fake run_structured returning the recorded fixtures — the offline desk seam."""
     signals = {
-        d: AnalystSignal.model_validate(load_fixture(f"agent_responses/{d}_signal"))
+        d: REPORT_FOR[d].model_validate(load_fixture(f"agent_responses/{d}_signal"))
         for d in DIMENSIONS
     }
     bull = Argument.model_validate(load_fixture("agent_responses/bull_argument"))
@@ -40,7 +42,7 @@ def _seam(load_fixture):
     support = verifier.SupportCheck.model_validate(load_fixture("agent_responses/verifier_support"))
 
     async def _fake(prompt, schema, *, mcp_servers=None, allowed_tools=None, model="sonnet"):
-        if schema is AnalystSignal:
+        if schema in LENS_CLASSES:
             for d in DIMENSIONS:
                 if f'"{d}"' in prompt:
                     return signals[d]

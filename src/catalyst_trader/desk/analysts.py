@@ -10,8 +10,8 @@ is a finding, never a fabrication). The one quant MCP server (built in desk.tool
 
 run_analyst maps the dimension to its lens report class via REPORT_FOR and binds THAT class
 at the run_structured seam — so the schema boundary rejects any uncited / malformed / wrong-
-shape payload before it reaches the debate. AnalystSignal is no longer bound here; the 8 DD
-dimensions keep it (in diligence.py) until Plan 2.
+shape payload before it reaches the debate. The thin shared analyst contract is no longer
+bound here; the 8 DD dimensions keep it (in diligence.py) until Plan 2.
 
 # ponytail: still 4 job strings + 1 prompt builder + 1 seam call. The only new moving part
 #           is REPORT_FOR (a dict). No per-dimension class hierarchy in this module.

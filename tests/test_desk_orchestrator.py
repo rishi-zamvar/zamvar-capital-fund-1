@@ -17,11 +17,13 @@ import asyncio
 
 import pytest
 
-from catalyst_trader.contracts import AnalystSignal, DebateVerdict
+from catalyst_trader.contracts import DebateVerdict
 from catalyst_trader.desk import analysts, debate, orchestrator, verifier
+from catalyst_trader.desk.analysts import REPORT_FOR
 from catalyst_trader.desk.debate import Argument
 
 DIMENSIONS = ["clinical", "regulatory", "financial", "market_sentiment"]
+LENS_CLASSES = set(REPORT_FOR.values())  # the 4 lens report classes bound at the analyst seam
 
 CATALYST = {
     "ticker": "ACME",
@@ -37,7 +39,7 @@ def _router(load_fixture, verdict, calls):
     on the dimension token the prompt mandates), bull vs bear, the moderator verdict, and
     the verifier's SupportCheck — each returning its recorded fixture."""
     signals = {
-        d: AnalystSignal.model_validate(load_fixture(f"agent_responses/{d}_signal"))
+        d: REPORT_FOR[d].model_validate(load_fixture(f"agent_responses/{d}_signal"))
         for d in DIMENSIONS
     }
     bull = Argument.model_validate(load_fixture("agent_responses/bull_argument"))
@@ -46,7 +48,7 @@ def _router(load_fixture, verdict, calls):
 
     async def _fake(prompt, schema, *, mcp_servers=None, allowed_tools=None, model="sonnet"):
         calls.append({"prompt": prompt, "schema": schema, "model": model})
-        if schema is AnalystSignal:
+        if schema in LENS_CLASSES:   # per-dimension lens report bound at the analyst seam
             for d in DIMENSIONS:
                 if f'"{d}"' in prompt:   # build_prompt: Emit `dimension` EXACTLY as "<d>"
                     return signals[d]
@@ -85,7 +87,7 @@ async def test_run_desk_end_to_end(db, monkeypatch, load_fixture):
     assert out.evidence_refs                               # support survived the verifier (CALL-04)
 
     # all four analysts ran, then the moderator, then the verifier semantic gate.
-    assert len([c for c in calls if c["schema"] is AnalystSignal]) == 4
+    assert len([c for c in calls if c["schema"] in LENS_CLASSES]) == 4
     assert any(c["schema"] is DebateVerdict for c in calls)
     assert any(c["schema"] is verifier.SupportCheck for c in calls)
 
@@ -109,7 +111,7 @@ async def test_analysts_run_concurrently(db, monkeypatch, load_fixture):
     await orchestrator.run_desk(db, CATALYST)
 
     assert gathered == [4]   # one fan-out of exactly the four analysts, not sequential awaits
-    analyst_prompts = [c["prompt"] for c in calls if c["schema"] is AnalystSignal]
+    analyst_prompts = [c["prompt"] for c in calls if c["schema"] in LENS_CLASSES]
     dims = {d for d in DIMENSIONS for p in analyst_prompts if f'"{d}"' in p}
     assert dims == set(DIMENSIONS)   # four distinct dimension prompts issued
 
@@ -140,7 +142,8 @@ async def test_run_desk_passes_extra_context(db, monkeypatch, load_fixture):
         return DebateVerdict.model_validate(load_fixture("agent_responses/moderator_verdict"))
 
     async def _fake_analyst(dim, catalyst, **kw):
-        return AnalystSignal.model_validate(load_fixture(f"agent_responses/{dim}_signal"))
+        # per-dim lens report (the migrated fixtures are lens-shaped; AnalystSignal would reject them)
+        return REPORT_FOR[dim].model_validate(load_fixture(f"agent_responses/{dim}_signal"))
 
     async def _fake_enforce(conn, verdict, **kw):
         return verdict

@@ -7,7 +7,7 @@ text, never the opponent's private scratchpad/transcript. These tests fake the
 run_structured seam (dispatching on schema) so the whole suite runs offline.
 """
 
-from catalyst_trader.contracts import AnalystSignal, DebateVerdict, KeyFinding
+from catalyst_trader.contracts import ClinicalReport, DebateVerdict, FinancialReport, KeyFinding
 from catalyst_trader.desk import MAX_ROUNDS
 from catalyst_trader.desk import debate
 from catalyst_trader.desk.debate import Argument
@@ -21,13 +21,13 @@ CATALYST = {
 }
 
 SIGNALS = [
-    AnalystSignal(
+    ClinicalReport(
         dimension="clinical", ticker="ACME", catalyst_id="cat-001", score=0.5, confidence=0.6,
         thesis="The science supports a positive readout: the pivotal endpoint was met with strong significance.",
         key_findings=[KeyFinding(claim="Phase 3 endpoint met p<0.001", evidence_ref="tool:base_rate#a1b2c3")],
         unknowns=["secondary endpoint durability not reported"],
     ),
-    AnalystSignal(
+    FinancialReport(
         dimension="financial", ticker="ACME", catalyst_id="cat-001", score=-0.3, confidence=0.5,
         thesis="Financially fragile into the event: cash runway lapses just after the PDUFA, raising dilution risk.",
         key_findings=[KeyFinding(claim="cash runway ends one quarter post-PDUFA", evidence_ref="tool:cash_runway#99aa88")],

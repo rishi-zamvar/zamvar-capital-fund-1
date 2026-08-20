@@ -13,7 +13,7 @@ dropped — which is exactly why 04-03 mints tool: refs.
 
 import pytest
 
-from catalyst_trader.contracts import AnalystSignal, DebateVerdict, KeyFinding
+from catalyst_trader.contracts import ClinicalReport, DebateVerdict, KeyFinding
 from catalyst_trader.desk import evidence, verifier
 from catalyst_trader.kb import EvidenceSource, KBNode, insert_claim
 
@@ -35,7 +35,7 @@ def _seed(db, *, url="https://ct.gov/NCT1", snippet="h1", quote):
 def _signal(pairs):
     """One AnalystSignal whose key_findings map each (ref, claim) — the ref->claim table
     the verifier uses to run quote_supported."""
-    return AnalystSignal(
+    return ClinicalReport(
         dimension="clinical", ticker="ACME", catalyst_id="cat-001",
         score=0.4, confidence=0.6,
         thesis="The cited clinical findings point to a positive readout.",
