@@ -18,5 +18,14 @@
     }
   ],
   "kb_analogs_queried": [],
-  "unknowns": ["dilution timing after the event is unknown", "burn rate guidance stale one quarter"]
+  "unknowns": ["dilution timing after the event is unknown", "burn rate guidance stale one quarter"],
+  "liquidity": {"cash_m": 180.0, "securities_m": 40.0, "total_liquidity_m": 220.0, "debt_m": 0.0, "covenants": "no minimum-cash covenant disclosed"},
+  "runway": {"quarterly_burn_m": 38.0, "runway_months": 17.0, "clears_catalyst": true, "cushion_months": 5.0},
+  "capital_structure": {"shares_basic_m": 96.0, "fully_diluted_m": 114.0, "warrant_overhang": "modest in-the-money warrant tranche", "annual_dilution_pct": null},
+  "financing_history": [
+    {"date": "2025-06-01", "vehicle": "ATM", "gross_m": 45.0, "discount_pct": null, "warrant_coverage": "none", "investors": "at-market, no named lead"}
+  ],
+  "insiders": {"net_direction": "mixed", "discretionary_buys": [], "scheduled_sales": ["CFO 30k on a 10b5-1 plan adopted 9 months ago"], "specialist_13f_change": "no material specialist-fund change last quarter"},
+  "rnpv": {"rnpv_m": 620.0, "rnpv_source": "tool:rnpv#33bb44", "peak_sales_m": 1100.0, "pos": 0.5, "net_price": 145000.0, "addressable_pop": 5200, "penetration_pct": 28.0, "loe_date": null, "discount_rate": 0.11},
+  "signal_synthesis": "Runway clears the event but the sub-2-quarter cushion beyond it plus an active undrawn ATM is a live dilution overhang; no insider buying to offset."
 }

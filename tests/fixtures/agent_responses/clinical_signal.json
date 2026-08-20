@@ -18,5 +18,15 @@
     }
   ],
   "kb_analogs_queried": ["tool:analog_query#d4e5f6"],
-  "unknowns": ["secondary-endpoint durability not yet reported", "blinding integrity unverified"]
+  "unknowns": ["secondary-endpoint durability not yet reported", "blinding integrity unverified"],
+  "disease_unmet_need": {"prevalence": 235000, "soc": "platinum doublet chemotherapy", "unmet_need_severity": "high — median OS under 12 months on SoC"},
+  "moa": {"target": "EGFR exon20", "modality": "small_molecule", "genetically_validated": true, "selection_biomarker": true},
+  "trial_design": {"n": 480, "randomization": "2:1", "control": "active_SoC", "blinding": "open", "alpha": 0.05, "power": 0.9, "powered_effect": "HR 0.70"},
+  "endpoints": {"primary": "progression-free survival", "ladder_rung": "PFS", "surrogate_status": "reasonably_likely", "endpoint_changed_vs_registration": false, "key_secondaries": ["overall survival", "objective response rate"]},
+  "efficacy": {"point_estimate": 0.68, "ci_low": 0.54, "ci_high": 0.86, "p_value": 0.002, "hr": 0.68, "absolute_gain": "roughly 4.5 months median PFS", "arr": null, "rrr": null, "nnt": null, "context_vs_benchmark": "HR 0.68 is a ~32% risk reduction, above the ~20% ASCO clearly-meaningful bar"},
+  "safety": {"ae_discontinuation_pct": 9.0, "sae_pct": null, "deaths": null, "grade34_pct": 34.0, "boxed_warning_risk": "low"},
+  "prior_consistency": "Phase 3 HR 0.68 is broadly consistent with the Phase 2 signal (HR ~0.6), a modest expected regression to the mean.",
+  "key_scientific_risk": "The open-label design can inflate the investigator-assessed PFS endpoint; an OS confirmation is not yet available.",
+  "pos_estimate": 0.6,
+  "pos_estimate_source": "tool:base_rate#a1b2c3"
 }

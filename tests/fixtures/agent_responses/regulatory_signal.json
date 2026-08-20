@@ -13,5 +13,13 @@
     }
   ],
   "kb_analogs_queried": ["tool:analog_query#c0ffee"],
-  "unknowns": ["no public CRL history for this sponsor", "label-scope negotiations opaque"]
+  "unknowns": ["no public CRL history for this sponsor", "label-scope negotiations opaque"],
+  "application": {"type": "NDA", "review": "priority", "clock_months": 6, "pdufa_date": "2026-11-28", "resubmission_class": null, "expedited_tags": ["breakthrough", "orphan"]},
+  "division": {"name": "Oncology (OCE)", "posture": "no notable public skepticism on this endpoint class"},
+  "prior_crl": {"exists": false, "deficiency_type": null, "addressed": null},
+  "adcom": {"scheduled": false, "committee": null, "voting_question": null, "briefing_doc_tone": null},
+  "label_risk": {"boxed_warning": false, "rems": false, "narrow_label": true, "confirmatory_trial": true},
+  "poa": {"point": 0.72, "point_source": "tool:base_rate#reg01", "clean_approve": 0.55, "approve_restricted": 0.17, "crl": 0.28},
+  "regulatory_question": "whether the open-label PFS benefit is durable enough absent mature OS data",
+  "precedent": "The nearest same-division analog was approved on a comparable PFS package with a confirmatory-OS commitment."
 }

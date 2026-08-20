@@ -13,5 +13,15 @@
     }
   ],
   "kb_analogs_queried": ["tool:analog_query#77dd88"],
-  "unknowns": ["short-interest data lags two weeks", "retail-flow direction unquantified"]
+  "unknowns": ["short-interest data lags two weeks", "retail-flow direction unquantified"],
+  "run_up": {"move_4w_pct": 22.0, "move_8w_pct": 31.0, "vs_xbi_pct": 18.0, "short_covering_component": "part of the run-up is short covering, not new longs"},
+  "expected_move": {"atm_straddle": 3.2, "expected_move_pct": 16.0, "iv_current": 130.0, "iv_post_event_est": 42.0},
+  "implied_prob": {"x": 20.0, "z": 34.0, "y": 8.0, "implied_p_approval": 0.46},
+  "short_interest": {"si_pct_float": 24.0, "days_to_cover": 6.5, "cost_to_borrow_pct": null, "squeeze_setup": true},
+  "ownership": {"float_pct": 78.0, "institutional_pct": null, "top10_concentration_pct": null},
+  "sentiment": {"buy": 6, "hold": 2, "sell": 0, "target_dispersion": "wide — targets are single-scenario, not probability-weighted", "revision_trend": "up"},
+  "analogs": [
+    {"name": "class-analog PDUFA A", "implied_move_pct": 15.0, "realized_move_pct": 11.0, "outcome": "approved, small move (priced in)"}
+  ],
+  "asymmetry": {"ev_pct": 12.0, "ev_source": "tool:implied_move#55cc66", "position_size_pct": null, "driver": "positioning", "expression": "run-up already priced in; favor exiting before the date over holding the binary"}
 }

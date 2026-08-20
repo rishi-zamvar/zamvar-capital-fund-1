@@ -2,7 +2,12 @@
 
 One JSON file per recorded role response. Each file is the exact structured
 payload a role's `query()` would emit — a schema-valid instance of that role's
-contract (`AnalystSignal`, `DebateVerdict`, ...).
+contract. The 4 catalyst-call analysts each emit a lens report
+(`{clinical,regulatory,financial,market_sentiment}_signal.json` ->
+`ClinicalReport`/`RegulatoryReport`/`FinancialReport`/`MarketReport`, guideline §7);
+the 8 DD dims + the generic seam sample still ride the shared `AnalystSignal`
+(`dd_*_signal.json`, `sample_analyst_signal.json`). Debate/verdict/etc. as before
+(`DebateVerdict`, ...).
 
 The whole desk test suite runs **offline**. There are two mock points, both
 against the single SDK seam in `catalyst_trader.desk.runtime`:
