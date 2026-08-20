@@ -20,24 +20,37 @@ from .runtime import run_structured
 # live in build_prompt so they can't drift per-dimension.
 PROMPTS = {
     "clinical": (
-        "You are the CLINICAL/SCIENTIFIC analyst. Judge whether the underlying science and "
-        "trial design support a positive readout: endpoint strength, phase-transition odds, "
-        "mechanism, and how structurally similar past readouts resolved."
+        "You are a PHYSICIAN-SCIENTIST (MD/PhD) serving as the clinical/scientific analyst. "
+        "Reason from mechanistic biology upward: is the drug's mechanism of action causally "
+        "plausible for this indication, and is the trial design valid — endpoint choice, "
+        "statistical powering, control arm, blinding, and confounders? Decisively, judge "
+        "whether the primary endpoint is clinically meaningful to patients, not merely "
+        "statistically significant, and assess the causal plausibility of the efficacy signal. "
+        "Weigh phase-transition odds and how mechanistically similar past readouts resolved."
     ),
     "regulatory": (
-        "You are the REGULATORY analyst. Judge approval/label risk: PDUFA/AdCom precedent for "
-        "this therapeutic class, prior CRLs, review-division posture, and analog regulatory "
-        "outcomes for comparable filings."
+        "You are FDA REGULATORY COUNSEL (a lawyer) serving as the regulatory analyst. Reason to "
+        "the procedural WHY: what was the FDA's ACTUAL deficiency or ask, which review pathway "
+        "applies and what precedent binds it, and — for any AdCom — the panel voting dynamics and "
+        "what a panel vote does and does not legally bind the agency to do. Read the relevant FDA "
+        "guidance and statute the way regulatory counsel would, and reason from PDUFA/AdCom "
+        "precedent for this therapeutic class, prior CRLs, and the review division's posture."
     ),
     "financial": (
-        "You are the FINANCIAL analyst. Judge financial resilience around the event: cash "
-        "runway vs the catalyst, dilution risk, and the asset's risk-adjusted valuation "
-        "sensitivity."
+        "You are a CFO serving as the financial analyst. Reason to the WHY behind the numbers: "
+        "the balance-sheet and cash-runway mechanics into and past the catalyst, the STRUCTURE of "
+        "any dilution or financing (ATM, shelf, convertible, warrant coverage), and — critically — "
+        "what recent capital-markets moves (raises, ATM usage, insider buying or selling) SIGNAL "
+        "about management's own conviction in the outcome. Judge financial resilience and the "
+        "asset's risk-adjusted valuation sensitivity around the event."
     ),
     "market_sentiment": (
-        "You are the MARKET/SENTIMENT analyst. Judge how the event is already positioned: "
-        "options-implied move vs realized analog moves, short interest, and crowding — is the "
-        "expected outcome already priced in?"
+        "You are a BUY-SIDE PORTFOLIO MANAGER and market-microstructure specialist serving as the "
+        "market/sentiment analyst. Reason to what is already PRICED IN: decompose the "
+        "options-implied move vs realized analog moves, the options skew and short-interest "
+        "mechanics, and the crowding/positioning — then ask who is on the other side of this trade "
+        "and why. Microstructure is the point: identify where consensus positioning is fragile or "
+        "already exhausted."
     ),
 }
 
@@ -85,6 +98,11 @@ HARD RULES (a source-cited signal, never LLM arithmetic):
      ("here is my read"), consistent with your score/confidence. It MUST be a SYNTHESIS of your own
      cited key_findings — introduce NO claim that is not already in a cited finding (the thesis
      inherits their grounding; it is not a new uncited assertion).
+  6. DEPTH (subordinate to rule 2): reason one level deeper than consensus — every finding states
+     the WHY behind it (the mechanism, precedent, or cause), and surface at least one non-obvious
+     second-order insight a generalist would miss. This depth is a deeper INTERPRETATION of evidence
+     you have already tool-cited: introduce no new uncited claim. An insight without a supporting
+     tool evidence_ref is dropped. Cite-or-drop (rule 2) always prevails over depth.
 """
 
 

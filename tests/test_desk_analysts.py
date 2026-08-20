@@ -92,6 +92,40 @@ async def test_prompt_mandates_grounded_thesis(dimension):
     assert "cited key_findings" in prompt  # grounded-in-own-findings phrasing
 
 
+# Each dimension must read as a distinct, named top-expert voice (not a generic job label).
+PERSONA_KEYWORD = {
+    "clinical": "clinically meaningful",  # physician-scientist: clinical vs statistical significance
+    "regulatory": "regulatory counsel",   # the FDA-lawyer voice
+    "financial": "CFO",                   # the CFO voice
+    "market_sentiment": "microstructure", # buy-side PM / microstructure voice
+}
+
+
+@pytest.mark.parametrize("dimension", DIMENSIONS)
+async def test_prompt_has_expert_persona(dimension):
+    # Each analyst reasons to the WHY as a distinct named expert, carrying a
+    # dimension-specific keyword no other persona would use.
+    prompt = analysts.build_prompt(dimension, CATALYST)
+    assert PERSONA_KEYWORD[dimension] in prompt
+
+
+@pytest.mark.parametrize("dimension", DIMENSIONS)
+async def test_depth_directive_is_cite_or_drop_subordinate(dimension):
+    # The shared DEPTH DIRECTIVE mandates one-level-deeper WHY + a second-order insight,
+    # but is EXPLICITLY subordinate to cite-or-drop: depth is a deeper INTERPRETATION of
+    # already-tool-cited evidence, never a new uncited claim.
+    prompt = analysts.build_prompt(dimension, CATALYST)
+    # depth mandate present
+    assert "one level deeper" in prompt
+    assert "second-order" in prompt
+    # subordination clause — both halves of the guardrail
+    assert "no new uncited claim" in prompt
+    assert "evidence_ref" in prompt and "dropped" in prompt
+    # preserved: cite-or-drop (rule 2) + grounded thesis (rule 5) survive verbatim
+    assert "cite-or-drop" in prompt
+    assert "cited key_findings" in prompt
+
+
 async def test_uncited_finding_rejected(monkeypatch, load_fixture):
     # A recorded payload with zero key_findings must be rejected at the schema
     # boundary — proven through the REAL run_structured (only the SDK query faked),
