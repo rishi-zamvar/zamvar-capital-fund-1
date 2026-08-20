@@ -210,3 +210,45 @@ def test_daysToEvent_scopedToAsOf():
     # C3: options/edgar are now-snapshots (no serving.asof read), but days_to_event IS scoped to as_of.
     _, md, _ = _build(options_source=lambda t: _cboe_liquid(), as_of="2026-08-20")
     assert md["options"]["days_to_event"] == (date.fromisoformat(_EVENT) - date(2026, 8, 20)).days == 2
+
+
+# ============================== Task 3 — DD sources FROM the research bundle ==============
+
+from catalyst_trader.contracts import CatalystResearchBundle, Fact  # noqa: E402
+
+
+def test_diligence_inputs_reads_bundle():
+    # DD maps bundle FACTS -> the SAME market_data shape (byte-compatible DD contract).
+    def _fake_bundle(conn, ticker, catalyst, as_of, **kw):
+        return CatalystResearchBundle(
+            ticker=ticker, catalyst=catalyst, as_of=as_of,
+            options=Fact(value=_cboe_liquid(), evidence_ref="tool:options_cboe#x"),
+            financials=Fact(value=_fund(), evidence_ref="tool:fundamentals#x"),
+            ownership=Fact(value={"short_interest_pct": 0.1, "days_to_cover": 4.2,
+                                  "insider_net": -2000.0}, evidence_ref="tool:short_interest#x"),
+            trial=Fact(), degraded=[])
+
+    factory = make_diligence_inputs(bundle_fn=_fake_bundle)
+    _, md, degraded = factory(None, "ACME", _catalyst(), entry=6.5, risk_inputs=_risk_inputs(),
+                              exit_by_date=_EXIT, pair=None, as_of=_AS_OF)
+    assert set(md) == {"options", "liquidity_quote", "hedge", "trial", "financials", "ownership"}
+    assert md["ownership"] == {"short_interest_pct": 0.1, "days_to_cover": 4.2, "insider_net": -2000.0}
+    assert md["financials"]["cash_usd"] == 300_000_000.0
+    assert md["options"]["quote"]["call_bid"] == 0.5 and md["liquidity_quote"]["bid"] == 6.4
+    assert degraded == []
+
+
+def test_no_double_sourcing():
+    # The frugality win at the DD seam: each source is hit ONCE (via the bundle), never re-fetched.
+    calls = {"options": 0, "financials": 0, "finra": 0, "insider": 0}
+
+    def opt(t): calls.__setitem__("options", calls["options"] + 1); return _cboe_liquid()
+    def fin(t): calls.__setitem__("financials", calls["financials"] + 1); return _fund()
+    def fnr(t): calls.__setitem__("finra", calls["finra"] + 1); return _finra_ok()
+    def ins(t, s, u): calls.__setitem__("insider", calls["insider"] + 1); return -2000.0
+
+    factory = make_diligence_inputs(options_source=opt, financials_source=fin, finra_source=fnr,
+                                    insider_source=ins, trial_source=lambda t: None)
+    factory(None, "ACME", _catalyst(), entry=6.5, risk_inputs=_risk_inputs(),
+            exit_by_date=_EXIT, pair=None, as_of=_AS_OF)
+    assert calls == {"options": 1, "financials": 1, "finra": 1, "insider": 1}

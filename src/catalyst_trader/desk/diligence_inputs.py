@@ -35,14 +35,14 @@ What Slice 2.5 now SOURCES honestly (source-or-omit, never fabricated):
 
 from __future__ import annotations
 
-from datetime import date, timedelta
+from datetime import date
 
 from ..contracts import DiligenceInput
-from ..providers import edgar, finra, options_cboe, registry
+from .research_bundle import build_research_bundle
 
-# Money-dim sourcing params (missing-key-raises — no magic literals): the Form-4 trailing window and
-# the days->months conversion for months_to_catalyst.
-_INPUTS_PARAMS = {"form4_lookback_days": 90, "days_per_month": 30.4375}
+# The days->months conversion for months_to_catalyst (missing-key-raises — no magic literal in-line).
+# months_to_catalyst is a function of as_of/event, not a sourced fact, so it stays in the DD mapping.
+_INPUTS_PARAMS = {"days_per_month": 30.4375}
 
 # The honest illiquid sentinel: a call_bid=0 quote trips options_liquid=False, so run_diligence uses
 # the in-house historical-gap fallback (options_move stays GROUNDED) — never a fabricated implied vol.
@@ -56,36 +56,43 @@ def _num(x) -> float:
 
 
 def make_diligence_inputs(*, options_source=None, trial_source=None, financials_source=None,
-                          finra_source=None, insider_source=None):
+                          finra_source=None, insider_source=None, bundle_fn=None):
     """Build the (DiligenceInput, market_data, degraded) binding closure.
+
+    DD no longer re-sources anything: it DELEGATES to the Catalyst Research Bundle (built ONCE per
+    catalyst — the single ground-truth pass) and MAPS the bundle's already-sourced FACTS into the
+    existing market_data shape. The firewall is unchanged: DD reads the same FACTS the desk does and
+    forms its verdict independently. The per-source kwargs are threaded INTO the bundle builder
+    (backward-compatible with the old injection points); tests may instead inject `bundle_fn`.
 
     Injectable providers (production defaults are the free, cache-first snapshots; tests inject fakes):
       options_source(ticker)     -> the CBOE seam dict (nested options_quote|None) | None  [now-snapshot]
       trial_source(ticker)       -> a ClinicalTrials.gov record | None (non-money; None is fine, no NO-GO)
       financials_source(ticker)  -> edgar.fundamentals dict | None (reused for financials AND ownership shares)
-      finra_source(ticker)       -> finra.fetch dict | None (defaulted INSIDE the closure — needs as_of)
+      finra_source(ticker)       -> finra.fetch dict | None (defaulted INSIDE the bundle — needs as_of)
       insider_source(tk, since, until) -> edgar.insider_net float | None (0.0 = quiet tape, grounds)
+      bundle_fn                  -> the bundle builder (default build_research_bundle)
 
     The closure:
       diligence_inputs(conn, ticker, catalyst, *, entry, risk_inputs, exit_by_date, pair=None, as_of)
         -> (DiligenceInput, market_data, degraded: list[str])
     """
-    options_source = options_source or options_cboe.fetch
-    trial_source = trial_source or (lambda ticker: None)
-    financials_source = financials_source or edgar.fundamentals
-    insider_source = insider_source or (
-        lambda tk, since, until: edgar.insider_net(tk, since=since, until=until))
-    # finra_source is NOT defaulted here: its production default binds as_of (recent_si_settlement),
-    # which is only in scope inside the closure (C1 — defaulting it here NameErrors on as_of).
+    bundle_fn = bundle_fn or build_research_bundle
 
     def diligence_inputs(conn, ticker, catalyst, *, entry, risk_inputs, exit_by_date, pair=None, as_of):
         event_date = catalyst["event_date"]
         days_to_event = (date.fromisoformat(event_date) - date.fromisoformat(as_of)).days
-        # C1: resolve the FINRA default HERE, where as_of is bound (recent_si_settlement(as_of)).
-        finra_fetch = finra_source or (lambda tk: finra.fetch(tk, registry.recent_si_settlement(as_of)))
 
-        # --- options (CBOE, nested + nullable) + the honest illiquid sentinel (B2) ---
-        cboe = options_source(ticker)
+        # ONE research pass. Request ONLY the DD-consumed facts, so the conn-touching sources
+        # (analog/base_rate/price) never fire — conn=None safe (B1). cutoff=as_of = point-in-time.
+        bundle = bundle_fn(conn, ticker, catalyst, as_of, cutoff=as_of,
+                           facts={"options", "financials", "ownership", "trial"},
+                           options_source=options_source, trial_source=trial_source,
+                           financials_source=financials_source, finra_source=finra_source,
+                           insider_source=insider_source)
+
+        # --- options (CBOE, nested + nullable) + the honest illiquid sentinel (B2), mapped from the bundle ---
+        cboe = bundle.options.value
         oq = cboe.get("options_quote") if cboe else None
         if oq is not None:
             quote = {**oq, "catalyst_date": event_date}   # inject the event date the provider can't know
@@ -106,37 +113,24 @@ def make_diligence_inputs(*, options_source=None, trial_source=None, financials_
             "options": options,
             "liquidity_quote": liquidity_quote,
             "hedge": hedge,
-            "trial": trial_source(ticker),
+            "trial": bundle.trial.value,
         }
-        degraded: list[str] = []  # built up ONLY from genuine misses (empty when every dim grounds)
 
-        # --- ONE fundamentals fetch, reused for BOTH financials (cash/burn) AND ownership (shares) ---
-        fund = financials_source(ticker)  # {shares_outstanding, cash_usd, monthly_burn_usd, ...} | None
-
-        # --- financials (SEC XBRL): grounded only when BOTH cash_usd + monthly_burn_usd exist ---
-        if fund and fund.get("cash_usd") is not None and fund.get("monthly_burn_usd") is not None:
+        # --- financials: map the bundle fact + months_to_catalyst (a function of as_of, not sourced) ---
+        fund = bundle.financials.value  # whole edgar.fundamentals dict (cash+burn present) | None
+        if fund is not None:
             months_to_catalyst = round(days_to_event / _INPUTS_PARAMS["days_per_month"], 2)
             market_data["financials"] = {"cash_usd": fund["cash_usd"],
                                          "monthly_burn_usd": fund["monthly_burn_usd"],
                                          "months_to_catalyst": months_to_catalyst}
-        else:
-            degraded.append("financials: cash_usd/monthly_burn_usd absent from SEC XBRL — "
-                            "dim ungrounded, forces NO-GO")
 
-        # --- ownership (FINRA + shares + Form-4): whole-dict-or-omit (NEVER a partial dict) ---
-        shares = fund.get("shares_outstanding") if fund else None
-        si = finra_fetch(ticker)
-        since = (date.fromisoformat(as_of) - timedelta(days=_INPUTS_PARAMS["form4_lookback_days"])).isoformat()
-        net = insider_source(ticker, since, as_of)  # 0.0 quiet-tape | float | None
-        if si and shares and net is not None:  # net==0.0 GROUNDS (0 is a real datum -> `is not None`)
-            # ponytail: short_interest_pct is short_interest / shares_outstanding — a shares-out ratio,
-            #           which slightly UNDERSTATES true short-%-of-float (free float isn't free).
-            #           Upgrade to a float denominator if a free float source ever lands.
-            market_data["ownership"] = {"short_interest_pct": si["short_interest"] / shares,
-                                        "days_to_cover": si["days_to_cover"], "insider_net": net}
-        else:
-            degraded.append("ownership: short_interest/shares/insider_net incomplete — "
-                            "dim ungrounded, forces NO-GO")
+        # --- ownership: map the bundle fact verbatim (whole-dict-or-absent) ---
+        if bundle.ownership.value is not None:
+            market_data["ownership"] = bundle.ownership.value
+
+        # B1: scope the DD degrade list to the DD money-dim flags (financials/ownership) only — the
+        # bundle only computes those dims in this seam, so this is a no-op safety net.
+        degraded = [f for f in bundle.degraded if f.startswith(("financials:", "ownership:"))]
 
         dd_input = DiligenceInput(ticker=ticker, catalyst=catalyst, pair=pair)
         return dd_input, market_data, degraded
