@@ -1,0 +1,135 @@
+<title>Four Experts, One Catalyst</title>
+<style>
+  :root{
+    --bg:#ecefe9;--surface:#fff;--surface-2:#f5f7f2;--ink:#191c18;--muted:#5f655c;--faint:#99a094;
+    --border:#d6dbcf;--border-strong:#c2c8b8;--accent:#8a6a12;--accent-bg:#f3ecd8;
+    --bull:#1f7a4d;--bull-bg:#e4f2e9;--bear:#b23b30;--bear-bg:#f6e5e3;
+    --tool:#2b6a93;--tool-bg:#e2edf4;--monitor:#6b4bc0;--monitor-bg:#ece5f7;--kb:#147a72;--kb-bg:#dff1ef;
+    --shadow:0 1px 2px rgba(20,25,18,.06),0 4px 14px rgba(20,25,18,.05);
+    --mono:ui-monospace,"SF Mono","JetBrains Mono",Menlo,Consolas,monospace;
+    --sans:system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,sans-serif;
+  }
+  @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+    --bg:#101310;--surface:#191d18;--surface-2:#20241e;--ink:#e8ece4;--muted:#9aa192;--faint:#6b7365;
+    --border:#2c322a;--border-strong:#3a4136;--accent:#d8b45a;--accent-bg:#2a2412;
+    --bull:#4cc585;--bull-bg:#14271c;--bear:#ef7365;--bear-bg:#2c1714;
+    --tool:#6fb0d8;--tool-bg:#12252f;--monitor:#a68ce8;--monitor-bg:#1e1830;--kb:#4fbcb0;--kb-bg:#102b28;
+    --shadow:0 1px 2px rgba(0,0,0,.3),0 6px 20px rgba(0,0,0,.35);
+  }}
+  :root[data-theme="dark"]{
+    --bg:#101310;--surface:#191d18;--surface-2:#20241e;--ink:#e8ece4;--muted:#9aa192;--faint:#6b7365;
+    --border:#2c322a;--border-strong:#3a4136;--accent:#d8b45a;--accent-bg:#2a2412;
+    --bull:#4cc585;--bull-bg:#14271c;--bear:#ef7365;--bear-bg:#2c1714;
+    --tool:#6fb0d8;--tool-bg:#12252f;--monitor:#a68ce8;--monitor-bg:#1e1830;--kb:#4fbcb0;--kb-bg:#102b28;
+    --shadow:0 1px 2px rgba(0,0,0,.3),0 6px 20px rgba(0,0,0,.35);
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);line-height:1.62;font-size:16px;-webkit-font-smoothing:antialiased;}
+  .wrap{max-width:920px;margin:0 auto;padding:3.5rem 1.5rem 5rem;}
+  .eyebrow{font-family:var(--mono);font-size:.72rem;letter-spacing:.16em;text-transform:uppercase;color:var(--accent);font-weight:600;}
+  h1{font-size:2.35rem;line-height:1.08;margin:.5rem 0 .5rem;letter-spacing:-.02em;text-wrap:balance;}
+  .sub{color:var(--muted);font-size:1.08rem;margin:0;max-width:62ch;}
+  .meta{font-family:var(--mono);font-size:.74rem;color:var(--faint);margin-top:1rem;}
+  h2{font-size:1.3rem;margin:3rem 0 .4rem;letter-spacing:-.01em;padding-top:1.4rem;border-top:1px solid var(--border);}
+  p{margin:.7rem 0;} .lede{font-size:1.1rem;}
+  strong{font-weight:650;} code{font-family:var(--mono);font-size:.84em;background:var(--surface-2);padding:.1em .38em;border-radius:4px;border:1px solid var(--border);}
+  .banner{background:var(--surface);border:1px solid var(--border-strong);border-radius:12px;padding:1rem 1.3rem;box-shadow:var(--shadow);margin:1.5rem 0;font-size:.95rem;}
+  .banner b{color:var(--accent);}
+  /* expert card */
+  .card{background:var(--surface);border:1px solid var(--border);border-top:5px solid var(--edge);border-radius:14px;padding:1.5rem 1.6rem;box-shadow:var(--shadow);margin:1.4rem 0;}
+  .top{display:flex;justify-content:space-between;align-items:flex-start;gap:1rem;flex-wrap:wrap;}
+  .persona .role{font-family:var(--mono);font-size:.68rem;letter-spacing:.12em;text-transform:uppercase;color:var(--edge);font-weight:700;}
+  .persona .name{font-size:1.3rem;font-weight:680;letter-spacing:-.01em;margin-top:.1rem;}
+  .persona .who{color:var(--muted);font-size:.86rem;}
+  .meters{text-align:right;font-family:var(--mono);min-width:150px;}
+  .meters .row{margin-bottom:.4rem;}
+  .meters .lab{font-size:.58rem;letter-spacing:.1em;text-transform:uppercase;color:var(--faint);}
+  .bar{height:7px;border-radius:4px;background:var(--surface-2);border:1px solid var(--border);overflow:hidden;margin-top:.15rem;position:relative;}
+  .bar > i{position:absolute;top:0;bottom:0;background:var(--edge);}
+  .sv{font-size:1.05rem;font-weight:700;font-variant-numeric:tabular-nums;}
+  .sv.pos{color:var(--bull);} .sv.neg{color:var(--bear);} .sv.neu{color:var(--muted);}
+  .thesis{margin:1.1rem 0 0;font-size:1.02rem;line-height:1.6;}
+  .thesis .q{color:var(--edge);font-weight:700;font-family:var(--mono);font-size:1.1rem;margin-right:.15rem;}
+  .why{margin-top:1rem;background:var(--edge-bg);border-radius:9px;padding:.8rem 1rem;border:1px solid var(--border);}
+  .why .t{font-family:var(--mono);font-size:.62rem;letter-spacing:.12em;text-transform:uppercase;color:var(--edge);font-weight:700;}
+  .why p{margin:.3rem 0 0;font-size:.9rem;}
+  .foot-row{display:flex;gap:1rem;margin-top:.9rem;flex-wrap:wrap;font-family:var(--mono);font-size:.72rem;color:var(--muted);}
+  .foot-row .chip{background:var(--surface-2);border:1px solid var(--border);border-radius:6px;padding:.2em .55em;}
+  .synth{background:var(--surface);border:2px solid var(--accent);border-radius:14px;padding:1.4rem 1.5rem;box-shadow:var(--shadow);margin:1.4rem 0;}
+  .foot{margin-top:3rem;padding-top:1.4rem;border-top:1px solid var(--border);font-size:.8rem;color:var(--faint);font-family:var(--mono);}
+  @media (max-width:600px){.meters{text-align:left;min-width:0;}h1{font-size:1.85rem;}}
+</style>
+
+<div class="wrap">
+  <div class="eyebrow">Zamvar Capital · Fund 1 · The analyst desk, live</div>
+  <h1>Four Experts, One Catalyst</h1>
+  <p class="sub">Four AI researchers examine the same event — each reasoning as a different top specialist, each required to go past the obvious to the mechanism, the precedent, the <em>why</em> — and each backing every claim with a cited tool.</p>
+  <div class="meta">Catalyst: CAPR (Capricor) FDA decision, 22 Aug 2026 · run live 19 Aug 2026 · scores −1 (bearish) → +1 (bullish), with a calibrated confidence</div>
+
+  <div class="banner">The event: an FDA approval decision for <b>deramiocel</b>, a cell therapy for the heart damage in Duchenne muscular dystrophy. The wrinkle: the confirmatory trial <em>hit</em>, but an FDA advisory panel voted <b>3–9 against</b> effectiveness in July. Below, four specialists each read that tension differently — which is the point.</div>
+
+  <!-- CLINICAL -->
+  <div class="card" style="--edge:var(--kb);--edge-bg:var(--kb-bg)">
+    <div class="top">
+      <div class="persona"><div class="role">Clinical / scientific</div><div class="name">The Physician-Scientist</div><div class="who">reasons like an MD/PhD — mechanism, trial validity, is the endpoint <em>clinically</em> meaningful</div></div>
+      <div class="meters">
+        <div class="row"><div class="lab">Score</div><div class="sv pos">+0.45</div></div>
+        <div class="row"><div class="lab">Confidence</div><div class="bar"><i style="left:0;width:55%"></i></div><span class="sv" style="font-size:.8rem">0.55</span></div>
+      </div>
+    </div>
+    <p class="thesis"><span class="q">“</span>HOPE-3's randomized, placebo-controlled design <strong>directly cures the specific evidentiary defect</strong> — the uncontrolled natural-history comparator — that triggered the 2025 rejection, and its two-endpoint win pairs a mechanistically direct cardiac biomarker (LVEF via MRI, p=0.041) with a patient-function primary (PUL v2.0, p=0.029). But both p-values sit close to the 0.05 boundary in a small trial, and a "significant number" of FDA information requests months before the decision signals unresolved scrutiny — constructively positive, not decisively de-risked.<span class="q">”</span></p>
+    <div class="why"><div class="t">The deeper why</div><p>Doesn't just say "the trial hit" — argues <em>which</em> endpoint carries causal weight: LVEF is a hard, on-pathway biomarker for the cardiomyopathy that is the leading cause of death in DMD, so the cardiac secondary is more clinically meaningful than the statistics alone suggest — while flagging that borderline p-values in a small n cut the other way.</p></div>
+    <div class="foot-row"><span class="chip">5 cited findings</span><span class="chip">5 stated unknowns</span><span class="chip">tools: analog_query · base_rate</span></div>
+  </div>
+
+  <!-- REGULATORY -->
+  <div class="card" style="--edge:var(--accent);--edge-bg:var(--accent-bg)">
+    <div class="top">
+      <div class="persona"><div class="role">Regulatory / legal</div><div class="name">The FDA Counsel</div><div class="who">reasons like a regulatory lawyer — the pathway, precedent, what a panel vote actually binds</div></div>
+      <div class="meters">
+        <div class="row"><div class="lab">Score</div><div class="sv pos">+0.40</div></div>
+        <div class="row"><div class="lab">Confidence</div><div class="bar"><i style="left:0;width:50%"></i></div><span class="sv" style="font-size:.8rem">0.50</span></div>
+      </div>
+    </div>
+    <p class="thesis"><span class="q">“</span>The Aug-22 date is a <strong>Class-2 resubmission</strong> — and that FDA-assigned classification itself confirms the agency is substantively reviewing the exact randomized data that this filing structure's reference class predicted the FDA would demand after the first rejection — <strong>procedurally the strongest available cure</strong> for a natural-history-comparator deficiency. But a late-cycle disclosure of "a significant number" of information requests, plus litigation against the commercial distributor, introduce real unquantified residual risk to approval and launch. Modestly bullish, moderate confidence.<span class="q">”</span></p>
+    <div class="why"><div class="t">The deeper why</div><p>Reads the <em>procedural signal in the paperwork</em>: a Class-2 resubmission classification is itself evidence the FDA is engaging the merits, and the reference class shows this is exactly the fix the agency asks for — a legal-process read a headline ("panel said no") would miss. And it's precise that an AdCom vote is <em>non-binding</em>.</p></div>
+    <div class="foot-row"><span class="chip">8 cited findings</span><span class="chip">6 stated unknowns</span><span class="chip">tools: analog_query</span></div>
+  </div>
+
+  <!-- FINANCIAL -->
+  <div class="card" style="--edge:var(--bull);--edge-bg:var(--bull-bg)">
+    <div class="top">
+      <div class="persona"><div class="role">Financial</div><div class="name">The CFO</div><div class="who">reasons like a chief financial officer — runway, financing structure, what the capital moves <em>signal</em></div></div>
+      <div class="meters">
+        <div class="row"><div class="lab">Score</div><div class="sv pos">+0.55</div></div>
+        <div class="row"><div class="lab">Confidence</div><div class="bar"><i style="left:0;width:50%"></i></div><span class="sv" style="font-size:.8rem">0.50</span></div>
+      </div>
+    </div>
+    <p class="thesis"><span class="q">“</span>CAPR enters the decision with 17.5 months of runway — funded well past the catalyst — having raised ~$77.5M via an ATM executed <strong>at a premium (~$28.89), not distressed pricing — a financing-structure signal of discipline, not desperation</strong>. Accelerating opex (+55% YoY) reflects commercial-launch build-out consistent with management positioning for approval, and the June insider sales were <strong>pre-scheduled 10b5-1 plans set before the panel vote — not a fresh bearish signal</strong>. Financial resilience removes dilution/going-concern as a bear case regardless of outcome, though a $300M shelf caps clean per-share upside.<span class="q">”</span></p>
+    <div class="why"><div class="t">The deeper why</div><p>The standout second-order read: it interprets the <em>manner</em> of the financing, not just the balance. A premium ATM and 10b5-1-scheduled insider sales are read as <strong>confidence signals, not distress</strong> — the exact "why behind the numbers" a surface scan (which would flag "insiders selling") gets backwards.</p></div>
+    <div class="foot-row"><span class="chip">5 cited findings</span><span class="chip">7 stated unknowns</span><span class="chip">tools: cash_runway · analog_query</span></div>
+  </div>
+
+  <!-- MARKET -->
+  <div class="card" style="--edge:var(--monitor);--edge-bg:var(--monitor-bg)">
+    <div class="top">
+      <div class="persona"><div class="role">Market / positioning</div><div class="name">The Buy-Side PM</div><div class="who">reasons like a market-microstructure trader — what's priced in, who's on the other side</div></div>
+      <div class="meters">
+        <div class="row"><div class="lab">Score</div><div class="sv neu">+0.20</div></div>
+        <div class="row"><div class="lab">Confidence</div><div class="bar"><i style="left:0;width:45%"></i></div><span class="sv" style="font-size:.8rem">0.45</span></div>
+      </div>
+    </div>
+    <p class="thesis"><span class="q">“</span>CAPR's ~70% pre-panel decline <strong>already front-loaded the negative-vote scenario</strong> — the same "bad news absorbed before the date" pattern seen in the CYTK and ALDX contested-efficacy analogs — so the reaction into 8/22 looks more asymmetric than a fresh binary, consistent with the post-vote rally and split upgrades <em>even after</em> a 3–9 no. Still-elevated 324% implied vol shows unresolved uncertainty, and a crowded (27% of float) but cheaply-borrowed short base with 10.8 days-to-cover is squeeze fuel skewed to any outcome short of an outright fresh rejection — including the plausible PDUFA-date extension management is guiding to.<span class="q">”</span></p>
+    <div class="why"><div class="t">The deeper why</div><p>Separates <em>the outcome</em> from <em>the trade</em>: a bad outcome can already be in the price. It anchors on a real precedent — CYTK's 8–3 negative panel usually implied a ~70–80% rejection rate, <em>yet the actual decision-day move was constructive</em> — to argue the setup is positioning-skewed, not a coin-flip on the FDA.</p></div>
+    <div class="foot-row"><span class="chip">7 cited findings</span><span class="chip">5 stated unknowns</span><span class="chip">tools: implied_move · analog_query</span></div>
+  </div>
+
+  <h2>What happens next — and why they can disagree</h2>
+  <p>These four reads feed the <strong>bull/bear debate</strong>, which argues them against each other, and a <strong>verifier</strong> that discards anything uncited. Notice the tension: on their own dimensions, all four lean mildly <em>positive</em> (the trial cured the defect; the process is the right fix; the balance sheet signals confidence; the bad news looks priced in). Yet when the desk ran the <em>full</em> debate on this same catalyst, it landed <strong>Negative</strong> — because the debate weighs the one fact that dominates a binary drug approval: an expert panel, holding the good data, still voted 3–9 against.</p>
+  <div class="synth">
+    <div class="eyebrow">The point of four experts</div>
+    <p style="margin:.4rem 0 0">A single analyst — even a good one — anchors on its own lens and can read this "positive." The value is in the <strong>disagreement</strong>: four specialists surface four different deeper truths, an adversarial debate forces them to fight, and the citation gate keeps all of it honest. No number here was invented by a model — every claim carries a tool reference, and any "insight" without one is dropped at the door.</p>
+  </div>
+
+  <div class="foot">Zamvar Capital — Fund 1 · 4 analyst agents on Claude · every figure tool-sourced &amp; point-in-time · depth is deeper interpretation of cited evidence, never invention · CAPR run 2026-08-19</div>
+</div>
