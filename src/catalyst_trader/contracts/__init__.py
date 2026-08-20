@@ -43,6 +43,358 @@ class AnalystSignal(BaseModel):
         return v
 
 
+# ---------------------------------------------------------------------------------------
+# 07.9 — the 4 CATALYST-CALL lens reports (schema split). AnalystSignal above stays intact
+# for the 8 DD dims (Plan 2 migrates them). Each lens report subclasses AnalystReportBase —
+# so it carries the SAME downstream interface (dimension/thesis/score/confidence/
+# key_findings/unknowns) debate + verifier read, plus its guideline-§7 sections.
+#
+# House rules for every section sub-model: extra="forbid" (a hallucinated leaf rejects),
+# frozen=True, and EVERY numeric/string leaf Optional-default-None — an empty slot is a
+# finding, never a fabricated 0. The ONE headline verdict number per lens carries a paired
+# `_source` enforced by a model_validator (the machine-enforceable slice of §7's
+# "every number carries a paired _source").
+# ponytail: plain pydantic sub-models straight from §7 — no builder/factory/registry; the
+#           nullable-by-default field IS the "empty slot is a finding" rule (no null-fill code).
+# ---------------------------------------------------------------------------------------
+
+_SECTION = ConfigDict(extra="forbid", frozen=True)
+
+
+class AnalystReportBase(BaseModel):
+    """The downstream interface (debate `_evidence_context` + verifier `_claim_for` read
+    exactly these fields) — identical spine to AnalystSignal, so lens subclasses flow through
+    the duck-typed consumers unchanged. `thesis` is the BOTTOM LINE, grounded in key_findings."""
+
+    model_config = ConfigDict(extra="forbid")
+    dimension: str
+    ticker: str
+    catalyst_id: str
+    thesis: str = Field(min_length=1)  # the BOTTOM LINE — synthesis of the cited key_findings (CALL-01)
+    score: float = Field(ge=-1.0, le=1.0)
+    confidence: float = Field(ge=0.0, le=1.0)
+    key_findings: list[KeyFinding]
+    kb_analogs_queried: list[str] = []
+    unknowns: list[str] = []
+
+    @field_validator("key_findings")
+    @classmethod
+    def _at_least_one_sourced_finding(cls, v: list[KeyFinding]) -> list[KeyFinding]:
+        if not v:
+            raise ValueError(
+                "an analyst report must carry at least one sourced key_finding"
+            )
+        return v
+
+
+# --- Clinical sections (guideline §1 / §7) ---------------------------------------------
+
+
+class DiseaseUnmetNeed(BaseModel):
+    model_config = _SECTION
+    prevalence: int | None = None
+    soc: str | None = None
+    unmet_need_severity: str | None = None
+
+
+class Moa(BaseModel):
+    model_config = _SECTION
+    target: str | None = None
+    modality: str | None = None
+    genetically_validated: bool | None = None
+    selection_biomarker: bool | None = None
+
+
+class TrialDesign(BaseModel):
+    model_config = _SECTION
+    n: int | None = None
+    randomization: str | None = None
+    control: str | None = None
+    blinding: str | None = None
+    alpha: float | None = None
+    power: float | None = None
+    powered_effect: str | None = None
+
+
+class Endpoints(BaseModel):
+    model_config = _SECTION
+    primary: str | None = None
+    ladder_rung: str | None = None
+    surrogate_status: str | None = None
+    endpoint_changed_vs_registration: bool | None = None
+    key_secondaries: list[str] = []
+
+
+class Efficacy(BaseModel):
+    model_config = _SECTION
+    point_estimate: float | None = None
+    ci_low: float | None = None
+    ci_high: float | None = None
+    p_value: float | None = None
+    hr: float | None = None
+    absolute_gain: str | None = None
+    arr: float | None = None
+    rrr: float | None = None
+    nnt: float | None = None
+    context_vs_benchmark: str | None = None
+
+
+class Safety(BaseModel):
+    model_config = _SECTION
+    ae_discontinuation_pct: float | None = None
+    sae_pct: float | None = None
+    deaths: int | None = None
+    grade34_pct: float | None = None
+    boxed_warning_risk: str | None = None
+
+
+class ClinicalReport(AnalystReportBase):
+    disease_unmet_need: DiseaseUnmetNeed = DiseaseUnmetNeed()
+    moa: Moa = Moa()
+    trial_design: TrialDesign = TrialDesign()
+    endpoints: Endpoints = Endpoints()
+    efficacy: Efficacy = Efficacy()
+    safety: Safety = Safety()
+    prior_consistency: str | None = None
+    key_scientific_risk: str | None = None
+    pos_estimate: float | None = None  # HEADLINE verdict number
+    pos_estimate_source: str | None = None
+
+    @model_validator(mode="after")
+    def _headline_sourced(self):
+        if self.pos_estimate is not None and not (self.pos_estimate_source or "").strip():
+            raise ValueError("clinical pos_estimate requires a non-empty pos_estimate_source (no-fabrication)")
+        return self
+
+
+# --- Regulatory sections (guideline §2 / §7) -------------------------------------------
+
+
+class Application(BaseModel):
+    model_config = _SECTION
+    type: str | None = None
+    review: str | None = None
+    clock_months: int | None = None
+    pdufa_date: str | None = None
+    resubmission_class: str | None = None
+    expedited_tags: list[str] = []
+
+
+class Division(BaseModel):
+    model_config = _SECTION
+    name: str | None = None
+    posture: str | None = None
+
+
+class PriorCrl(BaseModel):
+    model_config = _SECTION
+    exists: bool | None = None
+    deficiency_type: str | None = None
+    addressed: bool | None = None
+
+
+class AdCom(BaseModel):
+    model_config = _SECTION
+    scheduled: bool | None = None
+    committee: str | None = None
+    voting_question: str | None = None
+    briefing_doc_tone: str | None = None
+
+
+class LabelRisk(BaseModel):
+    model_config = _SECTION
+    boxed_warning: bool | None = None
+    rems: bool | None = None
+    narrow_label: bool | None = None
+    confirmatory_trial: bool | None = None
+
+
+class Poa(BaseModel):
+    model_config = _SECTION
+    point: float | None = None  # HEADLINE verdict number
+    point_source: str | None = None
+    clean_approve: float | None = None
+    approve_restricted: float | None = None
+    crl: float | None = None
+
+
+class RegulatoryReport(AnalystReportBase):
+    application: Application = Application()
+    division: Division = Division()
+    prior_crl: PriorCrl = PriorCrl()
+    adcom: AdCom = AdCom()
+    label_risk: LabelRisk = LabelRisk()
+    poa: Poa = Poa()
+    regulatory_question: str | None = None
+    precedent: str | None = None
+
+    @model_validator(mode="after")
+    def _headline_sourced(self):
+        if self.poa.point is not None and not (self.poa.point_source or "").strip():
+            raise ValueError("regulatory poa.point requires a non-empty poa.point_source (no-fabrication)")
+        return self
+
+
+# --- Financial sections (guideline §3 / §7) --------------------------------------------
+
+
+class Liquidity(BaseModel):
+    model_config = _SECTION
+    cash_m: float | None = None
+    securities_m: float | None = None
+    total_liquidity_m: float | None = None
+    debt_m: float | None = None
+    covenants: str | None = None
+
+
+class Runway(BaseModel):
+    model_config = _SECTION
+    quarterly_burn_m: float | None = None
+    runway_months: float | None = None
+    clears_catalyst: bool | None = None
+    cushion_months: float | None = None
+
+
+class CapitalStructure(BaseModel):
+    model_config = _SECTION
+    shares_basic_m: float | None = None
+    fully_diluted_m: float | None = None
+    warrant_overhang: str | None = None
+    annual_dilution_pct: float | None = None
+
+
+class FinancingRound(BaseModel):
+    model_config = _SECTION
+    date: str | None = None
+    vehicle: str | None = None
+    gross_m: float | None = None
+    discount_pct: float | None = None
+    warrant_coverage: str | None = None
+    investors: str | None = None
+
+
+class Insiders(BaseModel):
+    model_config = _SECTION
+    net_direction: str | None = None
+    discretionary_buys: list[str] = []
+    scheduled_sales: list[str] = []  # §7 "10b5-1_sales" — pre-scheduled, low-signal
+    specialist_13f_change: str | None = None
+
+
+class Rnpv(BaseModel):
+    model_config = _SECTION
+    rnpv_m: float | None = None  # HEADLINE verdict number
+    rnpv_source: str | None = None
+    peak_sales_m: float | None = None
+    pos: float | None = None
+    net_price: float | None = None
+    addressable_pop: int | None = None
+    penetration_pct: float | None = None
+    loe_date: str | None = None
+    discount_rate: float | None = None
+
+
+class FinancialReport(AnalystReportBase):
+    liquidity: Liquidity = Liquidity()
+    runway: Runway = Runway()
+    capital_structure: CapitalStructure = CapitalStructure()
+    financing_history: list[FinancingRound] = []
+    insiders: Insiders = Insiders()
+    rnpv: Rnpv = Rnpv()
+    signal_synthesis: str | None = None
+
+    @model_validator(mode="after")
+    def _headline_sourced(self):
+        if self.rnpv.rnpv_m is not None and not (self.rnpv.rnpv_source or "").strip():
+            raise ValueError("financial rnpv.rnpv_m requires a non-empty rnpv.rnpv_source (no-fabrication)")
+        return self
+
+
+# --- Market sections (guideline §4 / §7) -----------------------------------------------
+
+
+class RunUp(BaseModel):
+    model_config = _SECTION
+    move_4w_pct: float | None = None
+    move_8w_pct: float | None = None
+    vs_xbi_pct: float | None = None
+    short_covering_component: str | None = None
+
+
+class ExpectedMove(BaseModel):
+    model_config = _SECTION
+    atm_straddle: float | None = None
+    expected_move_pct: float | None = None
+    iv_current: float | None = None
+    iv_post_event_est: float | None = None
+
+
+class ImpliedProb(BaseModel):
+    model_config = _SECTION
+    x: float | None = None
+    z: float | None = None
+    y: float | None = None
+    implied_p_approval: float | None = None
+
+
+class ShortInterest(BaseModel):
+    model_config = _SECTION
+    si_pct_float: float | None = None
+    days_to_cover: float | None = None
+    cost_to_borrow_pct: float | None = None
+    squeeze_setup: bool | None = None
+
+
+class Ownership(BaseModel):
+    model_config = _SECTION
+    float_pct: float | None = None
+    institutional_pct: float | None = None
+    top10_concentration_pct: float | None = None
+
+
+class Sentiment(BaseModel):
+    model_config = _SECTION
+    buy: int | None = None
+    hold: int | None = None
+    sell: int | None = None
+    target_dispersion: str | None = None
+    revision_trend: str | None = None
+
+
+class Analog(BaseModel):
+    model_config = _SECTION
+    name: str | None = None
+    implied_move_pct: float | None = None
+    realized_move_pct: float | None = None
+    outcome: str | None = None
+
+
+class Asymmetry(BaseModel):
+    model_config = _SECTION
+    ev_pct: float | None = None  # HEADLINE verdict number
+    ev_source: str | None = None
+    position_size_pct: float | None = None
+    driver: str | None = None
+    expression: str | None = None
+
+
+class MarketReport(AnalystReportBase):
+    run_up: RunUp = RunUp()
+    expected_move: ExpectedMove = ExpectedMove()
+    implied_prob: ImpliedProb = ImpliedProb()
+    short_interest: ShortInterest = ShortInterest()
+    ownership: Ownership = Ownership()
+    sentiment: Sentiment = Sentiment()
+    analogs: list[Analog] = []
+    asymmetry: Asymmetry = Asymmetry()
+
+    @model_validator(mode="after")
+    def _headline_sourced(self):
+        if self.asymmetry.ev_pct is not None and not (self.asymmetry.ev_source or "").strip():
+            raise ValueError("market asymmetry.ev_pct requires a non-empty asymmetry.ev_source (no-fabrication)")
+        return self
+
+
 class DebateVerdict(BaseModel):
     model_config = ConfigDict(extra="forbid")
     thesis: str

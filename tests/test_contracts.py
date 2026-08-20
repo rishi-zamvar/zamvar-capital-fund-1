@@ -8,14 +8,19 @@ import pytest
 from pydantic import ValidationError
 
 from catalyst_trader.contracts import (
+    AnalystReportBase,
     AnalystSignal,
+    ClinicalReport,
     DebateVerdict,
     DiligenceDossier,
     DiligenceInput,
     EstimateVetting,
+    FinancialReport,
     Hedge,
+    MarketReport,
     MDDecision,
     ReconciliationRound,
+    RegulatoryReport,
     RetriggerFlag,
     RiskAssessment,
     StrategyDossier,
@@ -716,3 +721,191 @@ def test_mddecision_not_a_strategydossier_field():
     assert "md_decision" not in StrategyDossier.model_fields
     for name, field in StrategyDossier.model_fields.items():
         assert field.annotation is not MDDecision, name
+
+
+# --- Lens reports (07.9): the schema split — 4 structured one-pagers -----------------
+# The 4 CATALYST-CALL analysts emit lens-specific reports (guideline §7). AnalystSignal
+# stays intact for the 8 DD dims (Plan 2 migrates them). Each lens keeps the base
+# interface (dimension/ticker/catalyst_id/thesis/score/confidence/key_findings/unknowns)
+# so debate + verifier consume it unchanged, and carries nullable-by-default §7 sections.
+
+
+def _base_report_fields(dimension: str) -> dict:
+    return {
+        "dimension": dimension,
+        "ticker": "XYZ",
+        "catalyst_id": "cat_2026_001",
+        "score": 0.4,
+        "confidence": 0.7,
+        "thesis": "Bottom line: the pivotal endpoint was met, supporting a positive readout.",
+        "key_findings": [
+            {"claim": "primary endpoint met", "evidence_ref": "tool:base_rate#x", "source_url": None}
+        ],
+        "kb_analogs_queried": ["tool:analog_query#y"],
+        "unknowns": ["long-term safety"],
+    }
+
+
+def valid_clinical_report() -> dict:
+    d = _base_report_fields("clinical")
+    d.update({
+        "disease_unmet_need": {"prevalence": 235000, "soc": "chemo", "unmet_need_severity": "high"},
+        "moa": {"target": "EGFR", "modality": "small_molecule", "genetically_validated": True, "selection_biomarker": True},
+        "trial_design": {"n": 500, "randomization": "1:1", "control": "placebo", "blinding": "double", "alpha": 0.05, "power": 0.9, "powered_effect": "HR 0.7"},
+        "endpoints": {"primary": "OS", "ladder_rung": "OS", "surrogate_status": "validated", "endpoint_changed_vs_registration": False, "key_secondaries": ["PFS"]},
+        "efficacy": {"point_estimate": 0.65, "ci_low": 0.5, "ci_high": 0.85, "p_value": 0.001, "hr": 0.65, "absolute_gain": "4 months", "arr": 0.1, "rrr": 0.3, "nnt": 10.0, "context_vs_benchmark": "strong vs ASCO 0.8 bar"},
+        "safety": {"ae_discontinuation_pct": 8.0, "sae_pct": 12.0, "deaths": 2, "grade34_pct": 20.0, "boxed_warning_risk": "low"},
+        "prior_consistency": "P3 matches P2",
+        "key_scientific_risk": "surrogate translation",
+        "pos_estimate": 0.62,
+        "pos_estimate_source": "tool:base_rate#x",
+    })
+    return d
+
+
+def valid_regulatory_report() -> dict:
+    d = _base_report_fields("regulatory")
+    d.update({
+        "application": {"type": "BLA", "review": "priority", "clock_months": 6, "pdufa_date": "2026-11-28", "resubmission_class": None, "expedited_tags": ["breakthrough"]},
+        "division": {"name": "Oncology", "posture": "neutral"},
+        "prior_crl": {"exists": False, "deficiency_type": None, "addressed": None},
+        "adcom": {"scheduled": False, "committee": None, "voting_question": None, "briefing_doc_tone": None},
+        "label_risk": {"boxed_warning": False, "rems": False, "narrow_label": False, "confirmatory_trial": False},
+        "poa": {"point": 0.7, "point_source": "tool:base_rate#r", "clean_approve": 0.6, "approve_restricted": 0.1, "crl": 0.3},
+        "regulatory_question": "endpoint acceptability",
+        "precedent": "nearest analog approved",
+    })
+    return d
+
+
+def valid_financial_report() -> dict:
+    d = _base_report_fields("financial")
+    d.update({
+        "liquidity": {"cash_m": 200.0, "securities_m": 50.0, "total_liquidity_m": 250.0, "debt_m": 0.0, "covenants": "none"},
+        "runway": {"quarterly_burn_m": 30.0, "runway_months": 20.0, "clears_catalyst": True, "cushion_months": 8.0},
+        "capital_structure": {"shares_basic_m": 100.0, "fully_diluted_m": 120.0, "warrant_overhang": "modest", "annual_dilution_pct": 10.0},
+        "financing_history": [{"date": "2025-01-01", "vehicle": "PIPE", "gross_m": 100.0, "discount_pct": 10.0, "warrant_coverage": "none", "investors": "RA Capital"}],
+        "insiders": {"net_direction": "buy", "discretionary_buys": ["CEO 25k @ $9"], "scheduled_sales": ["CFO 40k 10b5-1"], "specialist_13f_change": "RA +2%"},
+        "rnpv": {"rnpv_m": 900.0, "rnpv_source": "tool:rnpv#f", "peak_sales_m": 1500.0, "pos": 0.5, "net_price": 150000.0, "addressable_pop": 6600, "penetration_pct": 30.0, "loe_date": "2035-01-01", "discount_rate": 0.11},
+        "signal_synthesis": "runway clears + insiders buying = healthy",
+    })
+    return d
+
+
+def valid_market_report() -> dict:
+    d = _base_report_fields("market_sentiment")
+    d.update({
+        "run_up": {"move_4w_pct": 20.0, "move_8w_pct": 35.0, "vs_xbi_pct": 15.0, "short_covering_component": "partial"},
+        "expected_move": {"atm_straddle": 8.0, "expected_move_pct": 14.0, "iv_current": 120.0, "iv_post_event_est": 40.0},
+        "implied_prob": {"x": 30.0, "z": 50.0, "y": 12.0, "implied_p_approval": 0.47},
+        "short_interest": {"si_pct_float": 25.0, "days_to_cover": 6.0, "cost_to_borrow_pct": 30.0, "squeeze_setup": True},
+        "ownership": {"float_pct": 80.0, "institutional_pct": 60.0, "top10_concentration_pct": 40.0},
+        "sentiment": {"buy": 5, "hold": 3, "sell": 1, "target_dispersion": "wide", "revision_trend": "up"},
+        "analogs": [{"name": "XYZ PDUFA", "implied_move_pct": 12.0, "realized_move_pct": 20.0, "outcome": "approved"}],
+        "asymmetry": {"ev_pct": 24.0, "ev_source": "tool:implied_move#m", "position_size_pct": 3.0, "driver": "fundamentals", "expression": "hold-through"},
+    })
+    return d
+
+
+LENS_REPORTS = [
+    (ClinicalReport, valid_clinical_report, "clinical"),
+    (RegulatoryReport, valid_regulatory_report, "regulatory"),
+    (FinancialReport, valid_financial_report, "financial"),
+    (MarketReport, valid_market_report, "market_sentiment"),
+]
+
+# (report_cls, builder, path to the non-null headline number, path to its paired source)
+HEADLINE_PAIRS = [
+    (ClinicalReport, valid_clinical_report, ("pos_estimate",), ("pos_estimate_source",)),
+    (RegulatoryReport, valid_regulatory_report, ("poa", "point"), ("poa", "point_source")),
+    (FinancialReport, valid_financial_report, ("rnpv", "rnpv_m"), ("rnpv", "rnpv_source")),
+    (MarketReport, valid_market_report, ("asymmetry", "ev_pct"), ("asymmetry", "ev_source")),
+]
+
+
+def _dig(d: dict, path: tuple):
+    for k in path[:-1]:
+        d = d[k]
+    return d, path[-1]
+
+
+@pytest.mark.parametrize("model, builder, dim", LENS_REPORTS)
+def test_lens_report_full_payload_validates(model, builder, dim):
+    obj = model.model_validate(builder())
+    assert obj.dimension == dim
+    assert obj.thesis and obj.key_findings  # base interface preserved (the debate/verifier contract)
+    assert isinstance(obj, AnalystReportBase)  # every lens IS the base contract
+
+
+@pytest.mark.parametrize("model, builder, dim", LENS_REPORTS)
+def test_lens_report_numeric_leaves_default_none(model, builder, dim):
+    # ONLY base fields -> sections default-construct, every numeric leaf reads None (empty slot = a finding).
+    obj = model.model_validate(_base_report_fields(dim))
+    # walk every section sub-model and assert no numeric leaf was fabricated to 0
+    for fname in model.model_fields:
+        val = getattr(obj, fname)
+        if isinstance(val, AnalystReportBase.__mro__[1]):  # a pydantic sub-model (BaseModel)
+            for leaf in type(val).model_fields:
+                lv = getattr(val, leaf)
+                assert lv is None or isinstance(lv, (str, list)), f"{fname}.{leaf}={lv!r} not null-default"
+    # explicit headline checks
+    assert obj.model_dump().get("dimension") == dim
+
+
+@pytest.mark.parametrize("model, builder, dim", LENS_REPORTS)
+def test_lens_report_extra_key_rejected(model, builder, dim):
+    payload = builder()
+    payload["hallucinated_field"] = 1
+    with pytest.raises(ValidationError):
+        model.model_validate(payload)
+
+
+@pytest.mark.parametrize("model, builder, dim", LENS_REPORTS)
+def test_lens_report_extra_key_in_section_rejected(model, builder, dim):
+    # a hallucinated key on ANY nested section is rejected (extra="forbid" on sub-models)
+    payload = builder()
+    # find the first section (a dict-valued field) and poison it
+    for k, v in payload.items():
+        if isinstance(v, dict):
+            v["hallucinated_leaf"] = 1
+            break
+    with pytest.raises(ValidationError):
+        model.model_validate(payload)
+
+
+@pytest.mark.parametrize("model, builder, dim", LENS_REPORTS)
+def test_lens_report_base_spine_enforced(model, builder, dim):
+    # same anti-hallucination spine as AnalystSignal, on the base class
+    p = builder(); p["thesis"] = ""
+    with pytest.raises(ValidationError):
+        model.model_validate(p)
+    p = builder(); p["key_findings"] = []
+    with pytest.raises(ValidationError):
+        model.model_validate(p)
+    p = builder(); p["score"] = 1.5
+    with pytest.raises(ValidationError):
+        model.model_validate(p)
+    p = builder(); p["confidence"] = 1.2
+    with pytest.raises(ValidationError):
+        model.model_validate(p)
+
+
+@pytest.mark.parametrize("model, builder, num_path, src_path", HEADLINE_PAIRS)
+def test_headline_number_requires_source(model, builder, num_path, src_path):
+    # both set -> validates
+    assert model.model_validate(builder()) is not None
+
+    # headline number set + source empty -> reject (no-fabrication invariant)
+    p = builder()
+    parent, key = _dig(p, src_path)
+    parent[key] = ""
+    with pytest.raises(ValidationError):
+        model.model_validate(p)
+
+    # headline number null -> source may be empty/None
+    p = builder()
+    nparent, nkey = _dig(p, num_path)
+    nparent[nkey] = None
+    sparent, skey = _dig(p, src_path)
+    sparent[skey] = None
+    assert model.model_validate(p) is not None
