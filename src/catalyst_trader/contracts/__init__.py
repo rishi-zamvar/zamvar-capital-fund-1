@@ -9,7 +9,7 @@ contract boundary (the DB-write half of KB-02 lives in kb.py).
 #           field, don't pre-add speculative ones.
 """
 
-from typing import Literal
+from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
@@ -717,3 +717,72 @@ class OpportunityFlag(BaseModel):
     tripped_flags: list[str] = []    # echo of the Stage-1 flags (threaded by Python)
     unknowns: list[str] = []         # gap-not-answer payload
     confidence: float = Field(ge=0.0, le=1.0)
+
+
+# ---------------------------------------------------------------------------------------
+# 07.9-1.5 — the Catalyst Research Bundle: the shared cited-FACT substrate (CALL-01).
+#
+# ONE deterministic research pass computes every free/cited fact ONCE per catalyst, then hands the
+# identical ground truth to every consumer (DD here; the 4 analysts via tool-backing in Plan 2). The
+# FIREWALL is a TYPE invariant, not a policy pass: the bundle carries FACTS ONLY — it has NO field for
+# any desk interpretation (analyst score/thesis, debate verdict, builder dossier). extra='forbid'
+# makes a leaked interpretation a ValidationError. Each populated Fact is cite-or-drop AT THE CONTRACT:
+# a value with neither a resolvable evidence_ref nor an inline citation is rejected.
+# ponytail: one generic Fact wrapper + a flat facts container. No per-fact class, no builder — the
+#           nullable-default value IS the "empty slot is a finding" rule (no null-fill code).
+# ---------------------------------------------------------------------------------------
+
+
+class Fact(BaseModel):
+    """One cited datum in the substrate. `value` is loose (float/str/list/dict) — this is a raw-fact
+    carrier, not a lens. Cite-or-drop: a populated value MUST carry a resolvable `evidence_ref`
+    (tool:… minted by evidence.tool_ref_for) OR an inline `citation` (the base-rate
+    {source_name, source_url, quote} shape). An empty Fact (value=None) needs neither — an empty slot
+    is an honest finding, never a fabricated 0."""
+
+    model_config = ConfigDict(extra="forbid")
+    value: Any = None
+    evidence_ref: str | None = None
+    citation: dict | None = None
+    context: str | None = None
+
+    @model_validator(mode="after")
+    def _cite_or_drop(self):
+        if self.value is not None and self.evidence_ref is None and self.citation is None:
+            raise ValueError("a populated Fact must carry an evidence_ref or an inline citation "
+                             "(cite-or-drop at the contract)")
+        return self
+
+
+class CatalystResearchBundle(BaseModel):
+    """The shared cited-fact substrate for one catalyst. FACTS ONLY (no interpretation field);
+    extra='forbid'. Every fact defaults to an empty Fact (value=None) so an unsourced slot is a
+    finding. `degraded` mirrors make_diligence_inputs' honest-degrade flags."""
+
+    model_config = ConfigDict(extra="forbid")
+    ticker: str
+    catalyst: dict
+    as_of: str | None = None
+    analogs: Fact = Field(default_factory=Fact)          # kb.analog_query realized-move precedents
+    base_rates: list[Fact] = []                          # inline-cited clinical priors (quant.base_rate)
+    financials: Fact = Field(default_factory=Fact)       # edgar.fundamentals cash/burn/shares/runway
+    trial: Fact = Field(default_factory=Fact)            # CT.gov record (non-money; None is fine)
+    options: Fact = Field(default_factory=Fact)          # CBOE seam (quote + underlying)
+    implied_move: Fact = Field(default_factory=Fact)     # quant.implied_move derivation over the quote
+    ownership: Fact = Field(default_factory=Fact)        # FINRA SI + shares + Form-4 insider_net
+    prices: Fact = Field(default_factory=Fact)           # point-in-time close series (serving.asof)
+    hedge_inputs: Fact = Field(default_factory=Fact)     # analog_gaps split (catalyst_context shape)
+    degraded: list[str] = []
+
+    def fact_for(self, tool_name: str, inputs: dict) -> Fact | None:
+        """Plan-2 tool-backing accessor: return the Fact whose evidence_ref == tool_ref_for(name,
+        inputs), so a build_quant_tools cache-lookup is a one-liner. None if no fact was minted from
+        that exact tool call."""
+        from ..desk import evidence  # lazy: avoid a contracts->desk import cycle at module load
+
+        ref = evidence.tool_ref_for(tool_name, inputs)
+        for f in (self.analogs, self.financials, self.trial, self.options, self.implied_move,
+                  self.ownership, self.prices, self.hedge_inputs, *self.base_rates):
+            if f.evidence_ref == ref:
+                return f
+        return None
