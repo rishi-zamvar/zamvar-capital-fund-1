@@ -63,3 +63,139 @@ def test_fact_carries_ref():
     with pytest.raises(ValidationError):
         Fact(value=1.0)
 
+
+# ============================== Task 2 — build_research_bundle ============================
+
+from catalyst_trader.desk.research_bundle import build_research_bundle  # noqa: E402
+
+
+class _Spy:
+    """Wrap a source fn, count calls, record args."""
+
+    def __init__(self, fn):
+        self._fn = fn
+        self.calls = 0
+        self.seen = []
+
+    def __call__(self, *a, **kw):
+        self.calls += 1
+        self.seen.append((a, kw))
+        return self._fn(*a, **kw)
+
+
+def _analogs():
+    return [{"outcome": {"move": 0.2}}, {"outcome": {"move": -0.3}}, {"outcome": {"move": 0.1}}]
+
+
+def _base_rate(metric, phase=None, indication=None):
+    return {"value": 0.575, "source_name": "IB guide", "source_url": "http://x",
+            "quote": f"{metric} prior"}
+
+
+def _fund():
+    return {"shares_outstanding": 65_000_000.0, "cash_usd": 3.0e8, "monthly_burn_usd": 1.5e7,
+            "cash_runway_months": 20.0, "provenance": {}}
+
+
+def _cboe():
+    return {"options_quote": {"call_bid": 0.5, "call_ask": 0.6, "put_bid": 0.5, "put_ask": 0.6,
+                              "call_oi": 200, "put_oi": 200, "expiry": "2026-09-19"},
+            "underlying_quote": {"bid": 6.4, "volume": 1000, "oi": 400}, "underlying_price": 6.5}
+
+
+def _finra():
+    return {"short_interest": 6_500_000, "days_to_cover": 4.2, "si_settlement_date": "2026-07-31"}
+
+
+def _sources(**over):
+    """The full offline injected-source kit (each replaceable via **over)."""
+    src = {
+        "analog_source": lambda conn, t, c, a: _analogs(),
+        "base_rate_source": _base_rate,
+        "financials_source": lambda t: _fund(),
+        "trial_source": lambda t: {"phase": "3", "status": "completed"},
+        "options_source": lambda t: _cboe(),
+        "finra_source": lambda t: _finra(),
+        "insider_source": lambda t, since, until: -2000.0,
+        "price_source": lambda conn, t, a: [6.4, 6.5, 6.6],
+    }
+    src.update(over)
+    return src
+
+
+def _build(**over):
+    return build_research_bundle(None, "ACME", _catalyst(), _AS_OF, cutoff=_AS_OF, **_sources(**over))
+
+
+def test_computed_once():
+    # FRUGALITY: wrap each source in a call-count spy; every source hit EXACTLY once (base_rate once
+    # per DISTINCT metric — never the same metric twice; the single fundamentals fetch serves BOTH
+    # financials cash/burn AND ownership shares).
+    spies = {k: _Spy(v) for k, v in _sources().items()}
+    build_research_bundle(None, "ACME", _catalyst(), _AS_OF, cutoff=_AS_OF, **spies)
+    for name in ("analog_source", "financials_source", "options_source", "finra_source",
+                 "insider_source", "price_source"):
+        assert spies[name].calls == 1, f"{name} called {spies[name].calls}x (want 1)"
+    metrics = [a[0] for (a, kw) in spies["base_rate_source"].seen]
+    assert len(metrics) == len(set(metrics)), f"a base-rate metric was fetched twice: {metrics}"
+
+
+def test_every_populated_fact_has_resolvable_ref():
+    b = _build()
+    single = [b.analogs, b.financials, b.trial, b.options, b.implied_move, b.ownership,
+              b.prices, b.hedge_inputs]
+    for f in single + b.base_rates:
+        if f.value is None:
+            continue
+        if f.evidence_ref is not None:
+            assert evidence.resolve(None, f.evidence_ref) is not None
+        else:
+            assert {"source_name", "source_url", "quote"} <= set(f.citation or {})
+
+
+def test_honest_degrade_missing_source():
+    # A missing financials source (and finra) yields NULL facts + degrade flags — NEVER a fabricated
+    # number (not 0, not a guess): the value is honestly None.
+    b = _build(financials_source=lambda t: None, finra_source=lambda t: None)
+    assert b.financials.value is None
+    assert b.ownership.value is None
+    assert any("financials" in f for f in b.degraded)
+    assert any("ownership" in f for f in b.degraded)
+
+
+def test_insider_zero_grounds():
+    # insider_net == 0.0 (a quiet tape) is a REAL datum -> ownership GROUNDS (not a degrade).
+    b = _build(insider_source=lambda t, since, until: 0.0)
+    assert b.ownership.value is not None
+    assert b.ownership.value["insider_net"] == 0.0
+    assert not any("ownership" in f for f in b.degraded)
+
+
+def test_point_in_time():
+    # The point-in-time as_of is threaded into the price source (no future read leaks into prices).
+    seen = {}
+
+    def _price(conn, t, a):
+        seen["as_of"] = a
+        return [6.4, 6.5, 6.6]
+
+    b = _build(price_source=_price)
+    assert seen["as_of"] == _AS_OF
+    assert b.prices.value["target"] == [6.4, 6.5, 6.6]
+
+
+def test_point_in_time_default_no_lookahead(db, embed):
+    # The DEFAULT price source runs through serving.asof(conn, cutoff): an empty as-of db yields an
+    # honest degrade (no crash, no LookAheadDenied for a knowable as_of).
+    b = build_research_bundle(db, "ACME", _catalyst(), _AS_OF, cutoff=_AS_OF, embed=embed,
+                              facts={"prices"})
+    assert b.prices.value is None
+    assert any("prices" in f for f in b.degraded)
+
+
+def test_facts_only_output():
+    b = _build()
+    assert isinstance(b, CatalystResearchBundle)
+    for leaked in _INTERPRETATION_FIELDS:
+        assert not hasattr(b, leaked) or leaked not in type(b).model_fields
+
