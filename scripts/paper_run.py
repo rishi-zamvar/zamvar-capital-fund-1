@@ -44,7 +44,7 @@ def submit_decision(conn, result: dict, *, as_of: str) -> int | None:
         verdict = getattr(dec, "decision", None) or "no-decision"
         print(f"NO SUBMIT        decision={verdict} — {result.get('reason') or 'not an enter'}")
         return None
-    pid = paper_ledger.submit_for_approval(conn, params)
+    pid = paper_ledger.submit_for_approval(conn, params, review=paper_ledger.review_snapshot(result))
     print("=" * 72)
     print(f"PENDING APPROVAL id={pid}  {params['ticker']}  entry={params['entry']}  "
           f"size_pct={params['size_pct']}  exit_by={params['exit_by']}")

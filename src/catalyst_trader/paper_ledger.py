@@ -121,12 +121,15 @@ def close_paper_position(
 # submit -> a pending record only. approve -> the SOLE path that opens a position. reject -> nothing.
 
 
-def submit_for_approval(conn: sqlite3.Connection, params: dict) -> int:
-    """Record a decision as PENDING operator approval; return the pending id. Opens NOTHING."""
+def submit_for_approval(conn: sqlite3.Connection, params: dict, *, review: dict | None = None) -> int:
+    """Record a decision as PENDING operator approval; return the pending id. Opens NOTHING.
+
+    `review` is the display-only snapshot (review_snapshot) the iOS dossier screen reads; the gate
+    never reads it — approve_pending opens from `params` alone."""
     try:
         pid = conn.execute(
-            "INSERT INTO paper_pending (status, params, submitted_at) VALUES ('pending', ?, ?)",
-            (json.dumps(params), now_iso()),
+            "INSERT INTO paper_pending (status, params, submitted_at, review) VALUES ('pending', ?, ?, ?)",
+            (json.dumps(params), now_iso(), None if review is None else json.dumps(review)),
         ).lastrowid
         conn.commit()
         return pid
@@ -138,16 +141,23 @@ def submit_for_approval(conn: sqlite3.Connection, params: dict) -> int:
 def approve_pending(conn: sqlite3.Connection, pending_id: int) -> int | None:
     """The SOLE opener: over a still-'pending' record, open the position from its params and flip the
     record to 'approved' (returns the new position id). Idempotent — an already-approved record
-    returns its existing position id (no duplicate); a rejected/absent record returns None."""
-    row = conn.execute("SELECT status, params, position_id FROM paper_pending WHERE id=?",
-                       (pending_id,)).fetchone()
-    if row is None:
-        return None
-    if row["status"] == "approved":
-        return row["position_id"]  # idempotent: no second position
-    if row["status"] != "pending":
-        return None  # rejected -> never opens
+    returns its existing position id (no duplicate); a rejected/absent record returns None.
+
+    Race-free: BEGIN IMMEDIATE takes the write lock BEFORE the status read, so two concurrent
+    approvers (CLI + dashboard, or a double-tap) serialize and the second sees 'approved' — never
+    two positions from one pending record."""
+    began = not conn.in_transaction
+    if began:
+        conn.execute("BEGIN IMMEDIATE")
     try:
+        row = conn.execute("SELECT status, params, position_id FROM paper_pending WHERE id=?",
+                           (pending_id,)).fetchone()
+        if row is None or row["status"] != "pending":
+            if began:
+                conn.rollback()  # release the lock; nothing was written
+            if row is not None and row["status"] == "approved":
+                return row["position_id"]  # idempotent: no second position
+            return None  # absent / rejected -> never opens
         pos_id = _open_paper_position(conn, json.loads(row["params"]))
         conn.execute(
             "UPDATE paper_pending SET status='approved', resolved_at=?, position_id=? WHERE id=?",
@@ -203,6 +213,35 @@ def position_params_from_decision(result: dict, *, as_of: str) -> dict | None:
         "catalyst_id": t.catalyst_id,
         "decision_ref": f"catalyst:{t.catalyst_id}",
         "evidence_refs": list(result["dossier"].all_evidence_refs),
+    }
+
+
+def _plain(obj):
+    """JSON-plain copy of a contract model / SimpleNamespace fake / container (None passes through)."""
+    if hasattr(obj, "model_dump"):
+        return obj.model_dump(mode="json")
+    if hasattr(obj, "__dict__"):
+        return {k: _plain(v) for k, v in vars(obj).items()}
+    if isinstance(obj, dict):
+        return {k: _plain(v) for k, v in obj.items()}
+    if isinstance(obj, (list, tuple)):
+        return [_plain(v) for v in obj]
+    return obj
+
+
+def review_snapshot(result: dict) -> dict:
+    """The display-only WHY behind a submitted decision, for the operator's dossier review (Phase 9):
+    the catalyst, the StrategyDossier (trade incl. SL/TP + thesis/kill criteria/pre-mortem), the sealed
+    DiligenceDossier and the MDDecision. The MD round_log is collapsed to a count (it carries the full
+    cross_check snapshots — audit material, not review material). Never read by the gate."""
+    decision = _plain(result.get("decision"))
+    if isinstance(decision, dict) and "round_log" in decision:
+        decision["rounds"] = len(decision.pop("round_log"))
+    return {
+        "catalyst": _plain(result.get("catalyst")),
+        "dossier": _plain(result.get("dossier")),
+        "dd": _plain(result.get("dd")),
+        "decision": decision,
     }
 
 
