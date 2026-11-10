@@ -19,6 +19,8 @@ dependencies = [
     "lxml==6.1.1",  # BeautifulSoup parser backend used by providers/pdufa.py
     "yfinance==1.6.0",  # paper-phase price bars (providers/prices.py)
     "pandas==3.0.5",  # price-bar frames (providers/prices.py); also transitively via statsmodels
+    "fastapi==0.162.4",  # Phase 9 iOS dashboard shim (dashboard_api.py) — ZeeChat-style HTTP+SSE
+    "uvicorn==0.54.0",  # serves the dashboard shim (scripts/serve_dashboard.py)
 ]
 
 [project.optional-dependencies]

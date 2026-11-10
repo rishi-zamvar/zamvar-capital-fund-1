@@ -33,18 +33,23 @@ async def run_structured(
     mcp_servers: dict | None = None,
     allowed_tools: list[str] | None = None,
     model: str = "sonnet",
+    tools: list[str] | None = None,
 ) -> BaseModel:
     """Run one agent role and return its validated contract model.
 
     Raises pydantic.ValidationError (schema-violating) or json.JSONDecodeError
     (malformed) rather than ever returning a bad model. Retries exactly once on a
     ValidationError (cheap re-roll; models occasionally emit a stray field).
+
+    `tools` (None = SDK default) sets the AVAILABLE built-in tool set; `tools=[]` removes every
+    built-in (allowed_tools only governs auto-approval) — used by the read-only MD chat.
     """
     opts = ClaudeAgentOptions(
         output_format={"type": "json_schema", "schema": schema.model_json_schema()},
         mcp_servers=mcp_servers or {},
         allowed_tools=allowed_tools or [],  # no "Agent" tool: desk fan-out is Python, never SDK subagents
         model=model,
+        tools=tools,
     )
     try:
         return await _attempt(prompt, opts, schema)
