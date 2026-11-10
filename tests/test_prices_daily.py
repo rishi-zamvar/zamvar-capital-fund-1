@@ -20,12 +20,22 @@ def _nasdaq_window():
     return json.loads((FIXTURES / "nasdaq_daily_event_window.json").read_text())
 
 
+def _stub_yfinance(monkeypatch):
+    """Offline: no live yfinance. The provider lists capture the functions at import time, so
+    patching the module attribute alone misses them — swap the yfinance entries in each
+    function's default `providers` list."""
+    yf = (prices._yf_weekly, prices._yf_daily)
+    for fn in (prices.get_weekly_bars, prices.get_daily_bars):
+        stubbed = [(lambda *a, **k: []) if p in yf else p for p in fn.__kwdefaults__["providers"]]
+        monkeypatch.setitem(fn.__kwdefaults__, "providers", stubbed)
+
+
 def _wire_nasdaq_only(monkeypatch):
     """Nasdaq returns the daily fixture; the keyed GREEN sources (AV/Tiingo) have no key -> skip."""
     monkeypatch.setattr(prices.settings, "tiingo_api_key", None)
     monkeypatch.setattr(prices.settings, "alpha_vantage_api_key", None)
     monkeypatch.setattr(prices, "get_json", lambda *a, **k: _nasdaq_window())
-    monkeypatch.setattr(prices, "_yf_daily", lambda *a, **k: [])  # offline: no live yfinance
+    _stub_yfinance(monkeypatch)
 
 
 # ── migration 010 ────────────────────────────────────────────────────────────────────────────
@@ -69,7 +79,7 @@ def test_get_daily_bars_degrades_to_empty(monkeypatch):
     monkeypatch.setattr(prices.settings, "tiingo_api_key", None)
     monkeypatch.setattr(prices.settings, "alpha_vantage_api_key", None)
     monkeypatch.setattr(prices, "get_json", lambda *a, **k: None)  # every source degrades
-    monkeypatch.setattr(prices, "_yf_daily", lambda *a, **k: [])  # yfinance degrades too
+    _stub_yfinance(monkeypatch)  # yfinance degrades too
     assert prices.get_daily_bars("TEST", "2026-09-28", "2026-10-09") == []
 
 
