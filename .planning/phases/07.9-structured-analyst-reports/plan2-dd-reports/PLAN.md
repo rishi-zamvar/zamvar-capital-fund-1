@@ -78,6 +78,27 @@ The hard constraints that shape every choice:
   ShortInterest, Ownership, ExpectedMove, ImpliedProb, Analog) verbatim. Add ONLY the 2 sections that
   have no lens equivalent (DD liquidity is *tradeability*, NOT the balance-sheet `Liquidity` section).
 
+**OPEN DECISION — RESOLVED: CONSOLIDATION (2026-11-10).** DD reads the shared Plan-1.5 Research
+Bundle ONLY (via `make_diligence_inputs` → `market_data`); there is NO independent belt-and-suspenders
+re-pull. Rationale: frugality (each free source hit once) + identical ground truth, so a DD-vs-desk
+disagreement is pure judgment, never a data artifact. The firewall is unaffected: the bundle carries
+cited FACTS only, never desk interpretations, and `run_diligence` still takes only `DiligenceInput`.
+
+**REVISIONS from plan-check (2026-11-10) — these OVERRIDE the task text below where they conflict:**
+- R1 NO DUPLICATION: `trial_stats` binds the Plan-1 `ClinicalReport` and `regulatory` binds the Plan-1
+  `RegulatoryReport` directly (the drafted TrialStatsReport/DDRegulatoryReport were field-for-field
+  copies; extra lens slots like moa/disease just stay null). Only 6 new DD classes.
+- R2 Headline = the reused SECTION field (no second copy of the same number): financials
+  `runway.runway_months`, ownership `short_interest.si_pct_float`, options `expected_move.expected_move_pct`
+  — each paired with a report-level `*_source`. Hedge/analog keep report-level headlines (no section).
+- R3 `Tradeability` is TARGET-LEG only (`bid/volume/oi` + `volume_source`; headline = `volume`):
+  `liquidity_quote` carries one leg, so peer/spread fields would be always-null fiction.
+- R4 The liquidity dim got NO data in its prompt — add `liquidity_context(liquidity_quote)` (prompt
+  text only; `zero_liquidity`/`ungrounded_money`/`synthesize_verdict` unchanged).
+- R5 The real-boundary uncited-finding test does not exist — ADD it (fake only SDK `query`).
+- R6 Test router routes on the bound schema (`{cls: d}`), not on the first quoted dim token.
+- R7 Section headers / plain-language rules must not contain "direction" (firewall leak-word test).
+
 Purpose: legible, deep, plain-language DD output for the CEO and the downstream MD.
 Output: 8 DD report contracts, 8 rewritten adversarial one-pager prompts, `run_dimension` bound
 per-dim, every DD construction/fixture/seam-assertion site migrated, and a green offline suite with

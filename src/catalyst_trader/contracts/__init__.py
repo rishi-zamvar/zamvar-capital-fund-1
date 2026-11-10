@@ -395,6 +395,97 @@ class MarketReport(AnalystReportBase):
         return self
 
 
+# --- DD dimension reports (07.9 Plan 2) -------------------------------------------------
+# The 8 diligence dims' one-pagers. trial_stats / regulatory REUSE ClinicalReport /
+# RegulatoryReport outright (desk/diligence.DD_REPORT_FOR). The 6 below reuse the Plan-1
+# sections; each headline IS the reused section field, paired with a report-level `*_source`.
+# C5: every headline anchors on a deterministic bundle fact — DDFinancialsReport has NO rNPV.
+
+
+def _require_source(number, source, what: str) -> None:
+    if number is not None and not (source or "").strip():
+        raise ValueError(f"{what} requires a non-empty paired source (no-fabrication)")
+
+
+class DDFinancialsReport(AnalystReportBase):
+    runway: Runway = Runway()
+    capital_structure: CapitalStructure = CapitalStructure()
+    insiders: Insiders = Insiders()
+    runway_months_source: str | None = None  # pairs runway.runway_months (HEADLINE)
+
+    @model_validator(mode="after")
+    def _headline_sourced(self):
+        _require_source(self.runway.runway_months, self.runway_months_source, "financials runway.runway_months")
+        return self
+
+
+class OwnershipFlowReport(AnalystReportBase):
+    short_interest: ShortInterest = ShortInterest()
+    ownership: Ownership = Ownership()
+    insiders: Insiders = Insiders()
+    si_pct_float_source: str | None = None  # pairs short_interest.si_pct_float (HEADLINE)
+
+    @model_validator(mode="after")
+    def _headline_sourced(self):
+        _require_source(self.short_interest.si_pct_float, self.si_pct_float_source, "ownership short_interest.si_pct_float")
+        return self
+
+
+class OptionsMoveReport(AnalystReportBase):
+    expected_move: ExpectedMove = ExpectedMove()
+    implied_prob: ImpliedProb = ImpliedProb()
+    expected_move_pct_source: str | None = None  # pairs expected_move.expected_move_pct (HEADLINE; null when illiquid)
+
+    @model_validator(mode="after")
+    def _headline_sourced(self):
+        _require_source(self.expected_move.expected_move_pct, self.expected_move_pct_source, "options expected_move.expected_move_pct")
+        return self
+
+
+class HedgeRevalidationReport(AnalystReportBase):
+    validated: bool | None = None
+    covers: str | None = None
+    mechanism: str | None = None
+    conditional_worst: float | None = None  # HEADLINE — un-netted worst cell of the validated inverse hedge
+    conditional_worst_source: str | None = None
+
+    @model_validator(mode="after")
+    def _headline_sourced(self):
+        _require_source(self.conditional_worst, self.conditional_worst_source, "hedge conditional_worst")
+        return self
+
+
+class Tradeability(BaseModel):
+    """DD liquidity = can the TARGET leg trade at size (NOT the balance-sheet `Liquidity` section).
+    Target leg only: liquidity_quote carries one leg."""
+
+    model_config = _SECTION
+    bid: float | None = None
+    volume: float | None = None  # HEADLINE — 0 is the zero_liquidity hard fail
+    oi: float | None = None
+    volume_source: str | None = None
+
+
+class LiquidityReport(AnalystReportBase):
+    tradeability: Tradeability = Tradeability()
+
+    @model_validator(mode="after")
+    def _headline_sourced(self):
+        _require_source(self.tradeability.volume, self.tradeability.volume_source, "liquidity tradeability.volume")
+        return self
+
+
+class HistoricalAnalogReport(AnalystReportBase):
+    analogs: list[Analog] = []
+    analog_realized_move_pct: float | None = None  # HEADLINE — realized move of the closest disconfirming analogs
+    analog_realized_move_pct_source: str | None = None
+
+    @model_validator(mode="after")
+    def _headline_sourced(self):
+        _require_source(self.analog_realized_move_pct, self.analog_realized_move_pct_source, "analog_realized_move_pct")
+        return self
+
+
 class DebateVerdict(BaseModel):
     model_config = ConfigDict(extra="forbid")
     thesis: str
