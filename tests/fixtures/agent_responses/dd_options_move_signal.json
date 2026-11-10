@@ -13,5 +13,7 @@
     }
   ],
   "kb_analogs_queried": ["tool:analog_query#op02jj"],
-  "unknowns": ["options quotes are delayed on the free feed"]
+  "unknowns": ["options quotes are delayed on the free feed"],
+  "expected_move": {"atm_straddle": null, "expected_move_pct": 28.0, "iv_current": null, "iv_post_event_est": null},
+  "expected_move_pct_source": "tool:implied_move#op01ii"
 }

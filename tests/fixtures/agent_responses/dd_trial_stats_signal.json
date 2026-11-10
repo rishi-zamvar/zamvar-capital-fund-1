@@ -13,5 +13,10 @@
     }
   ],
   "kb_analogs_queried": ["tool:analog_query#ts02bb"],
-  "unknowns": ["secondary-endpoint hierarchy not disclosed"]
+  "unknowns": ["secondary-endpoint hierarchy not disclosed"],
+  "trial_design": {"n": 450, "randomization": null, "control": null, "blinding": null, "alpha": null, "power": 0.9, "powered_effect": null},
+  "endpoints": {"primary": "OS", "ladder_rung": null, "surrogate_status": null, "endpoint_changed_vs_registration": null, "key_secondaries": []},
+  "key_scientific_risk": "secondary-endpoint hierarchy undisclosed",
+  "pos_estimate": 0.58,
+  "pos_estimate_source": "tool:base_rate#ts01aa"
 }

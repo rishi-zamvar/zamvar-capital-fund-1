@@ -9,11 +9,8 @@ ADD their tests to this file and reuse these constants + helpers.
 The 8 dimension keys are LOCKED for the whole phase — fixtures, prompts and the Wave-3
 MONEY_TOUCHING set all use them verbatim.
 
-`desk/diligence.py` does not exist until Wave 2, so this module NEVER imports it at top level:
-`AnalystSignal` comes from contracts (available now), and the ONLY reference to
-`catalyst_trader.desk.diligence` is the lazy import on the first line of `_patch_dd_seam`.
-The smoke test below (`test_dd_fixtures_are_valid_signals`) runs now with no dependence on the
-Wave-2 module; only tests that CALL `_patch_dd_seam` depend on it.
+07.9 Plan 2: each dimension emits its OWN structured report class (`diligence.DD_REPORT_FOR`)
+instead of the shared AnalystSignal; the router routes on the bound schema class.
 """
 
 import asyncio
@@ -21,12 +18,12 @@ import asyncio
 import pytest
 
 from catalyst_trader.contracts import (
-    AnalystSignal,
     DiligenceDossier,
     DiligenceInput,
     KeyFinding,
 )
 from catalyst_trader.desk import evidence
+from catalyst_trader.desk.diligence import DD_REPORT_FOR
 
 # LOCKED dimension keys (verbatim across the whole phase).
 DD_DIMENSIONS = [
@@ -65,25 +62,24 @@ DD_INPUT = {
 
 
 def _dd_router(load_fixture, calls, *, narrative=None, verdict_signals=None):
-    """Fake run_structured dispatching by role: the 8 dimension analysts (matched on the
-    dimension token the prompt mandates) return their recorded AnalystSignal fixture; any
-    other schema (the Wave-3 narrative model) is validated from the recorded dd_narrative
-    fixture against whatever schema the caller passes — so this stays decoupled from the
-    not-yet-existent narrative model's name. Every call is recorded in `calls`."""
+    """Fake run_structured dispatching by role: each of the 8 dimensions is routed on the report
+    class it binds (DD_REPORT_FOR is one class per dim) and returns its recorded per-dim fixture;
+    any other schema (the narrative model) is validated from the recorded dd_narrative fixture.
+    Every call is recorded in `calls`."""
     signals = {
-        d: AnalystSignal.model_validate(load_fixture(f"agent_responses/dd_{d}_signal"))
+        d: DD_REPORT_FOR[d].model_validate(load_fixture(f"agent_responses/dd_{d}_signal"))
         for d in DD_DIMENSIONS
     }
     if verdict_signals:
         signals.update(verdict_signals)
+    dim_for = {cls: d for d, cls in DD_REPORT_FOR.items()}
 
     async def _fake(prompt, schema, *, mcp_servers=None, allowed_tools=None, model="sonnet"):
         calls.append({"prompt": prompt, "schema": schema, "model": model})
-        if schema is AnalystSignal:
-            for d in DD_DIMENSIONS:
-                if f'"{d}"' in prompt:  # build_dimension_prompt mandates the token, like analysts
-                    return signals[d]
-            raise AssertionError("diligence analyst prompt matched no known dimension")
+        if schema in dim_for:
+            d = dim_for[schema]
+            assert f'"{d}"' in prompt  # build_dimension_prompt still mandates the token
+            return signals[d]
         if schema.__name__ == "SupportCheck":  # the Wave-4 enforce_dossier cite-or-drop gate
             return schema(supported=True, reason="ok")
         # Wave-3 narrative model: validate the recorded narrative against the passed schema
@@ -100,10 +96,10 @@ def _patch_dd_seam(monkeypatch, fake):
 
 
 def test_dd_fixtures_are_valid_signals(load_fixture):
-    """Every locked-dimension fixture is a valid AnalystSignal whose `.dimension` matches its
-    key and carries >=1 sourced key_finding. Runs now, independent of desk.diligence."""
+    """Every locked-dimension fixture is a valid per-dim report whose `.dimension` matches its
+    key and carries >=1 sourced key_finding."""
     for d in DD_DIMENSIONS:
-        sig = AnalystSignal.model_validate(load_fixture(f"agent_responses/dd_{d}_signal"))
+        sig = DD_REPORT_FOR[d].model_validate(load_fixture(f"agent_responses/dd_{d}_signal"))
         assert sig.dimension == d
         assert len(sig.key_findings) >= 1
 
@@ -116,7 +112,7 @@ def test_dd_fixtures_are_valid_signals(load_fixture):
 async def test_eight_dimensions_run_concurrently(db, monkeypatch, load_fixture):
     """gather_dimensions fans the 8 locked dimensions out through a SINGLE asyncio.gather of
     exactly 8 awaitables (spy the same way test_desk_orchestrator does) and returns 8 cited
-    AnalystSignals, one per locked key."""
+    per-dimension reports, one per locked key."""
     from catalyst_trader.desk import diligence
 
     calls = []
@@ -149,7 +145,7 @@ def test_dimension_prompt_reads_only_firewall_fields():
     assert "ACME" in prompt  # ticker
     assert "pdufa" in prompt  # catalyst fact
     assert '"financials"' in prompt  # the mandated dimension token (router matches on this)
-    # NB: `thesis` is now a legitimate AnalystSignal field (CALL-01) the DD prompt requests, so it is
+    # NB: `thesis` is now a legitimate report-base field (CALL-01) the DD prompt requests, so it is
     # NOT a firewall leak. The Workflow-1/2 VERDICT concepts below must still never appear.
     for leaked in ("bull_strongest_point", "direction", "kill_criteria"):
         assert leaked not in prompt
@@ -157,7 +153,7 @@ def test_dimension_prompt_reads_only_firewall_fields():
 
 def test_dimension_prompt_mandates_grounded_thesis():
     """CALL-01: the shared DD prompt requests a thesis SYNTHESIZED from the dimension's own cited
-    findings — the DD dims share the AnalystSignal schema, so the required field is instructed."""
+    findings — the DD dims share the AnalystReportBase spine, so the required field is instructed."""
     from catalyst_trader.desk import diligence
 
     prompt = diligence.build_dimension_prompt("financials", DiligenceInput(**DD_INPUT))
@@ -306,9 +302,9 @@ PARAMS = {"diligence": {"dimension_score_floor": -0.2, "dimension_min_conf": 0.5
 
 
 def _sig(dimension, *, score=0.3, confidence=0.7):
-    """A data-backed AnalystSignal for `dimension` (one cited finding, score above floor,
-    confidence above min_conf) — i.e. `dimension_passed` True under PARAMS by default."""
-    return AnalystSignal(
+    """A data-backed per-dim report for `dimension` (one cited finding, score above floor,
+    confidence above min_conf; sections default-empty) — `dimension_passed` True under PARAMS."""
+    return DD_REPORT_FOR[dimension](
         dimension=dimension, ticker="ACME", catalyst_id="cat-001",
         score=score, confidence=confidence,
         thesis=f"On the {dimension} dimension the cited finding does not kill the trade.",
@@ -395,7 +391,7 @@ def test_dimension_passed_reads_params():
     assert diligence.dimension_passed(_sig("financials", score=-0.5), params=PARAMS) is False
     assert diligence.dimension_passed(_sig("financials"), params=PARAMS) is True
 
-    # zero cited findings (constructed to bypass the AnalystSignal validator) -> False (defense).
+    # zero cited findings (constructed to bypass the report validator) -> False (defense).
     empty = _sig("financials").model_copy(update={"key_findings": []})
     assert diligence.dimension_passed(empty, params=PARAMS) is False
 
@@ -585,7 +581,7 @@ async def test_run_diligence_end_to_end(db, monkeypatch, load_fixture):
     assert len(dossier.per_dimension) == 8
     assert dossier.all_evidence_refs  # tool: refs survived cite-or-drop
     assert dossier.residual_risks  # populated from the narrative fixture
-    assert len([c for c in calls if c["schema"] is AnalystSignal]) == 8
+    assert len([c for c in calls if c["schema"] in set(DD_REPORT_FOR.values())]) == 8
     assert len([c for c in calls if c["schema"] is diligence.DiligenceNarrative]) == 1
 
 
@@ -677,3 +673,97 @@ async def test_dd_expected_move_abstains_when_options_illiquid(db, monkeypatch, 
     md["options"]["quote"] = dict(_ILLIQUID_OPTS)
     dossier = await diligence.run_diligence(db, DiligenceInput(**DD_INPUT), market_data=md)
     assert dossier.dd_expected_move is None
+
+
+# ---------------------------------------------------------------------------
+# 07.9 Plan 2 — per-dimension structured DD reports
+# ---------------------------------------------------------------------------
+
+_SECTION_HEADERS = {
+    "trial_stats": ["Trial Design", "Endpoints", "Efficacy", "Safety", "Key Scientific Risk"],
+    "regulatory": ["Application", "AdCom", "Label", "Probability of Approval"],
+    "financials": ["Runway", "Capital Structure", "Insider"],
+    "ownership_flow": ["Short Interest", "Insider"],
+    "options_move": ["Expected Move", "Implied"],
+    "hedge_revalidation": ["Hedge"],
+    "liquidity": ["Tradeability", "Volume"],
+    "historical_analog": ["Analog"],
+}
+
+
+def test_dd_report_for_covers_locked_keys_with_distinct_classes():
+    from catalyst_trader.contracts import AnalystReportBase, ClinicalReport, RegulatoryReport
+
+    assert list(DD_REPORT_FOR) == DD_DIMENSIONS  # keys + order frozen
+    assert len(set(DD_REPORT_FOR.values())) == 8  # one class per dim (schema-routable)
+    assert all(issubclass(c, AnalystReportBase) for c in DD_REPORT_FOR.values())
+    assert DD_REPORT_FOR["trial_stats"] is ClinicalReport  # reuse, no duplication (R1)
+    assert DD_REPORT_FOR["regulatory"] is RegulatoryReport
+
+
+@pytest.mark.parametrize("dim", DD_DIMENSIONS)
+async def test_run_dimension_binds_per_dim_report(monkeypatch, load_fixture, dim):
+    from catalyst_trader.desk import diligence
+
+    calls = []
+    _patch_dd_seam(monkeypatch, _dd_router(load_fixture, calls))
+    rep = await diligence.run_dimension(dim, DiligenceInput(**DD_INPUT))
+    assert calls[0]["schema"] is DD_REPORT_FOR[dim]
+    assert isinstance(rep, DD_REPORT_FOR[dim])
+    assert rep.dimension == dim and rep.key_findings and rep.thesis and rep.unknowns
+
+
+@pytest.mark.parametrize("dim", DD_DIMENSIONS)
+def test_dimension_prompt_has_sections_and_plain_language(dim):
+    from catalyst_trader.desk import diligence
+
+    prompt = diligence.build_dimension_prompt(dim, DiligenceInput(**DD_INPUT))
+    for h in _SECTION_HEADERS[dim]:
+        assert h in prompt, h
+    # Plain-Language Standard (§5) as HARD RULES
+    assert "define" in prompt and "context" in prompt and "BOTTOM LINE" in prompt
+    assert "null" in prompt and "never fabricate" in prompt
+    # preserved: adversarial framing, quant tools, cite-or-drop, dimension token
+    assert "assume the promoting desk is wrong" in prompt
+    assert "mcp__quant__" in prompt and "evidence_ref" in prompt and f'"{dim}"' in prompt
+    for leaked in ("bull_strongest_point", "direction", "kill_criteria"):
+        assert leaked not in prompt
+
+
+def test_liquidity_context_carries_quote():
+    from catalyst_trader.desk import diligence
+
+    ctx = diligence.liquidity_context({"bid": 1.5, "volume": 1200, "oi": 40})
+    assert "1.5" in ctx and "1200" in ctx and "40" in ctx
+    assert diligence.liquidity_context(None) is None
+    assert diligence.liquidity_context({}) is None
+
+
+async def test_run_diligence_threads_liquidity_context(db, monkeypatch, load_fixture):
+    from catalyst_trader.desk import diligence
+
+    _mock_valid_hedge(monkeypatch)
+    calls = []
+    _patch_dd_seam(monkeypatch, _dd_router(load_fixture, calls))
+    await diligence.run_diligence(db, DiligenceInput(**DD_INPUT), market_data=_full_market_data())
+    liq = next(c["prompt"] for c in calls if c["schema"] is DD_REPORT_FOR["liquidity"])
+    assert "volume=100" in liq
+
+
+@pytest.mark.parametrize("dim", DD_DIMENSIONS)
+async def test_uncited_dd_report_rejected_at_real_boundary(monkeypatch, load_fixture, dim):
+    """Only the SDK `query` is faked — the REAL run_structured rejects a zero-finding payload."""
+    import json
+
+    from pydantic import ValidationError
+
+    from catalyst_trader.desk import diligence, runtime
+
+    bad = {**load_fixture(f"agent_responses/dd_{dim}_signal"), "key_findings": []}
+
+    async def _q(*, prompt, options):
+        yield type("R", (), {"result": json.dumps(bad)})()
+
+    monkeypatch.setattr(runtime, "query", _q)
+    with pytest.raises(ValidationError):
+        await diligence.run_dimension(dim, DiligenceInput(**DD_INPUT))

@@ -13,5 +13,7 @@
     }
   ],
   "kb_analogs_queried": ["tool:analog_query#ow02hh"],
-  "unknowns": ["bi-monthly short-interest lag leaves a 2-week blind spot"]
+  "unknowns": ["bi-monthly short-interest lag leaves a 2-week blind spot"],
+  "short_interest": {"si_pct_float": 18.5, "days_to_cover": 4.2, "cost_to_borrow_pct": null, "squeeze_setup": null},
+  "si_pct_float_source": "tool:short_interest#ow01gg"
 }

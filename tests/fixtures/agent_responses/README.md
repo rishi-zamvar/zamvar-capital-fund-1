@@ -5,8 +5,9 @@ payload a role's `query()` would emit — a schema-valid instance of that role's
 contract. The 4 catalyst-call analysts each emit a lens report
 (`{clinical,regulatory,financial,market_sentiment}_signal.json` ->
 `ClinicalReport`/`RegulatoryReport`/`FinancialReport`/`MarketReport`, guideline §7);
-the 8 DD dims + the generic seam sample still ride the shared `AnalystSignal`
-(`dd_*_signal.json`, `sample_analyst_signal.json`). Debate/verdict/etc. as before
+the 8 DD dims each emit their per-dim report (`dd_*_signal.json` ->
+`diligence.DD_REPORT_FOR[dim]`, 07.9 Plan 2); only the generic seam sample still
+rides `AnalystSignal` (`sample_analyst_signal.json`). Debate/verdict/etc. as before
 (`DebateVerdict`, ...).
 
 The whole desk test suite runs **offline**. There are two mock points, both

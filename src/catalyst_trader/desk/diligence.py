@@ -21,7 +21,19 @@ from typing import Literal
 
 from pydantic import BaseModel, ConfigDict
 
-from ..contracts import AnalystSignal, DiligenceDossier, DiligenceInput
+from ..contracts import (
+    AnalystReportBase,
+    ClinicalReport,
+    DDFinancialsReport,
+    DiligenceDossier,
+    DiligenceInput,
+    HedgeRevalidationReport,
+    HistoricalAnalogReport,
+    LiquidityReport,
+    OptionsMoveReport,
+    OwnershipFlowReport,
+    RegulatoryReport,
+)
 from ..quant.options import implied_move
 from . import evidence, risk
 from .runtime import run_structured
@@ -56,45 +68,94 @@ DILIGENCE_PROMPTS = {
         "You are the TRIAL-STATS diligence agent. Your job is to find why this readout FAILS from "
         "the raw ClinicalTrials.gov record — assume the promoting desk cherry-picked. Interrogate "
         "endpoint power, the pre-registered analysis plan, phase-transition base rates, and how "
-        "structurally similar past readouts actually resolved."
+        "structurally similar past readouts actually resolved.\n"
+        "SECTIONS (in order): Trial Design (n, control, blinding, alpha/power) -> Endpoints (primary, "
+        "surrogate status, changed vs registration?) -> Efficacy (effect + CI/HR/ARR/NNT, each vs the "
+        "bar) -> Safety -> Prior Consistency -> Key Scientific Risk -> PoS estimate.\n"
+        "FRAMEWORK: statistically significant is not clinically meaningful — judge the effect against "
+        "the standard-of-care benchmark. Anchor `pos_estimate` on the mcp__quant__base_rate for this "
+        "phase (cite it in pos_estimate_source); efficacy/safety detail not in the record stays null."
     ),
     "regulatory": (
         "You are the REGULATORY diligence agent. Your job is to find the approval/label risk the "
         "promoting desk downplayed — PDUFA/AdCom precedent for this class, prior CRLs, review-division "
-        "posture, and analog regulatory outcomes. Anchor every claim to a base rate or a KB analog."
+        "posture, and analog regulatory outcomes. Anchor every claim to a base rate or a KB analog.\n"
+        "SECTIONS (in order): Application (type, review clock, PDUFA date) -> Division -> Prior CRL -> "
+        "AdCom -> Label Risk -> Regulatory Question -> Precedent -> Probability of Approval.\n"
+        "FRAMEWORK: split approval into 3 outcomes (clean approve / approve-restricted / CRL). Anchor "
+        "`poa.point` on the base_rate (CRL penalty, AdCom follow-through) and cite poa.point_source; "
+        "prior-CRL / AdCom / label reads are modifiers you note, never the number's source."
     ),
     "financials": (
         "You are the FINANCIALS diligence agent. Your job is to find the funding/dilution risk around "
         "the event. Take the raw cash / burn / runway figures supplied and CALL mcp__quant__cash_runway "
-        "to judge whether the company is funded past the catalyst — never estimate runway yourself."
+        "to judge whether the company is funded past the catalyst — never estimate runway yourself.\n"
+        "SECTIONS (in order): Runway (burn, months, clears the catalyst?) -> Capital Structure "
+        "(shares, dilution overhang) -> Insider activity.\n"
+        "FRAMEWORK: runway-vs-catalyst first (a raise right after the event caps the upside), then "
+        "dilution, then the insider signal. Headline = runway.runway_months cited in "
+        "runway_months_source. No rNPV here — valuation is not a diligence fact."
     ),
     "ownership_flow": (
         "You are the OWNERSHIP/FLOW diligence agent. Your job is to find the positioning risk hidden in "
         "the ownership tape: short interest, days-to-cover, and insider net selling. Interpret the "
-        "pre-computed figures supplied and cite each — a crowded or insider-dumped name is a red flag."
+        "pre-computed figures supplied and cite each — a crowded or insider-dumped name is a red flag.\n"
+        "SECTIONS (in order): Short Interest (% of float, days-to-cover, squeeze setup) -> Ownership -> "
+        "Insider activity (net buying vs selling).\n"
+        "FRAMEWORK: crowding cuts both ways — a squeeze on good news, a stampede on bad. Headline = "
+        "short_interest.si_pct_float cited in si_pct_float_source."
     ),
     "options_move": (
         "You are the OPTIONS-MOVE diligence agent. Your job is to judge whether the event is already "
         "priced in. Use the options-implied move supplied via the liquidity-gated context; when options "
         "are illiquid, emit LOW confidence and fall back to the in-house historical-gap estimate rather "
-        "than trusting a junk implied vol. Prefer the model-free straddle move."
+        "than trusting a junk implied vol. Prefer the model-free straddle move.\n"
+        "SECTIONS (in order): Expected Move (ATM straddle, % move, IV now vs post-event) -> Implied "
+        "outcome probability.\n"
+        "FRAMEWORK: the straddle is the market's priced-in move; IV crush after the event eats option "
+        "value. Headline = expected_move.expected_move_pct cited in expected_move_pct_source — leave it "
+        "null when options are illiquid (put the historical-gap fallback in the findings instead)."
     ),
     "hedge_revalidation": (
         "You are the HEDGE-REVALIDATION diligence agent. Your job is to independently confirm the "
         "candidate peer pays off INVERSELY on THIS specific catalyst. Interpret the deterministic "
         "validate_hedge result supplied in context (a validated inverse Hedge, or none). No valid "
-        "inverse hedge means size-tiny / exit — say so; never invent a hedge."
+        "inverse hedge means size-tiny / exit — say so; never invent a hedge.\n"
+        "SECTIONS (in order): Hedge validity (validated?, what it covers, mechanism) -> Conditional "
+        "worst case.\n"
+        "FRAMEWORK: only a validated inverse hedge counts. Headline = conditional_worst (the un-netted "
+        "worst cell) cited in conditional_worst_source; null when there is no valid hedge."
     ),
     "liquidity": (
         "You are the LIQUIDITY diligence agent. Your job is to confirm both legs can be traded at the "
         "target size. A wide-but-live quote is acceptable; ONLY a zero-liquidity leg (no bid / no volume "
-        "/ no open interest) is a hard fail. Cite the quote/volume figures supplied."
+        "/ no open interest) is a hard fail. Cite the quote/volume figures supplied.\n"
+        "SECTIONS (in order): Tradeability (bid, Volume, open interest of the target leg).\n"
+        "FRAMEWORK: tradeable-at-size, not tight-spread. Headline = tradeability.volume cited in "
+        "tradeability.volume_source (0 = the zero-liquidity hard fail)."
     ),
     "historical_analog": (
         "You are the HISTORICAL-ANALOG diligence agent. Your job is to surface the closest past scenarios "
         "and how they resolved — CALL mcp__quant__analog_query and let the disconfirming analogs argue "
-        "against the trade. Cite every analog you lean on."
+        "against the trade. Cite every analog you lean on.\n"
+        "SECTIONS (in order): Analog table (name, implied vs realized move, outcome) -> what the "
+        "disconfirming analogs say.\n"
+        "FRAMEWORK: weight the closest DISCONFIRMING analogs. Headline = analog_realized_move_pct (their "
+        "realized move) cited in analog_realized_move_pct_source."
     ),
+}
+
+# Each dim's structured one-pager (07.9 Plan 2). trial_stats/regulatory REUSE the lens classes
+# outright (same sections, no duplication); one class per dim keeps the schema routable.
+DD_REPORT_FOR = {
+    "trial_stats": ClinicalReport,
+    "regulatory": RegulatoryReport,
+    "financials": DDFinancialsReport,
+    "ownership_flow": OwnershipFlowReport,
+    "options_move": OptionsMoveReport,
+    "hedge_revalidation": HedgeRevalidationReport,
+    "liquidity": LiquidityReport,
+    "historical_analog": HistoricalAnalogReport,
 }
 
 
@@ -149,6 +210,12 @@ HARD RULES (a source-cited signal, never LLM arithmetic):
      ("here is my read"), consistent with your score/confidence. It MUST be a SYNTHESIS of your own
      cited key_findings — introduce NO claim that is not already in a cited finding (the thesis
      inherits their grounding; it is not a new uncited assertion).
+  6. Fill the SECTIONS above as a structured one-pager. Every number is tool-cited or left null —
+     never fabricate; an empty slot is an honest finding. A headline number needs its paired *_source.
+PLAIN-LANGUAGE STANDARD (HARD RULES — the reader is a smart non-specialist):
+  7. Lead with the BOTTOM LINE (the thesis), then the evidence.
+  8. define every technical term inline the first time you use it (e.g. "CRL (FDA rejection letter)").
+  9. Every number gets context — compared against which benchmark or base rate — never a bare figure.
 """
 
 
@@ -160,15 +227,17 @@ async def run_dimension(
     allowed_tools: list[str] | None = None,
     extra_context: str = "",
     model: str = "sonnet",
-) -> AnalystSignal:
-    """Run one adversarial diligence dimension and return its validated, source-cited AnalystSignal.
+) -> AnalystReportBase:
+    """Run one adversarial diligence dimension and return its validated, source-cited report
+    (the per-dim DD_REPORT_FOR class).
 
     Sibling of `analysts.run_analyst` (which hard-refs the 4-dim analyst PROMPTS). The schema
     boundary rejects any uncited/invalid payload; runs on the cheaper sonnet tier by default.
     """
+    prompt = build_dimension_prompt(dimension, input, extra_context=extra_context)  # validates the key first
     return await run_structured(
-        build_dimension_prompt(dimension, input, extra_context=extra_context),
-        AnalystSignal,
+        prompt,
+        DD_REPORT_FOR[dimension],
         mcp_servers=mcp_servers,
         allowed_tools=allowed_tools,
         model=model,
@@ -177,11 +246,11 @@ async def run_dimension(
 
 async def gather_dimensions(
     conn, input: DiligenceInput, *, dimension_context: dict[str, str] | None = None,
-) -> list[AnalystSignal]:
+) -> list[AnalystReportBase]:
     """Fan the 8 adversarial dimensions out through a SINGLE asyncio.gather (mirrors run_desk).
 
     `dimension_context` threads Task-2's prep seams (options/financials/ownership/trial/hedge) into
-    each dimension's `extra_context`; default empty = a plain run. Returns 8 cited AnalystSignals.
+    each dimension's `extra_context`; default empty = a plain run. Returns 8 cited per-dimension reports.
     """
     srv = {"quant": build_quant_server(conn)}
     ctx = dimension_context or {}
@@ -287,6 +356,17 @@ def trial_stats_context(study: dict | None) -> str | None:
     )
 
 
+def liquidity_context(quote: dict | None) -> str | None:
+    """Liquidity money-dim prep (prompt text ONLY — the hard fail stays zero_liquidity). Before
+    07.9-02 the liquidity agent got no figures at all. Empty -> None."""
+    if not quote:
+        return None
+    return (
+        "liquidity (target-leg underlying quote — interpret + cite):\n"
+        f"  bid={quote.get('bid')} volume={quote.get('volume')} oi={quote.get('oi')}"
+    )
+
+
 def hedge_context(conn, embed, input: DiligenceInput, *, entry, exit_by_date, analog_gaps, prices) -> str:
     """Hedge money-dim prep: re-run validate_hedge INDEPENDENTLY, scoped to the SPECIFIC promoted peer
     (candidate_peer=input.pair) with input.ticker as target (BLOCKER-3). Report the resulting Hedge |
@@ -324,11 +404,11 @@ MONEY_TOUCHING = frozenset({
 })
 
 
-def dimension_passed(sig: AnalystSignal, *, params: dict) -> bool:
+def dimension_passed(sig: AnalystReportBase, *, params: dict) -> bool:
     """A dimension is data-backed iff it has >=1 cited key_finding AND its score is not
     below the floor AND its confidence clears the minimum. Thresholds come from `params`
     via direct subscript (missing-key-raises) — NEVER a hardcoded literal in money code.
-    The >=1-cited-finding invariant is already guaranteed by the AnalystSignal validator;
+    The >=1-cited-finding invariant is already guaranteed by the report validator;
     the `bool(sig.key_findings)` check is defense against a bypassed/constructed signal."""
     floor = params["diligence"]["dimension_score_floor"]
     min_conf = params["diligence"]["dimension_min_conf"]
@@ -336,7 +416,7 @@ def dimension_passed(sig: AnalystSignal, *, params: dict) -> bool:
 
 
 def synthesize_verdict(
-    findings: list[AnalystSignal], *, liquidity_zero: bool, params: dict,
+    findings: list[AnalystReportBase], *, liquidity_zero: bool, params: dict,
 ) -> Literal["go", "no_go"]:
     """The ONLY place the diligence go/no-go is decided — a pure function the LLM cannot
     touch. Asymmetric by design ("rewards no-go"):
@@ -384,7 +464,7 @@ class DiligenceNarrative(BaseModel):
     residual_risks: list[str] = []
 
 
-def _narrative_prompt(findings: list[AnalystSignal], verdict: str) -> str:
+def _narrative_prompt(findings: list[AnalystReportBase], verdict: str) -> str:
     lines = [
         f"  {s.dimension}: score={s.score:+.2f} conf={s.confidence:.2f} "
         f"findings={[kf.claim for kf in s.key_findings]}"
@@ -400,14 +480,14 @@ def _narrative_prompt(findings: list[AnalystSignal], verdict: str) -> str:
     )
 
 
-async def _narrative(findings: list[AnalystSignal], verdict: str, *, model: str = "opus") -> DiligenceNarrative:
+async def _narrative(findings: list[AnalystReportBase], verdict: str, *, model: str = "opus") -> DiligenceNarrative:
     """One opus pass that writes the narrative of the ALREADY-DECIDED verdict. It returns a
     verdict-free DiligenceNarrative — it cannot flip the go/no-go (that lives in synthesize_verdict)."""
     return await run_structured(_narrative_prompt(findings, verdict), DiligenceNarrative, model=model)
 
 
 def assemble_dossier(
-    findings: list[AnalystSignal],
+    findings: list[AnalystReportBase],
     verdict: str,
     narrative: DiligenceNarrative,
     *,
@@ -532,6 +612,7 @@ async def run_diligence(
         "financials": financials_context(md.get("financials")),
         "ownership_flow": ownership_context(md.get("ownership")),
         "trial_stats": trial_stats_context(md.get("trial")),
+        "liquidity": liquidity_context(md.get("liquidity_quote")),
         "hedge_revalidation": hedge_context(conn, embed, input, **md["hedge"]) if md.get("hedge") else None,
     }
     dimension_context = {k: v for k, v in prep.items() if v}
