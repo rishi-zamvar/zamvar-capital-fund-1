@@ -186,6 +186,14 @@ def holdout_sha(conn, h: dict) -> str:
     return sha(_manifest(conn, h["start"], h["end"]))
 
 
+def runs_spent(conn, h: dict) -> int:
+    """Gate runs already spent against ANY holdout overlapping this one's window — re-freezing the same
+    (or an overlapping) window does NOT reset the budget or the deflated-Sharpe trial count."""
+    return conn.execute(
+        'SELECT COUNT(*) FROM learn_gate_run g JOIN learn_holdout h ON h.id = g.holdout_id '
+        'WHERE h.start <= ? AND h."end" >= ?', (h["end"], h["start"])).fetchone()[0]
+
+
 def training_cutoff(h: dict) -> str:
     """Last admissible training as_of: its one-week exit still lands >= embargo before the holdout."""
     d = date.fromisoformat(h["start"]) - timedelta(days=h["embargo_days"] + HOLD_DAYS)
@@ -319,8 +327,7 @@ def evaluate(conn, proposal_id: int, *, replay, golden: list[dict], benchmark,
     if prop is None or prop["status"] != "proposed":
         raise GateRefused(f"proposal {proposal_id} is not awaiting evaluation")
     h = active_holdout(conn)
-    spent = conn.execute("SELECT COUNT(*) FROM learn_gate_run WHERE holdout_id=?",
-                         (prop["holdout_id"],)).fetchone()[0]
+    spent = runs_spent(conn, h) if h else 0
     if spent >= th["max_gate_runs"]:
         raise GateRefused(f"gate-run budget spent on holdout {prop['holdout_id']} "
                           f"({spent}/{th['max_gate_runs']}) — freeze a new holdout")

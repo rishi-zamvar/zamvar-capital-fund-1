@@ -72,11 +72,64 @@ def test_given_failed_proposal_when_promoted_then_refused(frozen):
         lg.promote(frozen, pid)
 
 
-def test_given_proposal_status_flipped_to_passed_by_sql_when_promoted_then_refused(frozen):
+def test_given_proposal_status_flipped_to_passed_by_sql_when_flipped_then_refused(frozen):
     pid = lg.submit_proposal(frozen, _diff())
-    frozen.execute("UPDATE learn_proposal SET status='passed' WHERE id=?", (pid,))
-    with pytest.raises(lg.GateRefused):  # no passed gate run backs the status
+    with pytest.raises(sqlite3.IntegrityError, match="status transition"):
+        frozen.execute("UPDATE learn_proposal SET status='passed' WHERE id=?", (pid,))
+    with pytest.raises(lg.GateRefused):
         lg.promote(frozen, pid)
+
+
+def test_given_failed_proposal_when_flipped_to_passed_then_refused(frozen):
+    pid = lg.submit_proposal(frozen, _diff({"weekly.shortlist_k": 1}))
+    _evaluate(frozen, pid)
+    with pytest.raises(sqlite3.IntegrityError, match="status transition"):
+        frozen.execute("UPDATE learn_proposal SET status='passed' WHERE id=?", (pid,))
+
+
+def test_given_evaluated_proposal_when_a_second_passed_run_is_forged_then_refused(frozen):
+    pid = lg.submit_proposal(frozen, _diff({"weekly.shortlist_k": 1}))
+    _evaluate(frozen, pid)
+    p = frozen.execute("SELECT * FROM learn_proposal WHERE id=?", (pid,)).fetchone()
+    h = lg.active_holdout(frozen)
+    with pytest.raises(sqlite3.IntegrityError, match="bind"):
+        frozen.execute(
+            "INSERT INTO learn_gate_run (proposal_id, holdout_id, content_sha, holdout_sha, golden_sha,"
+            " n_trials, report, passed, created_at) VALUES (?,?,?,?,'g',1,'{}',1,'x')",
+            (pid, h["id"], p["content_sha"], h["manifest_sha"]))
+
+
+def test_given_gate_run_with_wrong_shas_when_inserted_then_refused(frozen):
+    pid = lg.submit_proposal(frozen, _diff())
+    with pytest.raises(sqlite3.IntegrityError, match="bind"):
+        frozen.execute(
+            "INSERT INTO learn_gate_run (proposal_id, holdout_id, content_sha, holdout_sha, golden_sha,"
+            " n_trials, report, passed, created_at) VALUES (?,1,'forged','forged','g',1,'{}',1,'x')", (pid,))
+
+
+def test_given_non_playbook_node_when_flipped_into_a_fitted_params_playbook_then_refused(frozen):
+    oid = kb.insert_claim(frozen, kb.KBNode(kind="outcome", attrs={
+        "scenario_type": "fitted_params:weekly", "scenario": "x", "strategy": EVIL}), EV)
+    with pytest.raises(sqlite3.IntegrityError, match="append-only"):
+        frozen.execute("UPDATE kb_node SET kind='playbook', confidence=0.99 WHERE id=?", (oid,))
+
+
+def test_given_free_form_playbook_when_rewritten_into_fitted_params_then_refused(frozen):
+    nid = kb.insert_playbook(frozen, "other", "x", EVIL, 0.9, EV)
+    with pytest.raises(sqlite3.IntegrityError, match="append-only"):
+        frozen.execute("UPDATE kb_node SET attrs_json=json_set(attrs_json,'$.scenario_type',"
+                       "'fitted_params:weekly') WHERE id=?", (nid,))
+
+
+def test_given_identical_window_refrozen_when_evaluated_then_budget_and_trials_carry_over(frozen):
+    th = dict(lg.GATE_THRESHOLDS, max_gate_runs=2)
+    _evaluate(frozen, lg.submit_proposal(frozen, _diff()), thresholds=th)
+    h = lg.active_holdout(frozen)
+    lg.freeze_holdout(frozen, start=h["start"], end=h["end"])   # try to reset the budget
+    rep = _evaluate(frozen, lg.submit_proposal(frozen, _diff({"weekly.cost_mult": 3})), thresholds=th)
+    assert rep["walk_forward"]["n_trials"] == 2
+    with pytest.raises(lg.GateRefused, match="budget"):
+        _evaluate(frozen, lg.submit_proposal(frozen, _diff({"weekly.cost_mult": 4})), thresholds=th)
 
 
 def test_given_promoted_proposal_when_promoted_again_then_refused():

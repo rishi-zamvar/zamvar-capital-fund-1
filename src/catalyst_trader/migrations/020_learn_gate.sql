@@ -115,3 +115,31 @@ BEGIN SELECT RAISE(ABORT, 'LEARN gate: fitted_params versions are append-only');
 CREATE TRIGGER kb_fitted_params_no_delete BEFORE DELETE ON kb_node
 WHEN OLD.kind = 'playbook' AND json_extract(OLD.attrs_json, '$.scenario_type') LIKE 'fitted_params:%'
 BEGIN SELECT RAISE(ABORT, 'LEARN gate: fitted_params versions are append-only'); END;
+
+-- Verifier gap fixes: guard the NEW row of an update too (a kind flip outcome->playbook, or an attrs
+-- rewrite into the fitted_params namespace, would otherwise mint an ungated money-path version).
+CREATE TRIGGER kb_fitted_params_no_rewrite_into BEFORE UPDATE ON kb_node
+WHEN NEW.kind = 'playbook' AND (
+    json_extract(NEW.attrs_json, '$.scenario_type') LIKE 'fitted_params:%'
+    OR json_extract(NEW.attrs_json, '$.learn_promotion_id') IS NOT NULL)
+BEGIN SELECT RAISE(ABORT, 'LEARN gate: fitted_params versions are append-only (no rewrite into the namespace)'); END;
+
+-- A gate run must bind to the proposal's CURRENT content + its holdout's frozen sha, and only while the
+-- proposal awaits evaluation (no second verdict on an evaluated proposal).
+CREATE TRIGGER learn_gate_run_binds_proposal BEFORE INSERT ON learn_gate_run
+WHEN NOT EXISTS (
+  SELECT 1 FROM learn_proposal p JOIN learn_holdout h ON h.id = p.holdout_id
+  WHERE p.id = NEW.proposal_id AND p.status = 'proposed' AND p.content_sha = NEW.content_sha
+    AND p.holdout_id = NEW.holdout_id AND h.manifest_sha = NEW.holdout_sha)
+BEGIN SELECT RAISE(ABORT, 'LEARN gate: a gate run must bind to a proposed proposal and its frozen holdout'); END;
+
+-- Status moves only along proposed -> passed|failed (backed by a matching gate run) -> promoted (backed by
+-- an applied promotion). A raw status flip with no verdict behind it is refused.
+CREATE TRIGGER learn_proposal_status_flow BEFORE UPDATE OF status ON learn_proposal
+WHEN NEW.status IS NOT OLD.status AND NOT (
+  (OLD.status = 'proposed' AND NEW.status IN ('passed', 'failed') AND EXISTS (
+     SELECT 1 FROM learn_gate_run g WHERE g.proposal_id = NEW.id
+       AND g.passed = (NEW.status = 'passed') AND g.content_sha = OLD.content_sha))
+  OR (OLD.status = 'passed' AND NEW.status = 'promoted' AND EXISTS (
+     SELECT 1 FROM learn_promotion pr WHERE pr.proposal_id = NEW.id AND pr.status = 'applied')))
+BEGIN SELECT RAISE(ABORT, 'LEARN gate: illegal proposal status transition'); END;
