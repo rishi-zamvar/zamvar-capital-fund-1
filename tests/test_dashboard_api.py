@@ -319,8 +319,8 @@ def test_playbook_lists_scenarios_confidence_desc_excludes_fitted_params(dbpath)
     assert first["confidence"] == 0.9 and first["strategy_text"] == "buy the dip"
     assert first["what_to_watch"] == [] and first["n"] is None
     assert second["n"] == 12 and second["median_move"] == 0.08
-    assert second["base_rate"] == {"approve": 0.8} and second["what_to_watch"] == ["AdCom"]
-    assert pb["kb_counts"]["playbook"] == 3
+    assert second["base_rate"] == [{"label": "approve", "rate": 0.8}] and second["what_to_watch"] == ["AdCom"]
+    assert {"kind": "playbook", "count": 3} in pb["kb_counts"]
 
 
 # --------------------------------------------------------------- chat (SSE)

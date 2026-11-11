@@ -201,10 +201,13 @@ def _playbook(conn) -> dict:
             "confidence": n["confidence"],
             "strategy_text": s if isinstance(s, str) else None,
             "n": struct.get("n"), "median_move": struct.get("median_move"),
-            "base_rate": struct.get("base_rate") or {}, "what_to_watch": struct.get("what_to_watch") or [],
+            # label/value LISTS (not dicts): a Swift snake_case decoder would rewrite dict KEYS
+            "base_rate": [{"label": k, "rate": v} for k, v in (struct.get("base_rate") or {}).items()],
+            "what_to_watch": struct.get("what_to_watch") or [],
         })
     out.sort(key=lambda p: -(p["confidence"] or 0))
-    counts = {r["kind"]: r["c"] for r in conn.execute("SELECT kind, COUNT(*) c FROM kb_node GROUP BY kind")}
+    counts = [{"kind": r["kind"], "count": r["c"]}
+              for r in conn.execute("SELECT kind, COUNT(*) c FROM kb_node GROUP BY kind ORDER BY kind")]
     return {"playbooks": out, "kb_counts": counts}
 
 
