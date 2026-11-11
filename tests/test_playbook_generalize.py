@@ -135,7 +135,7 @@ def test_given_seeded_fitted_params_when_generalize_then_load_params_unchanged(d
     """A pre-existing fitted_params:pdufa node must survive generalization untouched (no collision)."""
     from catalyst_trader.kb import EvidenceSource, insert_playbook
     ev = EvidenceSource(url="https://x", retrieved_at="2026-01-01", snippet_hash="fp")
-    insert_playbook(db, "fitted_params:pdufa", "seed", {"estimator": {"method": "median"}}, 0.9, [ev])
+    insert_playbook(db, "fitted_params:pdufa", "seed", {"estimator": {"method": "median"}}, 0.3, [ev])
     _seed_recurring_plus_singleton(db)
     before = load_params(db, "pdufa")
     generalize_playbooks(db, min_support=2)

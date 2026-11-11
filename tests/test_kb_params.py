@@ -43,9 +43,11 @@ def test_load_params_returns_seeded_strategy(db):
 
 
 def test_newer_higher_confidence_version_shadows_older(db):
-    insert_playbook(db, "fitted_params:pdufa", "old fit", _strategy(0.60), 0.4, EV)
-    insert_playbook(db, "fitted_params:pdufa", "new fit", _strategy(0.75), 0.7, EV)
-    # versioning: the 0.7 row wins (query_playbooks is confidence-desc)
+    # Phase 10: confidence above the 0.3 seed tier is reserved for LEARN-gated promotions (migration 020),
+    # so the ungated versioning check runs inside the seed tier.
+    insert_playbook(db, "fitted_params:pdufa", "old fit", _strategy(0.60), 0.1, EV)
+    insert_playbook(db, "fitted_params:pdufa", "new fit", _strategy(0.75), 0.2, EV)
+    # versioning: the 0.2 row wins (query_playbooks is confidence-desc)
     assert load_params(db, "pdufa")["estimator"]["default_down_move"] == 0.75
 
 
@@ -126,11 +128,15 @@ def test_load_params_returns_seeded_not_default_after_seeding(db):
     assert after["fit_source"] != BOOTSTRAP_DEFAULT["fit_source"]
 
 
-def test_seed_confidence_is_shadowable_by_a_future_fit(db):
-    # bootstrap rows are seeded at low confidence so any later, better fit shadows them (versioning)
+def test_seed_confidence_is_shadowable_only_by_a_gated_future_fit(db):
+    # bootstrap rows are seeded at low confidence so a later, better fit can shadow them — but since
+    # Phase 10 only through the LEARN gate (learn.gate.promote; proven in tests/test_learn_gate*.py).
+    # An ungated higher-confidence refit is refused by the migration-020 trigger.
+    import sqlite3
     seed_fitted_params(db)
-    insert_playbook(db, "fitted_params:pdufa", "refit", _strategy(0.99), 0.9, EV)
-    assert load_params(db, "pdufa")["estimator"]["default_down_move"] == 0.99
+    with pytest.raises(sqlite3.IntegrityError, match="LEARN gate"):
+        insert_playbook(db, "fitted_params:pdufa", "refit", _strategy(0.99), 0.9, EV)
+    assert load_params(db, "pdufa")["estimator"]["default_down_move"] != 0.99
 
 
 def test_seed_raises_on_uncited_row(db, tmp_path):

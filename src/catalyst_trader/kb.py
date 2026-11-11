@@ -557,7 +557,7 @@ def query_playbooks(conn, scenario_type: str) -> list[dict]:
     rows = conn.execute(
         "SELECT id, confidence, attrs_json FROM kb_node "
         "WHERE kind='playbook' AND json_extract(attrs_json,'$.scenario_type')=? "
-        "ORDER BY confidence DESC",
+        "ORDER BY confidence DESC, id ASC",  # tie -> the FIRST-written version wins (no silent displace)
         (scenario_type,),
     ).fetchall()
     out = []

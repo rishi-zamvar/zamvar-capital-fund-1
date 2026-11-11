@@ -1,0 +1,5 @@
+{"_README": "Golden-set regression windows for the LEARN gate (learn.gate.evaluate). Every case is replayed under the baseline and the patched config; the patched config may not do worse on ANY case. SEEDED by Claude with well-known small-cap-biotech stress windows (needs_ceo_review=true): the CEO should confirm/curate. An empty case list makes the gate fail closed.", "cases": [
+ {"id": "covid-crash-2020", "start": "2020-02-17", "end": "2020-03-30", "note": "Feb-Mar 2020 COVID crash: XBI ~-30% peak-to-trough", "needs_ceo_review": true},
+ {"id": "xbi-capitulation-2022", "start": "2022-04-18", "end": "2022-05-16", "note": "spring 2022 XBI capitulation to the cycle low", "needs_ceo_review": true},
+ {"id": "xbi-rebound-2022", "start": "2022-05-16", "end": "2022-07-11", "note": "summer 2022 sharp rebound off the low (a regime the loop must not break)", "needs_ceo_review": true}
+]}
