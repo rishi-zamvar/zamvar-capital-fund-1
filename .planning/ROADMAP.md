@@ -50,7 +50,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [ ] **Phase 8: Paper Ledger, Attribution & Post-Mortem (Layer C)** - Simulated ledger vs live quotes + P&L attribution + post-mortem into the KB
 - [ ] **Phase 8.5: Intra-Week Position Monitor** *(BUILD DEFERRED)* - Light/fast Haiku agent group, event-triggered by deterministic monitors (TA thresholds/news), flags positions → routes adjustment back to portfolio builder; no order placement
 - [ ] **Phase 9: iOS Dashboard + Approval Gate** - SwiftUI two-view dashboard, dossier review, approve/reject gate, chat-to-MD over Tailscale
-- [ ] **Phase 10: Continuous-Iteration Loop** - Predict→realize→score→propose-diff, gated behind golden-set regression + walk-forward evals
+- [x] **Phase 10: Continuous-Iteration Loop** - Predict→realize→score→propose-diff, gated behind golden-set regression + walk-forward evals
 - [ ] **Phase 11: Robinhood MCP Live Execution** - Live equities behind the human gate, after paper proof + a real tool-surface probe (strictly last)
 
 ## Phase Details
@@ -340,7 +340,11 @@ Decimal phases appear between their surrounding integers in numeric order.
   1. After each catalyst resolves, prediction-vs-realized is scored by an LLM-judge calibrated to hand-graded labels
   2. The loop proposes playbook/config diffs, and a diff merges to the money path only if it passes a golden-set regression replay plus guardrail/walk-forward evals against a frozen holdout
   3. No config or playbook diff can auto-apply to the live/paper money path without passing the gate
-**Plans**: TBD
+**Plans**: 3 plans (3 waves) — built 2026-11-11 on branch `phase10-learning-loop`
+- [x] 10-01-PLAN.md — LEARN-01 post-resolution LLM judge + calibration harness (QWK/within-one, real labels only), migration 019, 10 SYNTHETIC seed labels flagged for CEO grading (Wave 1)
+- [x] 10-02-PLAN.md — LEARN-02 gate: frozen holdout, training-only proposals, golden-set regression + guardrails + walk-forward (folds/DSR/XBI alpha); `learn.gate.promote` sole writer; migration 020 triggers + adversarial bypass suite (Wave 2)
+- [x] 10-03-PLAN.md — weekly learning cycle (`weekly_cycle.py --learn/--promote/--freeze-holdout`), grid proposer, never auto-promotes (Wave 3)
+**Open CEO inputs**: grade >= 20 real judge labels; curate golden windows; freeze the first real holdout; decide auto-promote (default explicit).
 
 ### Phase 11: Robinhood MCP Live Execution
 **Goal**: Execute real equities trades behind the human gate — only after paper proof and a verified tool surface.
@@ -368,5 +372,5 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 →
 | 7. Verifier/Guardrails + Backtest Harness | 0/5 | Planned | - |
 | 8. Paper Ledger, Attribution & Post-Mortem | 0/TBD | Not started | - |
 | 9. iOS Dashboard + Approval Gate | 0/TBD | Not started | - |
-| 10. Continuous-Iteration Loop | 0/TBD | Not started | - |
+| 10. Continuous-Iteration Loop | 3/3 | Complete (judge uncalibrated pending CEO labels) | 2026-11-11 |
 | 11. Robinhood MCP Live Execution | 0/TBD | Not started | - |

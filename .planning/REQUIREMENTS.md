@@ -177,8 +177,8 @@
 
 ### Continuous Iteration (LEARN)
 
-- [ ] **LEARN-01**: After each catalyst resolves, score prediction vs. realized and run an LLM-judge calibrated to graded labels
-- [ ] **LEARN-02**: Propose playbook/config diffs; merge only if they pass a golden-set regression replay + guardrail evals
+- [x] **LEARN-01**: After each catalyst resolves, score prediction vs. realized and run an LLM-judge calibrated to graded labels
+- [x] **LEARN-02**: Propose playbook/config diffs; merge only if they pass a golden-set regression replay + guardrail evals
 - [ ] **LEARN-03**: Post-mortem decomposes P&L (catalyst effect vs. beta drift vs. hedge leg vs. sizing) and updates base-rate priors
 
 ### Firm Operating Model & QC (OPS)
@@ -263,8 +263,8 @@
 | IOS-04 | Phase 9 | Pending |
 | IOS-05 | Phase 9 | Pending |
 | IOS-06 | Phase 9 | Pending |
-| LEARN-01 | Phase 10 | Pending |
-| LEARN-02 | Phase 10 | Pending |
+| LEARN-01 | Phase 10 | Complete (harness; judge uncalibrated until CEO labels) |
+| LEARN-02 | Phase 10 | Complete |
 | EXEC-03 | Phase 11 | Pending |
 | EXEC-04 | Phase 11 | Pending |
 

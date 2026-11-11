@@ -20,14 +20,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-08-14)
 
 **Core value:** Given an imminent biotech catalyst, produce a data-backed, portfolio-aware, hedged one-week trade recommendation the user can trust enough to approve — and get measurably better at it every week.
-**Current focus:** Phase 06.9 — free-data-ingestion-layer (multi-source real-data build + live shakedown)
+**Current focus:** Phase 10 — continuous-iteration loop (built on branch phase10-learning-loop; next: Phase 11)
 
 ## Current Position
 
-Phase: 06.9
-Plan: 8 of 8
-Status: Phase complete — ready for verification
-Last activity: 2026-08-20
+Phase: 10
+Plan: 3 of 3
+Status: Phase complete — verified (see 10-VERIFICATION.md); judge UNCALIBRATED pending CEO-graded labels
+Last activity: 2026-11-11
 
 Progress: [██████░░░░] 5/8 plans
 
@@ -136,6 +136,11 @@ Note: Phase 6.9/6.10 are retro-inserted sub-phases; the frontmatter project-wide
 ## Accumulated Context
 
 ### Decisions
+
+- [Phase 10]: money-path config = `fitted_params:<type>` via kb.load_params; only `fitted_params:weekly` is replayable (Layer A) — other targets fail the gate closed
+- [Phase 10]: migration 020 triggers make any ungated fitted_params:weekly row, any fitted_params above the 0.3 seed tier, or any in-place edit of a version impossible; learn.gate.promote is the sole writer
+- [Phase 10]: training cutoff = holdout.start - 7d embargo - 7d hold; DSR deflated by gate runs spent per holdout (budget 20)
+- [Phase 10]: judge scores are informational (not a gate input) until calibrated on >= 20 real labels
 
 Decisions are logged in PROJECT.md Key Decisions table.
 Recent decisions affecting current work:
@@ -256,6 +261,11 @@ Recent decisions affecting current work:
 - [Phase 07.8]: Slice-1 live catalyst_context hook: single-leg by honest degrade (no stored peer co-moves); every risk_input point-in-time-sourced or honestly degraded
 
 ### Pending Todos
+
+- [Phase 10] CEO: grade >= 20 REAL resolved cases into data/learn/judge_labels.json (all 10 seeds are SYNTHETIC)
+- [Phase 10] CEO: confirm/curate data/learn/golden_set.json windows (needs_ceo_review)
+- [Phase 10] Operator: freeze the first real holdout (`weekly_cycle.py --freeze-holdout START END`)
+- [Phase 10] Decide D1 auto-promote-on-pass (default: explicit --promote) and D2 holdout roll cadence
 
 None yet.
 

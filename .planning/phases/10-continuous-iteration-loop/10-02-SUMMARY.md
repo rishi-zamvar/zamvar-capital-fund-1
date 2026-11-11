@@ -19,7 +19,7 @@ key-files:
   passed runs, kb_node insert trigger (any fitted_params:weekly, any fitted_params above 0.3, any
   learn_promotion_id) must match an armed ticket exactly; fitted_params versions append-only.
 - kb.query_playbooks tie-break `id ASC` (plan-check B1).
-- Adversarial suite: 33 bypass attempts (forged fields, safety/gate-targeted patches, skip/fail gate, SQL
+- Adversarial suite: 39 bypass attempts (incl. 8 added after verification) (forged fields, safety/gate-targeted patches, skip/fail gate, SQL
   status flip, double promote, post-gate mutation incl. trigger dropped, holdout update/delete/drift/re-freeze,
   training leak, direct KB inserts at 0.9 / 0.31 / 0.1-weekly, forged + mismatched + consumed promotion
   tickets, in-place edit/delete of a version, grep invariant).

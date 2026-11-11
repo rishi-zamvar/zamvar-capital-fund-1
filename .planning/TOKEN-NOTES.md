@@ -314,3 +314,9 @@ Fable universe + pairs-discovery agents (event studies, FMP/yfinance metrics). T
 2. **Resolve as_of-dependent provider defaults INSIDE the closure, never at factory level** (C1) — a default lambda capturing a name that only exists in the inner scope NameErrors; the offline suite won't catch it if the default is never exercised.
 3. **Money-dim assembly is whole-dict-or-omit** — a partial dict passed to a direct-subscript consumer (diligence.py:269) KeyErrors; omit the whole key + flag. 0.0 is a real grounding datum, only None/absent degrades.
 4. All prior directives still hold (real fixtures, live check at close, don't babysit long-running live steps, Graphify graph-first, reuse-vs-new, plan-check ON for money, `.venv/bin/python -m pytest`).
+
+### Phase 10 — Continuous-Iteration Loop (CLOSED 2026-11-11)
+- **Spend: lean.** Single orchestrator executed all 3 plans inline (no executor subagents); only two subagents: one plan-checker (~73k) and one verifier. No research agent — the phase was pure reuse of existing seams (load_params, run_layer_a, deflated_sharpe, benchmark_relative, run_structured), so a RESEARCH.md would have re-read what CONTEXT already cites.
+- **Plan-check paid again:** B1 (fitted_params:weekly had NO seed tier, so a 0.3 direct insert would have silently become the money-path winner, plus undefined confidence-tie ordering) and W3 (leak boundary ignored the one-week exit fill) were real money-path holes caught before execution.
+- **Directive (new):** for any "X can only change via gate Y" requirement, enforce at the DB (triggers) AND test adversarially with the trigger DROPPED (defence in depth: the sha binding must still refuse).
+- Directives carried forward unchanged (real fixtures, live check at close, don't babysit live processes, reuse-vs-new up front, plan-check ON for money, `PYTHONPATH=src` in worktrees).
