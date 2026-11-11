@@ -34,7 +34,7 @@ state here), push notifications, a server-push event stream (pull-to-refresh is 
 
 ### Persisting the review snapshot
 - `paper_pending` only stores position params today; the dossier (thesis, kill criteria, pre-mortem,
-  SL/TP, DD verdict, MD rationale) is lost after submit. Migration 017 adds a nullable
+  SL/TP, DD verdict, MD rationale) is lost after submit. Migration 018 (renumbered: Phase 8 took 017) adds a nullable
   `paper_pending.review` JSON column; `submit_for_approval(conn, params, review=None)` stores it;
   `paper_run.submit_decision` passes `review_snapshot(result)`. Additive — older rows show an empty state.
 
