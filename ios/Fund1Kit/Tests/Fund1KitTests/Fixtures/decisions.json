@@ -1,0 +1,14 @@
+[
+ {
+  "id": 2,
+  "status": "pending",
+  "submitted_at": "2026-11-10T23:28:32.956978+00:00",
+  "resolved_at": null,
+  "position_id": null,
+  "ticker": "PEND",
+  "entry": 10.0,
+  "size_pct": 0.02,
+  "exit_by": "2026-08-21",
+  "direction": "positive"
+ }
+]

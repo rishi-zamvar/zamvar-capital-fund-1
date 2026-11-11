@@ -1,0 +1,47 @@
+{
+ "playbooks": [
+  {
+   "id": 3,
+   "scenario_type": "trial_readout",
+   "scenario": "free text",
+   "confidence": 0.9,
+   "strategy_text": "buy the dip",
+   "n": null,
+   "median_move": null,
+   "base_rate": [],
+   "what_to_watch": []
+  },
+  {
+   "id": 1,
+   "scenario_type": "pdufa",
+   "scenario": "clean approvals drift up",
+   "confidence": 0.6,
+   "strategy_text": null,
+   "n": 12,
+   "median_move": 0.08,
+   "base_rate": [
+    {
+     "label": "approve",
+     "rate": 0.8
+    },
+    {
+     "label": "crl",
+     "rate": 0.2
+    }
+   ],
+   "what_to_watch": [
+    "AdCom"
+   ]
+  }
+ ],
+ "kb_counts": [
+  {
+   "kind": "evidence_source",
+   "count": 1
+  },
+  {
+   "kind": "playbook",
+   "count": 2
+  }
+ ]
+}

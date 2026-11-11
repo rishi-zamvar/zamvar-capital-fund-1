@@ -1,0 +1,86 @@
+{
+ "trades": [
+  {
+   "id": 2,
+   "ticker": "AAAA",
+   "opened_at": "2026-08-14",
+   "exit_by": "2026-08-21",
+   "closed_at": "2026-11-10T23:28:32.957262+00:00",
+   "entry_price": 10.0,
+   "close_price": 11.0,
+   "size_pct": 0.02,
+   "realized_ret": 0.1,
+   "book_ret": 0.002,
+   "predicted": 0.05,
+   "win": true
+  },
+  {
+   "id": 3,
+   "ticker": "BBBB",
+   "opened_at": "2026-08-14",
+   "exit_by": "2026-08-28",
+   "closed_at": "2026-11-10T23:28:32.957528+00:00",
+   "entry_price": 10.0,
+   "close_price": 9.5,
+   "size_pct": 0.02,
+   "realized_ret": -0.05,
+   "book_ret": -0.001,
+   "predicted": 0.05,
+   "win": false
+  },
+  {
+   "id": 4,
+   "ticker": "CCCC",
+   "opened_at": "2026-08-14",
+   "exit_by": "2026-09-04",
+   "closed_at": "2026-11-10T23:28:32.957830+00:00",
+   "entry_price": 10.0,
+   "close_price": 10.2,
+   "size_pct": 0.02,
+   "realized_ret": 0.02,
+   "book_ret": 0.0004,
+   "predicted": 0.05,
+   "win": true
+  }
+ ],
+ "equity_curve": [
+  {
+   "date": "2026-08-14",
+   "equity": 1.0
+  },
+  {
+   "date": "2026-08-21",
+   "equity": 1.002
+  },
+  {
+   "date": "2026-08-28",
+   "equity": 1.000998
+  },
+  {
+   "date": "2026-09-04",
+   "equity": 1.0013983992
+  }
+ ],
+ "win_rate": 0.6666666666666666,
+ "expectancy": 0.023333333333333334,
+ "sharpe": 2.24179415327122,
+ "calibration": [
+  {
+   "ticker": "AAAA",
+   "predicted": 0.05,
+   "realized": 0.1
+  },
+  {
+   "ticker": "BBBB",
+   "predicted": 0.05,
+   "realized": -0.05
+  },
+  {
+   "ticker": "CCCC",
+   "predicted": 0.05,
+   "realized": 0.02
+  }
+ ],
+ "attribution": null,
+ "attribution_status": "pending_phase_8"
+}

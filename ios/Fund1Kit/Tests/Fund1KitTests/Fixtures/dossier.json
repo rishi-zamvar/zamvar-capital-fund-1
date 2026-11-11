@@ -1,0 +1,75 @@
+{
+ "id": 2,
+ "status": "pending",
+ "submitted_at": "2026-11-10T23:28:32.956978+00:00",
+ "resolved_at": null,
+ "position_id": null,
+ "ticker": "PEND",
+ "entry": 10.0,
+ "size_pct": 0.02,
+ "exit_by": "2026-08-21",
+ "direction": "positive",
+ "params": {
+  "ticker": "PEND",
+  "entry": 10.0,
+  "size_pct": 0.02,
+  "opened_at": "2026-08-14",
+  "exit_by": "2026-08-21",
+  "direction": "positive",
+  "evidence_refs": [
+   "kb:1"
+  ]
+ },
+ "review": {
+  "catalyst": {
+   "ticker": "ABCD",
+   "catalyst_type": "pdufa",
+   "event_date": "2026-08-20"
+  },
+  "dossier": {
+   "verdict_summary": "approval likely; run-up modest",
+   "kill_criteria": [
+    "CRL on CMC"
+   ],
+   "pre_mortem": [
+    "label narrower than modeled"
+   ],
+   "position_memo": "memo",
+   "all_evidence_refs": [
+    "kb:1",
+    "https://www.fda.gov/x"
+   ],
+   "trade": {
+    "target_long": "ABCD",
+    "entry": 10.0,
+    "size_pct": 0.02,
+    "stop_loss": 8.0,
+    "take_profit": 12.0,
+    "expected_return_pct": 0.05,
+    "sl_advisory": true,
+    "exit_by_date": "2026-08-21",
+    "hedge": {
+     "ticker": "PEER"
+    }
+   }
+  },
+  "dd": {
+   "verdict": "go",
+   "red_flags": [
+    "thin float"
+   ],
+   "strongest_disconfirming_evidence": "AdCom split"
+  },
+  "decision": {
+   "decision": "enter",
+   "rationale": "edge priced",
+   "accepted_residuals": [
+    "gap -> size"
+   ],
+   "dissent_preserved": [
+    "bear: CMC"
+   ],
+   "rounds": 2
+  }
+ }
+}
