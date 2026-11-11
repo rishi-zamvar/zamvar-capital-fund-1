@@ -13,5 +13,8 @@
     }
   ],
   "kb_analogs_queried": ["tool:analog_query#ha01oo", "tool:query_playbooks#ha02pp"],
-  "unknowns": ["small analog sample size (n=3)"]
+  "unknowns": ["small analog sample size (n=3)"],
+  "analogs": [{"name": null, "implied_move_pct": null, "realized_move_pct": 31.0, "outcome": "positive"}],
+  "analog_realized_move_pct": 31.0,
+  "analog_realized_move_pct_source": "tool:analog_query#ha01oo"
 }

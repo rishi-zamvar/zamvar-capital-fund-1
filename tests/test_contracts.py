@@ -869,6 +869,8 @@ def test_lens_report_extra_key_in_section_rejected(model, builder, dim):
         if isinstance(v, dict):
             v["hallucinated_leaf"] = 1
             break
+    else:
+        pytest.skip("report has no dict-valued section (hedge / historical_analog are report-level + list)")
     with pytest.raises(ValidationError):
         model.model_validate(payload)
 
@@ -909,3 +911,125 @@ def test_headline_number_requires_source(model, builder, num_path, src_path):
     sparent, skey = _dig(p, src_path)
     sparent[skey] = None
     assert model.model_validate(p) is not None
+
+
+# --- DD dimension reports (07.9 Plan 2): the 8 diligence one-pagers ------------------
+# trial_stats + regulatory REUSE ClinicalReport / RegulatoryReport (no duplication, R1).
+# The other 6 get their own AnalystReportBase subclass reusing the Plan-1 sections; the
+# headline is the reused section field + a report-level paired *_source (R2).
+
+from catalyst_trader.contracts import (  # noqa: E402
+    Analog,
+    DDFinancialsReport,
+    ExpectedMove,
+    HedgeRevalidationReport,
+    HistoricalAnalogReport,
+    Liquidity,
+    LiquidityReport,
+    OptionsMoveReport,
+    OwnershipFlowReport,
+    Runway,
+    ShortInterest,
+    Tradeability,
+)
+
+
+def valid_dd_financials_report() -> dict:
+    d = _base_report_fields("financials")
+    d.update({
+        "runway": {"quarterly_burn_m": 30.0, "runway_months": 20.0, "clears_catalyst": True, "cushion_months": 8.0},
+        "capital_structure": {"shares_basic_m": 100.0, "fully_diluted_m": 120.0, "warrant_overhang": None, "annual_dilution_pct": None},
+        "insiders": {"net_direction": None, "discretionary_buys": [], "scheduled_sales": [], "specialist_13f_change": None},
+        "runway_months_source": "tool:cash_runway#f1",
+    })
+    return d
+
+
+def valid_ownership_flow_report() -> dict:
+    d = _base_report_fields("ownership_flow")
+    d.update({
+        "short_interest": {"si_pct_float": 25.0, "days_to_cover": 6.0, "cost_to_borrow_pct": None, "squeeze_setup": True},
+        "ownership": {"float_pct": 80.0, "institutional_pct": None, "top10_concentration_pct": None},
+        "insiders": {"net_direction": "sell", "discretionary_buys": [], "scheduled_sales": ["CFO 10b5-1"], "specialist_13f_change": None},
+        "si_pct_float_source": "tool:market_data#own1",
+    })
+    return d
+
+
+def valid_options_move_report() -> dict:
+    d = _base_report_fields("options_move")
+    d.update({
+        "expected_move": {"atm_straddle": 8.0, "expected_move_pct": 14.0, "iv_current": 120.0, "iv_post_event_est": None},
+        "implied_prob": {"x": 30.0, "z": 50.0, "y": None, "implied_p_approval": None},
+        "expected_move_pct_source": "tool:implied_move#om1",
+    })
+    return d
+
+
+def valid_hedge_revalidation_report() -> dict:
+    d = _base_report_fields("hedge_revalidation")
+    d.update({
+        "validated": True, "covers": "idiosyncratic", "mechanism": "share-taker on target CRL",
+        "conditional_worst": -0.04, "conditional_worst_source": "tool:validate_hedge#h1",
+    })
+    return d
+
+
+def valid_liquidity_report() -> dict:
+    d = _base_report_fields("liquidity")
+    d.update({
+        "tradeability": {"bid": 9.8, "volume": 1_200_000.0, "oi": 5000.0, "volume_source": "tool:liquidity_quote#lq1"},
+    })
+    return d
+
+
+def valid_historical_analog_report() -> dict:
+    d = _base_report_fields("historical_analog")
+    d.update({
+        "analogs": [{"name": "ABC 2024 PDUFA", "implied_move_pct": 20.0, "realized_move_pct": -45.0, "outcome": "crl"}],
+        "analog_realized_move_pct": -45.0, "analog_realized_move_pct_source": "tool:analog_query#a1",
+    })
+    return d
+
+
+DD_REPORTS = [
+    (DDFinancialsReport, valid_dd_financials_report, "financials"),
+    (OwnershipFlowReport, valid_ownership_flow_report, "ownership_flow"),
+    (OptionsMoveReport, valid_options_move_report, "options_move"),
+    (HedgeRevalidationReport, valid_hedge_revalidation_report, "hedge_revalidation"),
+    (LiquidityReport, valid_liquidity_report, "liquidity"),
+    (HistoricalAnalogReport, valid_historical_analog_report, "historical_analog"),
+]
+LENS_REPORTS.extend(DD_REPORTS)  # the generic full/null-default/extra/spine tests above cover the DD reports too
+HEADLINE_PAIRS.extend([
+    (DDFinancialsReport, valid_dd_financials_report, ("runway", "runway_months"), ("runway_months_source",)),
+    (OwnershipFlowReport, valid_ownership_flow_report, ("short_interest", "si_pct_float"), ("si_pct_float_source",)),
+    (OptionsMoveReport, valid_options_move_report, ("expected_move", "expected_move_pct"), ("expected_move_pct_source",)),
+    (HedgeRevalidationReport, valid_hedge_revalidation_report, ("conditional_worst",), ("conditional_worst_source",)),
+    (LiquidityReport, valid_liquidity_report, ("tradeability", "volume"), ("tradeability", "volume_source")),
+    (HistoricalAnalogReport, valid_historical_analog_report, ("analog_realized_move_pct",), ("analog_realized_move_pct_source",)),
+])
+
+
+def test_dd_financials_carries_no_rnpv():
+    # C5: rNPV is a qualitative read the bundle does not carry -> structurally absent on the DD report.
+    assert not any("rnpv" in f for f in DDFinancialsReport.model_fields)
+
+
+def test_dd_reports_reuse_plan1_sections():
+    # NO DUPLICATION, locked as a test: the DD reports reference the SAME section classes as Plan 1.
+    assert DDFinancialsReport.model_fields["runway"].annotation is Runway
+    assert OwnershipFlowReport.model_fields["short_interest"].annotation is ShortInterest
+    assert OptionsMoveReport.model_fields["expected_move"].annotation is ExpectedMove
+    assert HistoricalAnalogReport.model_fields["analogs"].annotation == list[Analog]
+
+
+def test_dd_liquidity_is_tradeability_not_balance_sheet():
+    anns = {f.annotation for f in LiquidityReport.model_fields.values()}
+    assert Tradeability in anns and Liquidity not in anns
+
+
+def test_dd_reports_validate_with_all_qualitative_slots_null():
+    # C5: each DD report is buildable from the base spine alone (every qualitative slot null).
+    for model, _, dim in DD_REPORTS:
+        assert model.model_validate(_base_report_fields(dim)).dimension == dim

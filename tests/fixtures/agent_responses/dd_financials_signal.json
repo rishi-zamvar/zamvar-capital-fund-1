@@ -13,5 +13,7 @@
     }
   ],
   "kb_analogs_queried": ["tool:analog_query#fn02ff"],
-  "unknowns": ["undisclosed off-balance-sheet commitments"]
+  "unknowns": ["undisclosed off-balance-sheet commitments"],
+  "runway": {"quarterly_burn_m": 60.0, "runway_months": 25.0, "clears_catalyst": true, "cushion_months": 19.0},
+  "runway_months_source": "tool:cash_runway#fn01ee"
 }

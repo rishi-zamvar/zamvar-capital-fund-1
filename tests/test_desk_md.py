@@ -616,3 +616,18 @@ async def test_reconcile_end_to_end_escalate(db, monkeypatch, tmp_path):
     assert out.recommended_resolution
     assert out.round_log[-1].disposition == "cap_hit"
     assert bp.exists()
+
+
+def test_md_review_prompt_lists_dd_headline_numbers():
+    """07.9-03: the MD sees each DD dimension's headline number + source; thin raw dicts are tolerated."""
+    dd = _dd().model_copy(update={"per_dimension": [
+        {"dimension": "liquidity", "catalyst_id": "cat-1",
+         "tradeability": {"volume": 1200.0, "volume_source": "tool:liquidity#v1"}},
+        {"dimension": "regulatory", "catalyst_id": "cat-1"},  # thin dict -> no headline, no crash
+    ]})
+    verdict, dossier = _verdict(), _dossier()
+    packet = {"verdict": verdict, "dossier": dossier, "dd": dd}
+    sheet = cross_check(verdict, dossier, dd, catalyst_id="cat-1", min_tradeable_size=0.01)
+    p = _md_review_prompt(packet, sheet, [])
+    assert "liquidity: tradeability.volume=1200.0 (source: tool:liquidity#v1)" in p
+    assert "regulatory:" not in p.split("HEADLINE NUMBERS")[1].split("DETERMINISTIC")[0]

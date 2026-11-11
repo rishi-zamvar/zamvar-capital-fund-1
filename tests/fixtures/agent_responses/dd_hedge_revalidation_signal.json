@@ -13,5 +13,10 @@
     }
   ],
   "kb_analogs_queried": ["tool:analog_query#hr02ll"],
-  "unknowns": ["class-wide read-through could break the inverse relationship"]
+  "unknowns": ["class-wide read-through could break the inverse relationship"],
+  "validated": true,
+  "covers": "idiosyncratic",
+  "mechanism": null,
+  "conditional_worst": -0.03,
+  "conditional_worst_source": "tool:conditional_payoff#hr01kk"
 }

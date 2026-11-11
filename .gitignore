@@ -33,3 +33,6 @@ scripts/.*.done
 scripts/.*.log
 *.db-wal
 *.db-shm
+.claude/worktrees/
+logs/
+.monitor/*.log

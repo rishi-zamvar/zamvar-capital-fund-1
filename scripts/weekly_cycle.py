@@ -7,7 +7,9 @@ Slice 5 automates the weekly cadence the operator ran by hand (paper_run.py per 
                                  gate is the only opener. Runs ONLY inside a Claude Code session (the
                                  LLM desk needs Max; a headless cron has no API key).
     weekly_cycle.py --mark       the weekly mark/close pass (HEADLESS, launchd-schedulable, no LLM):
-                                 mark every open + close any past exit_by at the Slice-4 byte-identical fill.
+                                 mark every open + close any past exit_by at the Slice-4 byte-identical fill,
+                                 then attribute + post-mortem each resolved trade into the KB (Phase 8).
+    weekly_cycle.py --gate       the SAMPLE-based go-live verdict over the resolved paper book (read-only).
     weekly_cycle.py --status     offline snapshot: open positions, pending approvals, upcoming catalysts,
                                  queued desk runs. No LLM/network.
     weekly_cycle.py --dry-run    offline proof of the whole enqueue->drain->submit loop with the gate HELD.
@@ -116,6 +118,18 @@ def status(conn, *, as_of: str) -> dict:
             "upcoming": len(upcoming), "queued": len(queued)}
 
 
+def gate(conn) -> dict:
+    """Print + return the sample-based go-live verdict (paper_ledger.go_live_gate). Read-only — it
+    decides nothing and opens nothing; real capital stays behind the operator (Phase 11)."""
+    out = paper_ledger.go_live_gate(conn)
+    v = out["verdict"]
+    print(f"GO-LIVE GATE  {'GO' if v.go else 'NO-GO'}  N={v.n_catalysts} catalysts "
+          f"(min {v.min_sample})  psr={out['psr']}")
+    for r in v.reasons:
+        print(f"  - {r}")
+    return out
+
+
 def dry_run(conn) -> dict:
     """Offline full-loop proof (ZERO network/LLM): seed a T-2 verified catalyst -> register +
     detect_and_fire ENQUEUES -> drain_desk with a fake 'enter' -> submit -> assert the GATE HELD
@@ -179,6 +193,7 @@ def main():
     ap.add_argument("--desk", action="store_true", help="drain the T-2 queue -> submit to the gate (CC only)")
     ap.add_argument("--mark", action="store_true", help="weekly headless pass: mark opens + close past exit_by")
     ap.add_argument("--status", action="store_true", help="offline snapshot (opens/pending/upcoming/queued)")
+    ap.add_argument("--gate", action="store_true", help="sample-based go-live verdict (read-only)")
     ap.add_argument("--dry-run", action="store_true", help="offline full-loop proof, gate held (no network)")
     ap.add_argument("--db", default="catalyst.db", help="catalyst.db path (default: catalyst.db)")
     args = ap.parse_args()
@@ -199,12 +214,15 @@ def main():
             summary = drain_desk(conn, desk_fn=_live_desk_fn, as_of=as_of)
             print(f"desk drain: {summary}")
         elif args.mark:
-            summary = paper_ledger.mark_open_positions(conn, as_of, quotes_fn=paper_ledger._rh_quote)
+            summary = paper_ledger.weekly_mark_pass(conn, as_of, quotes_fn=paper_ledger._rh_quote,
+                                                    embed=kb.default_embedder())
             print(f"weekly mark pass: {summary}")
+        elif args.gate:
+            gate(conn)
         elif args.status:
             status(conn, as_of=as_of)
         else:
-            ap.error("give one of --desk/--mark/--status/--dry-run")
+            ap.error("give one of --desk/--mark/--status/--gate/--dry-run")
     finally:
         conn.close()
 

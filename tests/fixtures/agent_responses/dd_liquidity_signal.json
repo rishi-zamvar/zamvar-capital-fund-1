@@ -13,5 +13,6 @@
     }
   ],
   "kb_analogs_queried": ["tool:analog_query#lq02nn"],
-  "unknowns": ["event-day spread widening not modeled"]
+  "unknowns": ["event-day spread widening not modeled"],
+  "tradeability": {"bid": 1.0, "volume": 100.0, "oi": 50.0, "volume_source": "tool:liquidity_check#lq01mm"}
 }

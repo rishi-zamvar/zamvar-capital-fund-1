@@ -165,3 +165,21 @@ async def test_semantic_check_only_for_load_bearing(db, monkeypatch, load_fixtur
     assert "garbage" not in prompts                     # unresolvable ref never reaches the LLM
     assert f"kb:{nid_b}" not in prompts                 # unsupported kb ref never reaches the LLM
     assert all(c["model"] == "opus" for c in calls)     # load-bearing judgment uses the strongest tier
+
+
+def test_claim_for_maps_headline_source_to_field_value():
+    """07.9-03: a cited headline *_source ref yields a precise '<field>=<value>' claim
+    (not the verdict-thesis fallback); key_findings still win when they cite the ref."""
+    sig = _signal([("tool:x#1", "finding claim")]).model_copy(
+        update={"pos_estimate": 0.62, "pos_estimate_source": "tool:base_rate#h1"})
+    assert verifier._claim_for("tool:base_rate#h1", [sig]) == "pos_estimate=0.62"
+    assert verifier._claim_for("tool:x#1", [sig]) == "finding claim"
+    assert verifier._claim_for("tool:nope#0", [sig]) is None
+
+
+async def test_enforce_semantic_prompt_uses_headline_claim(db, monkeypatch):
+    calls = []
+    monkeypatch.setattr(verifier, "run_structured", _seam(calls, {"supported": True, "reason": "ok"}))
+    sig = _signal([("tool:x#1", "other claim")]).model_copy(update={"pos_estimate": 0.62, "pos_estimate_source": "tool:base_rate#h1"})
+    await verifier.enforce(db, _verdict(["tool:base_rate#h1"]), signals=[sig])
+    assert "Claim: pos_estimate=0.62" in calls[0]["prompt"]

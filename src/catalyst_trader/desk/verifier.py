@@ -24,7 +24,7 @@ If no supporting ref survives, the verdict's thesis is unbacked -> raise
 from pydantic import BaseModel, ConfigDict
 
 from catalyst_trader.contracts import DebateVerdict, EstimateVetting
-from catalyst_trader.desk import evidence
+from catalyst_trader.desk import evidence, rollup
 from catalyst_trader.desk.runtime import run_structured
 
 
@@ -41,11 +41,16 @@ class SupportCheck(BaseModel):
 
 
 def _claim_for(ref: str, signals) -> str | None:
-    """The claim text cited under `ref` (from analyst key_findings), or None."""
+    """The claim text cited under `ref` (from analyst key_findings), else — when `ref` is a
+    report's headline *_source — the precise '<field>=<value>' it backs (07.9-03), or None."""
     for sig in signals or []:
         for kf in sig.key_findings:
             if kf.evidence_ref == ref:
                 return kf.claim
+    for sig in signals or []:
+        h = rollup.headline(sig)
+        if h and h[2] == ref:
+            return f"{h[0]}={h[1]}"
     return None
 
 

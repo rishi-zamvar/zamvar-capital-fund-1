@@ -13,5 +13,8 @@
     }
   ],
   "kb_analogs_queried": ["tool:analog_query#rg02dd"],
-  "unknowns": ["label-scope negotiation outcome uncertain"]
+  "unknowns": ["label-scope negotiation outcome uncertain"],
+  "application": {"type": null, "review": null, "clock_months": null, "pdufa_date": "2026-11-28", "resubmission_class": null, "expedited_tags": []},
+  "adcom": {"scheduled": false, "committee": null, "voting_question": null, "briefing_doc_tone": null},
+  "poa": {"point": 0.72, "point_source": "tool:base_rate#rg01cc", "clean_approve": null, "approve_restricted": null, "crl": null}
 }
