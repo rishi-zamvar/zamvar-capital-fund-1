@@ -1,0 +1,335 @@
+{
+ "_README": "ALL labels below are SYNTHETIC placeholders written by Claude to exercise the calibration harness. They do NOT certify the judge: calibrate() ignores synthetic labels. The CEO must hand-grade >= 20 REAL resolved cases (synthetic=false, needs_ceo_grading=false, grader='CEO') before the judge can be calibrated.",
+ "labels": [
+  {
+   "id": "S01",
+   "case": {
+    "prediction": {
+     "ticker": "SYNA",
+     "direction": "positive",
+     "size_pct": 0.02,
+     "catalyst_type": "pdufa",
+     "thesis": "clean approval expected; label broad",
+     "kill_criteria": "CRL on CMC",
+     "pre_mortem": "label narrower than hoped"
+    },
+    "realized": {
+     "verdict": "skill",
+     "r_gross": 0.22,
+     "realized_ret": 0.21,
+     "components": {
+      "catalyst_effect": 0.0042,
+      "beta_drift": 0.0002,
+      "costs": -0.0002,
+      "sizing": 0.0,
+      "hedge_leg": 0.0
+     },
+     "beta_available": true
+    }
+   },
+   "human_grade": 5,
+   "human_direction_correct": true,
+   "grader": "SYNTHETIC-PLACEHOLDER (claude) - CEO must grade",
+   "synthetic": true,
+   "needs_ceo_grading": true,
+   "note": "PLACEHOLDER: approval drove a large idiosyncratic move as predicted"
+  },
+  {
+   "id": "S02",
+   "case": {
+    "prediction": {
+     "ticker": "SYNB",
+     "direction": "positive",
+     "size_pct": 0.02,
+     "catalyst_type": "pdufa",
+     "thesis": "approval likely; modest upside",
+     "kill_criteria": "CRL",
+     "pre_mortem": "adcom concerns resurface"
+    },
+    "realized": {
+     "verdict": "skill",
+     "r_gross": 0.06,
+     "realized_ret": 0.049999999999999996,
+     "components": {
+      "catalyst_effect": 0.001,
+      "beta_drift": 0.0002,
+      "costs": -0.0002,
+      "sizing": 0.0,
+      "hedge_leg": 0.0
+     },
+     "beta_available": true
+    }
+   },
+   "human_grade": 4,
+   "human_direction_correct": true,
+   "grader": "SYNTHETIC-PLACEHOLDER (claude) - CEO must grade",
+   "synthetic": true,
+   "needs_ceo_grading": true,
+   "note": "PLACEHOLDER: right call, smaller move than thesis"
+  },
+  {
+   "id": "S03",
+   "case": {
+    "prediction": {
+     "ticker": "SYNC",
+     "direction": "positive",
+     "size_pct": 0.02,
+     "catalyst_type": "pdufa",
+     "thesis": "approval likely",
+     "kill_criteria": "CRL",
+     "pre_mortem": "sector selloff"
+    },
+    "realized": {
+     "verdict": "luck",
+     "r_gross": 0.05,
+     "realized_ret": 0.04,
+     "components": {
+      "catalyst_effect": -0.0002,
+      "beta_drift": 0.0012,
+      "costs": -0.0002,
+      "sizing": 0.0,
+      "hedge_leg": 0.0
+     },
+     "beta_available": true
+    }
+   },
+   "human_grade": 3,
+   "human_direction_correct": true,
+   "grader": "SYNTHETIC-PLACEHOLDER (claude) - CEO must grade",
+   "synthetic": true,
+   "needs_ceo_grading": true,
+   "note": "PLACEHOLDER: up week but XBI tape did it; catalyst effect negative"
+  },
+  {
+   "id": "S04",
+   "case": {
+    "prediction": {
+     "ticker": "SYND",
+     "direction": "positive",
+     "size_pct": 0.06,
+     "catalyst_type": "pdufa",
+     "thesis": "approval likely",
+     "kill_criteria": "CRL",
+     "pre_mortem": "dilution post-approval"
+    },
+    "realized": {
+     "verdict": "skill",
+     "r_gross": 0.3,
+     "realized_ret": 0.29,
+     "components": {
+      "catalyst_effect": 0.006,
+      "beta_drift": 0.0,
+      "costs": -0.0002,
+      "sizing": 0.0,
+      "hedge_leg": 0.0
+     },
+     "beta_available": true
+    }
+   },
+   "human_grade": 3,
+   "human_direction_correct": true,
+   "grader": "SYNTHETIC-PLACEHOLDER (claude) - CEO must grade",
+   "synthetic": true,
+   "needs_ceo_grading": true,
+   "note": "PLACEHOLDER: right reason, oversized vs survival cap"
+  },
+  {
+   "id": "S05",
+   "case": {
+    "prediction": {
+     "ticker": "SYNE",
+     "direction": "positive",
+     "size_pct": 0.02,
+     "catalyst_type": "pdufa",
+     "thesis": "approval likely",
+     "kill_criteria": "CRL citing manufacturing",
+     "pre_mortem": "manufacturing inspection risk"
+    },
+    "realized": {
+     "verdict": "bad_luck",
+     "r_gross": -0.45,
+     "realized_ret": -0.46,
+     "components": {
+      "catalyst_effect": -0.009,
+      "beta_drift": 0.0,
+      "costs": -0.0002,
+      "sizing": 0.0,
+      "hedge_leg": 0.0
+     },
+     "beta_available": true
+    }
+   },
+   "human_grade": 2,
+   "human_direction_correct": false,
+   "grader": "SYNTHETIC-PLACEHOLDER (claude) - CEO must grade",
+   "synthetic": true,
+   "needs_ceo_grading": true,
+   "note": "PLACEHOLDER: wrong direction but pre-mortem named the CMC failure"
+  },
+  {
+   "id": "S06",
+   "case": {
+    "prediction": {
+     "ticker": "SYNF",
+     "direction": "positive",
+     "size_pct": 0.02,
+     "catalyst_type": "pdufa",
+     "thesis": "approval certain",
+     "kill_criteria": "none stated",
+     "pre_mortem": "none"
+    },
+    "realized": {
+     "verdict": "no_skill",
+     "r_gross": -0.6,
+     "realized_ret": -0.61,
+     "components": {
+      "catalyst_effect": -0.012,
+      "beta_drift": 0.0,
+      "costs": -0.0002,
+      "sizing": 0.0,
+      "hedge_leg": 0.0
+     },
+     "beta_available": true
+    }
+   },
+   "human_grade": 1,
+   "human_direction_correct": false,
+   "grader": "SYNTHETIC-PLACEHOLDER (claude) - CEO must grade",
+   "synthetic": true,
+   "needs_ceo_grading": true,
+   "note": "PLACEHOLDER: wrong direction, thesis missed the efficacy question entirely"
+  },
+  {
+   "id": "S07",
+   "case": {
+    "prediction": {
+     "ticker": "SYNG",
+     "direction": "positive",
+     "size_pct": 0.02,
+     "catalyst_type": "pdufa",
+     "thesis": "label expansion likely",
+     "kill_criteria": "delay",
+     "pre_mortem": "delay to next quarter"
+    },
+    "realized": {
+     "verdict": "skill",
+     "r_gross": 0.09,
+     "realized_ret": 0.08,
+     "components": {
+      "catalyst_effect": 0.0016,
+      "beta_drift": 0.0002,
+      "costs": -0.0002,
+      "sizing": 0.0,
+      "hedge_leg": 0.0
+     },
+     "beta_available": true
+    }
+   },
+   "human_grade": 4,
+   "human_direction_correct": true,
+   "grader": "SYNTHETIC-PLACEHOLDER (claude) - CEO must grade",
+   "synthetic": true,
+   "needs_ceo_grading": true,
+   "note": "PLACEHOLDER: right direction mostly right reason"
+  },
+  {
+   "id": "S08",
+   "case": {
+    "prediction": {
+     "ticker": "SYNH",
+     "direction": "positive",
+     "size_pct": 0.02,
+     "catalyst_type": "pdufa",
+     "thesis": "approval likely",
+     "kill_criteria": "safety signal in label",
+     "pre_mortem": "boxed warning"
+    },
+    "realized": {
+     "verdict": "bad_luck",
+     "r_gross": -0.2,
+     "realized_ret": -0.21000000000000002,
+     "components": {
+      "catalyst_effect": -0.004,
+      "beta_drift": 0.0,
+      "costs": -0.0002,
+      "sizing": 0.0,
+      "hedge_leg": 0.0
+     },
+     "beta_available": true
+    }
+   },
+   "human_grade": 2,
+   "human_direction_correct": false,
+   "grader": "SYNTHETIC-PLACEHOLDER (claude) - CEO must grade",
+   "synthetic": true,
+   "needs_ceo_grading": true,
+   "note": "PLACEHOLDER: wrong, but kill criteria listed the boxed warning"
+  },
+  {
+   "id": "S09",
+   "case": {
+    "prediction": {
+     "ticker": "SYNI",
+     "direction": "positive",
+     "size_pct": 0.02,
+     "catalyst_type": "pdufa",
+     "thesis": "beat-and-raise",
+     "kill_criteria": "guide-down",
+     "pre_mortem": "none"
+    },
+    "realized": {
+     "verdict": "no_skill",
+     "r_gross": -0.25,
+     "realized_ret": -0.26,
+     "components": {
+      "catalyst_effect": -0.005,
+      "beta_drift": 0.0,
+      "costs": -0.0002,
+      "sizing": 0.0,
+      "hedge_leg": 0.0
+     },
+     "beta_available": true
+    }
+   },
+   "human_grade": 1,
+   "human_direction_correct": false,
+   "grader": "SYNTHETIC-PLACEHOLDER (claude) - CEO must grade",
+   "synthetic": true,
+   "needs_ceo_grading": true,
+   "note": "PLACEHOLDER: wrong and the thesis never considered guidance"
+  },
+  {
+   "id": "S10",
+   "case": {
+    "prediction": {
+     "ticker": "SYNJ",
+     "direction": "positive",
+     "size_pct": 0.02,
+     "catalyst_type": "pdufa",
+     "thesis": "resubmission after CRL resolves CMC",
+     "kill_criteria": "second CRL",
+     "pre_mortem": "inspection slips"
+    },
+    "realized": {
+     "verdict": "skill",
+     "r_gross": 0.35,
+     "realized_ret": 0.33999999999999997,
+     "components": {
+      "catalyst_effect": 0.0068,
+      "beta_drift": 0.0002,
+      "costs": -0.0002,
+      "sizing": 0.0,
+      "hedge_leg": 0.0
+     },
+     "beta_available": true
+    }
+   },
+   "human_grade": 5,
+   "human_direction_correct": true,
+   "grader": "SYNTHETIC-PLACEHOLDER (claude) - CEO must grade",
+   "synthetic": true,
+   "needs_ceo_grading": true,
+   "note": "PLACEHOLDER: resubmission approved exactly per thesis"
+  }
+ ]
+}
