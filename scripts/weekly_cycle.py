@@ -13,6 +13,11 @@ Slice 5 automates the weekly cadence the operator ran by hand (paper_run.py per 
     weekly_cycle.py --status     offline snapshot: open positions, pending approvals, upcoming catalysts,
                                  queued desk runs. No LLM/network.
     weekly_cycle.py --dry-run    offline proof of the whole enqueue->drain->submit loop with the gate HELD.
+    weekly_cycle.py --learn      Phase 10 learning cycle (CC session: live judge): judge resolved trades ->
+                                 propose config diffs from the TRAINING window -> run each through the LEARN
+                                 gate. Applies NOTHING — a passed diff waits for --promote.
+    weekly_cycle.py --promote ID apply ONE gate-passed proposal to the money path (learn.gate re-verifies).
+    weekly_cycle.py --freeze-holdout START END   freeze the walk-forward evaluation holdout (operator).
 
 `drain_desk`/`status`/`dry_run` are the TESTABLE cores (no network/LLM — desk_fn/db injectable); the thin
 __main__ resolves the live desk (async -> asyncio.run) and routes the flags.
@@ -173,6 +178,45 @@ def dry_run(conn) -> dict:
     return {"fired": len(fired), "drain": drain, "pending": pending, "open_positions": opens}
 
 
+# --------------------------------------------------------------- Phase 10: the learning loop
+
+
+def learn_cmd(conn, *, replay, golden, benchmark, judge_fn=None, judge_model=None,
+              lookback_weeks: int = 104) -> dict:
+    """judge -> propose -> gate (learn.loop.run_learn_cycle) and print each verdict. Applies NOTHING."""
+    from catalyst_trader.learn import loop
+
+    rep = loop.run_learn_cycle(conn, replay=replay, golden=golden, benchmark=benchmark,
+                               judge_fn=judge_fn, judge_model=judge_model,
+                               lookback_weeks=lookback_weeks)
+    print(f"LEARN  judge={rep['judge']}  proposals={rep['proposals']}")
+    for r in rep["reports"]:
+        print(f"  proposal #{r['proposal_id']} {r['patch']}  {'PASS' if r['passed'] else 'FAIL'}")
+        for why in r["reasons"]:
+            print(f"    - {why}")
+    if rep["stopped"]:
+        print(f"  stopped: {rep['stopped']}")
+    return rep
+
+
+def promote_cmd(conn, proposal_id: int) -> int:
+    """Apply one gate-passed proposal (learn.gate.promote re-verifies everything)."""
+    from catalyst_trader.learn import gate
+
+    nid = gate.promote(conn, proposal_id)
+    print(f"PROMOTED proposal #{proposal_id} -> fitted_params version node {nid}")
+    return nid
+
+
+def freeze_holdout_cmd(conn, start: str, end: str, embargo_days: int = 7) -> int:
+    from catalyst_trader.learn import gate
+
+    hid = gate.freeze_holdout(conn, start=start, end=end, embargo_days=embargo_days)
+    print(f"HOLDOUT #{hid} frozen {start}..{end} (embargo {embargo_days}d, training cutoff "
+          f"{gate.training_cutoff(gate.active_holdout(conn))})")
+    return hid
+
+
 # --------------------------------------------------------------- the live desk_fn (CC-only)
 
 
@@ -195,6 +239,9 @@ def main():
     ap.add_argument("--status", action="store_true", help="offline snapshot (opens/pending/upcoming/queued)")
     ap.add_argument("--gate", action="store_true", help="sample-based go-live verdict (read-only)")
     ap.add_argument("--dry-run", action="store_true", help="offline full-loop proof, gate held (no network)")
+    ap.add_argument("--learn", action="store_true", help="judge + propose + gate (CC only; applies nothing)")
+    ap.add_argument("--promote", type=int, metavar="ID", help="apply one gate-passed proposal")
+    ap.add_argument("--freeze-holdout", nargs=2, metavar=("START", "END"), help="freeze the eval holdout")
     ap.add_argument("--db", default="catalyst.db", help="catalyst.db path (default: catalyst.db)")
     args = ap.parse_args()
     logging.basicConfig(level=logging.INFO)
@@ -221,8 +268,17 @@ def main():
             gate(conn)
         elif args.status:
             status(conn, as_of=as_of)
+        elif args.learn:
+            from catalyst_trader.learn import gate as lgate, judge as ljudge
+            learn_cmd(conn, replay=lgate.layer_a_replay(conn, kb.default_embedder()),
+                      golden=lgate.load_golden(), benchmark=lgate.xbi_benchmark(conn),
+                      judge_fn=ljudge.make_live_judge(), judge_model="sonnet")
+        elif args.promote is not None:
+            promote_cmd(conn, args.promote)
+        elif args.freeze_holdout:
+            freeze_holdout_cmd(conn, *args.freeze_holdout)
         else:
-            ap.error("give one of --desk/--mark/--status/--gate/--dry-run")
+            ap.error("give one of --desk/--mark/--status/--gate/--dry-run/--learn/--promote/--freeze-holdout")
     finally:
         conn.close()
 

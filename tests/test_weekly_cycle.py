@@ -178,3 +178,33 @@ def test_drain_desk_logs_per_catalyst_elapsed(caplog):
     with caplog.at_level("INFO", logger="scripts.weekly_cycle"):
         wc.drain_desk(conn, desk_fn=_fake_enter_fn, as_of="2026-08-14")
     assert any("elapsed=" in r.message for r in caplog.records)
+
+
+# ------------------------------------------------------------ Phase 10: the learning-loop flags
+
+
+def test_module_never_writes_the_kb_directly():
+    src = Path(wc.__file__).read_text()
+    for forbidden in ("insert_playbook", "insert_claim", "seed_fitted_params"):
+        assert forbidden not in src, f"{forbidden} must never appear in weekly_cycle.py"
+
+
+def test_learn_cmd_never_promotes():
+    import inspect
+    assert "promote" not in inspect.getsource(wc.learn_cmd)
+
+
+def test_learn_freeze_and_promote_cmds_route_to_the_gate():
+    from catalyst_trader import kb
+    from catalyst_trader.learn import gate as lg
+    from tests.test_learn_gate import GOLDEN, H_END, H_START, _conn, stub_bench, stub_replay
+
+    conn = _conn()
+    hid = wc.freeze_holdout_cmd(conn, H_START, H_END)
+    assert lg.active_holdout(conn)["id"] == hid
+    rep = wc.learn_cmd(conn, replay=stub_replay(), golden=GOLDEN, benchmark=stub_bench,
+                       lookback_weeks=30)
+    passed = [r["proposal_id"] for r in rep["reports"] if r["passed"]]
+    assert passed and conn.execute("SELECT COUNT(*) FROM learn_promotion").fetchone()[0] == 0
+    wc.promote_cmd(conn, passed[0])
+    assert kb.load_params(conn, "weekly") != kb.BOOTSTRAP_DEFAULT

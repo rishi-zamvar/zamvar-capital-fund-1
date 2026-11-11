@@ -81,3 +81,23 @@ The `--desk` step still needs a human to open a Claude Code session. A future up
 headless enqueue also write a `~/.dispatch/wake-touches/` signal (the existing Dispatch wake-touch
 pattern), so a Claude Code session **auto-wakes** when a T-2 fires and runs `--desk` on its own. That
 is an upgrade path only — Slice 5 does **not** build it, and does not claim headless LLM.
+
+## Learning loop (Phase 10 — LEARN-01/02)
+
+The loop makes the desk better week over week **without** being able to quietly overfit the money path.
+
+1. **Freeze a holdout once** (operator): `python scripts/weekly_cycle.py --freeze-holdout 2025-06-02 2026-05-25`.
+   Pick an `END` at least one week before the newest price bar (its one-week XBI exit must exist).
+   Proposals train strictly before `START - 7d embargo - 7d hold`. The holdout is immutable; any data
+   revision inside it makes the gate refuse until you freeze a new one. Each holdout allows 20 gate runs.
+2. **Weekly, inside a Claude Code session**: `python scripts/weekly_cycle.py --learn` — judges every newly
+   resolved paper trade (stored UNCALIBRATED until the judge passes calibration on >= 20 CEO-graded labels),
+   proposes weekly-config diffs from the training window, and runs each through the gate (golden-set
+   regression + guardrails + walk-forward on the frozen holdout). It applies nothing.
+3. **Promote explicitly**: `python scripts/weekly_cycle.py --promote <proposal id>` for a PASSed proposal.
+   The gate re-verifies (content, holdout, money-path-unchanged) and appends a new `fitted_params:weekly`
+   version. Nothing else can write one — the database refuses it (migration 020).
+
+Calibrating the judge: grade real cases into `data/learn/judge_labels.json` (`synthetic: false`,
+`grader: "CEO"`), then run `learn.judge.calibrate` + `record_calibration` in a CC session with
+`make_live_judge()`. Curate the golden windows in `data/learn/golden_set.json`.
