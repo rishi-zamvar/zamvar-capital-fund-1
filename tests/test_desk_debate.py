@@ -184,3 +184,17 @@ async def test_no_positioning_in_verdict():
         "position", "exit_by_date", "quantity", "shares", "allocation",
     }
     assert positioning.isdisjoint(set(DebateVerdict.model_fields))  # prediction only; sizing is Phase 5
+
+
+def test_evidence_context_carries_structured_points_and_rollup():
+    """07.9-03: both sides + moderator see each report's non-null data points, its headline
+    with source, and the deterministic §6 roll-up block."""
+    sigs = [
+        SIGNALS[0].model_copy(update={"pos_estimate": 0.6, "pos_estimate_source": "tool:base_rate#p1"}),
+        SIGNALS[1],
+    ]
+    ctx = debate._evidence_context(sigs)
+    assert "Phase 3 endpoint met p<0.001  (cite: tool:base_rate#a1b2c3)" in ctx  # base spine kept
+    assert "HEADLINE pos_estimate=0.6 (source: tool:base_rate#p1)" in ctx
+    assert "ROLL-UP" in ctx and "fundamental_p_approval=0.60" in ctx
+    assert "market_implied_p_approval=unknown" in ctx  # no Lens-4 -> honest gap, not a number

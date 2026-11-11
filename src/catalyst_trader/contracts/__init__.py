@@ -486,6 +486,20 @@ class HistoricalAnalogReport(AnalystReportBase):
         return self
 
 
+class Rollup(BaseModel):
+    """Guideline §6 single-thesis roll-up of the 4 lens reports — computed DETERMINISTICALLY
+    (desk/rollup.py), every field null when an input is null. No size/conviction: sizing is risk.py's."""
+
+    model_config = _SECTION
+    fundamental_p_approval: float | None = None  # reconciled Clinical pos_estimate x Regulatory poa.point
+    lenses_disagree: bool | None = None  # Clinical vs Regulatory P beyond tolerance — itself a finding
+    market_implied_p_approval: float | None = None  # p = (X - Y) / (Z - Y) from Lens-4 implied_prob
+    edge: float | None = None  # fundamental - market-implied
+    solvency_clears_catalyst: bool | None = None  # Lens-3 runway.clears_catalyst (the solvency gate)
+    driver: str | None = None  # Lens-4 asymmetry.driver (positioning | fundamentals)
+    expression: str | None = None  # Lens-4 asymmetry.expression (hold-through | run-up)
+
+
 class DebateVerdict(BaseModel):
     model_config = ConfigDict(extra="forbid")
     thesis: str

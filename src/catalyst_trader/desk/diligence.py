@@ -38,7 +38,7 @@ from ..quant.options import implied_move
 from . import evidence, risk
 from .runtime import run_structured
 from .tools import build_quant_server
-from .verifier import SupportCheck  # pure model reuse — the DebateVerdict-typed enforce() is NEVER called here
+from .verifier import SupportCheck, _claim_for  # pure model/helper reuse — the DebateVerdict-typed enforce() is NEVER called here
 
 # The SINGLE source of diligence thresholds (BLOCKER-2). Module-level + always present, read via
 # direct subscript (missing-key-raises), NEVER `.get`. It is deliberately DECOUPLED from the KB
@@ -510,16 +510,6 @@ def assemble_dossier(
         all_evidence_refs=all_refs,
         residual_risks=narrative.residual_risks,
     )
-
-
-def _claim_for(ref: str, signals) -> str | None:
-    """The claim text cited under `ref` (from a signal's key_findings), or None.
-    Mirrors verifier._claim_for — the ref->claim table quote_supported needs."""
-    for sig in signals or []:
-        for kf in sig.key_findings:
-            if kf.evidence_ref == ref:
-                return kf.claim
-    return None
 
 
 def _dossier_support_prompt(ref: str, claim: str, dossier: DiligenceDossier) -> str:

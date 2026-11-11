@@ -25,6 +25,7 @@ from catalyst_trader.contracts import (
     StrategyDossier,
     WeeklyFlag,
 )
+from catalyst_trader.desk import rollup
 from catalyst_trader.desk.diligence import run_diligence
 from catalyst_trader.desk.orchestrator import run_desk, run_portfolio
 from catalyst_trader.desk.runtime import run_structured
@@ -181,6 +182,11 @@ def _md_review_prompt(packet: dict, sheet: dict, incoming_flags: list[WeeklyFlag
             for f in incoming_flags
         ) + "\n"
 
+    dd_headlines = "\n".join(
+        f"    {d['dimension']}: {h[0]}={h[1]} (source: {h[2]})"
+        for d in dd.per_dimension if (h := rollup.headline(d))
+    )
+
     return f"""You are the MD/GP. Reconcile the catalyst call, the portfolio build, and the independent
 diligence into ONE view. Raise a RetriggerFlag ONLY for a material gap (the gap, never the answer);
 route or LOG each incoming flag. Set satisfied=True only if there is no material open issue.
@@ -203,6 +209,8 @@ DILIGENCE (Workflow-3, sealed firewall)
   red_flags:  {dd.red_flags}
   residuals:  {dd.residual_risks}
   strongest disconfirming: {dd.strongest_disconfirming_evidence}
+  HEADLINE NUMBERS (per dimension; absent = unknown):
+{dd_headlines}
 
 DETERMINISTIC CROSS-CHECK SHEET (already computed — interpret, do not recompute):
 {json.dumps(sheet, indent=2)}

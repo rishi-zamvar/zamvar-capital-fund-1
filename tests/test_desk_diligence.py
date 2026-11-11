@@ -767,3 +767,17 @@ async def test_uncited_dd_report_rejected_at_real_boundary(monkeypatch, load_fix
     monkeypatch.setattr(runtime, "query", _q)
     with pytest.raises(ValidationError):
         await diligence.run_dimension(dim, DiligenceInput(**DD_INPUT))
+
+
+def test_dd_claim_for_maps_headline_source():
+    """07.9-03: the DD cite-or-drop gate reuses verifier._claim_for, so a cited DD headline
+    source maps to '<field>=<value>' instead of the disconfirming-evidence fallback."""
+    from catalyst_trader.contracts import LiquidityReport
+    from catalyst_trader.desk import diligence
+
+    rep = LiquidityReport(
+        dimension="liquidity", ticker="ACME", catalyst_id="c1", thesis="t", score=0.0, confidence=0.5,
+        key_findings=[KeyFinding(claim="c", evidence_ref="tool:x#1")],
+        tradeability={"volume": 100.0, "volume_source": "tool:lq#1"},
+    )
+    assert diligence._claim_for("tool:lq#1", [rep]) == "tradeability.volume=100.0"

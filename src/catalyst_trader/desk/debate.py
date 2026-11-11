@@ -18,7 +18,7 @@ naming the losing side. No sizing/positioning here (that is Phase 5).
 from pydantic import BaseModel, ConfigDict
 
 from ..contracts import AnalystReportBase, DebateVerdict
-from . import MAX_ROUNDS
+from . import MAX_ROUNDS, rollup
 from .runtime import run_structured
 
 
@@ -44,6 +44,8 @@ def _evidence_context(signals: list[AnalystReportBase]) -> str:
             lines.append(f"  - {f.claim}  (cite: {f.evidence_ref})")
         for u in s.unknowns:
             lines.append(f"  - UNKNOWN: {u}")
+        lines.extend(rollup.render(s))  # 07.9-03: structured non-null data points + headline/source
+    lines.append(rollup.render_rollup(rollup.rollup(signals)))
     return "\n".join(lines)
 
 
