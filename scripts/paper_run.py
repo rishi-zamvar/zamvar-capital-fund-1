@@ -136,8 +136,9 @@ def main():
             paper_ledger.reject_pending(conn, args.reject)
             print(f"rejected pending {args.reject} — nothing opened")
         elif args.mark:
-            summary = paper_ledger.mark_open_positions(
-                conn, date.today().isoformat(), quotes_fn=paper_ledger._rh_quote)
+            summary = paper_ledger.weekly_mark_pass(
+                conn, date.today().isoformat(), quotes_fn=paper_ledger._rh_quote,
+                embed=kb.default_embedder())
             print(f"weekly mark pass: {summary}")
         elif args.ticker:
             embed = kb.default_embedder()
